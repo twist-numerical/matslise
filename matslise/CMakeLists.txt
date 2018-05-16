@@ -1,4 +1,4 @@
-add_library (matslise SHARED matslise.cpp legendre.cpp)
+add_library (matslise SHARED matslise.cpp legendre.cpp Array2D.h)
 
 # Make sure the compiler can find include files for our Hello library
 # when other libraries or executables link to Hello
