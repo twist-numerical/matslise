@@ -2,14 +2,13 @@
 // Created by toon on 5/16/18.
 //
 
+#include <cmath>
 #include "matslise.h"
 #include "legendre.h"
-#include "Array2D.h"
-#include <array>
-#include <cublas_v2.h>
 
 #define EPS (1.e-12)
 
+using namespace matslise;
 
 Matslise::Matslise(double (*V)(double), double xmin, double xmax, int sectorCount) : V(V), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
@@ -18,7 +17,7 @@ Matslise::Matslise(double (*V)(double), double xmin, double xmax, int sectorCoun
         sectors[i] = new Sector(this, xmin + i * h, xmin + (i + 1) * h);
 }
 
-Matslise::Y Matslise::propagate(double E, Matslise::Y y, double a, double b) {
+Y Matslise::propagate(double E, Y y, double a, double b) {
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
@@ -34,18 +33,34 @@ Matslise::Y Matslise::propagate(double E, Matslise::Y y, double a, double b) {
                 y = sector->calculateT(E) * y;
             }
         }
-        return y;
+    } else {
+        for (int i = sectorCount - 1; i >= 0; --i) {
+            Sector *sector = sectors[i];
+            if (sector->xmin < a) {
+                if (sector->xmax > a) // eerste
+                    y = sector->calculateT(E, a - sector->xmin) / y;
+                else
+                    y = sector->calculateT(E) / y;
+
+                if (sector->xmin < b) { // laatste
+                    y = sector->calculateT(E, b - sector->xmin) * y;
+                    break;
+                }
+
+            }
+        }
     }
+    return y;
 }
 
-Matslise::Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
+Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
     vs = legendre::getCoefficients(5, s->V, xmin, xmax);
 
     calculateTCoeffs();
 }
 
-void Matslise::Sector::calculateTCoeffs() {
+void Sector::calculateTCoeffs() {
     double v1 = vs[1],
             v2 = vs[2],
             v3 = vs[3],
@@ -117,7 +132,7 @@ double *calculateEta(double Z) {
     return eta;
 }
 
-Matslise::T Matslise::Sector::calculateT(double E, double delta) {
+T Sector::calculateT(double E, double delta) {
     if (fabs(delta) <= EPS)
         return T(1, 0, 0, 1);
     if (fabs(delta - h) <= EPS)
@@ -140,7 +155,7 @@ Matslise::T Matslise::Sector::calculateT(double E, double delta) {
     return t;
 }
 
-Matslise::T Matslise::Sector::calculateT(double E) {
+T Sector::calculateT(double E) {
     double *eta = calculateEta((vs[0] - E) * h * h);
     T t(0, (vs[0] - E) * h * eta[1], 0, 0);
 

@@ -5,21 +5,49 @@
 #ifndef SCHRODINGER_MATSLISE_H
 #define SCHRODINGER_MATSLISE_H
 
-#include <armadillo>
+#include <ostream>
 #include "Array2D.h"
 
 #define HMAX 8
 #define ETA 5
 
+typedef double (*function)(double);
+
+namespace matslise {
+    class Sector;
+
+    struct Y;
+
+    function Mathieu() {
+        return [](double x) -> double { return 2 * cos(2 * x); };
+    }
+}
 
 class Matslise {
 public:
+
+
+    double (*V)(double);
+
+    double xmin, xmax;
+    int sectorCount;
+    matslise::Sector **sectors;
+
+public:
+    Matslise(double (*V)(double), double xmin, double xmax, int sectorCount);
+
+    matslise::Y propagate(double E, matslise::Y, double a, double b);
+};
+
+#endif //SCHRODINGER_MATSLISE_H
+
+namespace matslise {
     struct Y {
         double y, dy;
 
         Y(double y, double dy) : y(y), dy(dy) {}
 
-        friend std::ostream &operator<<(std::ostream &os, const Matslise::Y &m) {
+        friend std::ostream &operator<<(std::ostream &os, const Y &m) {
             return os << "(" << m.y << "," << m.dy << ")";
         }
     };
@@ -39,7 +67,7 @@ public:
             return Y((vp * y.y - v * y.dy) / d, (-up * y.y + u * y.dy) / d);
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const Matslise::T &m) {
+        friend std::ostream &operator<<(std::ostream &os, const T &m) {
             return os << "((" << m.u << "," << m.v << "), (" << m.up << "," << m.vp << "))";
         }
     };
@@ -66,17 +94,4 @@ public:
 
         T calculateT(double E, double delta);
     };
-
-    double xmin, xmax;
-    int sectorCount;
-    Sector **sectors;
-
-    double (*V)(double);
-
-public:
-    Matslise(double (*V)(double), double xmin, double xmax, int sectors);
-
-    Y propagate(double E, Y, double a, double b);
-};
-
-#endif //SCHRODINGER_MATSLISE_H
+}
