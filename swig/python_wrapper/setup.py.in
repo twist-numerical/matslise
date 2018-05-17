@@ -25,8 +25,8 @@ class CompiledLibInstall(setuptools.command.install.install):
 
 if __name__ == '__main__':
     setuptools.setup(
-        name='pyslise',
+        name='pyslise_swig',
         version='1.0.0-dev',
-        packages=['pyslise'],
+        packages=['pyslise_swig'],
         cmdclass={'install': CompiledLibInstall}
     )

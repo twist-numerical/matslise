@@ -7,7 +7,7 @@
 
 
 namespace legendre {
-    double *getCoefficients(int n, double (*V)(double), double a, double b);
+    double *getCoefficients(int n, std::function<double(double)> V, double a, double b);
 };
 
 

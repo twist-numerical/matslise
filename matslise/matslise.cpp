@@ -3,19 +3,26 @@
 //
 
 #include <cmath>
+#include <array>
+#include <vector>
 #include "matslise.h"
 #include "legendre.h"
+#include <algorithm>
+#include <iostream>
+#include <functional>
 
 #define EPS (1.e-12)
 
 using namespace matslise;
 
-Matslise::Matslise(double (*V)(double), double xmin, double xmax, int sectorCount) : V(V), sectorCount(sectorCount) {
+Matslise::Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount)
+        : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
         sectors[i] = new Sector(this, xmin + i * h, xmin + (i + 1) * h);
 }
+
 
 Y Matslise::propagate(double E, Y y, double a, double b) {
     if (a < b) {
@@ -53,9 +60,42 @@ Y Matslise::propagate(double E, Y y, double a, double b) {
     return y;
 }
 
+Matslise::~Matslise() {
+    for (int i = 0; i < sectorCount; ++i)
+        delete sectors[i];
+    delete[] sectors;
+}
+
+std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x) {
+    std::sort(x.begin(), x.end());
+    std::vector<Y> *ys = new std::vector<Y>();
+
+    auto iterator = x.begin();
+
+    while (iterator != x.end() && *iterator < xmin - EPS)
+        iterator = x.erase(iterator);
+
+    Sector *sector;
+    Y y{0, 1};
+    for (int i = 0; iterator != x.end(); ++iterator) {
+        while ((sector = sectors[i])->xmax < *iterator) {
+            y = sector->calculateT(E) * y;
+            ++i;
+            if (i >= sectorCount)
+                break;
+        }
+
+        ys->push_back(sector->calculateT(E, *iterator - sector->xmin) * y);
+    }
+    while (iterator != x.end() && *iterator > xmax + EPS)
+        iterator = x.erase(iterator);
+
+    return ys;
+}
+
 Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
-    vs = legendre::getCoefficients(5, s->V, xmin, xmax);
+    vs = legendre::getCoefficients(6, s->V, xmin, xmax);
 
     calculateTCoeffs();
 }
@@ -109,12 +149,10 @@ double *calculateEta(double Z) {
     } else {
         eta = new double[ETA];
 
-        if (Z > 1000) {
-            throw "WHAAAA";
-            double sZ = sqrt(Z);
-            eta[0] = .5 * (1 + exp(-2 * sZ));
-            eta[1] = .5 * (1 - exp(-2 * sZ)) / sZ;
-        } else if (Z > 0) {
+        if (Z > 0) {
+            if (Z > 1000) {
+                throw std::invalid_argument("Z > 1000");
+            }
             double sZ = sqrt(Z);
             eta[0] = cosh(sZ);
             eta[1] = sinh(sZ) / sZ;
@@ -144,14 +182,14 @@ T Sector::calculateT(double E, double delta) {
     for (int i = 0; i < ETA; ++i) {
         double D = 1;
         for (int j = 0; j < HMAX; ++j, D *= delta) {
-            t.u += D * eta[j] * u[i][j];
-            t.up += D * eta[j] * up[i][j];
-            t.v += D * eta[j] * v[i][j];
-            t.vp += D * eta[j] * vp[i][j];
+            t.u += D * eta[i] * u[i][j];
+            t.up += D * eta[i] * up[i][j];
+            t.v += D * eta[i] * v[i][j];
+            t.vp += D * eta[i] * vp[i][j];
         }
     }
 
-    delete eta;
+    delete[] eta;
     return t;
 }
 
@@ -165,6 +203,10 @@ T Sector::calculateT(double E) {
         t.v += eta[i] * hv[i];
         t.vp += eta[i] * hvp[i];
     }
-    delete eta;
+    delete[] eta;
     return t;
+}
+
+Sector::~Sector() {
+    delete[]vs;
 }

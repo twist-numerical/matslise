@@ -6,44 +6,45 @@
 #define SCHRODINGER_MATSLISE_H
 
 #include <ostream>
+#include <array>
+#include <vector>
+#include <functional>
 #include "Array2D.h"
 
 #define HMAX 8
 #define ETA 5
 
-typedef double (*function)(double);
-
 namespace matslise {
     class Sector;
 
-    struct Y;
-
-    function Mathieu() {
-        return [](double x) -> double { return 2 * cos(2 * x); };
-    }
+    class Y;
 }
 
 class Matslise {
 public:
-
-
-    double (*V)(double);
-
+    std::function<double(double)> V;
     double xmin, xmax;
     int sectorCount;
     matslise::Sector **sectors;
 
 public:
-    Matslise(double (*V)(double), double xmin, double xmax, int sectorCount);
+    Matslise(std::function<double(double)>, double xmin, double xmax, int sectorCount);
 
     matslise::Y propagate(double E, matslise::Y, double a, double b);
+
+    std::vector<matslise::Y> *computeEigenfunction(double E, std::vector<double> &x);
+
+    virtual ~Matslise();
 };
 
 #endif //SCHRODINGER_MATSLISE_H
 
 namespace matslise {
-    struct Y {
+    class Y {
+    public:
         double y, dy;
+
+        Y() : y(0), dy(0) {}
 
         Y(double y, double dy) : y(y), dy(dy) {}
 
@@ -93,5 +94,7 @@ namespace matslise {
         T calculateT(double E);
 
         T calculateT(double E, double delta);
+
+        virtual ~Sector();
     };
 }
