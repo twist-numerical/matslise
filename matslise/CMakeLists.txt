@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 project(matslise)
 
 set(CMAKE_BUILD_TYPE Release)
-set(CMAKE_CXX_FLAGS "-O3 -Wall -Wextra -fPIC")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -fPIC")
 set(CMAKE_INSTALL_PREFIX /usr/)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})

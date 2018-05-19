@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.5)
 project(schrodinger)
 
-find_library(matslise REQUIRED)
 set(CMAKE_CXX_STANDARD 11)
 
-add_subdirectory (matslise)
+find_package(Eigen3 REQUIRED NO_MODULE)
+# add_subdirectory (matslise)
 
-add_executable(schrodinger main.cpp)
-target_link_libraries(schrodinger LINK_PUBLIC matslise)
+add_executable(schrodinger main.cpp matslise/matslise.cpp matslise/matscs.cpp)
+target_link_libraries(schrodinger Eigen3::Eigen)
 
 
 # add_subdirectory(swig/python_wrapper)

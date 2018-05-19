@@ -7,9 +7,7 @@
 #include <vector>
 #include "matslise.h"
 #include "legendre.h"
-#include <algorithm>
-#include <iostream>
-#include <functional>
+#include "calculateEta.h"
 
 #define EPS (1.e-12)
 
@@ -114,10 +112,10 @@ void Sector::calculateTCoeffs() {
     vp = {1.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,   0.0, 0.0, (((((((h*h*h*h*h)*v5)*-0.5)+(((h*h*h*h)*v4)*0.5))+(((h*h*h)*v3)*-0.5))+(((h*h)*v2)*0.5))+((h*v1)*-0.5)), (((((((h*h*h*h)*v5)*7.5)+(((h*h*h)*v4)*-5.0))+(((h*h)*v3)*3.0))+((h*v2)*-1.5))+(v1*0.5)), ((((((h*h*h)*v5)*-35.0)+(((h*h)*v4)*15.0))+((h*v3)*-5.0))+v2), (((((h*h)*v5)*70.0)+((h*v4)*-17.5))+(v3*2.5)), (((h*v5)*-63.0)+(v4*7.0)), (v5*21.0),   0.0, 0.0, 0.0, (((((((h*h*h*h)*v5)*7.5)+(((h*h*h)*v4)*-5.0))+(((h*h)*v3)*3.0))+((h*v2)*-1.5))+(v1*0.5)), (((((((((((v3*v3)+((v2*v4)*2.0))+((v1*v5)*2.0))*(h*h*h*h*h*h))*0.125)+((((v2*v3)+(v1*v4))*(h*h*h*h*h))*-0.25))+((((v2*v2)+((v1*v3)*2.0))*(h*h*h*h))*0.125))+((((v1*v2)+(v5*210.0))*(h*h*h))*-0.25))+((((v1*v1)+(v4*180.0))*(h*h))*0.125))+((h*v3)*-7.5))+(v2*1.5)), (((((((((((v3*v3)*6.0)+((v2*v4)*13.0))+((v1*v5)*16.0))*(h*h*h*h*h))*-0.25)+(((((v2*v3)*9.0)+((v1*v4)*11.0))*(h*h*h*h))*0.25))+(((((v2*v2)*3.0)+((v1*v3)*7.0))*(h*h*h))*-0.25))+(((v1*v2)+(v5*140.0))*(h*h)))+((((v1*v1)+(v4*140.0))*h)*-0.25))+(v3*5.0)), (((((((((((v3*v3)*28.0)+((v2*v4)*62.0))+((v1*v5)*85.0))*(h*h*h*h))*0.25)+(((((v2*v3)*3.0)+((v1*v4)*4.0))*(h*h*h))*-2.5))+(((((v2*v2)*13.0)+((v1*v3)*32.0))*(h*h))*0.125))+((((v1*v2)+(v5*126.0))*h)*-1.25))+((v1*v1)*0.125))+(v4*17.5)), ((((((((((v3*v3)*13.0)+((v2*v4)*29.0))+((v1*v5)*42.0))*(h*h*h))*-1.25)+(((((v2*v3)*47.0)+((v1*v4)*65.0))*(h*h))*0.25))+(((((v2*v2)*2.0)+((v1*v3)*5.0))*h)*-0.75))+((v1*v2)*0.5))+(v5*63.0)),   0.0, 0.0, 0.0, 0.0, 0.0, (((((((((((v3*v3)*6.0)+((v2*v4)*13.0))+((v1*v5)*16.0))*(h*h*h*h*h))*-0.25)+(((((v2*v3)*9.0)+((v1*v4)*11.0))*(h*h*h*h))*0.25))+(((((v2*v2)*3.0)+((v1*v3)*7.0))*(h*h*h))*-0.25))+(((v1*v2)+(v5*-70.0))*(h*h)))+((((v1*v1)+(v4*-70.0))*h)*-0.25))+(v3*-2.5)), ((((((((((((v1*v1)*v2)+((v3*v3)*180.0))+((v2*v4)*392.0))+((v1*v5)*520.0))*(h*h*h*h))*0.0625)+(((((v1*v1*v1)+((v2*v3)*576.0))+((v1*v4)*740.0))*(h*h*h))*-0.0208333333333))+(((((v2*v2)*21.0)+((v1*v3)*50.0))*(h*h))*0.125))+(((((v1*v2)*4.0)+(v5*-315.0))*h)*-0.5))+((v1*v1)*0.208333333333))+(v4*-17.5)), (((((((((((v1*v1)*v2)+((v3*v3)*104.0))+((v2*v4)*232.0))+((v1*v5)*336.0))*(h*h*h))*-0.3125)+(((((v1*v1*v1)+((v2*v3)*376.0))+((v1*v4)*520.0))*(h*h))*0.0625))+(((((v2*v2)*2.0)+((v1*v3)*5.0))*h)*-1.5))+(v1*v2))+(v5*-94.5)),   0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, (((((((((((v1*v1)*v2)+((v3*v3)*-52.0))+((v2*v4)*-116.0))+((v1*v5)*-168.0))*(h*h*h))*-0.3125)+(((((v1*v1*v1)+((v2*v3)*-188.0))+((v1*v4)*-260.0))*(h*h))*0.0625))+(((((v2*v2)*2.0)+((v1*v3)*5.0))*h)*0.75))+((v1*v2)*-0.5))+(v5*31.5))};
     // @formatter:on
 
-    for (int i = 0; i < ETA; ++i) {
+    for (int i = 0; i < MATSLISE_ETA; ++i) {
         hu[i] = hup[i] = hv[i] = hvp[i] = 0;
         double H = 1;
-        for (int j = 0; j < HMAX; ++j, H *= h) {
+        for (int j = 0; j < MATSLISE_HMAX; ++j, H *= h) {
             hu[i] += H * u[i][j];
             hup[i] += H * up[i][j];
             hv[i] += H * v[i][j];
@@ -126,62 +124,18 @@ void Sector::calculateTCoeffs() {
     }
 }
 
-double *calculateEta(double Z) {
-    double *eta;
-    if (fabs(Z) < 0.5) {
-        static double eta9[] = {1.527349308567059e-009, 0.36365459727787e-10, 0.00395276736172e-10,
-                                0.00002635178241e-10, 0.00000012199899e-10, 0.00000000042069e-10,
-                                0.00000000000113e-10, 0};
-        static double eta8[] = {2.901963686277412e-008, 0.76367465428353e-9, 0.00909136493195e-9,
-                                0.00006587945603e-9, 0.00000032939728e-9, 0.00000000121999e-9,
-                                0.00000000000351e-9, 0.00000000000001e-9};
-
-        double e9 = 0, e8 = 0;
-        double z = 1;
-        for (int i = 0; i < 8; ++i, z *= Z) {
-            e9 += z * eta9[i];
-            e8 += z * eta8[i];
-        }
-
-        eta = new double[11]{0, 0, 0, 0, 0, 0, 0, 0, 0, e8, e9};
-        for (int i = 8; i >= 0; --i)
-            eta[i] = Z * eta[i + 2] + (2 * i + 1) * eta[i + 1];
-    } else {
-        eta = new double[ETA];
-
-        if (Z > 0) {
-            if (Z > 1000) {
-                throw std::invalid_argument("Z > 1000");
-            }
-            double sZ = sqrt(Z);
-            eta[0] = cosh(sZ);
-            eta[1] = sinh(sZ) / sZ;
-        } else {
-            double sZ = sqrt(-Z);
-            eta[0] = cos(sZ);
-            eta[1] = sin(sZ) / sZ;
-        }
-
-        for (int i = 2; i < ETA; ++i) {
-            eta[i] = (eta[i - 2] - (2 * i - 3) * eta[i - 1]) / Z;
-        }
-    }
-
-    return eta;
-}
-
 T Sector::calculateT(double E, double delta) {
     if (fabs(delta) <= EPS)
         return T(1, 0, 0, 1);
     if (fabs(delta - h) <= EPS)
         return calculateT(E);
 
-    double *eta = calculateEta((vs[0] - E) * delta * delta);
+    double *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA);
     T t(0, (vs[0] - E) * delta * eta[1], 0, 0);
 
-    for (int i = 0; i < ETA; ++i) {
+    for (int i = 0; i < MATSLISE_ETA; ++i) {
         double D = 1;
-        for (int j = 0; j < HMAX; ++j, D *= delta) {
+        for (int j = 0; j < MATSLISE_HMAX; ++j, D *= delta) {
             t.u += D * eta[i] * u[i][j];
             t.up += D * eta[i] * up[i][j];
             t.v += D * eta[i] * v[i][j];
@@ -194,10 +148,10 @@ T Sector::calculateT(double E, double delta) {
 }
 
 T Sector::calculateT(double E) {
-    double *eta = calculateEta((vs[0] - E) * h * h);
+    double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA);
     T t(0, (vs[0] - E) * h * eta[1], 0, 0);
 
-    for (int i = 0; i < ETA; ++i) {
+    for (int i = 0; i < MATSLISE_ETA; ++i) {
         t.u += eta[i] * hu[i];
         t.up += eta[i] * hup[i];
         t.v += eta[i] * hv[i];

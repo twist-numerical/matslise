@@ -11,8 +11,8 @@
 #include <functional>
 #include "Array2D.h"
 
-#define HMAX 8
-#define ETA 5
+#define MATSLISE_HMAX 8
+#define MATSLISE_ETA 5
 
 namespace matslise {
     class Sector;
@@ -36,8 +36,6 @@ public:
 
     virtual ~Matslise();
 };
-
-#endif //SCHRODINGER_MATSLISE_H
 
 namespace matslise {
     class Y {
@@ -78,14 +76,14 @@ namespace matslise {
         Matslise *s;
         double *vs;
         double xmin, xmax, h;
-        Array2D<double, ETA, HMAX> u;
-        Array2D<double, ETA, HMAX> up;
-        Array2D<double, ETA, HMAX> v;
-        Array2D<double, ETA, HMAX> vp;
-        double hu[ETA];
-        double hup[ETA];
-        double hv[ETA];
-        double hvp[ETA];
+        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> u;
+        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> up;
+        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> v;
+        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> vp;
+        double hu[MATSLISE_ETA];
+        double hup[MATSLISE_ETA];
+        double hv[MATSLISE_ETA];
+        double hvp[MATSLISE_ETA];
 
         Sector(Matslise *problem, double xmin, double xmax);
 
@@ -98,3 +96,6 @@ namespace matslise {
         virtual ~Sector();
     };
 }
+
+
+#endif //SCHRODINGER_MATSLISE_H
