@@ -31,7 +31,7 @@ inline double *calculateEta(double Z, int etaCount) {
 
         if (Z > 0) {
             if (Z > 1000) {
-                throw std::invalid_argument("Z > 1000");
+                std::cerr << ("Z > 1000") << std::endl;
             }
             double sZ = sqrt(Z);
             eta[0] = cosh(sZ);
@@ -50,7 +50,7 @@ inline double *calculateEta(double Z, int etaCount) {
     return eta;
 }
 
-inline MatrixXd *calculateEta(VectorXd Z, int n, int etaCount) {
+inline MatrixXd *calculateEta(const VectorXd &Z, int n, int etaCount) {
     VectorXd eta[etaCount];
     for (int j = 0; j < etaCount; ++j)
         eta[j] = VectorXd::Zero(n);

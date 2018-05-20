@@ -9,7 +9,7 @@
 using namespace matscs;
 
 Matscs::Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount)
-        : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount), n(n) {
+        : V(V), n(n), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
@@ -17,7 +17,8 @@ Matscs::Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xma
 
 }
 
-matscs::Y Matscs::propagate(double E, matscs::Y y, double a, double b) {
+matscs::Y Matscs::propagate(const double E, const matscs::Y &_y, const double a, const double b) const {
+    Y y = _y;
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
@@ -60,7 +61,7 @@ Matscs::~Matscs() {
     delete[] sectors;
 }
 
-std::vector<matscs::Y> *Matscs::computeEigenfunction(double E, std::vector<double> &x) {
+std::vector<matscs::Y> *Matscs::computeEigenfunction(double E, std::vector<double> &x) const {
     std::sort(x.begin(), x.end());
     std::vector<Y> *ys = new std::vector<Y>();
 
@@ -87,7 +88,7 @@ std::vector<matscs::Y> *Matscs::computeEigenfunction(double E, std::vector<doubl
     return ys;
 }
 
-Sector::Sector(Matscs *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
+Sector::Sector(const Matscs *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
     vs = legendre::getCoefficients(MATSCS_LEGENDRE, s->V, xmin, xmax);
     SelfAdjointEigenSolver<MatrixXd> es(vs[0]);
@@ -103,11 +104,11 @@ Sector::Sector(Matscs *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xma
 void Sector::calculateTCoeffs() {
     MatrixXd zero = MatrixXd::Zero(s->n, s->n);
     MatrixXd I = MatrixXd::Identity(s->n, s->n);
-    MatrixXd v1 = vs[1],
-            v2 = vs[2],
-            v3 = vs[3],
-            v4 = vs[4],
-            v5 = vs[5];
+    MatrixXd &v1 = vs[1],
+            &v2 = vs[2],
+            &v3 = vs[3],
+            &v4 = vs[4],
+            &v5 = vs[5];
 
     // @formatter:off
     u = {(I), zero, zero, zero, zero, zero, zero, zero, zero, zero,      zero, zero, ((((-0.5*v1))+(((0.5*v2))+(((-0.5*v3))+(((0.5*v4))+((-0.5*v5))*h)*h)*h)*h)*h), (((0.5*v1))+(((-1.5*v2))+(((3.0*v3))+(((-5.0*v4))+((7.5*v5))*h)*h)*h)*h), ((v2)+(((-5.0*v3))+(((15.0*v4))+((-35.0*v5))*h)*h)*h), (((2.5*v3))+(((-17.5*v4))+((70.0*v5))*h)*h), (((7.0*v4))+((-63.0*v5))*h), ((21.0*v5)), zero, zero,      zero, zero, zero, (((-0.5*v1))+(((1.5*v2))+(((-3.0*v3))+(((5.0*v4))+((-7.5*v5))*h)*h)*h)*h), (((-1.5*v2))+(((7.5*v3))+(((-22.5*v4)+(0.125*(v1*v1)))+(((-0.125*(v2*v1))+(52.5*v5)+(-0.125*(v1*v2)))+(((0.125*(v3*v1))+(0.125*(v1*v3))+(0.125*(v2*v2)))+((-0.125*(v4*v1))+(-0.125*(v1*v4))+(-0.125*(v2*v3))+(-0.125*(v3*v2)))*h)*h)*h)*h)*h), (((-5.0*v3))+(((35.0*v4)+(-0.25*(v1*v1)))+(((0.5833333333333334*(v2*v1))+(-140.0*v5)+(0.4166666666666667*(v1*v2)))+(((-1.0833333333333333*(v3*v1))+(-0.6666666666666666*(v1*v3))+(-0.75*(v2*v2)))+((1.75*(v4*v1))+(v1*v4)+(v2*v3)+(1.25*(v3*v2)))*h)*h)*h)*h), (((-17.5*v4)+(0.125*(v1*v1)))+(((-0.75*(v2*v1))+(157.5*v5)+(-0.5*(v1*v2)))+(((2.625*(v3*v1))+(1.375*(v1*v3))+(1.625*(v2*v2)))+((-6.875*(v4*v1))+(-3.125*(v1*v4))+(-3.25*(v2*v3))+(-4.25*(v3*v2)))*h)*h)*h), (((0.3*(v2*v1))+(-63.0*v5)+(0.2*(v1*v2)))+(((-2.5*(v3*v1))+(-1.25*(v1*v3))+(-1.5*(v2*v2)))+((11.5*(v4*v1))+(4.75*(v1*v4))+(5.05*(v2*v3))+(6.7*(v3*v2)))*h)*h), (((0.8333333333333334*(v3*v1))+(0.4166666666666667*(v1*v3))+(0.5*(v2*v2)))+((-8.75*(v4*v1))+(-3.5*(v1*v4))+(-3.75*(v2*v3))+(-5.0*(v3*v2)))*h), ((2.5*(v4*v1))+(v1*v4)+(1.0714285714285714*(v2*v3))+(1.4285714285714286*(v3*v2))),      zero, zero, zero, zero, zero, (((2.5*v3))+(((-17.5*v4)+(0.25*(v1*v1)))+(((-0.4166666666666667*(v2*v1))+(70.0*v5)+(-0.5833333333333334*(v1*v2)))+(((0.6666666666666666*(v3*v1))+(1.0833333333333333*(v1*v3))+(0.75*(v2*v2)))+((-1.0*(v4*v1))+(-1.75*(v1*v4))+(-1.25*(v2*v3))+(-1.0*(v3*v2)))*h)*h)*h)*h), (((17.5*v4)+(-0.2916666666666667*(v1*v1)))+(((1.25*(v2*v1))+(-157.5*v5)+(1.25*(v1*v2)))+(((-3.625*(v3*v1))+(-3.625*(v1*v3))+(-3.375*(v2*v2)))+((8.541666666666666*(v4*v1))+(8.541666666666666*(v1*v4))+(7.5*(v2*v3))+(-0.020833333333333332*(v1*v1*v1))+(7.5*(v3*v2)))*h)*h)*h), (((-0.825*(v2*v1))+(94.5*v5)+(-0.675*(v1*v2)))+(((5.625*(v3*v1))+(4.375*(v1*v3))+(4.5*(v2*v2)))+((-22.875*(v4*v1))+(-17.125*(v1*v4))+(-16.075*(v2*v3))+(0.0625*(v1*v1*v1))+(-17.925*(v3*v2)))*h)*h), (((-2.6666666666666665*(v3*v1))+(-1.8333333333333333*(v1*v3))+(-1.9*(v2*v2)))+((24.5*(v4*v1))+(15.75*(v1*v4))+(15.0*(v2*v3))+(-0.0625*(v1*v1*v1))+(17.5*(v3*v2)))*h), ((-9.166666666666666*(v4*v1))+(-5.416666666666667*(v1*v4))+(-5.178571428571429*(v2*v3))+(0.020833333333333332*(v1*v1*v1))+(-6.071428571428571*(v3*v2)))};
@@ -129,7 +130,7 @@ void Sector::calculateTCoeffs() {
 }
 
 
-T Sector::calculateT(double E, double delta) {
+T Sector::calculateT(double E, double delta) const {
     MatrixXd zero = MatrixXd::Zero(s->n, s->n);
     MatrixXd one = MatrixXd::Identity(s->n, s->n);
 
@@ -161,7 +162,7 @@ T Sector::calculateT(double E, double delta) {
     return t;
 }
 
-T Sector::calculateT(double E) {
+T Sector::calculateT(double E) const {
     MatrixXd zero = MatrixXd::Zero(s->n, s->n);
     MatrixXd one = MatrixXd::Identity(s->n, s->n);
 

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cmath>
 #include <vector>
+#include <Eigen/Dense>
 #include "matslise/matscs.h"
 
 using namespace std;
@@ -14,8 +15,8 @@ int main() {
     }, 2, 0, 1, 16);
 
     double E = 10.368507161836;
-
-    cout << ms.propagate(E, matscs::Y(MatrixXd::Zero(2,2), MatrixXd::Identity(2,2)), 0, 1) << endl;
+    const matscs::Y &y = matscs::Y(MatrixXd::Zero(2, 2), MatrixXd::Identity(2, 2));
+    cout << ms.propagate(E, y, 0, 1) << endl;
     /*
     vector<matscs::Y> *ys = ms.computeEigenfunction(E, x);
     int i = 0;

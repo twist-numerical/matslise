@@ -27,16 +27,17 @@ namespace matscs {
 class Matscs {
 public:
     std::function<MatrixXd(double)> V;
+    int n;
     double xmin, xmax;
-    int n, sectorCount;
+    int sectorCount;
     matscs::Sector **sectors;
     MatrixXd zero, one;
 public:
     Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount);
 
-    matscs::Y propagate(double E, matscs::Y y, double a, double b);
+    matscs::Y propagate(double E, const matscs::Y &y, double a, double b) const;
 
-    std::vector<matscs::Y> *computeEigenfunction(double E, std::vector<double> &x);
+    std::vector<matscs::Y> *computeEigenfunction(double E, std::vector<double> &x) const;
 
     virtual ~Matscs();
 };
@@ -59,11 +60,11 @@ namespace matscs {
 
         T(MatrixXd u, MatrixXd up, MatrixXd v, MatrixXd vp) : u(u), up(up), v(v), vp(vp) {}
 
-        Y operator*(Y y) {
+        Y operator*(const Y &y) const {
             return Y(u * y.y + v * y.dy, up * y.y + vp * y.dy);
         }
 
-        Y operator/(Y y) {
+        Y operator/(const Y &y) const {
             MatrixXd d = (u * vp - up * v).inverse();
             return Y(vp * d * y.y - v * d * y.dy, -up * d * y.y + u * d * y.dy);
         }
@@ -74,8 +75,9 @@ namespace matscs {
     };
 
     class Sector {
+    private:
+        const Matscs *s;
     public:
-        Matscs *s;
         MatrixXd *vs;
         double xmin, xmax, h;
         Array2D<MatrixXd, MATSCS_ETA, MATSCS_HMAX> u;
@@ -88,13 +90,13 @@ namespace matscs {
         MatrixXd hvp[MATSCS_ETA];
         MatrixXd D;
 
-        Sector(Matscs *problem, double xmin, double xmax);
+        Sector(const Matscs *problem, double xmin, double xmax);
 
         void calculateTCoeffs();
 
-        T calculateT(double E);
+        T calculateT(double E) const;
 
-        T calculateT(double E, double delta);
+        T calculateT(double E, double delta) const;
 
         virtual ~Sector();
 

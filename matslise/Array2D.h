@@ -13,6 +13,10 @@ public:
     T *operator[](int i) {
         return data + i * cols;
     }
+
+    const T *operator[](int i) const {
+        return data + i * cols;
+    }
 };
 
 
