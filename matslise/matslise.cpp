@@ -17,25 +17,35 @@ Matslise::Matslise(std::function<double(double)> V, double xmin, double xmax, in
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
-    for (int i = 0; i < sectorCount; ++i)
-        sectors[i] = new Sector(this, xmin + i * h, xmin + (i + 1) * h);
+    double mid = (xmax + xmin) / 2;
+    for (int i = 0; i < sectorCount; ++i) {
+        double a = xmin + i * h;
+        double b = a + h;
+        if (b - 1.e-5 > mid) {
+            match = b;
+            mid = xmax + 1;
+        }
+        sectors[i] = new Sector(this, a, b);
+    }
 }
 
 
-Y Matslise::propagate(double E, Y y, double a, double b) {
+std::tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, double b) const {
+    Y y = _y;
+    double theta = y.theta();
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
             if (sector->xmax > a) {
                 if (sector->xmin < a) // eerste
-                    y = sector->calculateT(E, a - sector->xmin) / y;
+                    y = sector->propagate(E, y, sector->xmin - a, theta);
 
                 if (sector->xmax > b) { // laatste
-                    y = sector->calculateT(E, b - sector->xmin) * y;
+                    y = sector->propagate(E, y, b - sector->xmin, theta);
                     break;
                 }
 
-                y = sector->calculateT(E) * y;
+                y = sector->propagate(E, y, sector->xmax - sector->xmin, theta);
             }
         }
     } else {
@@ -43,19 +53,27 @@ Y Matslise::propagate(double E, Y y, double a, double b) {
             Sector *sector = sectors[i];
             if (sector->xmin < a) {
                 if (sector->xmax > a) // eerste
-                    y = sector->calculateT(E, a - sector->xmin) / y;
+                    y = sector->propagate(E, y, sector->xmin - a, theta);
                 else
-                    y = sector->calculateT(E) / y;
+                    y = sector->propagate(E, y, sector->xmin - sector->xmax, theta);
 
                 if (sector->xmin < b) { // laatste
-                    y = sector->calculateT(E, b - sector->xmin) * y;
+                    y = sector->propagate(E, y, b - sector->xmin, theta);
                     break;
                 }
 
             }
         }
     }
-    return y;
+    return std::make_tuple(y, theta);
+}
+
+double Matslise::calculateError(double E, const matslise::Y &left, const matslise::Y &right) const {
+    Y l, r;
+    double p;
+    std::tie(l, p) = propagate(E, left, xmin, match);
+    std::tie(r, p) = propagate(E, right, xmax, match);
+    return l.dy * r.y - r.dy * l.y;
 }
 
 Matslise::~Matslise() {
@@ -64,7 +82,7 @@ Matslise::~Matslise() {
     delete[] sectors;
 }
 
-std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x) {
+std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x) const {
     std::sort(x.begin(), x.end());
     std::vector<Y> *ys = new std::vector<Y>();
 
@@ -80,11 +98,13 @@ std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x)
             y = sector->calculateT(E) * y;
             ++i;
             if (i >= sectorCount)
-                break;
+                goto allSectorsDone;
         }
 
         ys->push_back(sector->calculateT(E, *iterator - sector->xmin) * y);
     }
+    allSectorsDone:
+
     while (iterator != x.end() && *iterator > xmax + EPS)
         iterator = x.erase(iterator);
 
@@ -124,7 +144,7 @@ void Sector::calculateTCoeffs() {
     }
 }
 
-T Sector::calculateT(double E, double delta) {
+T Sector::calculateT(double E, double delta) const {
     if (fabs(delta) <= EPS)
         return T(1, 0, 0, 1);
     if (fabs(delta - h) <= EPS)
@@ -147,7 +167,7 @@ T Sector::calculateT(double E, double delta) {
     return t;
 }
 
-T Sector::calculateT(double E) {
+T Sector::calculateT(double E) const {
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA);
     T t(0, (vs[0] - E) * h * eta[1], 0, 0);
 
@@ -159,6 +179,44 @@ T Sector::calculateT(double E) {
     }
     delete[] eta;
     return t;
+}
+
+double Sector::prufer(double E, double delta, const Y &y0, const Y &y1) const {
+    double theta0 = y0.theta();
+
+    double theta1 = y1.theta();
+    double ff = E - vs[0];
+    if (ff > 0) {
+        double f = sqrt(ff);
+        double C = atan(tan(theta0) * f) / f;
+        theta1 += round((C + delta) * f / M_PI) * M_PI;
+    } else {
+        if (y0.y * y1.y >= 0) {
+            if (theta0 > 0 && theta1 < 0)
+                theta1 += M_PI;
+            else if (theta0 < 0 && theta1 > 0)
+                theta1 -= M_PI;
+        } else if (theta0 * theta1 > 0) {
+            theta1 += M_PI;
+        }
+    }
+
+    return theta1 - theta0;
+}
+
+Y Sector::propagate(double E, const Y &y0, double delta, double &theta) const {
+    bool forward = delta >= 0;
+    if (!forward)
+        delta = -delta;
+    const T &t = calculateT(E, delta);
+    Y y1 = forward ? t * y0 : t / y0;
+
+    if (forward)
+        theta += prufer(E, delta, y0, y1);
+    else
+        theta -= prufer(E, delta, y1, y0);
+
+    return y1;
 }
 
 Sector::~Sector() {

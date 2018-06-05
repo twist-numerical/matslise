@@ -8,6 +8,7 @@
 #include <ostream>
 #include <array>
 #include <vector>
+#include <tuple>
 #include <functional>
 #include "Array2D.h"
 
@@ -25,14 +26,17 @@ public:
     std::function<double(double)> V;
     double xmin, xmax;
     int sectorCount;
+    double match;
     matslise::Sector **sectors;
 
 public:
     Matslise(std::function<double(double)>, double xmin, double xmax, int sectorCount);
 
-    matslise::Y propagate(double E, matslise::Y, double a, double b);
+    std::tuple<matslise::Y, double> propagate(double E, const matslise::Y &y, double a, double b) const;
 
-    std::vector<matslise::Y> *computeEigenfunction(double E, std::vector<double> &x);
+    std::vector<matslise::Y> *computeEigenfunction(double E, std::vector<double> &x) const;
+
+    double calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
 
     virtual ~Matslise();
 };
@@ -46,6 +50,10 @@ namespace matslise {
 
         Y(double y, double dy) : y(y), dy(dy) {}
 
+        double theta() const {
+            return atan(y/dy);
+        }
+
         friend std::ostream &operator<<(std::ostream &os, const Y &m) {
             return os << "(" << m.y << "," << m.dy << ")";
         }
@@ -57,11 +65,11 @@ namespace matslise {
 
         T(double u, double up, double v, double vp) : u(u), up(up), v(v), vp(vp) {}
 
-        Y operator*(Y y) {
+        Y operator*(Y y) const {
             return Y(u * y.y + v * y.dy, up * y.y + vp * y.dy);
         }
 
-        Y operator/(Y y) {
+        Y operator/(Y y) const {
             double d = u * vp - up * v;
             return Y((vp * y.y - v * y.dy) / d, (-up * y.y + u * y.dy) / d);
         }
@@ -89,10 +97,12 @@ namespace matslise {
 
         void calculateTCoeffs();
 
-        T calculateT(double E);
+        T calculateT(double E) const;
 
-        T calculateT(double E, double delta);
+        T calculateT(double E, double delta) const;
 
+        Y propagate(double E, const Y &y0, double delta, double &theta) const;
+        double prufer(double E, double delta, const Y &y0, const Y &y1) const;
         virtual ~Sector();
     };
 }

@@ -4,6 +4,7 @@
 #include <pybind11/stl.h>
 #include <pybind11/pybind11.h>
 #include <matscs.h>
+#include <tuple>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
@@ -16,6 +17,7 @@ using namespace std;
 matslise::Y packY(tuple<double, double> &t) {
     return matslise::Y(get<0>(t), get<1>(t));
 }
+
 tuple<double, double> unpackY(matslise::Y y) {
     tuple<double, double> t(y.y, y.dy);
     return t;
@@ -24,6 +26,7 @@ tuple<double, double> unpackY(matslise::Y y) {
 matscs::Y packY(tuple<MatrixXd, MatrixXd> &t) {
     return matscs::Y(get<0>(t), get<1>(t));
 }
+
 tuple<MatrixXd, MatrixXd> unpackY(matscs::Y y) {
     tuple<MatrixXd, MatrixXd> t(y.y, y.dy);
     return t;
@@ -35,8 +38,11 @@ PYBIND11_MODULE(pyslise, m) {
         .def(py::init<function<double(double)>, double, double, int>())
         .def("propagate",
             [](Matslise &m, double E, tuple<double, double> y, double a, double b) ->
-                tuple<double, double> {
-                    return unpackY(m.propagate(E, packY(y), a, b));
+                tuple<double, double, double> {
+                    matslise::Y y0;
+                    double theta;
+                    tie(y0, theta) = m.propagate(E, packY(y), a, b);
+                    return std::make_tuple(y0.y, y0.dy, theta);
                 })
         .def("computeEigenfunction", [](Matslise &m, double E, vector<double> xs)
              -> tuple<vector<double>, vector<tuple<double, double>>*> {
@@ -47,7 +53,12 @@ PYBIND11_MODULE(pyslise, m) {
                 delete ysY;
                 tuple<vector<double>, vector<tuple<double, double>>*> xsys(xs, ys);
                 return xsys;
-            });
+            })
+        .def("calculateError",
+            [](Matslise &m, double E, tuple<double, double> left, tuple<double, double> right) ->
+                double {
+                    return m.calculateError(E, packY(left), packY(right));
+                });
 
     py::class_<Matscs>(m, "Pyscs")
         .def(py::init<function<MatrixXd(double)>, int, double, double, int>())
