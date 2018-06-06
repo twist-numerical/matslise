@@ -39,7 +39,11 @@ public:
 
     std::vector<matslise::Y> *computeEigenfunction(double E, std::vector<double> &x) const;
 
-    std::tuple<double, double, double>  calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
+    std::tuple<double, double, double>
+    calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
+
+    std::vector<double> *
+    computeEigenvalues(double Emin, double Emax, const matslise::Y &left, const matslise::Y &right) const;
 
     virtual ~Matslise();
 };
@@ -61,7 +65,7 @@ namespace matslise {
         }
 
         friend std::ostream &operator<<(std::ostream &os, const Y &m) {
-            return os << "(" << m.y[0] << "," << m.y[1] << ")";
+            return os << "(" << m.y[0] << "," << m.y[1] << ")" << "(" << m.dy[0] << "," << m.dy[1] << ")";
         }
     };
 
@@ -71,7 +75,8 @@ namespace matslise {
         Matrix2d t;
         Matrix2d dt;
 
-        T() : t(Matrix2d::Identity()), dt(Matrix2d::Identity()) {}
+        T() : t(Matrix2d::Identity()), dt(Matrix2d::Zero()) {}
+
         T(Matrix2d t, Matrix2d dt) : t(t), dt(dt) {}
 
         Y operator*(Y y) const {

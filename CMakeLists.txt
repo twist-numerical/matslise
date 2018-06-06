@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(schrodinger)
 
+set(CMAKE_CXX_FLAGS "-Og -Wall -Wextra -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Eigen3 REQUIRED NO_MODULE)

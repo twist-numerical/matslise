@@ -56,6 +56,9 @@ PYBIND11_MODULE(pyslise, m) {
                 tie(y0, theta) = m.propagate(E, matslise::Y(y, dy), a, b);
                 return make_tuple(y0.y, y0.dy, theta);
         })
+        .def("computeEigenvalues", [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right) -> vector<double>* {
+            return m.computeEigenvalues(Emin, Emax, matslise::Y(left), matslise::Y(right));
+        })
         .def("computeEigenfunction", [](Matslise &m, double E, vector<double> xs)
              -> tuple<vector<double>, vector<tuple<double, double>>*> {
                 auto ysY = m.computeEigenfunction(E, xs);

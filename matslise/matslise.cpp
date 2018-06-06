@@ -5,6 +5,7 @@
 #include <cmath>
 #include <array>
 #include <vector>
+#include <queue>
 #include "matslise.h"
 #include "legendre.h"
 #include "calculateEta.h"
@@ -12,6 +13,7 @@
 #define EPS (1.e-12)
 
 using namespace matslise;
+using namespace std;
 
 Matslise::Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount)
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
@@ -37,10 +39,10 @@ std::tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, doubl
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
             if (sector->xmax > a) {
-                if (sector->xmin < a) // eerste
+                if (sector->xmin < a) // first
                     y = sector->propagate(E, y, sector->xmin - a, theta);
 
-                if (sector->xmax > b) { // laatste
+                if (sector->xmax > b) { // last
                     y = sector->propagate(E, y, b - sector->xmin, theta);
                     break;
                 }
@@ -52,12 +54,12 @@ std::tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, doubl
         for (int i = sectorCount - 1; i >= 0; --i) {
             Sector *sector = sectors[i];
             if (sector->xmin < a) {
-                if (sector->xmax > a) // eerste
+                if (sector->xmax > a) // first
                     y = sector->propagate(E, y, sector->xmin - a, theta);
                 else
                     y = sector->propagate(E, y, sector->xmin - sector->xmax, theta);
 
-                if (sector->xmin < b) { // laatste
+                if (sector->xmin < b) { // last
                     y = sector->propagate(E, y, b - sector->xmin, theta);
                     break;
                 }
@@ -65,18 +67,64 @@ std::tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, doubl
             }
         }
     }
-    return std::make_tuple(y, theta);
+    return make_tuple(y, theta);
 }
 
-std::tuple<double, double, double>
-Matslise::calculateError(double E, const matslise::Y &left, const matslise::Y &right) const {
+tuple<double, double, double>
+Matslise::calculateError(double E, const Y &left, const Y &right) const {
     Y l, r;
     double thetaL, thetaR;
-    std::tie(l, thetaL) = propagate(E, left, xmin, match);
-    std::tie(r, thetaR) = propagate(E, right, xmax, match);
-    return std::make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
+    tie(l, thetaL) = propagate(E, left, xmin, match);
+    tie(r, thetaR) = propagate(E, right, xmax, match);
+    return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
                            l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
                            thetaL - thetaR);
+}
+
+double newtonIteration(const Matslise *ms, double E, const Y &left, const Y &right, double tol) {
+    double adjust, error, derror, theta;
+    int i = 0;
+    do {
+        tie(error, derror, theta) = ms->calculateError(E, left, right);
+        adjust = error/derror;
+        E = E - adjust;
+        if(++i > 50) {
+            throw runtime_error("Newton-iteration did not converge");
+        }
+    } while(fabs(adjust) > tol);
+    return E;
+}
+
+vector<double> *Matslise::computeEigenvalues(double Emin, double Emax, const Y &left, const Y &right) const {
+    vector<double> *eigenvalues =  new vector<double>();
+    queue<tuple<double, double, double, double>> toCheck;
+
+    toCheck.push(make_tuple(Emin, get<2>(calculateError(Emin, left, right))/M_PI,
+            Emax, get<2>(calculateError(Emax, left, right))/M_PI));
+
+    double a, ta, b, tb, c, tc;
+    int ia, ib;
+    while(!toCheck.empty()) {
+        tie(a, ta, b, tb) = toCheck.front();
+        toCheck.pop();
+        ia = (int) floor(ta);
+        ib = (int) floor(tb);
+        if(ta >= tb || ia == ib)
+            continue;
+
+        c = (a+b)/2;
+        if(tb - ta < 0.1)
+            eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-12));
+        else {
+            tc = get<2>(calculateError(c, left, right))/M_PI;
+            toCheck.push(make_tuple(a, ta, c, tc));
+            toCheck.push(make_tuple(c, tc, b, tb));
+        }
+    }
+
+    sort(eigenvalues->begin(), eigenvalues->end());
+
+    return eigenvalues;
 }
 
 Matslise::~Matslise() {
@@ -167,10 +215,10 @@ T Sector::calculateT(double E, double delta) const {
 
             if (i + 1 < MATSLISE_ETA) {
                 double dEta = -delta * delta * eta[i + 1] / 2;
-                t.dt(0, 0) += dEta * u[i][j];
-                t.dt(0, 1) += dEta * v[i][j];
-                t.dt(1, 0) += dEta * up[i][j];
-                t.dt(1, 1) += dEta * vp[i][j];
+                t.dt(0, 0) += D * dEta * u[i][j];
+                t.dt(0, 1) += D * dEta * v[i][j];
+                t.dt(1, 0) += D * dEta * up[i][j];
+                t.dt(1, 1) += D * dEta * vp[i][j];
             }
         }
     }
@@ -230,7 +278,7 @@ Y Sector::propagate(double E, const Y &y0, double delta, double &theta) const {
     if (!forward)
         delta = -delta;
     const T &t = calculateT(E, delta);
-    Y y1 = forward ? t * y0 : t / y0;
+    const Y y1 = forward ? t * y0 : t / y0;
 
     if (forward)
         theta += prufer(E, delta, y0, y1);
