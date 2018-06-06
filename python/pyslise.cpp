@@ -14,12 +14,16 @@ namespace py = pybind11;
 using namespace Eigen;
 using namespace std;
 
-matslise::Y packY(tuple<double, double> &t) {
-    return matslise::Y(get<0>(t), get<1>(t));
+matslise::Y packY(const tuple<double, double> &t) {
+    return matslise::Y({get<0>(t), get<1>(t)});
+}
+
+matslise::Y packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
+    return matslise::Y({get<0>(t), get<1>(t)}, {get<0>(dt), get<1>(dt)});
 }
 
 tuple<double, double> unpackY(matslise::Y y) {
-    tuple<double, double> t(y.y, y.dy);
+    tuple<double, double> t(y.y[0], y.y[1]);
     return t;
 };
 
@@ -37,13 +41,21 @@ PYBIND11_MODULE(pyslise, m) {
     py::class_<Matslise>(m, "Pyslise")
         .def(py::init<function<double(double)>, double, double, int>())
         .def("propagate",
-            [](Matslise &m, double E, tuple<double, double> y, double a, double b) ->
-                tuple<double, double, double> {
+            [](Matslise &m, double E, const Vector2d &y, double a, double b) ->
+                tuple<Vector2d, double> {
                     matslise::Y y0;
                     double theta;
-                    tie(y0, theta) = m.propagate(E, packY(y), a, b);
-                    return std::make_tuple(y0.y, y0.dy, theta);
+                    tie(y0, theta) = m.propagate(E, matslise::Y(y), a, b);
+                    return make_tuple(y0.y, theta);
                 })
+        .def("propagate",
+            [](Matslise &m, double E, const Vector2d &y, const Vector2d &dy, double a, double b) ->
+            tuple<Vector2d, Vector2d, double> {
+                matslise::Y y0;
+                double theta;
+                tie(y0, theta) = m.propagate(E, matslise::Y(y, dy), a, b);
+                return make_tuple(y0.y, y0.dy, theta);
+        })
         .def("computeEigenfunction", [](Matslise &m, double E, vector<double> xs)
              -> tuple<vector<double>, vector<tuple<double, double>>*> {
                 auto ysY = m.computeEigenfunction(E, xs);
@@ -56,7 +68,7 @@ PYBIND11_MODULE(pyslise, m) {
             })
         .def("calculateError",
             [](Matslise &m, double E, tuple<double, double> left, tuple<double, double> right) ->
-                double {
+                tuple<double, double, double> {
                     return m.calculateError(E, packY(left), packY(right));
                 });
 

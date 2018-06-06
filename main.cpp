@@ -16,11 +16,12 @@ int main() {
         //return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
     }, m, M, 16);
 
-    matslise::Y y1, y0 = matslise::Y(0, 1);
+    matslise::Y y1, y0 = matslise::Y({0, 1}, {0, 0});
     double theta;
     tie(y1, theta) = coffey.propagate(E, y0, m, M);
     cout << theta << endl;
-    cout << coffey.calculateError(E, y0, y0) << endl;
+    cout << get<0>(coffey.calculateError(E, y0, y0)) << endl;
+    cout <<  y1.y << ", " << y1.dy[0] << endl;
 
     return 1;
     Matscs ms([](double x) -> MatrixXd {

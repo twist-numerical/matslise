@@ -68,12 +68,15 @@ std::tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, doubl
     return std::make_tuple(y, theta);
 }
 
-double Matslise::calculateError(double E, const matslise::Y &left, const matslise::Y &right) const {
+std::tuple<double, double, double>
+Matslise::calculateError(double E, const matslise::Y &left, const matslise::Y &right) const {
     Y l, r;
-    double p;
-    std::tie(l, p) = propagate(E, left, xmin, match);
-    std::tie(r, p) = propagate(E, right, xmax, match);
-    return l.dy * r.y - r.dy * l.y;
+    double thetaL, thetaR;
+    std::tie(l, thetaL) = propagate(E, left, xmin, match);
+    std::tie(r, thetaR) = propagate(E, right, xmax, match);
+    return std::make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
+                           l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
+                           thetaL - thetaR);
 }
 
 Matslise::~Matslise() {
@@ -92,7 +95,7 @@ std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x)
         iterator = x.erase(iterator);
 
     Sector *sector;
-    Y y{0, 1};
+    Y y({0, 1});
     for (int i = 0; iterator != x.end(); ++iterator) {
         while ((sector = sectors[i])->xmax < *iterator) {
             y = sector->calculateT(E) * y;
@@ -146,20 +149,29 @@ void Sector::calculateTCoeffs() {
 
 T Sector::calculateT(double E, double delta) const {
     if (fabs(delta) <= EPS)
-        return T(1, 0, 0, 1);
+        return T();
     if (fabs(delta - h) <= EPS)
         return calculateT(E);
 
     double *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA);
-    T t(0, (vs[0] - E) * delta * eta[1], 0, 0);
+    T t((Matrix2d() << 0, 0, (vs[0] - E) * delta * eta[1], 0).finished(),
+        (Matrix2d() << 0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0).finished());
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
         double D = 1;
         for (int j = 0; j < MATSLISE_HMAX; ++j, D *= delta) {
-            t.u += D * eta[i] * u[i][j];
-            t.up += D * eta[i] * up[i][j];
-            t.v += D * eta[i] * v[i][j];
-            t.vp += D * eta[i] * vp[i][j];
+            t.t(0, 0) += D * eta[i] * u[i][j];
+            t.t(0, 1) += D * eta[i] * v[i][j];
+            t.t(1, 0) += D * eta[i] * up[i][j];
+            t.t(1, 1) += D * eta[i] * vp[i][j];
+
+            if (i + 1 < MATSLISE_ETA) {
+                double dEta = -delta * delta * eta[i + 1] / 2;
+                t.dt(0, 0) += dEta * u[i][j];
+                t.dt(0, 1) += dEta * v[i][j];
+                t.dt(1, 0) += dEta * up[i][j];
+                t.dt(1, 1) += dEta * vp[i][j];
+            }
         }
     }
 
@@ -169,13 +181,22 @@ T Sector::calculateT(double E, double delta) const {
 
 T Sector::calculateT(double E) const {
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA);
-    T t(0, (vs[0] - E) * h * eta[1], 0, 0);
+    T t((Matrix2d() << 0, 0, (vs[0] - E) * h * eta[1], 0).finished(),
+        (Matrix2d() << 0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0).finished());
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
-        t.u += eta[i] * hu[i];
-        t.up += eta[i] * hup[i];
-        t.v += eta[i] * hv[i];
-        t.vp += eta[i] * hvp[i];
+        t.t(0, 0) += eta[i] * hu[i];
+        t.t(0, 1) += eta[i] * hv[i];
+        t.t(1, 0) += eta[i] * hup[i];
+        t.t(1, 1) += eta[i] * hvp[i];
+
+        if (i + 1 < MATSLISE_ETA) {
+            double dEta = -h * h * eta[i + 1] / 2;
+            t.dt(0, 0) += dEta * hu[i];
+            t.dt(0, 1) += dEta * hv[i];
+            t.dt(1, 0) += dEta * hup[i];
+            t.dt(1, 1) += dEta * hvp[i];
+        }
     }
     delete[] eta;
     return t;
@@ -188,10 +209,10 @@ double Sector::prufer(double E, double delta, const Y &y0, const Y &y1) const {
     double ff = E - vs[0];
     if (ff > 0) {
         double f = sqrt(ff);
-        double C = atan(tan(theta0) * f) / f;
+        double C = atan(y0.y[0] / y0.y[1] * f) / f;
         theta1 += round((C + delta) * f / M_PI) * M_PI;
     } else {
-        if (y0.y * y1.y >= 0) {
+        if (y0.y[0] * y1.y[0] >= 0) {
             if (theta0 > 0 && theta1 < 0)
                 theta1 += M_PI;
             else if (theta0 < 0 && theta1 > 0)

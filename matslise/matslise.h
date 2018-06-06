@@ -10,10 +10,13 @@
 #include <vector>
 #include <tuple>
 #include <functional>
+#include <Eigen/Dense>
 #include "Array2D.h"
 
 #define MATSLISE_HMAX 8
 #define MATSLISE_ETA 5
+
+using namespace Eigen;
 
 namespace matslise {
     class Sector;
@@ -36,7 +39,7 @@ public:
 
     std::vector<matslise::Y> *computeEigenfunction(double E, std::vector<double> &x) const;
 
-    double calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
+    std::tuple<double, double, double>  calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
 
     virtual ~Matslise();
 };
@@ -44,38 +47,44 @@ public:
 namespace matslise {
     class Y {
     public:
-        double y, dy;
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Vector2d y, dy;
 
-        Y() : y(0), dy(0) {}
+        Y() : y(Vector2d::Zero()), dy(Vector2d::Zero()) {}
 
-        Y(double y, double dy) : y(y), dy(dy) {}
+        Y(Vector2d y) : y(y), dy(Vector2d::Zero()) {}
+
+        Y(Vector2d y, Vector2d dy) : y(y), dy(dy) {}
 
         double theta() const {
-            return atan(y/dy);
+            return atan(y[0] / y[1]);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const Y &m) {
-            return os << "(" << m.y << "," << m.dy << ")";
+            return os << "(" << m.y[0] << "," << m.y[1] << ")";
         }
     };
 
     class T {
     public:
-        double u, up, v, vp;
+        EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+        Matrix2d t;
+        Matrix2d dt;
 
-        T(double u, double up, double v, double vp) : u(u), up(up), v(v), vp(vp) {}
+        T() : t(Matrix2d::Identity()), dt(Matrix2d::Identity()) {}
+        T(Matrix2d t, Matrix2d dt) : t(t), dt(dt) {}
 
         Y operator*(Y y) const {
-            return Y(u * y.y + v * y.dy, up * y.y + vp * y.dy);
+            return Y(t * y.y, dt * y.y + t * y.dy);
         }
 
         Y operator/(Y y) const {
-            double d = u * vp - up * v;
-            return Y((vp * y.y - v * y.dy) / d, (-up * y.y + u * y.dy) / d);
+            Matrix2d ti = t.inverse();
+            return Y(t.inverse() * y.y, -ti * ti * dt * y.y + ti * y.dy);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const T &m) {
-            return os << "((" << m.u << "," << m.v << "), (" << m.up << "," << m.vp << "))";
+            return os << m.t;
         }
     };
 
@@ -102,7 +111,9 @@ namespace matslise {
         T calculateT(double E, double delta) const;
 
         Y propagate(double E, const Y &y0, double delta, double &theta) const;
+
         double prufer(double E, double delta, const Y &y0, const Y &y1) const;
+
         virtual ~Sector();
     };
 }
