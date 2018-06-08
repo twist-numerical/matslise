@@ -37,9 +37,11 @@ int main() {
 
     Matslise coffey([](double x) {
         return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
-    }, m, M, 256);
+    }, m, M, 512);
 
-    eigenvalues = coffey.computeEigenvalues(0, 100, y0, y0);
+    cout << endl;
+
+    eigenvalues = coffey.computeEigenvalues(-1, 1000, y0, y0);
     cout.precision(17);
     for (double E : *eigenvalues) {
         cout << E << endl;

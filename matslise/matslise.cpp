@@ -258,7 +258,7 @@ double Sector::prufer(double E, double delta, const Y &y0, const Y &y1) const {
     if (ff > 0) {
         double f = sqrt(ff);
         double C = atan(y0.y[0] / y0.y[1] * f) / f;
-        theta1 += round((C + delta) * f / M_PI) * M_PI;
+        theta1 += round(((C + delta) * f - theta1) / M_PI) * M_PI;
     } else {
         if (y0.y[0] * y1.y[0] >= 0) {
             if (theta0 > 0 && theta1 < 0)
