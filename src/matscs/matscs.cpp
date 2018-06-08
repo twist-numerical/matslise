@@ -1,8 +1,8 @@
 #include <functional>
 #include <Eigen/Dense>
-#include "matscs.h"
-#include "legendre.h"
-#include "calculateEta.h"
+#include "../matscs.h"
+#include "../util/legendre.h"
+#include "../util/calculateEta.h"
 
 #define EPS (1.e-12)
 

@@ -33,11 +33,11 @@ public:
     matslise::Sector **sectors;
 
 public:
-    Matslise(std::function<double(double)>, double xmin, double xmax, int sectorCount);
+    Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount);
 
     std::tuple<matslise::Y, double> propagate(double E, const matslise::Y &y, double a, double b) const;
 
-    std::vector<matslise::Y> *computeEigenfunction(double E, std::vector<double> &x) const;
+    std::vector<matslise::Y> *computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, std::vector<double> &x) const;
 
     std::tuple<double, double, double>
     calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
@@ -49,6 +49,21 @@ public:
 };
 
 namespace matslise {
+    class HalfRange {
+    public:
+        const Matslise *ms;
+
+    public:
+        HalfRange(std::function<double(double)> V, double xmax, int sectorCount);
+
+        std::vector<matslise::Y> *computeEigenfunction(double E, const matslise::Y &side, std::vector<double> &x) const;
+
+        std::vector<double> *
+        computeEigenvalues(double Emin, double Emax, const matslise::Y &side) const;
+
+        virtual ~HalfRange();
+    };
+
     class Y {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW

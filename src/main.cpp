@@ -1,13 +1,33 @@
 #include <iostream>
 #include <cmath>
 #include <Eigen/Dense>
-#include <matscs.h>
-#include "matslise/matslise.h"
+#include "matscs.h"
+#include "matslise.h"
 
 using namespace std;
 using namespace Eigen;
 
-int main() {
+void coffey() {
+    double M = M_PI_2;
+
+    matslise::HalfRange coffey([](double x) {
+        return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
+    }, M, 60);
+
+    cout << endl;
+
+    matslise::Y y0({0, 1});
+    vector<double> x = {-.6,.1,1.1};
+    vector<double> *eigenvalues = coffey.computeEigenvalues(0, 1000, y0);
+    cout.precision(17);
+    for (double E : *eigenvalues) {
+        coffey.computeEigenfunction(E, y0, x);
+        cout << E << endl;
+    }
+    delete eigenvalues;
+}
+
+void mathieu() {
     double m = -M_PI_2, M = M_PI_2;
 
     Matslise mathieu([](double x) {
@@ -34,18 +54,9 @@ int main() {
         cout << E << endl;
     }
     delete eigenvalues;
+}
 
-    Matslise coffey([](double x) {
-        return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
-    }, m, M, 512);
 
-    cout << endl;
-
-    eigenvalues = coffey.computeEigenvalues(-1, 1000, y0, y0);
-    cout.precision(17);
-    for (double E : *eigenvalues) {
-        cout << E << endl;
-    }
-    delete eigenvalues;
-    return 0;
+int main() {
+    coffey();
 }

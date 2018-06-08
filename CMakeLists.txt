@@ -1,13 +1,24 @@
 cmake_minimum_required(VERSION 3.5)
 project(schrodinger)
 
-set(CMAKE_CXX_FLAGS "-Og -Wall -Wextra -fPIC")
+set(CMAKE_CXX_FLAGS "-O0 -Wall -Wextra -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
-find_package(Eigen3 REQUIRED NO_MODULE)
-add_subdirectory (matslise)
+cmake_minimum_required(VERSION 3.5)
+project(matslise)
 
-add_executable(schrodinger main.cpp matslise/matslise.cpp matslise/matscs.cpp)
+set(CMAKE_INSTALL_PREFIX /usr/)
+
+find_package(Eigen3 REQUIRED NO_MODULE)
+
+add_library(matslise SHARED src/matslise/matslise.cpp src/matscs/matscs.cpp src/matslise/halfrange.cpp)
+target_link_libraries(matslise Eigen3::Eigen)
+
+install(TARGETS matslise DESTINATION lib)
+install(FILES src/matslise.h src/Array2D.h src/matscs.h DESTINATION include/matslise/)
+
+
+add_executable(schrodinger src/main.cpp src/matslise/matslise.cpp src/matscs/matscs.cpp src/matslise/halfrange.cpp)
 target_link_libraries(schrodinger Eigen3::Eigen)
 
 

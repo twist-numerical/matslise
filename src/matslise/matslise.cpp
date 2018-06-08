@@ -6,9 +6,9 @@
 #include <array>
 #include <vector>
 #include <queue>
-#include "matslise.h"
-#include "legendre.h"
-#include "calculateEta.h"
+#include "../matslise.h"
+#include "../util/legendre.h"
+#include "../util/calculateEta.h"
 
 #define EPS (1.e-12)
 
@@ -133,7 +133,7 @@ Matslise::~Matslise() {
     delete[] sectors;
 }
 
-std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x) const {
+std::vector<Y> *Matslise::computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, std::vector<double> &x) const {
     std::sort(x.begin(), x.end());
     std::vector<Y> *ys = new std::vector<Y>();
 
@@ -143,7 +143,7 @@ std::vector<Y> *Matslise::computeEigenfunction(double E, std::vector<double> &x)
         iterator = x.erase(iterator);
 
     Sector *sector;
-    Y y({0, 1});
+    Y y = left;
     for (int i = 0; iterator != x.end(); ++iterator) {
         while ((sector = sectors[i])->xmax < *iterator) {
             y = sector->calculateT(E) * y;

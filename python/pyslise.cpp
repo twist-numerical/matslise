@@ -1,14 +1,17 @@
 #include <pybind11/pybind11.h>
-#include <matslise.h>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include <pybind11/pybind11.h>
-#include <matscs.h>
-#include <tuple>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
 #include <pybind11/eigen.h>
+
+#include <tuple>
+
 #include <Eigen/Dense>
+
+#include <matslise/matslise.h>
+#include <matslise/matscs.h>
 
 namespace py = pybind11;
 using namespace Eigen;
@@ -38,6 +41,21 @@ tuple<MatrixXd, MatrixXd> unpackY(matscs::Y y) {
 
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
+    py::class_<matslise::HalfRange>(m, "PysliseHalf")
+        .def(py::init<function<double(double)>, double, int>())
+        .def("computeEigenvalues", [](matslise::HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<double>* {
+            return m.computeEigenvalues(Emin, Emax, matslise::Y(side));
+        })
+        .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, vector<double> xs)
+            -> tuple<vector<double>, vector<Vector2d>*> {
+            auto ysY = m.computeEigenfunction(E, matslise::Y(side), xs);
+            auto ys = new vector<Vector2d>();
+            for(matslise::Y y : *ysY)
+                ys->push_back(y.y);
+            delete ysY;
+            return make_tuple(xs, ys);
+        });
+
     py::class_<Matslise>(m, "Pyslise")
         .def(py::init<function<double(double)>, double, double, int>())
         .def("propagate",
@@ -59,20 +77,19 @@ PYBIND11_MODULE(pyslise, m) {
         .def("computeEigenvalues", [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right) -> vector<double>* {
             return m.computeEigenvalues(Emin, Emax, matslise::Y(left), matslise::Y(right));
         })
-        .def("computeEigenfunction", [](Matslise &m, double E, vector<double> xs)
-             -> tuple<vector<double>, vector<tuple<double, double>>*> {
-                auto ysY = m.computeEigenfunction(E, xs);
-                auto ys = new vector<tuple<double, double>>();
+        .def("computeEigenfunction", [](Matslise &m, double E, const Vector2d &left, const Vector2d &right, vector<double> xs)
+             -> tuple<vector<double>, vector<Vector2d>*> {
+                auto ysY = m.computeEigenfunction(E, matslise::Y(left), matslise::Y(right), xs);
+                auto ys = new vector<Vector2d>();
                 for(matslise::Y y : *ysY)
-                    ys->push_back(unpackY(y));
+                    ys->push_back(y.y);
                 delete ysY;
-                tuple<vector<double>, vector<tuple<double, double>>*> xsys(xs, ys);
-                return xsys;
+                return make_tuple(xs, ys);
             })
         .def("calculateError",
-            [](Matslise &m, double E, tuple<double, double> left, tuple<double, double> right) ->
+            [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                 tuple<double, double, double> {
-                    return m.calculateError(E, packY(left), packY(right));
+                    return m.calculateError(E, matslise::Y(left), matslise::Y(right));
                 });
 
     py::class_<Matscs>(m, "Pyscs")
