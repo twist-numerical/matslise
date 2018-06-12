@@ -9,20 +9,35 @@ using namespace Eigen;
 
 void coffey() {
     double M = M_PI_2;
+    double B = 20;
 
-    matslise::HalfRange coffey([](double x) {
-        return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
-    }, M, 60);
+    Matslise coffey([B](double x) {
+        return B*B*x-2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, -M, M, 256);
 
     cout << endl;
 
     matslise::Y y0({0, 1});
-    vector<double> x = {-.6,.1,1.1};
-    vector<double> *eigenvalues = coffey.computeEigenvalues(0, 1000, y0);
+    vector<double> x = {-1,1};
+
+    vector<tuple<unsigned int, double>> *eigenvalues = coffey.computeEigenvaluesByIndex(0, 2, y0, y0);
     cout.precision(17);
-    for (double E : *eigenvalues) {
-        coffey.computeEigenfunction(E, y0, x);
-        cout << E << endl;
+    unsigned int i;
+    double E;
+    for (tuple<unsigned int, double> iE : *eigenvalues) {
+        tie(i, E)  = iE;
+
+        vector<matslise::Y> *ys = coffey.computeEigenfunction(E, y0, y0, x);
+        for (double _x : x) {
+            cout << _x << ", ";
+        }
+        cout << endl;
+        for (matslise::Y &y : *ys) {
+            cout << y.y[0] << ", ";
+        }
+        delete ys;
+
+        cout << endl << i << ": " << E << endl << endl;
     }
     delete eigenvalues;
 }
@@ -48,10 +63,14 @@ void mathieu() {
     cout << get<0>(mathieu.propagate(140, y0, M, M - 2 * h)) << endl;
     cout << endl;
 
-    vector<double> *eigenvalues = mathieu.computeEigenvalues(0, 100, y0, y0);
+    vector<tuple<unsigned int, double>> *eigenvalues = mathieu.computeEigenvalues(0, 100, y0, y0);
     cout.precision(17);
-    for (double E : *eigenvalues) {
-        cout << E << endl;
+
+    unsigned int i;
+    double E;
+    for (auto &iE : *eigenvalues) {
+        tie(i, E) = iE;
+        cout << i << ": " << E << endl;
     }
     delete eigenvalues;
 }

@@ -42,8 +42,9 @@ public:
     std::tuple<double, double, double>
     calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
 
-    std::vector<double> *
-    computeEigenvalues(double Emin, double Emax, const matslise::Y &left, const matslise::Y &right) const;
+    std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, const matslise::Y &left, const matslise::Y &right) const;
+    std::vector<std::tuple<unsigned int, double>> *computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &left, const matslise::Y &right) const;
+    std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax, const matslise::Y &left, const matslise::Y &right) const;
 
     virtual ~Matslise();
 };
@@ -58,8 +59,8 @@ namespace matslise {
 
         std::vector<matslise::Y> *computeEigenfunction(double E, const matslise::Y &side, std::vector<double> &x) const;
 
-        std::vector<double> *
-        computeEigenvalues(double Emin, double Emax, const matslise::Y &side) const;
+        std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, const matslise::Y &side) const;
+        std::vector<std::tuple<unsigned int, double>> *computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &side) const;
 
         virtual ~HalfRange();
     };
@@ -74,6 +75,10 @@ namespace matslise {
         Y(Vector2d y) : y(y), dy(Vector2d::Zero()) {}
 
         Y(Vector2d y, Vector2d dy) : y(y), dy(dy) {}
+
+        Y operator-() const{
+            return Y(-y, -dy);
+        }
 
         double theta() const {
             return atan(y[0] / y[1]);

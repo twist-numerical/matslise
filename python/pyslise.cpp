@@ -43,8 +43,11 @@ tuple<MatrixXd, MatrixXd> unpackY(matscs::Y y) {
 PYBIND11_MODULE(pyslise, m) {
     py::class_<matslise::HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
-        .def("computeEigenvalues", [](matslise::HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<double>* {
+        .def("computeEigenvalues", [](matslise::HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
             return m.computeEigenvalues(Emin, Emax, matslise::Y(side));
+        })
+        .def("computeEigenvaluesByIndex", [](matslise::HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
+            return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(side));
         })
         .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, vector<double> xs)
             -> tuple<vector<double>, vector<Vector2d>*> {
@@ -74,8 +77,11 @@ PYBIND11_MODULE(pyslise, m) {
                 tie(y0, theta) = m.propagate(E, matslise::Y(y, dy), a, b);
                 return make_tuple(y0.y, y0.dy, theta);
         })
-        .def("computeEigenvalues", [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right) -> vector<double>* {
+        .def("computeEigenvalues", [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right) -> vector<tuple<unsigned int, double>>* {
             return m.computeEigenvalues(Emin, Emax, matslise::Y(left), matslise::Y(right));
+        })
+        .def("computeEigenvaluesByIndex", [](Matslise &m, unsigned int Imin, unsigned int Imax, const Vector2d &left, const Vector2d &right) -> vector<tuple<unsigned int, double>>* {
+            return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(left), matslise::Y(right));
         })
         .def("computeEigenfunction", [](Matslise &m, double E, const Vector2d &left, const Vector2d &right, vector<double> xs)
              -> tuple<vector<double>, vector<Vector2d>*> {

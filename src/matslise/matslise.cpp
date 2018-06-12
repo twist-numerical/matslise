@@ -77,48 +77,91 @@ Matslise::calculateError(double E, const Y &left, const Y &right) const {
     tie(l, thetaL) = propagate(E, left, xmin, match);
     tie(r, thetaR) = propagate(E, right, xmax, match);
     return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
-                           l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
-                           thetaL - thetaR);
+                      l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
+                      thetaL - thetaR);
 }
 
-double newtonIteration(const Matslise *ms, double E, const Y &left, const Y &right, double tol) {
+tuple<unsigned int, double> newtonIteration(const Matslise *ms, double E, const Y &left, const Y &right, double tol) {
     double adjust, error, derror, theta;
     int i = 0;
     do {
         tie(error, derror, theta) = ms->calculateError(E, left, right);
-        adjust = error/derror;
+        adjust = error / derror;
         E = E - adjust;
-        if(++i > 50) {
+        if (++i > 50) {
             throw runtime_error("Newton-iteration did not converge");
         }
-    } while(fabs(adjust) > tol);
-    return E;
+    } while (fabs(adjust) > tol);
+
+    int index = (int) (round(theta / M_PI) - 1);
+    if (index < 0)
+        index = 0;
+    return make_tuple(index, E);
 }
 
-vector<double> *Matslise::computeEigenvalues(double Emin, double Emax, const Y &left, const Y &right) const {
-    vector<double> *eigenvalues =  new vector<double>();
-    queue<tuple<double, double, double, double>> toCheck;
+vector<tuple<unsigned int, double>> *
+Matslise::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y &left, const Y &right) const {
+    double Emin = -1;
+    double Emax = 1;
+    while (true) {
+        unsigned int i = (unsigned int) floor(get<2>(calculateError(Emax, left, right)) / M_PI);
+        if (i >= Imax)
+            break;
+        else {
+            if (i < Imin)
+                Emin = Emax;
+            Emax *= 2;
+        }
+    }
+    if (Emin == -1) {
+        while (true) {
+            unsigned int i = (unsigned int) floor(get<2>(calculateError(Emin, left, right)) / M_PI);
+            if (i <= Imin)
+                break;
+            else {
+                if (i > Imax)
+                    Emax = Emin;
+                Emin *= 2;
+            }
+        }
+    }
+    return computeEigenvalues(Emin, Emax, Imin, Imax, left, right);
+};
 
-    toCheck.push(make_tuple(Emin, get<2>(calculateError(Emin, left, right))/M_PI,
-            Emax, get<2>(calculateError(Emax, left, right))/M_PI));
+vector<tuple<unsigned int, double>> *
+Matslise::computeEigenvalues(double Emin, double Emax, const Y &left, const Y &right) const {
+    return computeEigenvalues(Emin, Emax, 0, UINT_MAX, left, right);
+};
+
+vector<tuple<unsigned int, double>> *
+Matslise::computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax, const Y &left,
+                             const Y &right) const {
+    vector<tuple<unsigned int, double>> *eigenvalues = new vector<tuple<unsigned int, double>>();
+    queue<tuple<double, double, double, double, unsigned int>> toCheck;
+
+    toCheck.push(make_tuple(Emin, get<2>(calculateError(Emin, left, right)) / M_PI,
+                            Emax, get<2>(calculateError(Emax, left, right)) / M_PI,
+                            0));
 
     double a, ta, b, tb, c, tc;
-    int ia, ib;
-    while(!toCheck.empty()) {
-        tie(a, ta, b, tb) = toCheck.front();
+    unsigned int ia, ib, depth;
+    while (!toCheck.empty()) {
+        tie(a, ta, b, tb, depth) = toCheck.front();
         toCheck.pop();
-        ia = (int) floor(ta);
-        ib = (int) floor(tb);
-        if(ta >= tb || ia == ib)
+        ia = (unsigned int) floor(ta);
+        ib = (unsigned int) floor(tb);
+        if (ta >= tb || ia == ib || ib <= Imin || Imax <= ia)
             continue;
+        if (ia + 1 == ib)
+            ++depth;
 
-        c = (a+b)/2;
-        if(tb - ta < 0.1)
+        c = (a + b) / 2;
+        if (tb - ta < 0.1 || depth > 10)
             eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-12));
         else {
-            tc = get<2>(calculateError(c, left, right))/M_PI;
-            toCheck.push(make_tuple(a, ta, c, tc));
-            toCheck.push(make_tuple(c, tc, b, tb));
+            tc = get<2>(calculateError(c, left, right)) / M_PI;
+            toCheck.push(make_tuple(a, ta, c, tc, depth));
+            toCheck.push(make_tuple(c, tc, b, tb, depth));
         }
     }
 
@@ -133,31 +176,67 @@ Matslise::~Matslise() {
     delete[] sectors;
 }
 
-std::vector<Y> *Matslise::computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, std::vector<double> &x) const {
+std::vector<Y> *Matslise::computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right,
+                                               std::vector<double> &x) const {
     std::sort(x.begin(), x.end());
     std::vector<Y> *ys = new std::vector<Y>();
 
-    auto iterator = x.begin();
-
-    while (iterator != x.end() && *iterator < xmin - EPS)
-        iterator = x.erase(iterator);
-
-    Sector *sector;
+    auto forward = x.begin();
     Y y = left;
-    for (int i = 0; iterator != x.end(); ++iterator) {
-        while ((sector = sectors[i])->xmax < *iterator) {
-            y = sector->calculateT(E) * y;
-            ++i;
-            if (i >= sectorCount)
-                goto allSectorsDone;
+    int iLeft = 0;
+    { // left
+        while (forward != x.end() && *forward < xmin - EPS)
+            ++forward;
+        forward = x.erase(x.begin(), forward);
+
+        Sector *sector;
+        for (; forward != x.end(); ++forward) {
+            while ((sector = sectors[iLeft])->xmax < *forward) {
+                y = sector->calculateT(E) * y;
+                ++iLeft;
+                if (iLeft >= sectorCount || sector->xmin >= match)
+                    goto allLeftSectorsDone;
+            }
+
+            ys->push_back(sector->calculateT(E, *forward - sector->xmin) * y);
+        }
+        allLeftSectorsDone:;
+    }
+
+    { // right
+        Y yLeft = y;
+        y = right;
+
+        vector<Y> rightYs;
+
+        auto reverse = x.end();
+        while (reverse-- != x.begin() && *reverse > xmax + EPS);
+        auto removeReverse = reverse+1;
+
+        Sector *sector;
+        for (int i = sectorCount-1; reverse >= forward; --reverse) {
+            while ((sector = sectors[i])->xmin > *reverse) {
+                y = sector->calculateT(E) / y;
+                --i;
+                if (i == iLeft || sector->xmax < match)
+                    goto allRightSectorsDone;
+            }
+
+            rightYs.push_back(sector->calculateT(E, *reverse - sector->xmin) * y);
+        }
+        allRightSectorsDone:;
+
+        Y yRight = y;
+        double scale = yLeft.y[0]/yRight.y[0];
+        for(auto &yr : rightYs) {
+            yr.y *= scale;
+            yr.dy *= scale;
         }
 
-        ys->push_back(sector->calculateT(E, *iterator - sector->xmin) * y);
-    }
-    allSectorsDone:
+        ys->insert(ys->end(), rightYs.rbegin(), rightYs.rend());
 
-    while (iterator != x.end() && *iterator > xmax + EPS)
-        iterator = x.erase(iterator);
+        x.erase(removeReverse, x.end());
+    }
 
     return ys;
 }
