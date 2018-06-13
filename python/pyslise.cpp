@@ -53,14 +53,17 @@ PYBIND11_MODULE(pyslise, m) {
         .def("computeEigenvaluesByIndex", [](matslise::HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
             return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(side));
         })
-      /*  .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
-            -> Array<Vector2d, Dynamic, 1> {
-            auto ysY = m.computeEigenfunction(E, matslise::Y(side), xs);
-            Array<Vector2d, Dynamic, 1> ys(ysY.size());
-            for(int i = 0; i < ysY.size(); ++i)
-                ys[i] = ysY[i].y;
-            return ys;
-        })*/;
+        .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
+            -> tuple<ArrayXd, ArrayXd> {
+                auto ysY = m.computeEigenfunction(E, matslise::Y(side), xs);
+                ArrayXd ys(ysY.size());
+                ArrayXd dys(ysY.size());
+                for(int i = 0; i < ysY.size(); ++i) {
+                    ys[i] = ysY[i].y[0];
+                    dys[i] = ysY[i].y[1];
+                }
+                return make_tuple(ys, dys);
+        });
 
     py::class_<Matslise>(m, "Pyslise")
         .def(py::init<function<double(double)>, double, double, int>())

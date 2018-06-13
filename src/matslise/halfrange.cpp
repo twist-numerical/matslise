@@ -12,12 +12,7 @@ using namespace matslise;
 #define EPS (1e-12)
 
 HalfRange::HalfRange(function<double(double)> V, double xmax, int sectorCount) {
-    ms = new Matslise([V](double x) -> double {
-        if (x < 0)
-            return V(-x);
-        else
-            return V(x);
-    }, 0, xmax, sectorCount);
+    ms = new Matslise(V, 0, xmax, sectorCount);
 }
 
 template<typename T>
@@ -33,15 +28,24 @@ void removeDoubles(vector<T> &x) {
 }
 
 Array<Y, Dynamic, 1> HalfRange::computeEigenfunction(double E, const matslise::Y &side, const ArrayXd &x) const {
-    /*long n = x.size();
+    long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
 
-    int firstPositive = 0;
-    for (int i = 0; i < n; ++i)
-        if(x[i] < 0)
-            firstPositive  = i + 1;
+    long negatives = 0;
+    for (long i = 0; i < n; ++i)
+        if (x[i] < 0)
+            negatives = i + 1;
+
+    ArrayXd xNeg(negatives);
+    ArrayXd xPos(n - negatives);
+
+    for (long i = 0; i < negatives; ++i)
+        xNeg[i] = -x[negatives - 1 - i];
+    for (long i = negatives; i < n; ++i)
+        xPos[i - negatives] = x[i];
+
 
     Y y0({0, 1});
     Y y1({1, 0});
@@ -49,17 +53,22 @@ Array<Y, Dynamic, 1> HalfRange::computeEigenfunction(double E, const matslise::Y
     double error0 = get<0>(ms->calculateError(E, y0, side));
     double error1 = get<0>(ms->calculateError(E, y1, side));
 
-    Array<Y, Dynamic, 1> yleft;
+    Array<Y, Dynamic, 1> yNeg, yPos, ys(n);
     bool is0 = abs(error0) < abs(error1);
-    if (is0)
-        yleft = ms->computeEigenfunction(E, y0, side, absx);
-    else
-        yleft = ms->computeEigenfunction(E, y1, side, absx);
+
+    yNeg = ms->computeEigenfunction(E, is0 ? y0 : y1, side, xNeg);
+    yPos = ms->computeEigenfunction(E, is0 ? y0 : y1, side, xPos);
+
+    for (long i = 0; i < negatives; ++i)
+        ys[negatives - 1 - i] = is0 ? -yNeg[i] : yNeg[i];
+    for (long i = negatives; i < n; ++i)
+        ys[i] = yPos[i - negatives];
 
     return ys;
-*/}
+}
 
-vector<tuple<unsigned int, double>> *mergeEigenvalues(vector<tuple<unsigned int, double>> *even, vector<tuple<unsigned int, double>> *odd) {
+vector<tuple<unsigned int, double>> *
+mergeEigenvalues(vector<tuple<unsigned int, double>> *even, vector<tuple<unsigned int, double>> *odd) {
     vector<tuple<unsigned int, double>> *values = new vector<tuple<unsigned int, double>>();
 
 
@@ -90,14 +99,16 @@ vector<tuple<unsigned int, double>> *mergeEigenvalues(vector<tuple<unsigned int,
 
 };
 
-vector<tuple<unsigned int, double>> *HalfRange::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y &side) const {
+vector<tuple<unsigned int, double>> *
+HalfRange::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y &side) const {
     return mergeEigenvalues(
-            ms->computeEigenvaluesByIndex(Imin/2 + Imin%2, Imax/2 + Imax%2, Y({1, 0}), side),
-            ms->computeEigenvaluesByIndex(Imin/2, Imax/2, Y({0, 1}), side));
+            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y({1, 0}), side),
+            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y({0, 1}), side));
 };
 
 vector<tuple<unsigned int, double>> *HalfRange::computeEigenvalues(double Emin, double Emax, const Y &side) const {
-    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y({1, 0}), side), ms->computeEigenvalues(Emin, Emax, Y({0, 1}), side));
+    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y({1, 0}), side),
+                            ms->computeEigenvalues(Emin, Emax, Y({0, 1}), side));
 }
 
 HalfRange::~HalfRange() {
