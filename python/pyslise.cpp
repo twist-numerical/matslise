@@ -12,6 +12,7 @@
 
 #include <matslise/matslise.h>
 #include <matslise/matscs.h>
+#include <matslise/se2d.h>
 
 namespace py = pybind11;
 using namespace Eigen;
@@ -41,6 +42,9 @@ tuple<MatrixXd, MatrixXd> unpackY(matscs::Y y) {
 
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
+    py::class_<SE2D>(m, "SE2D")
+        .def(py::init<function<double(double, double)>, double,double, double,double, int, int>());
+
     py::class_<matslise::HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
         .def("computeEigenvalues", [](matslise::HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
@@ -49,15 +53,14 @@ PYBIND11_MODULE(pyslise, m) {
         .def("computeEigenvaluesByIndex", [](matslise::HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
             return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(side));
         })
-        .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, vector<double> xs)
-            -> tuple<vector<double>, vector<Vector2d>*> {
+      /*  .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
+            -> Array<Vector2d, Dynamic, 1> {
             auto ysY = m.computeEigenfunction(E, matslise::Y(side), xs);
-            auto ys = new vector<Vector2d>();
-            for(matslise::Y y : *ysY)
-                ys->push_back(y.y);
-            delete ysY;
-            return make_tuple(xs, ys);
-        });
+            Array<Vector2d, Dynamic, 1> ys(ysY.size());
+            for(int i = 0; i < ysY.size(); ++i)
+                ys[i] = ysY[i].y;
+            return ys;
+        })*/;
 
     py::class_<Matslise>(m, "Pyslise")
         .def(py::init<function<double(double)>, double, double, int>())
@@ -83,14 +86,16 @@ PYBIND11_MODULE(pyslise, m) {
         .def("computeEigenvaluesByIndex", [](Matslise &m, unsigned int Imin, unsigned int Imax, const Vector2d &left, const Vector2d &right) -> vector<tuple<unsigned int, double>>* {
             return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(left), matslise::Y(right));
         })
-        .def("computeEigenfunction", [](Matslise &m, double E, const Vector2d &left, const Vector2d &right, vector<double> xs)
-             -> tuple<vector<double>, vector<Vector2d>*> {
+        .def("computeEigenfunction", [](Matslise &m, double E, const Vector2d &left, const Vector2d &right, const ArrayXd &xs)
+             -> tuple<ArrayXd, ArrayXd> {
                 auto ysY = m.computeEigenfunction(E, matslise::Y(left), matslise::Y(right), xs);
-                auto ys = new vector<Vector2d>();
-                for(matslise::Y y : *ysY)
-                    ys->push_back(y.y);
-                delete ysY;
-                return make_tuple(xs, ys);
+                ArrayXd ys(ysY.size());
+                ArrayXd dys(ysY.size());
+                for(int i = 0; i < ysY.size(); ++i) {
+                    ys[i] = ysY[i].y[0];
+                    dys[i] = ysY[i].y[1];
+                }
+                return make_tuple(ys, dys);
             })
         .def("calculateError",
             [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->

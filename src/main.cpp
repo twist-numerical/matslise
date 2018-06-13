@@ -3,6 +3,7 @@
 #include <Eigen/Dense>
 #include "matscs.h"
 #include "matslise.h"
+#include "se2d.h"
 
 using namespace std;
 using namespace Eigen;
@@ -12,13 +13,19 @@ void coffey() {
     double B = 20;
 
     Matslise coffey([B](double x) {
-        return B*B*x-2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, -M, M, 256);
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, -M, M, 128);
 
     cout << endl;
 
     matslise::Y y0({0, 1});
-    vector<double> x = {-1,1};
+    ArrayXd x(6);
+    x << 0.0700000000000000,
+            0.0760000000000000,
+            0.0820000000000000,
+            0.0880000000000000,
+            0.0940000000000000,
+            0.100000000000000;
 
     vector<tuple<unsigned int, double>> *eigenvalues = coffey.computeEigenvaluesByIndex(0, 2, y0, y0);
     cout.precision(17);
@@ -27,15 +34,14 @@ void coffey() {
     for (tuple<unsigned int, double> iE : *eigenvalues) {
         tie(i, E)  = iE;
 
-        vector<matslise::Y> *ys = coffey.computeEigenfunction(E, y0, y0, x);
-        for (double _x : x) {
-            cout << _x << ", ";
+        Array<matslise::Y, Dynamic, 1> y = coffey.computeEigenfunction(E, y0, y0, x);
+        for (int j=0; j < x.size(); ++j) {
+            cout << x[j] << ", ";
         }
         cout << endl;
-        for (matslise::Y &y : *ys) {
-            cout << y.y[0] << ", ";
+        for (int j=0; j < y.size(); ++j) {
+            cout << y[j].y[0] << ", ";
         }
-        delete ys;
 
         cout << endl << i << ": " << E << endl << endl;
     }
@@ -75,7 +81,13 @@ void mathieu() {
     delete eigenvalues;
 }
 
+void test2d() {
+    SE2D se2d([](double x, double y) { return (1+x*x)*(1+y*y); }, -5.5,5.5, -5.5,5.5, 30, 15);
+
+    cout << se2d.xmin << endl;
+}
 
 int main() {
     coffey();
+//    test2d();
 }

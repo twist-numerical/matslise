@@ -6,6 +6,7 @@
 #include <array>
 #include <vector>
 #include <queue>
+#include <Eigen/Dense>
 #include "../matslise.h"
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"
@@ -14,8 +15,9 @@
 
 using namespace matslise;
 using namespace std;
+using namespace Eigen;
 
-Matslise::Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount)
+Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sectorCount)
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
@@ -32,7 +34,7 @@ Matslise::Matslise(std::function<double(double)> V, double xmin, double xmax, in
 }
 
 
-std::tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, double b) const {
+tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, double b) const {
     Y y = _y;
     double theta = y.theta();
     if (a < b) {
@@ -176,66 +178,65 @@ Matslise::~Matslise() {
     delete[] sectors;
 }
 
-std::vector<Y> *Matslise::computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right,
-                                               std::vector<double> &x) const {
-    std::sort(x.begin(), x.end());
-    std::vector<Y> *ys = new std::vector<Y>();
+Array<Y, Dynamic, 1> Matslise::computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right,
+                                                    const ArrayXd &x) const {
+    long n = x.size();
+    for (int i = 1; i < n; ++i)
+        if (x[i - 1] > x[i])
+            throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
 
-    auto forward = x.begin();
+    Array<Y, Dynamic, 1> ys(n);
+
+    long forward = 0;
     Y y = left;
     int iLeft = 0;
     { // left
-        while (forward != x.end() && *forward < xmin - EPS)
+        while (forward < n && x[forward] < xmin - EPS)
             ++forward;
-        forward = x.erase(x.begin(), forward);
 
-        Sector *sector;
-        for (; forward != x.end(); ++forward) {
-            while ((sector = sectors[iLeft])->xmax < *forward) {
+        Sector *sector = sectors[0];
+        for (; forward < n; ++forward) {
+            while (sector->xmax < x[forward]) {
                 y = sector->calculateT(E) * y;
                 ++iLeft;
-                if (iLeft >= sectorCount || sector->xmin >= match)
+                sector = sectors[iLeft];
+                if (iLeft >= sectorCount || sector->xmin > match)
                     goto allLeftSectorsDone;
             }
 
-            ys->push_back(sector->calculateT(E, *forward - sector->xmin) * y);
+            ys[forward] = sector->calculateT(E, x[forward] - sector->xmin) * y;
         }
         allLeftSectorsDone:;
     }
 
     { // right
         Y yLeft = y;
-        y = right;
 
-        vector<Y> rightYs;
+        long reverse = n;
+        while (reverse-- > forward && x[reverse] > xmax + EPS);
+        long lastValid = reverse;
 
-        auto reverse = x.end();
-        while (reverse-- != x.begin() && *reverse > xmax + EPS);
-        auto removeReverse = reverse+1;
-
-        Sector *sector;
-        for (int i = sectorCount-1; reverse >= forward; --reverse) {
-            while ((sector = sectors[i])->xmin > *reverse) {
-                y = sector->calculateT(E) / y;
+        Sector *sector = sectors[sectorCount - 1];
+        y = sector->calculateT(E) / right;
+        for (int i = sectorCount - 1; reverse >= 0; --reverse) {
+            while (sector->xmin > x[reverse]) {
                 --i;
-                if (i == iLeft || sector->xmax < match)
+                sector = sectors[i];
+                if (i < iLeft || sector->xmax < match)
                     goto allRightSectorsDone;
+                y = sector->calculateT(E) / y;
             }
 
-            rightYs.push_back(sector->calculateT(E, *reverse - sector->xmin) * y);
+            ys[reverse] = sector->calculateT(E, x[reverse] - sector->xmin) * y;
         }
         allRightSectorsDone:;
 
         Y yRight = y;
-        double scale = yLeft.y[0]/yRight.y[0];
-        for(auto &yr : rightYs) {
-            yr.y *= scale;
-            yr.dy *= scale;
+        double scale = yLeft.y[0] / yRight.y[0];
+        for (long i = reverse + 1; i <= lastValid; ++i) {
+            ys[i].y *= scale;
+            ys[i].dy *= scale;
         }
-
-        ys->insert(ys->end(), rightYs.rbegin(), rightYs.rend());
-
-        x.erase(removeReverse, x.end());
     }
 
     return ys;

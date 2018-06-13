@@ -37,7 +37,7 @@ public:
 
     std::tuple<matslise::Y, double> propagate(double E, const matslise::Y &y, double a, double b) const;
 
-    std::vector<matslise::Y> *computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, std::vector<double> &x) const;
+    Eigen::Array<matslise::Y, Eigen::Dynamic, 1> computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, const Eigen::ArrayXd &x) const;
 
     std::tuple<double, double, double>
     calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
@@ -57,7 +57,7 @@ namespace matslise {
     public:
         HalfRange(std::function<double(double)> V, double xmax, int sectorCount);
 
-        std::vector<matslise::Y> *computeEigenfunction(double E, const matslise::Y &side, std::vector<double> &x) const;
+        Array<matslise::Y, Dynamic, 1> computeEigenfunction(double E, const matslise::Y &side, const ArrayXd &x) const;
 
         std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, const matslise::Y &side) const;
         std::vector<std::tuple<unsigned int, double>> *computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &side) const;

@@ -32,64 +32,32 @@ void removeDoubles(vector<T> &x) {
     x.erase(x.begin() + i + 1, x.end());
 }
 
-vector<Y> *HalfRange::computeEigenfunction(double E, const Y &side, vector<double> &x) const {
-    sort(x.begin(), x.end());
+Array<Y, Dynamic, 1> HalfRange::computeEigenfunction(double E, const matslise::Y &side, const ArrayXd &x) const {
+    /*long n = x.size();
+    for (int i = 1; i < n; ++i)
+        if (x[i - 1] > x[i])
+            throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
 
-    vector<double> absx = x;
-    for (auto i = absx.begin(); i != absx.end(); ++i)
-        *i = abs(*i);
-    removeDoubles(absx);
+    int firstPositive = 0;
+    for (int i = 0; i < n; ++i)
+        if(x[i] < 0)
+            firstPositive  = i + 1;
 
     Y y0({0, 1});
     Y y1({1, 0});
 
     double error0 = get<0>(ms->calculateError(E, y0, side));
     double error1 = get<0>(ms->calculateError(E, y1, side));
-    vector<Y> *absy;
+
+    Array<Y, Dynamic, 1> yleft;
     bool is0 = abs(error0) < abs(error1);
     if (is0)
-        absy = ms->computeEigenfunction(E, y0, side, absx);
+        yleft = ms->computeEigenfunction(E, y0, side, absx);
     else
-        absy = ms->computeEigenfunction(E, y1, side, absx);
-
-
-    vector<Y> *ys = new vector<Y>();
-    auto i = x.begin();
-    {
-        auto absi = absx.rbegin();
-        auto absj = absy->rbegin();
-        while (i != x.end() && *i < 0) {
-            while (*i > -*absi) {
-                absj++;
-                absi++;
-            }
-            if (*i == -*absi) {
-                ys->push_back(is0 ? -*absj : *absj);
-                ++i;
-            } else
-                i = x.erase(i);
-        }
-    }
-    {
-        auto absi = absx.begin();
-        auto absj = absy->begin();
-        while (i != x.end()) {
-            while (*i > *absi) {
-                absj++;
-                absi++;
-            }
-            if (*i == *absi) {
-                ys->push_back(*absj);
-                ++i;
-            } else
-                i = x.erase(i);
-        }
-    }
-
-    delete absy;
+        yleft = ms->computeEigenfunction(E, y1, side, absx);
 
     return ys;
-}
+*/}
 
 vector<tuple<unsigned int, double>> *mergeEigenvalues(vector<tuple<unsigned int, double>> *even, vector<tuple<unsigned int, double>> *odd) {
     vector<tuple<unsigned int, double>> *values = new vector<tuple<unsigned int, double>>();
