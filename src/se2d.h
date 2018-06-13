@@ -7,6 +7,7 @@
 
 
 #include <functional>
+#include <tuple>
 #include <vector>
 #include "matslise.h"
 #include "matscs.h"
@@ -18,6 +19,7 @@ namespace se2d {
 class SE2D {
 public:
     std::function<double(double, double)> V;
+    MatrixXd *M;
     double xmin, xmax, ymin, ymax;
     int sectorCount;
     se2d::Sector **sectors;
@@ -25,7 +27,11 @@ public:
     SE2D(std::function<double(double, double)> V,
          double xmin, double xmax, double ymin, double ymax, int xSectorCount, int ySectorCount);
 
+    matscs::Y propagate(double E, double y, bool forward) const;
+    std::tuple<double, double> calculateError(double E) const;
+
     std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
+    MatrixXd calculateM(int k) const;
 
     virtual ~SE2D();
 
@@ -39,17 +45,19 @@ namespace se2d {
         Matslise *matslise;
         Matscs *matscs;
         ArrayXd vbar;
-
-        virtual ~Sector();
-
         double ymin, ymax;
 
         Sector(SE2D *se2d, double ymin, double ymax, int sectorCount);
 
-        matscs::Y propagate(double delta, const matscs::Y &y);
+        matscs::Y propagate(double E, const matscs::Y &c, bool forward) const;
+        matscs::Y propagate(double E, const matscs::Y &c, double y, bool forward) const;
+
+        Eigen::MatrixXd calculateDeltaV(double y) const;
 
         double *eigenvalues;
         Eigen::ArrayXd *eigenfunctions;
+
+        virtual ~Sector();
     };
 }
 

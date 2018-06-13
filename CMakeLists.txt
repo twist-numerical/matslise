@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.5)
 project(schrodinger)
 
-set(CMAKE_CXX_FLAGS "-O0 -Wall -Wextra -fPIC")
+set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
 cmake_minimum_required(VERSION 3.5)

@@ -43,7 +43,12 @@ tuple<MatrixXd, MatrixXd> unpackY(matscs::Y y) {
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
     py::class_<SE2D>(m, "SE2D")
-        .def(py::init<function<double(double, double)>, double,double, double,double, int, int>());
+        .def(py::init<function<double(double, double)>, double,double, double,double, int, int>())
+        .def("propagate", [](SE2D &m, double E, double y, bool forward)
+            -> tuple<MatrixXd, MatrixXd> {
+                matscs::Y y0 = m.propagate(E, y, forward);
+                return make_tuple(y0.y, y0.dy);
+        });
 
     py::class_<matslise::HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
