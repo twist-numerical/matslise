@@ -13,8 +13,8 @@
 #include <Eigen/Dense>
 #include "Array2D.h"
 
-#define MATSLISE_HMAX 8
-#define MATSLISE_ETA 5
+#define MATSLISE_HMAX 10
+#define MATSLISE_ETA 7
 
 using namespace Eigen;
 

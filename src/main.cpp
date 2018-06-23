@@ -32,14 +32,14 @@ void coffey() {
     unsigned int i;
     double E;
     for (tuple<unsigned int, double> iE : *eigenvalues) {
-        tie(i, E)  = iE;
+        tie(i, E) = iE;
 
         Array<matslise::Y, Dynamic, 1> y = coffey.computeEigenfunction(E, y0, y0, x);
-        for (int j=0; j < x.size(); ++j) {
+        for (int j = 0; j < x.size(); ++j) {
             cout << x[j] << ", ";
         }
         cout << endl;
-        for (int j=0; j < y.size(); ++j) {
+        for (int j = 0; j < y.size(); ++j) {
             cout << y[j].y[0] << ", ";
         }
 
@@ -82,14 +82,24 @@ void mathieu() {
 }
 
 void test2d() {
-    SE2D se2d([](double x, double y) { return (1+x*x)*(1+y*y); }, -5.5,5.5, -5.5,5.5, 128, 15);
+    SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 128, 15);
 
     se2d.propagate(3, 5.5, true);
 
     cout << se2d.xmin << endl;
 }
 
+void testBigE() {
+    double M = 5.5;
+    Matslise ms([](double x) {
+        return 26 * (1 + x*x);
+    }, -M, M, 16);
+    double E = 31.09901945548935;
+    ms.propagate(E, matslise::Y({0, 1}), -M, M);
+}
+
 int main() {
 //    coffey();
-    test2d();
+    //test2d();
+    testBigE();
 }
