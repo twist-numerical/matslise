@@ -92,10 +92,12 @@ void test2d() {
 void testBigE() {
     double M = 5.5;
     Matslise ms([](double x) {
-        return 26 * (1 + x*x);
-    }, -M, M, 16);
+        return 26 * (1 + x * x);
+    }, -M, M, 21);
     double E = 31.09901945548935;
-    ms.propagate(E, matslise::Y({0, 1}), -M, M);
+
+    for(tuple<unsigned int, double> &iE : *(ms.computeEigenvaluesByIndex(0,1, matslise::Y({0,1}), matslise::Y({0,1}))))
+       cout << get<0>(iE) << ": " << get<1>(iE) << endl;
 }
 
 int main() {

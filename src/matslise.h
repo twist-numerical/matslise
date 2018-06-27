@@ -5,7 +5,7 @@
 #ifndef SCHRODINGER_MATSLISE_H
 #define SCHRODINGER_MATSLISE_H
 
-#include <ostream>
+#include <iostream>
 #include <array>
 #include <vector>
 #include <tuple>
@@ -13,8 +13,8 @@
 #include <Eigen/Dense>
 #include "Array2D.h"
 
-#define MATSLISE_HMAX 10
-#define MATSLISE_ETA 7
+#define MATSLISE_HMAX 19
+#define MATSLISE_ETA 11
 
 using namespace Eigen;
 
@@ -37,14 +37,22 @@ public:
 
     std::tuple<matslise::Y, double> propagate(double E, const matslise::Y &y, double a, double b) const;
 
-    Eigen::Array<matslise::Y, Eigen::Dynamic, 1> computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, const Eigen::ArrayXd &x) const;
+    Eigen::Array<matslise::Y, Eigen::Dynamic, 1>
+    computeEigenfunction(double E, const matslise::Y &left, const matslise::Y &right, const Eigen::ArrayXd &x) const;
 
     std::tuple<double, double, double>
     calculateError(double E, const matslise::Y &left, const matslise::Y &right) const;
 
-    std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, const matslise::Y &left, const matslise::Y &right) const;
-    std::vector<std::tuple<unsigned int, double>> *computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &left, const matslise::Y &right) const;
-    std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax, const matslise::Y &left, const matslise::Y &right) const;
+    std::vector<std::tuple<unsigned int, double>> *
+    computeEigenvalues(double Emin, double Emax, const matslise::Y &left, const matslise::Y &right) const;
+
+    std::vector<std::tuple<unsigned int, double>> *
+    computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &left,
+                              const matslise::Y &right) const;
+
+    std::vector<std::tuple<unsigned int, double>> *
+    computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax, const matslise::Y &left,
+                       const matslise::Y &right) const;
 
     virtual ~Matslise();
 };
@@ -59,8 +67,11 @@ namespace matslise {
 
         Array<matslise::Y, Dynamic, 1> computeEigenfunction(double E, const matslise::Y &side, const ArrayXd &x) const;
 
-        std::vector<std::tuple<unsigned int, double>> *computeEigenvalues(double Emin, double Emax, const matslise::Y &side) const;
-        std::vector<std::tuple<unsigned int, double>> *computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &side) const;
+        std::vector<std::tuple<unsigned int, double>> *
+        computeEigenvalues(double Emin, double Emax, const matslise::Y &side) const;
+
+        std::vector<std::tuple<unsigned int, double>> *
+        computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y &side) const;
 
         virtual ~HalfRange();
     };
@@ -76,7 +87,7 @@ namespace matslise {
 
         Y(Vector2d y, Vector2d dy) : y(y), dy(dy) {}
 
-        Y operator-() const{
+        Y operator-() const {
             return Y(-y, -dy);
         }
 
@@ -100,12 +111,14 @@ namespace matslise {
         T(Matrix2d t, Matrix2d dt) : t(t), dt(dt) {}
 
         Y operator*(Y y) const {
-            return Y(t * y.y, dt * y.y + t * y.dy);
+            return Y(t * y.y, t * y.dy + dt * y.y);
         }
 
         Y operator/(Y y) const {
-            Matrix2d ti = t.inverse();
-            return Y(t.inverse() * y.y, -ti * ti * dt * y.y + ti * y.dy);
+            Matrix2d ti, dti;
+            ti << t(1, 1), -t(0, 1), -t(1, 0), t(0, 0);
+            dti << dt(1, 1), -dt(0, 1), -dt(1, 0), dt(0, 0);
+            return Y(ti * y.y, ti * y.dy + dti * y.y);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const T &m) {

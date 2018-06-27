@@ -45,7 +45,7 @@ tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, double b) 
                 if (sector->xmin < a) // first
                     y = sector->propagate(E, y, sector->xmin - a, theta);
 
-                if (sector->xmax > b) { // last
+                if (sector->xmax >= b) { // last
                     y = sector->propagate(E, y, b - sector->xmin, theta);
                     break;
                 }
@@ -62,7 +62,7 @@ tuple<Y, double> Matslise::propagate(double E, const Y &_y, double a, double b) 
                 else
                     y = sector->propagate(E, y, sector->xmin - sector->xmax, theta);
 
-                if (sector->xmin < b) { // last
+                if (sector->xmin <= b) { // last
                     y = sector->propagate(E, y, b - sector->xmin, theta);
                     break;
                 }
@@ -92,7 +92,8 @@ tuple<unsigned int, double> newtonIteration(const Matslise *ms, double E, const 
         adjust = error / derror;
         E = E - adjust;
         if (++i > 50) {
-            throw runtime_error("Newton-iteration did not converge");
+            cerr << "Newton-iteration did not converge for E=" << E << endl;
+            break;
         }
     } while (fabs(adjust) > tol);
 
@@ -159,8 +160,8 @@ Matslise::computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsign
             ++depth;
 
         c = (a + b) / 2;
-        if (tb - ta < 0.1 || depth > 10)
-            eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-12));
+        if (tb - ta < 0.05 || depth > 10)
+            eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9));
         else {
             tc = get<2>(calculateError(c, left, right)) / M_PI;
             toCheck.push(make_tuple(a, ta, c, tc, depth));
@@ -250,6 +251,13 @@ Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(x
     calculateTCoeffs();
 }
 
+inline double horner(const double* f, double x, int n) {
+    double r = f[n-1];
+    for(int i = n-2; i >= 0; --i)
+        r = r*x + f[i];
+    return r;
+}
+
 void Sector::calculateTCoeffs() {
     double v1 = vs[1],
             v2 = vs[2],
@@ -276,14 +284,10 @@ void Sector::calculateTCoeffs() {
     // @formatter:on
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
-        hu[i] = hup[i] = hv[i] = hvp[i] = 0;
-        double H = 1;
-        for (int j = 0; j < MATSLISE_HMAX; ++j, H *= h) {
-            hu[i] += H * u[i][j];
-            hup[i] += H * up[i][j];
-            hv[i] += H * v[i][j];
-            hvp[i] += H * vp[i][j];
-        }
+        hu[i] = horner(u[i], h, MATSLISE_HMAX);
+        hup[i] = horner(up[i], h, MATSLISE_HMAX);
+        hv[i] = horner(v[i], h, MATSLISE_HMAX);
+        hvp[i] = horner(vp[i], h, MATSLISE_HMAX);
     }
 }
 
@@ -298,20 +302,17 @@ T Sector::calculateT(double E, double delta) const {
         (Matrix2d() << 0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0).finished());
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
-        double D = 1;
-        for (int j = 0; j < MATSLISE_HMAX; ++j, D *= delta) {
-            t.t(0, 0) += D * eta[i] * u[i][j];
-            t.t(0, 1) += D * eta[i] * v[i][j];
-            t.t(1, 0) += D * eta[i] * up[i][j];
-            t.t(1, 1) += D * eta[i] * vp[i][j];
+        t.t(0, 0) += eta[i] * horner(u[i], delta, MATSLISE_HMAX);
+        t.t(1, 0) += eta[i] * horner(up[i], delta, MATSLISE_HMAX);
+        t.t(0, 1) += eta[i] * horner(v[i], delta, MATSLISE_HMAX);
+        t.t(1, 1) += eta[i] * horner(vp[i], delta, MATSLISE_HMAX);
 
-            if (i + 1 < MATSLISE_ETA) {
-                double dEta = -delta * delta * eta[i + 1] / 2;
-                t.dt(0, 0) += D * dEta * u[i][j];
-                t.dt(0, 1) += D * dEta * v[i][j];
-                t.dt(1, 0) += D * dEta * up[i][j];
-                t.dt(1, 1) += D * dEta * vp[i][j];
-            }
+        if (i + 1 < MATSLISE_ETA) {
+            double dEta = -delta*delta * eta[i + 1] / 2;
+            t.dt(0, 0) += dEta * horner(u[i], delta, MATSLISE_HMAX);
+            t.dt(1, 0) += dEta * horner(up[i], delta, MATSLISE_HMAX);
+            t.dt(0, 1) += dEta * horner(v[i], delta, MATSLISE_HMAX);
+            t.dt(1, 1) += dEta * horner(vp[i], delta, MATSLISE_HMAX);
         }
     }
 
@@ -369,6 +370,7 @@ Y Sector::propagate(double E, const Y &y0, double delta, double &theta) const {
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
+
     const T &t = calculateT(E, delta);
     const Y y1 = forward ? t * y0 : t / y0;
 
@@ -376,6 +378,16 @@ Y Sector::propagate(double E, const Y &y0, double delta, double &theta) const {
         theta += prufer(E, delta, y0, y1);
     else
         theta -= prufer(E, delta, y1, y0);
+
+    /*
+    if(forward)
+        cout << "(" << xmin << ")   " << xmin << " -> " << (xmin+delta) << endl;
+    else
+        cout << "(" << xmin << ")   " << (xmin+delta) << " -> " << xmin << endl;
+
+    cout << "| " << y0.y[0] << ", " << y0.dy[0] << " |    | " << y1.y[0] << ", " << y1.dy[0] << " |" << endl;
+    cout << "| " << y0.y[1] << ", " << y0.dy[1] << " | -> | " << y1.y[1] << ", " << y1.dy[1] << " |" << endl;
+    */
 
     return y1;
 }
