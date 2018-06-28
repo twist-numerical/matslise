@@ -10,11 +10,11 @@ set(CMAKE_INSTALL_PREFIX /usr/)
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-add_library(matslise SHARED src/util/calculateEta.cpp src/matslise/matslise.cpp src/matscs/matscs.cpp src/matslise/halfrange.cpp src/se2d/se2d.cpp)
+add_library(matslise SHARED src/util/calculateEta.cpp src/matslise/matslise.cpp src/matscs/matscs.cpp src/matslise/halfrange.cpp src/se2d/se2d.cpp src/Matrix2D.h)
 target_link_libraries(matslise Eigen3::Eigen)
 
 install(TARGETS matslise DESTINATION lib)
-install(FILES src/matslise.h src/Array2D.h src/matscs.h src/se2d.h DESTINATION include/matslise/)
+install(FILES src/matslise.h src/Array2D.h src/matscs.h src/se2d.h src/Matrix2D.h DESTINATION include/matslise/)
 
 
 add_executable(schrodinger src/main.cpp src/util/calculateEta.cpp src/matslise/matslise.cpp src/matscs/matscs.cpp src/matslise/halfrange.cpp src/se2d/se2d.cpp)

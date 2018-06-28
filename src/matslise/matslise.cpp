@@ -8,7 +8,6 @@
 #include <queue>
 #include <Eigen/Dense>
 #include "matslise_formulas.h"
-#include "../matslise.h"
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"
 
@@ -160,7 +159,7 @@ Matslise::computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsign
             ++depth;
 
         c = (a + b) / 2;
-        if (tb - ta < 0.05 || depth > 10)
+        if (tb - ta < 0.05 || depth > 20)
             eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9));
         else {
             tc = get<2>(calculateError(c, left, right)) / M_PI;
@@ -251,44 +250,19 @@ Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(x
     calculateTCoeffs();
 }
 
-inline double horner(const double* f, double x, int n) {
-    double r = f[n-1];
-    for(int i = n-2; i >= 0; --i)
-        r = r*x + f[i];
+template<typename D>
+inline D horner(const D *f, double x, int n) {
+    D r = f[n - 1];
+    for (int i = n - 2; i >= 0; --i)
+        r = r * x + f[i];
     return r;
 }
 
 void Sector::calculateTCoeffs() {
-    double v1 = vs[1],
-            v2 = vs[2],
-            v3 = vs[3],
-            v4 = vs[4],
-            v5 = vs[5],
-            v6 = vs[6],
-            v7 = vs[7],
-            v8 = vs[8],
-            v9 = vs[9],
-            v10 = vs[10],
-            v11 = vs[11],
-            v12 = vs[12],
-            v13 = vs[13],
-            v14 = vs[14],
-            v15 = vs[15],
-            v16 = vs[16];
+    calculate_tcoeff_matrix(h, vs, t_coeff);
 
-    // @formatter:off
-    u = MATSLISE_U;
-    up = MATSLISE_UP;
-    v = MATSLISE_V;
-    vp = MATSLISE_VP;
-    // @formatter:on
-
-    for (int i = 0; i < MATSLISE_ETA; ++i) {
-        hu[i] = horner(u[i], h, MATSLISE_HMAX);
-        hup[i] = horner(up[i], h, MATSLISE_HMAX);
-        hv[i] = horner(v[i], h, MATSLISE_HMAX);
-        hvp[i] = horner(vp[i], h, MATSLISE_HMAX);
-    }
+    for (int i = 0; i < MATSLISE_ETA; ++i)
+        t_coeff_h[i] = horner(t_coeff[i], h, MATSLISE_HMAX);
 }
 
 T Sector::calculateT(double E, double delta) const {
@@ -298,22 +272,15 @@ T Sector::calculateT(double E, double delta) const {
         return calculateT(E);
 
     double *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA);
-    T t((Matrix2d() << 0, 0, (vs[0] - E) * delta * eta[1], 0).finished(),
-        (Matrix2d() << 0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0).finished());
+    T t({0, 0, (vs[0] - E) * delta * eta[1], 0},
+        {0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0});
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
-        t.t(0, 0) += eta[i] * horner(u[i], delta, MATSLISE_HMAX);
-        t.t(1, 0) += eta[i] * horner(up[i], delta, MATSLISE_HMAX);
-        t.t(0, 1) += eta[i] * horner(v[i], delta, MATSLISE_HMAX);
-        t.t(1, 1) += eta[i] * horner(vp[i], delta, MATSLISE_HMAX);
+        Matrix2D<> hor = horner(t_coeff[i], delta, MATSLISE_HMAX);
+        t.t += hor * eta[i];
 
-        if (i + 1 < MATSLISE_ETA) {
-            double dEta = -delta*delta * eta[i + 1] / 2;
-            t.dt(0, 0) += dEta * horner(u[i], delta, MATSLISE_HMAX);
-            t.dt(1, 0) += dEta * horner(up[i], delta, MATSLISE_HMAX);
-            t.dt(0, 1) += dEta * horner(v[i], delta, MATSLISE_HMAX);
-            t.dt(1, 1) += dEta * horner(vp[i], delta, MATSLISE_HMAX);
-        }
+        if (i + 1 < MATSLISE_ETA)
+            t.dt += hor * (-delta * delta * eta[i + 1] / 2);
     }
 
     delete[] eta;
@@ -322,22 +289,13 @@ T Sector::calculateT(double E, double delta) const {
 
 T Sector::calculateT(double E) const {
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA);
-    T t((Matrix2d() << 0, 0, (vs[0] - E) * h * eta[1], 0).finished(),
-        (Matrix2d() << 0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0).finished());
+    T t({0, 0, (vs[0] - E) * h * eta[1], 0}, {0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0});
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
-        t.t(0, 0) += eta[i] * hu[i];
-        t.t(0, 1) += eta[i] * hv[i];
-        t.t(1, 0) += eta[i] * hup[i];
-        t.t(1, 1) += eta[i] * hvp[i];
+        t.t += t_coeff_h[i] * eta[i];
 
-        if (i + 1 < MATSLISE_ETA) {
-            double dEta = -h * h * eta[i + 1] / 2;
-            t.dt(0, 0) += dEta * hu[i];
-            t.dt(0, 1) += dEta * hv[i];
-            t.dt(1, 0) += dEta * hup[i];
-            t.dt(1, 1) += dEta * hvp[i];
-        }
+        if (i + 1 < MATSLISE_ETA)
+            t.dt += t_coeff_h[i] * (-h * h * eta[i + 1] / 2);
     }
     delete[] eta;
     return t;

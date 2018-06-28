@@ -12,9 +12,10 @@
 #include <functional>
 #include <Eigen/Dense>
 #include "Array2D.h"
+#include "Matrix2D.h"
 
-#define MATSLISE_HMAX 19
-#define MATSLISE_ETA 11
+#define MATSLISE_HMAX 17
+#define MATSLISE_ETA 9
 
 using namespace Eigen;
 
@@ -79,13 +80,13 @@ namespace matslise {
     class Y {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Vector2d y, dy;
+        Vector2D<> y, dy;
 
-        Y() : y(Vector2d::Zero()), dy(Vector2d::Zero()) {}
+        Y() : y({0,0}), dy({0,0}) {}
 
-        Y(Vector2d y) : y(y), dy(Vector2d::Zero()) {}
+        Y(Vector2D<> y) : y(y), dy({0,0}) {}
 
-        Y(Vector2d y, Vector2d dy) : y(y), dy(dy) {}
+        Y(Vector2D<> y, Vector2D<> dy) : y(y), dy(dy) {}
 
         Y operator-() const {
             return Y(-y, -dy);
@@ -103,21 +104,21 @@ namespace matslise {
     class T {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        Matrix2d t;
-        Matrix2d dt;
+        Matrix2D<> t;
+        Matrix2D<> dt;
 
-        T() : t(Matrix2d::Identity()), dt(Matrix2d::Zero()) {}
+        T() : t({1,0,0,1}), dt({0,0,0,0}) {}
 
-        T(Matrix2d t, Matrix2d dt) : t(t), dt(dt) {}
+        T(Matrix2D<> t, Matrix2D<> dt) : t(t), dt(dt) {}
 
         Y operator*(Y y) const {
             return Y(t * y.y, t * y.dy + dt * y.y);
         }
 
         Y operator/(Y y) const {
-            Matrix2d ti, dti;
-            ti << t(1, 1), -t(0, 1), -t(1, 0), t(0, 0);
-            dti << dt(1, 1), -dt(0, 1), -dt(1, 0), dt(0, 0);
+            Matrix2D<> ti, dti;
+            ti = {t.d, -t.b, -t.c, t.a};
+            dti = {dt.d, -dt.b, -dt.c, dt.a};
             return Y(ti * y.y, ti * y.dy + dti * y.y);
         }
 
@@ -131,14 +132,8 @@ namespace matslise {
         Matslise *s;
         double *vs;
         double xmin, xmax, h;
-        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> u;
-        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> up;
-        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> v;
-        Array2D<double, MATSLISE_ETA, MATSLISE_HMAX> vp;
-        double hu[MATSLISE_ETA];
-        double hup[MATSLISE_ETA];
-        double hv[MATSLISE_ETA];
-        double hvp[MATSLISE_ETA];
+        Array2D<Matrix2D<>, MATSLISE_ETA, MATSLISE_HMAX> t_coeff;
+        Matrix2D<> t_coeff_h[MATSLISE_ETA];
 
         Sector(Matslise *problem, double xmin, double xmax);
 

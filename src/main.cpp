@@ -93,10 +93,10 @@ void testBigE() {
     double M = 5.5;
     Matslise ms([](double x) {
         return 26 * (1 + x * x);
-    }, -M, M, 21);
+    }, 0, M, 21);
     double E = 31.09901945548935;
 
-    for(tuple<unsigned int, double> &iE : *(ms.computeEigenvaluesByIndex(0,1, matslise::Y({0,1}), matslise::Y({0,1}))))
+    for(tuple<unsigned int, double> &iE : *(ms.computeEigenvaluesByIndex(0,3, matslise::Y({1,0}), matslise::Y({0,1}))))
        cout << get<0>(iE) << ": " << get<1>(iE) << endl;
 }
 
