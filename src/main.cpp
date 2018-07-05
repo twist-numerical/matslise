@@ -2,23 +2,22 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include "matscs.h"
-#include "matslise.h"
-#include "se2d.h"
 
 using namespace std;
 using namespace Eigen;
+using namespace matslise;
 
 void coffey() {
     double M = M_PI_2;
     double B = 20;
 
-    Matslise coffey([B](double x) {
+    matslise::Matslise coffey([B](double x) {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
     }, -M, M, 128);
 
     cout << endl;
 
-    matslise::Y y0({0, 1});
+    matslise::Y<double> y0({0, 1});
     ArrayXd x(6);
     x << 0.0700000000000000,
             0.0760000000000000,
@@ -34,7 +33,7 @@ void coffey() {
     for (tuple<unsigned int, double> iE : *eigenvalues) {
         tie(i, E) = iE;
 
-        Array<matslise::Y, Dynamic, 1> y = coffey.computeEigenfunction(E, y0, y0, x);
+        Array<matslise::Y<double>, Dynamic, 1> y = coffey.computeEigenfunction(E, y0, y0, x);
         for (int j = 0; j < x.size(); ++j) {
             cout << x[j] << ", ";
         }
@@ -57,7 +56,7 @@ void mathieu() {
     }, m, M, 16);
     double h = M_PI / 16;
 
-    matslise::Y y0({0, 1});
+    matslise::Y<double> y0({0, 1});
     cout << get<0>(mathieu.propagate(110, y0, m, m + 2 * h)) << endl;
     cout << get<0>(mathieu.propagate(120, y0, m, m + 2 * h)) << endl;
     cout << get<0>(mathieu.propagate(130, y0, m, m + 2 * h)) << endl;
@@ -81,27 +80,28 @@ void mathieu() {
     delete eigenvalues;
 }
 
+/*
 void test2d() {
     SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 128, 15);
 
     se2d.propagate(3, 5.5, true);
 
     cout << se2d.xmin << endl;
-}
+}*/
 
-void testBigE() {
-    double M = 5.5;
-    Matslise ms([](double x) {
-        return 26 * (1 + x * x);
-    }, 0, M, 21);
-    double E = 31.09901945548935;
-
-    for(tuple<unsigned int, double> &iE : *(ms.computeEigenvaluesByIndex(0,3, matslise::Y({1,0}), matslise::Y({0,1}))))
-       cout << get<0>(iE) << ": " << get<1>(iE) << endl;
+void testMatscs() {
+    Matscs ms([](double x) {
+        return (MatrixXd(2,2) << x*x, -1, -1, x*x).finished();
+    }, 2, 0, 10, 5);
+    MatrixXd zero = MatrixXd::Zero(2, 2);
+    MatrixXd one = MatrixXd::Identity(2, 2);
+    double E = 3;
+    cout << ms.propagate(E, Y<MatrixXd>({zero, one}, {zero, zero}), 0, 10).y.x << endl;
 }
 
 int main() {
 //    coffey();
     //test2d();
-    testBigE();
+    // testBigE();
+    testMatscs();
 }

@@ -1,13 +1,14 @@
 //
 // Created by toon on 6/13/18.
 //
-
+/*
 #include <iostream>
 #include "../se2d.h"
 #include "../lobatto.h"
 
 #define N 12
 
+using namespace matslise;
 using namespace se2d;
 using namespace std;
 
@@ -66,8 +67,8 @@ std::tuple<double, double> SE2D::calculateError(double E) const {
     return tuple<double, double>();
 }
 
-matscs::Y SE2D::propagate(double E, double y, bool forward) const {
-    matscs::Y c(MatrixXd::Zero(N, N), MatrixXd::Identity(N, N));
+Y<MatrixXd> SE2D::propagate(double E, double y, bool forward) const {
+    Y c(MatrixXd::Zero(N, N), MatrixXd::Identity(N, N));
     if (forward) {
         int i = 0;
 
@@ -106,7 +107,7 @@ matscs::Y SE2D::propagate(double E, double y, bool forward) const {
 
 
 Sector::Sector(SE2D *se2d, double ymin, double ymax, int sectorCount) : se2d(se2d), ymin(ymin), ymax(ymax) {
-    static const matslise::Y y0 = matslise::Y({0, 1});
+    static const matslise::Y<double> y0 = matslise::Y<double>({0, 1});
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
@@ -119,7 +120,7 @@ Sector::Sector(SE2D *se2d, double ymin, double ymax, int sectorCount) : se2d(se2
     for (int i = 0; i < N; ++i) {
         double E = get<1>((*index_eigv)[i]);
         eigenvalues[i] = E;
-        Array<matslise::Y, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->xGrid);
+        Array<matslise::Y<double>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->xGrid);
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
@@ -137,11 +138,11 @@ Sector::~Sector() {
     delete[] eigenfunctions;
 }
 
-matscs::Y Sector::propagate(double E, const matscs::Y &c, bool forward) const {
+Y Sector::propagate(double E, const matscs::Y &c, bool forward) const {
     return propagate(E, c, forward ? ymax : ymin, forward);
 }
 
-matscs::Y Sector::propagate(double E, const matscs::Y &c, double y, bool forward) const {
+Y Sector::propagate(double E, const matscs::Y &c, double y, bool forward) const {
     return matscs->propagate(E, c, forward ? ymin : ymax, y);
 }
 
@@ -161,3 +162,4 @@ Eigen::MatrixXd Sector::calculateDeltaV(double y) const {
 
     return dV;
 }
+*/

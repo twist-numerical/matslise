@@ -17,50 +17,46 @@
 namespace py = pybind11;
 using namespace Eigen;
 using namespace std;
+using namespace matslise;
 
-matslise::Y packY(const tuple<double, double> &t) {
-    return matslise::Y({get<0>(t), get<1>(t)});
+Y<double> packY(const tuple<double, double> &t) {
+    return Y<double>({get<0>(t), get<1>(t)});
 }
 
-matslise::Y packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
-    return matslise::Y({get<0>(t), get<1>(t)}, {get<0>(dt), get<1>(dt)});
+Y<MatrixXd> packY(const tuple<MatrixXd, MatrixXd> &t) {
+    int rows = get<0>(t).rows(), cols = get<0>(t).rows();
+    return Y<MatrixXd>({get<0>(t), get<1>(t)}, {MatrixXd::Zero(rows, cols), MatrixXd::Zero(rows, cols)});
 }
 
-tuple<double, double> unpackY(matslise::Y y) {
-    tuple<double, double> t(y.y[0], y.y[1]);
-    return t;
-};
-
-matscs::Y packY(tuple<MatrixXd, MatrixXd> &t) {
-    return matscs::Y(get<0>(t), get<1>(t));
+Y<double> packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
+    return Y<double>({get<0>(t), get<1>(t)}, {get<0>(dt), get<1>(dt)});
 }
 
-tuple<MatrixXd, MatrixXd> unpackY(matscs::Y y) {
-    tuple<MatrixXd, MatrixXd> t(y.y, y.dy);
-    return t;
+template<typename D>
+tuple<D, D> unpackY(const Y<D> &y) {
+    return make_tuple(y.y[0], y.y[1]);
 };
 
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
-    py::class_<SE2D>(m, "SE2D")
+    /*py::class_<SE2D>(m, "SE2D")
         .def(py::init<function<double(double, double)>, double,double, double,double, int, int>())
         .def("propagate", [](SE2D &m, double E, double y, bool forward)
             -> tuple<MatrixXd, MatrixXd> {
-                matscs::Y y0 = m.propagate(E, y, forward);
-                return make_tuple(y0.y, y0.dy);
+                return unpackY(m.propagate(E, y, forward));
         });
-
-    py::class_<matslise::HalfRange>(m, "PysliseHalf")
+*/
+    py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
-        .def("computeEigenvalues", [](matslise::HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
-            return m.computeEigenvalues(Emin, Emax, matslise::Y(side));
+        .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
+            return m.computeEigenvalues(Emin, Emax, Y<double>(side));
         })
-        .def("computeEigenvaluesByIndex", [](matslise::HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
-            return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(side));
+        .def("computeEigenvaluesByIndex", [](HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
+            return m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(side));
         })
-        .def("computeEigenfunction", [](matslise::HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
+        .def("computeEigenfunction", [](HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
             -> tuple<ArrayXd, ArrayXd> {
-                auto ysY = m.computeEigenfunction(E, matslise::Y(side), xs);
+                auto ysY = m.computeEigenfunction(E, Y<double>(side), xs);
                 ArrayXd ys(ysY.size());
                 ArrayXd dys(ysY.size());
                 for(int i = 0; i < ysY.size(); ++i) {
@@ -75,28 +71,28 @@ PYBIND11_MODULE(pyslise, m) {
         .def("propagate",
             [](Matslise &m, double E, const Vector2d &y, double a, double b) ->
                 tuple<Vector2d, double> {
-                    matslise::Y y0;
+                    Y<double> y0;
                     double theta;
-                    tie(y0, theta) = m.propagate(E, matslise::Y(y), a, b);
+                    tie(y0, theta) = m.propagate(E, Y<double>(y), a, b);
                     return make_tuple(y0.y, theta);
                 })
         .def("propagate",
             [](Matslise &m, double E, const Vector2d &y, const Vector2d &dy, double a, double b) ->
             tuple<Vector2d, Vector2d, double> {
-                matslise::Y y0;
+                Y<double> y0;
                 double theta;
-                tie(y0, theta) = m.propagate(E, matslise::Y(y, dy), a, b);
+                tie(y0, theta) = m.propagate(E, Y<double>(y, dy), a, b);
                 return make_tuple(y0.y, y0.dy, theta);
         })
         .def("computeEigenvalues", [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right) -> vector<tuple<unsigned int, double>>* {
-            return m.computeEigenvalues(Emin, Emax, matslise::Y(left), matslise::Y(right));
+            return m.computeEigenvalues(Emin, Emax, Y<double>(left), Y<double>(right));
         })
         .def("computeEigenvaluesByIndex", [](Matslise &m, unsigned int Imin, unsigned int Imax, const Vector2d &left, const Vector2d &right) -> vector<tuple<unsigned int, double>>* {
-            return m.computeEigenvaluesByIndex(Imin, Imax, matslise::Y(left), matslise::Y(right));
+            return m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right));
         })
         .def("computeEigenfunction", [](Matslise &m, double E, const Vector2d &left, const Vector2d &right, const ArrayXd &xs)
              -> tuple<ArrayXd, ArrayXd> {
-                auto ysY = m.computeEigenfunction(E, matslise::Y(left), matslise::Y(right), xs);
+                auto ysY = m.computeEigenfunction(E, Y<double>(left), Y<double>(right), xs);
                 ArrayXd ys(ysY.size());
                 ArrayXd dys(ysY.size());
                 for(int i = 0; i < ysY.size(); ++i) {
@@ -108,14 +104,13 @@ PYBIND11_MODULE(pyslise, m) {
         .def("calculateError",
             [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                 tuple<double, double, double> {
-                    return m.calculateError(E, matslise::Y(left), matslise::Y(right));
+                    return m.calculateError(E, Y<double>(left), Y<double>(right));
                 });
 
     py::class_<Matscs>(m, "Pyscs")
         .def(py::init<function<MatrixXd(double)>, int, double, double, int>())
         .def("propagate",
             [](Matscs &m, double E, tuple<MatrixXd, MatrixXd> y, double a, double b) -> tuple<MatrixXd, MatrixXd> {
-                auto packedY = packY(y);
-                return unpackY(m.propagate(E, packedY, a, b));
+                return unpackY(m.propagate(E, packY(y), a, b));
         });
 }

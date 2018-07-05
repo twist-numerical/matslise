@@ -12,6 +12,8 @@
 #include "matslise.h"
 #include "matscs.h"
 
+using namespace matslise;
+
 namespace se2d {
     class Sector;
 }
@@ -27,10 +29,12 @@ public:
     SE2D(std::function<double(double, double)> V,
          double xmin, double xmax, double ymin, double ymax, int xSectorCount, int ySectorCount);
 
-    matscs::Y propagate(double E, double y, bool forward) const;
+    matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
+
     std::tuple<double, double> calculateError(double E) const;
 
     std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
+
     MatrixXd calculateM(int k) const;
 
     virtual ~SE2D();
@@ -49,8 +53,9 @@ namespace se2d {
 
         Sector(SE2D *se2d, double ymin, double ymax, int sectorCount);
 
-        matscs::Y propagate(double E, const matscs::Y &c, bool forward) const;
-        matscs::Y propagate(double E, const matscs::Y &c, double y, bool forward) const;
+        matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, bool forward) const;
+
+        matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, double y, bool forward) const;
 
         Eigen::MatrixXd calculateDeltaV(double y) const;
 

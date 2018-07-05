@@ -103,8 +103,21 @@ public:
         return {a * r.x + b * r.y, c * r.x + d * r.y};
     }
 
+    Matrix2D<V> operator*=(double f) {
+        a *= f;
+        b *= f;
+        c *= f;
+        d *= f;
+        return *this;
+    }
+
+
+    friend Matrix2D<V> operator*(const V &f, const Matrix2D<V> &m) {
+        return {f * m.a, f * m.b, f * m.c, f * m.d};
+    }
+
     friend std::ostream &operator<<(std::ostream &os, const Matrix2D<V> &m) {
-        return os << "|'" << m.a << ", " << m.b << "'|\n|'" << m.a << ", " << m.b << "'|";
+        return os << "|'" << m.a << ", " << m.b << "'|\n|." << m.c << ", " << m.d << ".|";
     }
 };
 
