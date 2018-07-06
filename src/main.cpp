@@ -91,12 +91,16 @@ void test2d() {
 
 void testMatscs() {
     Matscs ms([](double x) {
-        return (MatrixXd(2,2) << x*x, -1, -1, x*x).finished();
-    }, 2, 0, 10, 5);
-    MatrixXd zero = MatrixXd::Zero(2, 2);
-    MatrixXd one = MatrixXd::Identity(2, 2);
+        return (MatrixXd(1,1) << x*x).finished();
+    }, 1, -5, 5, 32);
+    MatrixXd zero = MatrixXd::Zero(1, 1);
+    MatrixXd one = MatrixXd::Identity(1, 1);
     double E = 3;
-    cout << ms.propagate(E, Y<MatrixXd>({zero, one}, {zero, zero}), 0, 10).y.x << endl;
+    cout << ms.propagate(E, Y<MatrixXd>({zero, one}, {zero, zero}), -5, 5).y.x << endl;
+
+    cout << "\n\nMATSLISE" << endl;
+    Matslise ml([](double x) { return x*x; }, -5,5,32);
+    cout << get<0>(ml.propagate(E, Y<double>({0,1}, {0,0}), -5, 5)).y.x << endl;
 }
 
 int main() {

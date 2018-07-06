@@ -23,28 +23,28 @@ Y<MatrixXd> Matscs::propagate(const double E, const Y<MatrixXd> &_y, const doubl
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
             if (sector->xmax > a) {
-                if (sector->xmin < a) // eerste
-                    y = sector->calculateT(E, a - sector->xmin) / y;
+                if (sector->xmin < a) // first
+                    y = sector->propagate(E, y, sector->xmin - a);
 
-                if (sector->xmax > b) { // laatste
-                    y = sector->calculateT(E, b - sector->xmin) * y;
+                if (sector->xmax >= b) { // last
+                    y = sector->propagate(E, y, b - sector->xmin);
                     break;
                 }
 
-                y = sector->calculateT(E) * y;
+                y = sector->propagate(E, y, sector->xmax - sector->xmin);
             }
         }
     } else {
         for (int i = sectorCount - 1; i >= 0; --i) {
             Sector *sector = sectors[i];
             if (sector->xmin < a) {
-                if (sector->xmax > a) // eerste
-                    y = sector->calculateT(E, a - sector->xmin) / y;
+                if (sector->xmax > a) // first
+                    y = sector->propagate(E, y, sector->xmin - a);
                 else
-                    y = sector->calculateT(E) / y;
+                    y = sector->propagate(E, y, sector->xmin - sector->xmax);
 
-                if (sector->xmin < b) { // laatste
-                    y = sector->calculateT(E, b - sector->xmin) * y;
+                if (sector->xmin <= b) { // last
+                    y = sector->propagate(E, y, b - sector->xmin);
                     break;
                 }
 

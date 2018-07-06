@@ -13,8 +13,8 @@
 #include "matslise.h"
 #include <Eigen/Dense>
 
-#define MATSCS_HMAX 5
-#define MATSCS_ETA 3
+#define MATSCS_HMAX 9
+#define MATSCS_ETA 5
 
 using namespace Eigen;
 
@@ -59,6 +59,8 @@ namespace matslise {
             T<MatrixXd> calculateT(double E) const;
 
             T<MatrixXd> calculateT(double E, double delta) const;
+
+            Y<MatrixXd> propagate(double E, const Y<MatrixXd> &y0, double delta) const;
 
             virtual ~Sector();
 

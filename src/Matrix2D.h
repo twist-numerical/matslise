@@ -117,7 +117,7 @@ public:
     }
 
     friend std::ostream &operator<<(std::ostream &os, const Matrix2D<V> &m) {
-        return os << "|'" << m.a << ", " << m.b << "'|\n|." << m.c << ", " << m.d << ".|";
+        return os << "/" << m.a << ", " << m.b << "\\\n\\" << m.c << ", " << m.d << "/";
     }
 };
 
