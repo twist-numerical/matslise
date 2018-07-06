@@ -10,10 +10,10 @@ set(CMAKE_INSTALL_PREFIX /usr/)
 
 find_package(Eigen3 REQUIRED NO_MODULE)
 
-SET(MATSLISE_SRC src/util/calculateEta.cpp
+SET(MATSLISE_SRC src/util/calculateEta.cpp src/util/lobatto.cpp
         src/matslise/matslise.cpp src/matslise/halfrange.cpp src/matslise/sector.cpp src/matslise/matslise_formulas.cpp
         src/matscs/matscs.cpp src/matscs/sector.cpp src/matscs/matscs_formulas.cpp
-        src/se2d/se2d.cpp src/Matrix2D.h)
+        src/se2d/se2d.cpp src/se2d/sector.cpp)
 
 add_library(matslise SHARED ${MATSLISE_SRC})
 target_link_libraries(matslise Eigen3::Eigen)

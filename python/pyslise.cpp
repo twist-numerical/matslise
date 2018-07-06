@@ -39,13 +39,13 @@ tuple<D, D> unpackY(const Y<D> &y) {
 
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
-    /*py::class_<SE2D>(m, "SE2D")
+    py::class_<SE2D>(m, "PySE2d")
         .def(py::init<function<double(double, double)>, double,double, double,double, int, int>())
         .def("propagate", [](SE2D &m, double E, double y, bool forward)
             -> tuple<MatrixXd, MatrixXd> {
                 return unpackY(m.propagate(E, y, forward));
         });
-*/
+
     py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
         .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {

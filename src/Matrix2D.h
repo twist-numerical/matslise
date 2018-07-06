@@ -68,6 +68,10 @@ public:
         e << x, y;
         return e;
     };
+
+    friend Vector2D<V> operator*(const V &f, const Vector2D<V> &v) {
+        return {f * v.x, f * v.y};
+    }
 };
 
 template<typename V = double>
