@@ -6,14 +6,11 @@
 #include "../se2d.h"
 #include "../util/lobatto.h"
 
-#define N 12
-
 using namespace Eigen;
 using namespace matslise;
 using namespace matslise::se2d_sector;
 using namespace std;
 
-#define GRID_POINTS 60
 
 SE2D::SE2D(function<double(double, double)> V,
            double xmin, double xmax, double ymin, double ymax, int xSectorCount, int ySectorCount) :
@@ -53,13 +50,25 @@ SE2D::~SE2D() {
     delete[] M;
 }
 
-std::tuple<double, double> SE2D::calculateError(double E) const {
-
-    return tuple<double, double>();
+MatrixXd SE2D::calculateError(double E) const {
+    int match = sectorCount / 2;
+    Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
+    Y<MatrixXd> yl = y0;
+    for (int i = 0; i <= match; ++i) {
+        if (i > 0)
+            yl = M[i - 1] * yl;
+        yl = sectors[i]->propagate(E, yl, true);
+    }
+    Y<MatrixXd> yr = y0;
+    for (int i = sectorCount - 1; i > match; --i) {
+        yr = sectors[i]->propagate(E, yr, false);
+        yr = M[i - 1].transpose() * yr;
+    }
+    return yl.y.y * yl.y.x.inverse() - yr.y.y * yr.y.x.inverse();
 }
 
 Y<MatrixXd> SE2D::propagate(double E, double y, bool forward) const {
-    Y<MatrixXd> c({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N,N), MatrixXd::Zero(N,N)});
+    Y<MatrixXd> c({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     if (forward) {
         int i = 0;
 

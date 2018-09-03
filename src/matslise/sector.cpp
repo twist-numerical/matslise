@@ -1,6 +1,5 @@
 #include <cmath>
 #include <array>
-#include <ostream>
 #include <Eigen/Dense>
 #include "matslise_formulas.h"
 #include "../util/legendre.h"
@@ -83,6 +82,18 @@ double Sector::prufer(double E, double delta, const Y<double> &y0, const Y<doubl
     }
 
     return theta1 - theta0;
+}
+
+Y<double> Sector::propagate(double E, const Y<double> &y0, bool forward) const {
+    const T<double> &t = calculateT(E);
+    return forward ? t * y0 : t / y0;
+}
+
+Y<double> Sector::propagate(double E, const Y<double> &y0, double delta) const {
+    if (delta >= 0)
+        return calculateT(E, delta) * y0;
+    else
+        return calculateT(E, -delta) / y0;
 }
 
 Y<double> Sector::propagate(double E, const Y<double> &y0, double delta, double &theta) const {

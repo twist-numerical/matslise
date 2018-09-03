@@ -56,6 +56,7 @@
 # CMake
 cmake-build-debug/
 cmake-build-release/
+cmake-build-emscripten/
 
 # Mongo Explorer plugin
 .idea/**/mongoSettings.xml
@@ -83,3 +84,6 @@ fabric.properties
 
 # Editor-based Rest Client
 .idea/httpRequests
+
+# Notebooks
+.ipynb_checkpoints/

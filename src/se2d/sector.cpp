@@ -6,14 +6,10 @@
 #include "../se2d.h"
 #include "../util/lobatto.h"
 
-#define N 12
-
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
 using namespace matslise::se2d_sector;
-
-#define GRID_POINTS 40
 
 template<typename FROM, typename TO>
 Array<TO, Dynamic, 1> apply(const Array<FROM, Dynamic, 1> &x, function<TO(FROM)> f) {

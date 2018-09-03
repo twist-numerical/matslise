@@ -13,6 +13,7 @@
 #include <Eigen/Dense>
 #include "Array2D.h"
 #include "Matrix2D.h"
+#include "Evaluator.h"
 
 #define MATSLISE_HMAX 17
 #define MATSLISE_ETA 9
@@ -43,6 +44,16 @@ namespace matslise {
 
         friend std::ostream &operator<<(std::ostream &os, const Y<D> &m) {
             return os << "(" << m.y[0] << "," << m.y[1] << ")" << "(" << m.dy[0] << "," << m.dy[1] << ")";
+        }
+
+        Y<D> &operator*=(const D &f) {
+            y *= f;
+            dy *= f;
+            return *this;
+        }
+
+        friend Y<D> operator*(const D &f, const Y<D> &y) {
+            return Y(f * y.y, f * y.dy);
         }
     };
 
@@ -111,6 +122,9 @@ namespace matslise {
                            const matslise::Y<double> &left,
                            const matslise::Y<double> &right) const;
 
+        Evaluator<matslise::Y<double>, double> *eigenfunctionCalculator(
+                double E, const matslise::Y<double> &left, const matslise::Y<double> &right);
+
         virtual ~Matslise();
     };
 
@@ -149,6 +163,10 @@ namespace matslise {
             T<double> calculateT(double E) const;
 
             T<double> calculateT(double E, double delta) const;
+
+            Y<double> propagate(double E, const Y<double> &y0, bool forward) const;
+
+            Y<double> propagate(double E, const Y<double> &y0, double delta) const;
 
             Y<double> propagate(double E, const Y<double> &y0, double delta, double &theta) const;
 

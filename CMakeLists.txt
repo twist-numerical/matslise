@@ -19,11 +19,14 @@ add_library(matslise SHARED ${MATSLISE_SRC})
 target_link_libraries(matslise Eigen3::Eigen)
 
 install(TARGETS matslise DESTINATION lib)
-install(FILES src/matslise.h src/Array2D.h src/matscs.h src/se2d.h src/Matrix2D.h DESTINATION include/matslise/)
+install(FILES src/matslise.h src/Array2D.h src/matscs.h src/se2d.h src/Matrix2D.h src/Evaluator.h DESTINATION include/matslise/)
 
 
 add_executable(schrodinger src/main.cpp ${MATSLISE_SRC})
 target_link_libraries(schrodinger Eigen3::Eigen)
+
+add_executable(javascript src/js/main.cpp ${MATSLISE_SRC})
+target_link_libraries(javascript Eigen3::Eigen)
 
 # add_subdirectory(swig/python_wrapper)
 

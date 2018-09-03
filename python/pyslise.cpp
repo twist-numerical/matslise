@@ -13,6 +13,7 @@
 #include <matslise/matslise.h>
 #include <matslise/matscs.h>
 #include <matslise/se2d.h>
+#include <matslise/Evaluator.h>
 
 namespace py = pybind11;
 using namespace Eigen;
@@ -37,13 +38,28 @@ tuple<D, D> unpackY(const Y<D> &y) {
     return make_tuple(y.y[0], y.y[1]);
 };
 
+template <class R, class... A>
+class PyEvaluator : public Evaluator<R, A...> {
+public:
+    /* Trampoline (need one for each virtual function) */
+    R eval(A... x) const override {}
+};
+
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
+    py::class_<Evaluator<Y<double>, double>, PyEvaluator<Y<double>, double>>(m, "EvaluatorY1")
+        .def("__call__", [](Evaluator<Y<double>, double> &e, double x) -> tuple<double, double> {
+            return unpackY(e(x));
+        }, py::is_operator());
+
     py::class_<SE2D>(m, "PySE2d")
         .def(py::init<function<double(double, double)>, double,double, double,double, int, int>())
         .def("propagate", [](SE2D &m, double E, double y, bool forward)
             -> tuple<MatrixXd, MatrixXd> {
                 return unpackY(m.propagate(E, y, forward));
+        })
+        .def("calculateError", [](SE2D &m, double E) -> MatrixXd {
+            return m.calculateError(E);
         });
 
     py::class_<HalfRange>(m, "PysliseHalf")
@@ -105,7 +121,11 @@ PYBIND11_MODULE(pyslise, m) {
             [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                 tuple<double, double, double> {
                     return m.calculateError(E, Y<double>(left), Y<double>(right));
-                });
+                })
+        .def("eigenfunctionCalculator",
+            [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) -> Evaluator<Y<double>, double>* {
+                return m.eigenfunctionCalculator(E, Y<double>(left), Y<double>(right));
+        });
 
     py::class_<Matscs>(m, "Pyscs")
         .def(py::init<function<MatrixXd(double)>, int, double, double, int>())

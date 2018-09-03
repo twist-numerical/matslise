@@ -12,6 +12,10 @@
 #include "matslise.h"
 #include "matscs.h"
 
+
+#define N 12
+#define GRID_POINTS 60
+
 namespace matslise {
     namespace se2d_sector {
         class Sector;
@@ -30,7 +34,7 @@ namespace matslise {
 
         matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
 
-        std::tuple<double, double> calculateError(double E) const;
+        MatrixXd calculateError(double E) const;
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 

@@ -85,14 +85,13 @@ void mathieu() {
 void test2d() {
     SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 32, 32);
 
-    se2d.propagate(3, 5.5, true);
 
-    cout << se2d.xmin << endl;
+    cout << se2d.calculateError(3.19) << endl;
 }
 
 void testMatscs() {
     Matscs ms([](double x) {
-        return (MatrixXd(1,1) << x*x).finished();
+        return (MatrixXd(1, 1) << x * x).finished();
     }, 1, -5, 5, 32);
     MatrixXd zero = MatrixXd::Zero(1, 1);
     MatrixXd one = MatrixXd::Identity(1, 1);
@@ -100,13 +99,35 @@ void testMatscs() {
     cout << ms.propagate(E, Y<MatrixXd>({zero, one}, {zero, zero}), -5, 5).y.x << endl;
 
     cout << "\n\nMATSLISE" << endl;
-    Matslise ml([](double x) { return x*x; }, -5,5,32);
-    cout << get<0>(ml.propagate(E, Y<double>({0,1}, {0,0}), -5, 5)).y.x << endl;
+    Matslise ml([](double x) { return x * x; }, -5, 5, 32);
+    cout << get<0>(ml.propagate(E, Y<double>({0, 1}, {0, 0}), -5, 5)).y.x << endl;
+}
+
+void testEigenfunctionCalculator() {
+    double M = M_PI_2;
+    double B = 20;
+
+    matslise::Matslise coffey([B](double x) {
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, -M, M, 128);
+
+    Y<double> y0({0, 1});
+
+    vector<tuple<unsigned int, double>> *eigs = coffey.computeEigenvaluesByIndex(2, 3, y0, y0);
+    double E = get<1>((*eigs)[0]);
+    cout << E << endl;
+    delete eigs;
+
+    Evaluator<Y<double>, double> *_ef = coffey.eigenfunctionCalculator(E, y0, y0);
+    Evaluator<Y<double>, double> &ef = *_ef;
+    cout << ef(0) << endl;
+    delete _ef;
 }
 
 int main() {
     // coffey();
-    test2d();
+    // test2d();
     // testBigE();
     // testMatscs();
+    testEigenfunctionCalculator();
 }
