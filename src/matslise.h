@@ -84,6 +84,7 @@ namespace matslise {
         }
     };
 
+    class EigenfunctionCalculator;
     namespace matslise_sector {
         class Sector;
     }
@@ -122,7 +123,7 @@ namespace matslise {
                            const matslise::Y<double> &left,
                            const matslise::Y<double> &right) const;
 
-        Evaluator<matslise::Y<double>, double> *eigenfunctionCalculator(
+        matslise::EigenfunctionCalculator *eigenfunctionCalculator(
                 double E, const matslise::Y<double> &left, const matslise::Y<double> &right);
 
         virtual ~Matslise();
@@ -175,6 +176,22 @@ namespace matslise {
             virtual ~Sector();
         };
     }
+
+
+    class EigenfunctionCalculator : public Evaluator<Y<double>, double> {
+    public:
+        Matslise *ms;
+        double E;
+        Y<double> *ys = NULL;
+
+        EigenfunctionCalculator(Matslise *ms, double E, const Y<double> &left, const Y<double> &right);
+
+        virtual Y<double> eval(double x) const;
+
+        EigenfunctionCalculator &operator=(const EigenfunctionCalculator &ec);
+
+        ~EigenfunctionCalculator();
+    };
 }
 
 

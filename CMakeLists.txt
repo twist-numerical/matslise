@@ -19,12 +19,11 @@ if (DEFINED EMSCRIPTEN)
     add_executable(matslise src/js/main.cpp ${MATSLISE_SRC})
 
     set_target_properties(matslise
-            PROPERTIES SUFFIX ".html"
+            PROPERTIES SUFFIX ".js"
             LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2")
     em_link_js_library(matslise ${libraryJsFiles})
-    # add -O2 to minify
 else ()
-
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")
     add_library(matslise SHARED ${MATSLISE_SRC})
     # target_link_libraries(matslise Eigen3::Eigen)
 
