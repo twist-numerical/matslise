@@ -27,11 +27,11 @@ void coffey() {
             0.0940000000000000,
             0.100000000000000;
 
-    vector<tuple<unsigned int, double>> *eigenvalues = coffey.computeEigenvaluesByIndex(0, 2, y0, y0);
+    vector<pair<unsigned int, double>> *eigenvalues = coffey.computeEigenvaluesByIndex(0, 2, y0, y0);
     cout.precision(17);
     unsigned int i;
     double E;
-    for (tuple<unsigned int, double> iE : *eigenvalues) {
+    for (pair<unsigned int, double> iE : *eigenvalues) {
         tie(i, E) = iE;
 
         Array<matslise::Y<double>, Dynamic, 1> y = coffey.computeEigenfunction(E, y0, y0, x);
@@ -69,7 +69,7 @@ void mathieu() {
     cout << get<0>(mathieu.propagate(140, y0, M, M - 2 * h)) << endl;
     cout << endl;
 
-    vector<tuple<unsigned int, double>> *eigenvalues = mathieu.computeEigenvalues(0, 100, y0, y0);
+    vector<pair<unsigned int, double>> *eigenvalues = mathieu.computeEigenvalues(0, 100, y0, y0);
     cout.precision(17);
 
     unsigned int i;
@@ -113,13 +113,13 @@ void testEigenfunctionCalculator() {
 
     Y<double> y0({0, 1});
 
-    vector<tuple<unsigned int, double>> *eigs = coffey.computeEigenvaluesByIndex(2, 3, y0, y0);
+    vector<pair<unsigned int, double>> *eigs = coffey.computeEigenvaluesByIndex(2, 3, y0, y0);
     double E = get<1>((*eigs)[0]);
     cout << E << endl;
     delete eigs;
 
-    Evaluator<Y<double>, double> *_ef = coffey.eigenfunctionCalculator(E, y0, y0);
-    Evaluator<Y<double>, double> &ef = *_ef;
+    EigenfunctionCalculator *_ef = coffey.eigenfunctionCalculator(E, y0, y0);
+    EigenfunctionCalculator &ef = *_ef;
     cout << ef(0) << endl;
     delete _ef;
 }

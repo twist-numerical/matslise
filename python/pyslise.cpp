@@ -64,10 +64,10 @@ PYBIND11_MODULE(pyslise, m) {
 
     py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
-        .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
+        .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<pair<unsigned int, double>>* {
             return m.computeEigenvalues(Emin, Emax, Y<double>(side));
         })
-        .def("computeEigenvaluesByIndex", [](HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<tuple<unsigned int, double>>* {
+        .def("computeEigenvaluesByIndex", [](HalfRange &m, unsigned int Imin, unsigned int Imax, const Vector2d &side) -> vector<pair<unsigned int, double>>* {
             return m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(side));
         })
         .def("computeEigenfunction", [](HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
@@ -104,13 +104,13 @@ PYBIND11_MODULE(pyslise, m) {
             py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
         .def("computeEigenvalues",
             [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right)
-            -> vector<tuple<unsigned int, double>>* {
+            -> vector<pair<unsigned int, double>>* {
                 return m.computeEigenvalues(Emin, Emax, Y<double>(left), Y<double>(right));
             },
             py::arg("Emin"), py::arg("Emax"), py::arg("left"), py::arg("right"))
         .def("computeEigenvaluesByIndex",
             [](Matslise &m, unsigned int Imin, unsigned int Imax, const Vector2d &left, const Vector2d &right)
-            -> vector<tuple<unsigned int, double>>* {
+            -> vector<pair<unsigned int, double>>* {
                 return m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right));
             },
             py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("right"))

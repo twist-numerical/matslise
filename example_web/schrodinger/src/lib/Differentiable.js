@@ -1,10 +1,12 @@
 import getParser from './getParser';
 
+Math.square = (x) => x*x;
+
 Number.prototype.get = function () { 
 	return this; 
 };
 Number.prototype.diff = () => 0;
-Number.prototype.toFunction = () => () => 0;
+Number.prototype.toFunction = function() { return () => this };
 Array.prototype.get = function(subs, x) {
 	return this.map((v) => v.get(subs, x)); 
 };
@@ -76,7 +78,9 @@ DF.identity = (f) => f;
 
 let parser = getParser(
 	(() => {
-		const vars = {};
+		const vars = {
+			'pi': Math.PI
+		};
 		return (v) => {
 			if(!vars[v])
 				vars[v] = DF.variable(v);

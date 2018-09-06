@@ -8,10 +8,12 @@ import Graph from './components/Graph'
 
 class App extends Component {
   state = {
-    parsed: 0,
-    x: [-5.5, 5.5]
-  }
-  Matslise = false;
+    f: (x) => 0,
+    x: [0, Math.PI],
+    steps: 32,
+    matslise: null
+  };
+  toDelete = [];
 
   constructor(...args) {
     super(...args);
@@ -20,34 +22,58 @@ class App extends Component {
       window.Module = {};
     if(!Module.Matslise && !Module.onRuntimeInitialized) {
       Module.onRuntimeInitialized = () => {
-        this.Matslise = Module.Matslise;
-        this.forceUpdate();
+        this.updateFunction();
       }
     }
   }
 
   render() {
-    if(!this.Matslise) {
+    if(!this.state.matslise)
       return "Loading";
-    }
-
-    let func = this.state.parsed.toFunction("x");
-
-    let allFuncs = [func, this.eigenfunction(func, 3)];
+    
+    const {x, f} = this.state;
+    window.f= f;
+    let funcs = [f];
+    this.eigenvalues(0, 2).forEach(({value}) => 
+      funcs.push(this.eigenfunction(value)));
 
     return (
       <div className="App">
-      <ParsedInput onParsed={parsed => this.setState({parsed})} value="x^2" />
+      <ParsedInput
+      onParsed={parsed => {
+        window.p = parsed;
+        this.updateFunction({f: parsed.toFunction("x")});
+      }}
+      value="2*cos(2*x)" />
       <Graph
-      x={this.state.x}
-      func={allFuncs} />
+      x={x}
+      func={funcs} />
       </div>
       );
   }
 
-  eigenfunction(f, e) {
-    const ms = new Module.Matslise(f, ...this.state.x, 32);
-    let eigen = ms.eigenfunction(e, [0,1], [0,1]);
+  updateFunction(newState) {
+    let {f, x, steps} = {
+      ...this.state,
+      ...newState
+    };
+
+    while(this.toDelete.length > 0)
+      this.toDelete.pop().delete();
+
+    const matslise = new Module.Matslise(f, ...x, steps);
+
+    this.toDelete.push(matslise);
+    this.setState({f, x, steps, matslise});
+  }
+
+  eigenvalues(imin, imax) {
+    return this.state.matslise.eigenvaluesByIndex(imin, imax, [0,1], [0,1]);
+  }
+
+  eigenfunction(e) {
+    let eigen = this.state.matslise.eigenfunction(e, [0,1], [0,1]);
+    this.toDelete.push(eigen);
     return (x) => eigen(x)[0];
   }
 }

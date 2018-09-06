@@ -3,7 +3,6 @@
 //
 
 #include <iostream>
-#include <algorithm>
 #include "../matslise.h"
 
 using namespace std;
@@ -27,7 +26,8 @@ void removeDoubles(vector<T> &x) {
     x.erase(x.begin() + i + 1, x.end());
 }
 
-Array<Y<double>, Dynamic, 1> HalfRange::computeEigenfunction(double E, const matslise::Y<double> &side, const ArrayXd &x) const {
+Array<Y<double>, Dynamic, 1>
+HalfRange::computeEigenfunction(double E, const matslise::Y<double> &side, const ArrayXd &x) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -67,16 +67,16 @@ Array<Y<double>, Dynamic, 1> HalfRange::computeEigenfunction(double E, const mat
     return ys;
 }
 
-vector<tuple<unsigned int, double>> *
-mergeEigenvalues(vector<tuple<unsigned int, double>> *even, vector<tuple<unsigned int, double>> *odd) {
-    vector<tuple<unsigned int, double>> *values = new vector<tuple<unsigned int, double>>();
+vector<pair<unsigned int, double>> *
+mergeEigenvalues(vector<pair<unsigned int, double>> *even, vector<pair<unsigned int, double>> *odd) {
+    vector<pair<unsigned int, double>> *values = new vector<pair<unsigned int, double>>();
 
 
-    for (tuple<unsigned int, double> &iE : *even)
-        get<0>(iE) *= 2;
+    for (pair<unsigned int, double> &iE : *even)
+        iE.first *= 2;
 
-    for (tuple<unsigned int, double> &iE : *odd)
-        get<0>(iE) = 2 * get<0>(iE) + 1;
+    for (pair<unsigned int, double> &iE : *odd)
+        iE.first = 2 * iE.first + 1;
 
     auto a = even->begin();
     auto b = odd->begin();
@@ -99,14 +99,15 @@ mergeEigenvalues(vector<tuple<unsigned int, double>> *even, vector<tuple<unsigne
 
 };
 
-vector<tuple<unsigned int, double>> *
+vector<pair<unsigned int, double>> *
 HalfRange::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y<double> &side) const {
     return mergeEigenvalues(
             ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<double>({1, 0}), side),
             ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<double>({0, 1}), side));
 };
 
-vector<tuple<unsigned int, double>> *HalfRange::computeEigenvalues(double Emin, double Emax, const Y<double> &side) const {
+vector<pair<unsigned int, double>> *
+HalfRange::computeEigenvalues(double Emin, double Emax, const Y<double> &side) const {
     return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<double>({1, 0}), side),
                             ms->computeEigenvalues(Emin, Emax, Y<double>({0, 1}), side));
 }

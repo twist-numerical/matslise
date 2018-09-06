@@ -28,11 +28,11 @@ Sector::Sector(SE2D *se2d, double ymin, double ymax, int sectorCount) : se2d(se2
     vbar = apply(se2d->xGrid, vbar_fun);
     matslise = new Matslise(vbar_fun, se2d->xmin, se2d->xmax, sectorCount);
 
-    vector<tuple<unsigned int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, N, y0, y0);
+    vector<pair<unsigned int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, N, y0, y0);
     eigenvalues = new double[N];
     eigenfunctions = new ArrayXd[N];
     for (int i = 0; i < N; ++i) {
-        double E = get<1>((*index_eigv)[i]);
+        double E = (*index_eigv)[i].second;
         eigenvalues[i] = E;
         Array<Y<double>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->xGrid);
         eigenfunctions[i] = ArrayXd(func.size());

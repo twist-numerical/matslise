@@ -83,7 +83,7 @@ Matslise::calculateError(double E, const Y<double> &left, const Y<double> &right
                       thetaL - thetaR);
 }
 
-tuple<unsigned int, double>
+pair<unsigned int, double>
 newtonIteration(const Matslise *ms, double E, const Y<double> &left, const Y<double> &right, double tol) {
     double adjust, error, derror, theta;
     int i = 0;
@@ -100,10 +100,10 @@ newtonIteration(const Matslise *ms, double E, const Y<double> &left, const Y<dou
     int index = (int) (round(theta / M_PI) - 1);
     if (index < 0)
         index = 0;
-    return make_tuple(index, E);
+    return make_pair(index, E);
 }
 
-vector<tuple<unsigned int, double>> *
+vector<pair<unsigned int, double>> *
 Matslise::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y<double> &left,
                                     const Y<double> &right) const {
     double Emin = -1;
@@ -133,15 +133,15 @@ Matslise::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const 
     return computeEigenvalues(Emin, Emax, Imin, Imax, left, right);
 };
 
-vector<tuple<unsigned int, double>> *
+vector<pair<unsigned int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, const Y<double> &left, const Y<double> &right) const {
     return computeEigenvalues(Emin, Emax, 0, UINT_MAX, left, right);
 };
 
-vector<tuple<unsigned int, double>> *
+vector<pair<unsigned int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax, const Y<double> &left,
                              const Y<double> &right) const {
-    vector<tuple<unsigned int, double>> *eigenvalues = new vector<tuple<unsigned int, double>>();
+    vector<pair<unsigned int, double>> *eigenvalues = new vector<pair<unsigned int, double>>();
     queue<tuple<double, double, double, double, unsigned int>> toCheck;
 
     toCheck.push(make_tuple(Emin, get<2>(calculateError(Emin, left, right)) / M_PI,
