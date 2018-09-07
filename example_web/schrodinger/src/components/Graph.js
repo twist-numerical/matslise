@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ComposedChart, CartesianGrid, XAxis, YAxis, Line } from 'recharts';
+import { ComposedChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Line } from 'recharts';
 
 
 class Graph extends Component {
@@ -9,9 +9,18 @@ class Graph extends Component {
     x: [-1, 1],
   };
 
-  state = {
-    x: this.props.x,
-  };
+  constructor(props) {
+    super(props);
+
+    this.state = this.calculateState(props);
+  }
+
+  calculateState(props) {
+    return {
+      x: props.x,
+      f: props.func ? Array.isArray(props.func) ? props.func : [props.func] : [],
+    };
+  }
 
   getFunc() {
     if(this.props.func === undefined || this.props.func === null)
@@ -19,6 +28,10 @@ class Graph extends Component {
     if(Array.isArray(this.props.func))
       return this.props.func;
     return [this.props.func];
+  }
+
+  componentWillReceiveProps(newProps) {
+    this.setState(this.calculateState(newProps));
   }
 
   render() {
@@ -70,9 +83,8 @@ class Graph extends Component {
     }
 
     return (
+      <ResponsiveContainer>
       <ComposedChart
-      width={800}
-      height={400}
       data={data}>
       <CartesianGrid strokeDasharray="3 3"/>
       <XAxis 
@@ -92,7 +104,8 @@ class Graph extends Component {
         stroke={'#' + ('000000'+Math.floor(Math.random()*0x10000007).toString(16)).substr(-6)}
         dot={false} />
         )}
-      </ComposedChart> 
+      </ComposedChart>
+      </ResponsiveContainer>
       );
   }
 }

@@ -1,21 +1,6 @@
-import getParser from './getParser';
+import MathParser from './MathParser';
 
 Math.square = (x) => x*x;
-
-Number.prototype.get = function () { 
-	return this; 
-};
-Number.prototype.diff = () => 0;
-Number.prototype.toFunction = function() { return () => this };
-Array.prototype.get = function(subs, x) {
-	return this.map((v) => v.get(subs, x)); 
-};
-Array.prototype.diff = function(v) { 
-	return this.map((x) => x.diff(v));
-};
-Array.prototype.toFunction = function(...args) { 
-	return new Function(...args, "return "+this.toString());
-};
 
 const DF = function(f, df, toString) {
 	const r = function(v) {
@@ -30,29 +15,32 @@ const DF = function(f, df, toString) {
 	return r;
 }
 
-DF.variable = (name) => name === "PI" ? Math.PI : DF((subs, x) => subs[name], (v) => v === name?1:0, (s) => name);
+DF.number = (n) => DF(() => n, () => DF.zero, () => ""+n);
+const N0 = DF.zero = DF.number(0);
+const N1 = DF.one = DF.number(1);
+DF.variable = (name) => DF((subs, x) => subs[name], (v) => v === name?1:0, (s) => name);
 DF.chain = (f, g) => DF(
 	(subs, x) => f.get(subs, g.get(subs, x)),
 	v => DF.multiply(DF.chain(f.diff(v), g), g.diff(v)),
 	(s) => f.toString(g.toString(s)));
 
-DF.negate = (f) => f === 0?0:DF((subs, x) => -f.get(subs, x), (v) => DF.negate(f.diff(v)), (s) => "(-"+f.toString(s)+")");
+DF.negate = (f) => f === N0?N0:DF((subs, x) => -f.get(subs, x), (v) => DF.negate(f.diff(v)), (s) => "(-"+f.toString(s)+")");
 DF.sin = DF((subs, x) => Math.sin(x), () => DF.cos, (s) => "Math.sin("+s+")");
 DF.cos = DF((subs, x) => Math.cos(x), () => DF.negate(DF.sin), (s) => "Math.cos("+s+")");
 DF.exp = DF((subs, x) => Math.exp(x), () => DF.exp, (s) => "Math.exp("+s+")");
-DF.multiply = (f, g) => f === 0 || g === 0?0:f===1?g:g===1?f:f===g?DF.square(f):DF(
+DF.multiply = (f, g) => f === N0 || g === N0?N0:f===N1?g:g===N1?f:f===g?DF.square(f):DF(
 	(subs, x) => f.get(subs, x) * g.get(subs, x),
 	v => DF.add(DF.multiply(f.diff(v),g), DF.multiply(f, g.diff(v))),
 	(s) => "("+f.toString(s)+"*"+g.toString(s)+")");
-DF.divide = (f, g) => f === 0?0:g===1?f:DF(
+DF.divide = (f, g) => f === N0?N0:g===N1?f:DF(
 	(subs, x) => f.get(subs, x) / g.get(subs, x),
 	v => DF.divide(DF.subtract(DF.multiply(f.diff(v),g), DF.multiply(f, g.diff(v))), DF.square(g)),
 	(s) => "("+f.toString(s)+"/"+g.toString(s)+")");
-DF.subtract = (f, g) => f===0?DF.negate(g):g===0?f:f === g?0:DF(
+DF.subtract = (f, g) => f===N0?DF.negate(g):g===N0?f:f === g?N0:DF(
 	(subs, x) => f.get(subs, x) - g.get(subs, x),
 	v => DF.subtract(f.diff(v), g.diff(v)),
 	(s) => "("+f.toString(s)+" - "+g.toString(s)+")");
-DF.add = (f, g) => f === 0?g:g === 0?f:DF(
+DF.add = (f, g) => f === N0?g:g === N0?f:DF(
 	(subs, x) => f.get(subs, x).add(g.get(subs, x)),
 	v => DF.add(f.diff(v), g.diff(v)),
 	(s) => "("+f.toString(s)+" + "+g.toString(s)+")");
@@ -76,29 +64,40 @@ DF.ifelse = (crit, f, g) => DF(
 	);
 DF.identity = (f) => f;
 
-let parser = getParser(
-	(() => {
-		const vars = {
-			'pi': Math.PI
+class DFParser extends MathParser {
+	constants = {
+		pi: DF.number(Math.PI),
+	}
+	constructor() {
+		super(DF.number,
+			v => this.constants[v],
+			(() => {
+				const operators = {};
+				["add", "subtract", "multiply", "divide", "negate", "pow", "identity"].forEach(
+					f => operators[f] = DF[f]);
+				return operators;
+			})(),
+			(() => {
+				const functions = {};
+				["sqrt", "sin", "cos", "exp", "square"].forEach(
+					f => functions[f] = DF[f]);
+				return functions;
+			})());
+	}
+
+	parse(value, variables = []) {
+		this.variables = (v) => {
+			if(variables.indexOf(v) >= 0)
+				return DF.variable(v);
+			return this.constants[v];
 		};
-		return (v) => {
-			if(!vars[v])
-				vars[v] = DF.variable(v);
-			return vars[v];
-		};
-	})(),
-	(() => {
-		const operators = {};
-		["add", "subtract", "multiply", "divide", "negate", "pow", "identity"].forEach(
-			f => operators[f] = DF[f]);
-		return operators;
-	})(),
-	(() => {
-		const functions = {};
-		["sqrt", "sin", "cos", "exp", "square"].forEach(
-			f => functions[f] = DF[f]);
-		return functions;
-	})());
+		const parsed = super.parse(value);
+		parsed.value = value;
+		return parsed;
+	}
+}
+
+const parser = new DFParser();
 DF.parse = parser.parse.bind(parser);
 
 export default DF;

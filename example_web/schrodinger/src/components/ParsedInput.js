@@ -1,48 +1,74 @@
 import React, { Component } from 'react';
 import DF from '../lib/Differentiable';
 
+const htmlEscape = (s="") => {
+  return s.replace(/&/g, '&amp;')
+  .replace(/>/g, '&gt;')
+  .replace(/</g, '&lt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&apos;');
+}
+
 class ParsedInput extends Component {
+
   static defaultProps = {
     onParsed: () => {},
-    parseOnMount: true,
+    onEnter: (pi) => {
+      let e = pi.input;
+      while(e && e.tagName !== "FORM")
+        e = e.parentElement;
+      if(e) {
+        let submit = document.createElement("input");
+        submit.type = "submit";
+        submit.style.display = "none";
+        e.appendChild(submit);
+        submit.click();
+        e.removeChild(submit);
+      }
+    },
+    parsed: null,
+    variables: [],
   }
   state = {
-    value: "",
-    parsed: null,
+    parsed: this.props.parsed,
+    done: this.props.parsed ? this.props.parsed.value : "", 
+    todo: "",
   }
   input = null;
 
-  constructor(props) {
-    super(props);
-
-    this.state.value = props.value;
-  }
-
-  componentDidMount() {
-    if(this.props.parseOnMount)
-      this.props.onParsed(this.onInput(this.state.value));
-  }
-
-  componentDidUpdate(prevProps, prevState, snapshot) {
-    if(prevProps.value !== this.props.value) {
-      this.onInput(this.props.value); 
-    }
+  isValid() {
+    return this.state.parsed !== null;
   }
 
   render() {
+    const {parsed, onParsed, variables, onEnter, ...restProps} = this.props;
+
     return (
-      <div className="input-group mb-3">
-      <div className="form-control" contentEditable={true}
-      style={{'textAlign': 'left'}}
-      onInput={(e) => this.onInput()}
-      ref={div => this.input = div} />
-      <div className="input-group-append">
-      <button
-      onClick={() => this.props.onParsed(this.state.parsed)}
-      className="btn btn-outline-secondary">View</button>
-      </div>
-      </div>
+      <div {...restProps} contentEditable={true}
+      onInput={e => this.onInput(e.target.textContent.replace(/[\n\r]/g, " "))}
+      ref={div => this.input = div}
+      dangerouslySetInnerHTML={{__html:
+        '<span>'+htmlEscape(this.state.done)+'</span><span style="color: red;">'+htmlEscape(this.state.todo)+'</span>'}}
+      onKeyDown={(e) => {
+        if (e.keyCode === 13) {
+          this.props.onEnter(this);
+          e.preventDefault();
+        }
+      }}
+      />
       );
+  }
+
+  componentDidUpdate() {
+    if(!this.input.firstChild)
+      return;
+    if(this.cursorPosition >= 0) {
+      if (this.cursorPosition <= this.state.done.length)
+        this.setCursor(this.input.children[0].firstChild, this.cursorPosition);
+      else
+        this.setCursor(this.input.children[1].firstChild, this.cursorPosition-this.state.done.length);
+    }
+    this.cursorPosition = -1;
   }
 
   getCursorOffset(node) {
@@ -95,30 +121,14 @@ class ParsedInput extends Component {
   }
 
   onInput(value) {
-    if(value === undefined)
-      value = this.input.textContent;
+    this.cursorPosition = this.getCursorOffset(this.input);
+
     const {parsed, todo, done} = this.parse(value);
-    const cursor = this.getCursorOffset(this.input);
-    this.setState({parsed, value});
-    
-    const doneSpan = document.createElement('span');
-    doneSpan.textContent = done;
-    
-    const todoSpan = document.createElement('span');
-    todoSpan.style.color = 'red';
-    todoSpan.textContent = todo;
-    
-    while (this.input.firstChild)
-      this.input.removeChild(this.input.firstChild);
-    this.input.appendChild(doneSpan);
-    this.input.appendChild(todoSpan);
 
-    if(cursor <= done.length)
-      this.setCursor(doneSpan.firstChild, cursor);
-    else
-      this.setCursor(todoSpan.firstChild, cursor-done.length);
+    if (parsed !== null)
+      this.props.onParsed(parsed);
 
-    return parsed;
+    this.setState({parsed, todo, done});
   }
 
   parse(value) {
@@ -126,7 +136,7 @@ class ParsedInput extends Component {
     let done = value;
     let todo = "";
     try {
-      parsed = DF.parse(value);
+      parsed = DF.parse(value, this.props.variables);
     } catch (e) {
       if(e.done === undefined || e.todo === undefined)
         throw e;

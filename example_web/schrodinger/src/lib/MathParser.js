@@ -12,7 +12,7 @@ class Parser {
 		const arr = applied.filter(([v, s]) => s.length === 0).map(([v,s]) => v);
 		if(arr.length === 1)
 			return arr[0];
-		console.error(applied.map(([v, s]) => [v.toString(), s]));
+		
 		if(arr.length === 0) {
 			const error = new Error("Could not parse the given query");
 			error.todo = str;
@@ -84,7 +84,7 @@ Parser.regex = regex => new Parser(s => {
 });
 
 Parser.unsignedFloat 
-= Parser.regex(/^(([0-9]+(\.[0-9]*)?)|([0-9]*\.[0-9]+))(e-?[0-9]+)?/g).bind(v => Parser.pure(+v));
+= Parser.regex(/^(([0-9]+(\.[0-9]*)?)|([0-9]*\.[0-9]+))(e-?[0-9]+)?/g);
 
 Parser.word
 = Parser.regex(/^[a-zA-Z][a-zA-Z0-9_]*/g);
@@ -96,49 +96,72 @@ Parser.whitespaceWrap = (p) => Parser.whitespace.chain(
 		Parser.whitespace.chain(
 			Parser.pure(v))));
 
-export default (
-	variable = (name) => toString(name),
-	operators = {
-		identity: (a) => a,
-		negate: (a) => toString("-"+a),
-		add: (a,b) => toString("("+a+" + "+b+")"),
-		multiply: (a,b) => toString("("+a+" * "+b+")"),
-		subtract: (a,b) => toString("("+a+" - "+b+")"),
-		divide: (a,b) => toString("("+a+" / "+b+")"),
-		pow: (a,b) => toString("("+a+"^"+b+")"),
-	},
-	functions = {}) => {
-	let unaryExp, binExp, expression;
-	operators.powNegate = (a, b) => operators.pow(a, operators.negate(b));
-	operators.powIdentity = (a, b) => operators.pow(a, operators.identity(b));
+class MathParser {
+	numbers = null;
+	variables = null;
+	operators = null;
+	functions = null;
 
-	unaryExp = (priority, ops) => ops.reduce((c, [op, f]) =>
-		c.mplus(Parser.regex(op).bind(_ =>
-			expression(priority-1).bind(v => 
-				Parser.pure(operators[f](v))))),
-		Parser.empty);
+	constructor(
+		numbers = (n) => ""+n,
+		variables = (name) => toString(name),
+		operators = {
+			identity: (a) => a,
+			negate: (a) => toString("-"+a),
+			add: (a,b) => toString("("+a+" + "+b+")"),
+			multiply: (a,b) => toString("("+a+" * "+b+")"),
+			subtract: (a,b) => toString("("+a+" - "+b+")"),
+			divide: (a,b) => toString("("+a+" / "+b+")"),
+			pow: (a,b) => toString("("+a+"^"+b+")"),
+		},
+		functions = {}) {
+		operators.powNegate = (a, b) => operators.pow(a, operators.negate(b));
+		operators.powIdentity = (a, b) => operators.pow(a, operators.identity(b));
 
-	binExp = (priority, ops) => {
-		let opParser = ops.reduce((c, [op, f]) =>
-			c.mplus(Parser.whitespaceWrap(Parser.regex(op)).chain(Parser.pure(f))),
+		this.numbers = numbers;
+		this.variables = variables;
+		this.operators = operators;
+		this.functions = functions;
+		this.parser = this.buildParser();
+	}
+
+	buildParser() {
+		const cumul = [];
+
+		const unaryExp = (priority, ops) => ops.reduce((c, [op, f]) =>
+			c.mplus(Parser.regex(op).bind(_ =>
+				cumul[priority-1].bind(v => 
+					Parser.pure(this.operators[f](v))))),
 			Parser.empty);
-		return Parser.pure(null).bind(_ => expression(priority-1).bind(first => 
-			Parser.plus(opParser.bind(f => expression(priority-1)
-				.bind(d => Parser.pure([f, d])))
-			).bind(st => Parser.pure(
-				st.reduce((c, [f, d]) => operators[f](c, d), first)))));
-	};
 
-	expression = (() => {
-		let parsers = [
+		const binExp = (priority, ops) => {
+			let opParser = ops.reduce((c, [op, f]) =>
+				c.mplus(Parser.whitespaceWrap(Parser.regex(op)).chain(Parser.pure(f))),
+				Parser.empty);
+			return Parser.pure(null).bind(_ => cumul[priority-1].bind(first => 
+				Parser.plus(opParser.bind(f => cumul[priority-1]
+					.bind(d => Parser.pure([f, d])))
+				).bind(st => Parser.pure(
+					st.reduce((c, [f, d]) => this.operators[f](c, d), first)))));
+		};
+
+		const parsers = [
 		Parser.mplus(
-			Parser.unsignedFloat,
+			Parser.unsignedFloat.bind(n => Parser.pure(this.numbers(n))),
 			Parser.word.bind(f => Parser.regex(/^\s*\(\s*/g).chain(
-				expression().bind(e => Parser.regex(/^\s*\)/g).bind(_=>
-					Parser.pure(functions[f](e)))))),
-			Parser.word.bind(v => Parser.pure(variable(v))),
+				cumul[cumul.length-1].bind(e => Parser.regex(/^\s*\)/g).bind(_=> {
+					if (this.functions[f] === undefined)
+						return Parser.empty;
+					return Parser.pure(this.functions[f](e))
+				})))),
+			Parser.word.bind(v => {
+				const parsedVar = this.variables(v);
+				if(parsedVar === undefined)
+					return Parser.empty;
+				return Parser.pure(parsedVar);
+			}),
 			Parser.regex(/^\(\s*/g).bind(_ =>
-				expression().bind(v =>
+				cumul[cumul.length-1].bind(v =>
 					Parser.regex(/^\s*\)/g).chain(
 						Parser.pure(v))))),
 		null,
@@ -149,7 +172,8 @@ export default (
 		binExp(6, [[/^\+/, "add"], [/^-/, "subtract"]])
 		];
 
-		let cumul = [parsers[0]];
+
+		cumul.push(parsers[0]);
 		for(let i = 1; i < parsers.length; ++i) {
 			if(parsers[i] == null)
 				cumul.push(cumul[i-1]);
@@ -157,12 +181,13 @@ export default (
 				cumul.push(cumul[i-1].mplus(parsers[i]));
 		}
 
-		return priority => {
-			if(priority === undefined || priority >= cumul.length)
-				priority = cumul.length-1;
-			return cumul[priority];
-		};
-	})();
+		return cumul[cumul.length-1];
+	};
 
-	return expression();
+	parse(value) {
+		return this.parser.parse(value);
+	}
 };
+MathParser.Parser = Parser;
+
+export default MathParser;

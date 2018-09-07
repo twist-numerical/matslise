@@ -3,7 +3,7 @@
 
 import React, { Component } from 'react';
 import './App.css';
-import ParsedInput from './components/ParsedInput'
+import SettingsForm from './components/SettingsForm'
 import Graph from './components/Graph'
 
 class App extends Component {
@@ -32,22 +32,24 @@ class App extends Component {
       return "Loading";
     
     const {x, f} = this.state;
-    window.f= f;
+
     let funcs = [f];
-    this.eigenvalues(0, 2).forEach(({value}) => 
+    this.eigenvalues(0, 50).forEach(({value}) => 
       funcs.push(this.eigenfunction(value)));
 
     return (
-      <div className="App">
-      <ParsedInput
-      onParsed={parsed => {
-        window.p = parsed;
-        this.updateFunction({f: parsed.toFunction("x")});
-      }}
-      value="2*cos(2*x)" />
-      <Graph
-      x={x}
-      func={funcs} />
+      <div className="container-fluid">
+        <h1>Schrödinger</h1>
+        <div className="row">
+          <div className="col-4">
+            <SettingsForm onSubmit={data => this.updateFunction(data)} />
+          </div>
+          <div className="col-8"  style={{minHeight: '300px'}}>
+            <Graph
+            x={x}
+            func={funcs} />
+          </div>
+        </div>
       </div>
       );
   }
