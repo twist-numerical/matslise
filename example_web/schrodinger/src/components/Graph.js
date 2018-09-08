@@ -7,6 +7,7 @@ class Graph extends Component {
     numPoints: 200,
     func: x => x,
     x: [-1, 1],
+    symmetricY: false,
   };
 
   constructor(props) {
@@ -79,6 +80,11 @@ class Graph extends Component {
       } else {
         ymin = Math.floor(ymin/step)*step;
         ymax = Math.ceil(ymax/step)*step;
+      }
+
+      if(this.props.symmetricY) {
+        ymax = Math.max(ymax, -ymin);
+        ymin = -ymax;
       }
     }
 

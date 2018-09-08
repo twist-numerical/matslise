@@ -5,11 +5,16 @@ import DF from '../lib/Differentiable';
 class SettingsForm extends Component {
   static defaultProps = {
     onSubmit: () => {},
+    onInit: () => {},
   };
   state = {
     x: [DF.parse('0'), DF.parse('pi')],
     parsed: DF.parse('0'),
   };
+
+  componentDidMount() {
+    this.props.onInit(this.calculateData());
+  }
 
   render() {
     window.DF = DF;
@@ -56,12 +61,18 @@ class SettingsForm extends Component {
   }
 
   onSubmit() {
+    this.props.onSubmit(this.calculateData());
+  }
+
+  calculateData() {
     const {parsed, x} = this.state;
-    const data = {
+    window.parsed = parsed;
+    const f = parsed.toFunction('x');
+    f.value = parsed.value;
+    return {
       x: x.map(v => v.toFunction()()),
-      f: parsed.toFunction('x'),
+      f: f,
     };
-    this.props.onSubmit(data);
   }
 }
 

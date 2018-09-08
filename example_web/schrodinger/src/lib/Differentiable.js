@@ -18,15 +18,17 @@ const DF = function(f, df, toString) {
 DF.number = (n) => DF(() => n, () => DF.zero, () => ""+n);
 const N0 = DF.zero = DF.number(0);
 const N1 = DF.one = DF.number(1);
+const X = DF.x = DF((subs, x) => x, () => N1, (s) => s)
 DF.variable = (name) => DF((subs, x) => subs[name], (v) => v === name?1:0, (s) => name);
 DF.chain = (f, g) => DF(
 	(subs, x) => f.get(subs, g.get(subs, x)),
 	v => DF.multiply(DF.chain(f.diff(v), g), g.diff(v)),
 	(s) => f.toString(g.toString(s)));
-
 DF.negate = (f) => f === N0?N0:DF((subs, x) => -f.get(subs, x), (v) => DF.negate(f.diff(v)), (s) => "(-"+f.toString(s)+")");
 DF.sin = DF((subs, x) => Math.sin(x), () => DF.cos, (s) => "Math.sin("+s+")");
 DF.cos = DF((subs, x) => Math.cos(x), () => DF.negate(DF.sin), (s) => "Math.cos("+s+")");
+DF.tan = DF((subs, x) => Math.tan(x), () => DF.divide(N1, DF.square(DF.cos)), (s) => "Math.tan("+s+")");
+DF.atan = DF((subs, x) => Math.atan(x), () => DF.divide(N1, DF.add(N1, DF.square(X))), (s) => "Math.atan("+s+")");
 DF.exp = DF((subs, x) => Math.exp(x), () => DF.exp, (s) => "Math.exp("+s+")");
 DF.multiply = (f, g) => f === N0 || g === N0?N0:f===N1?g:g===N1?f:f===g?DF.square(f):DF(
 	(subs, x) => f.get(subs, x) * g.get(subs, x),
@@ -46,7 +48,7 @@ DF.add = (f, g) => f === N0?g:g === N0?f:DF(
 	(s) => "("+f.toString(s)+" + "+g.toString(s)+")");
 DF.square = (f) => DF(
 	(subs, x) => Math.square(f.get(subs, x)),
-	v => DF.multiply(2, DF.multiply(f.diff(v), f)),
+	v => DF.multiply(DF.number(2), DF.multiply(f.diff(v), f)),
 	(s) => "Math.square("+f.toString(s)+")");
 DF.pow = (f, e) => DF(
 	(subs, x) => Math.pow(f.get(subs, x), e),
@@ -79,7 +81,7 @@ class DFParser extends MathParser {
 			})(),
 			(() => {
 				const functions = {};
-				["sqrt", "sin", "cos", "exp", "square"].forEach(
+				["sqrt", "sin", "cos", "tan", "atan", "exp", "square"].forEach(
 					f => functions[f] = DF[f]);
 				return functions;
 			})());
