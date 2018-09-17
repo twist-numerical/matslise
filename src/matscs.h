@@ -19,8 +19,10 @@
 using namespace Eigen;
 
 namespace matslise {
-    namespace matscs_sector {
+    namespace matscs_util {
         class Sector;
+
+        class EigenfunctionCalculator;
     }
 
     class Matscs {
@@ -29,19 +31,23 @@ namespace matslise {
         int n;
         double xmin, xmax;
         int sectorCount;
-        matslise::matscs_sector::Sector **sectors;
+        matslise::matscs_util::Sector **sectors;
         MatrixXd zero, one;
     public:
         Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount);
 
-        matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &y, double a, double b) const;
+        template<typename Type, int... Args>
+        matslise::Y<Matrix<Type, Args...>> propagate(double E, const matslise::Y<Matrix<Type, Args...>> &y, double a, double b) const;
 
         std::vector<matslise::Y<MatrixXd>> *computeEigenfunction(double E, std::vector<double> &x) const;
+
+        matslise::matscs_util::EigenfunctionCalculator *eigenfunctionCalculator(
+                double E, const matslise::Y<VectorXd> &left, const matslise::Y<VectorXd> &right);
 
         virtual ~Matscs();
     };
 
-    namespace matscs_sector {
+    namespace matscs_util {
         class Sector {
         private:
             const Matscs *s;
@@ -60,10 +66,23 @@ namespace matslise {
 
             T<MatrixXd> calculateT(double E, double delta) const;
 
-            Y<MatrixXd> propagate(double E, const Y<MatrixXd> &y0, double delta) const;
+            template<typename Type, int... Args>
+            Y<Matrix<Type, Args...>> propagate(double E, const Y<Matrix<Type, Args...>> &y0, double delta) const;
 
             virtual ~Sector();
 
+        };
+
+
+        class EigenfunctionCalculator : public Evaluator<Y<VectorXd>, double> {
+        public:
+            Matscs *ms;
+            double E;
+            std::vector<Y<VectorXd>> ys;
+
+            EigenfunctionCalculator(Matscs *ms, double E, const Y<VectorXd> &left, const Y<VectorXd> &right);
+
+            virtual Y<VectorXd> eval(double x) const;
         };
     }
 }

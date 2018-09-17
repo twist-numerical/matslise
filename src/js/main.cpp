@@ -1,5 +1,6 @@
 #include <emscripten/bind.h>
 #include "../matslise.h"
+#include "../se2d.h"
 
 using namespace matslise;
 using namespace emscripten;
@@ -25,9 +26,9 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .field("index", &pair<unsigned int, double>::first)
             .field("value", &pair<unsigned int, double>::second);
 
-    class_<EigenfunctionCalculator>("EigenfunctionCalculator")
+    class_<matslise_util::EigenfunctionCalculator>("EigenfunctionCalculator")
             .function("eval",
-                      optional_override([](EigenfunctionCalculator &self, double x) -> Vector2d { return self(x).y; }));
+                      optional_override([](matslise_util::EigenfunctionCalculator &self, double x) -> Vector2d { return self(x).y; }));
 
     class_<Matslise>("Matslise")
             .constructor(optional_override(
@@ -48,7 +49,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .function("eigenfunction", optional_override(
                     [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                             val {
-                        EigenfunctionCalculator *calculator = m.eigenfunctionCalculator(E, Y<double>(left),
+                        matslise_util::EigenfunctionCalculator *calculator = m.eigenfunctionCalculator(E, Y<double>(left),
                                                                                         Y<double>(right));
                         return val::global("Function")
                                 .new_(string("calculator"), string(

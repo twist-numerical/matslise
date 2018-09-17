@@ -51,7 +51,7 @@ class App extends Component {
       <div className="container-fluid h-100">
         <h1 style={{position: 'absolute', top:0, width: '100%', height: "50px"}}>Schrödinger</h1>
         <div className="row h-100">
-          <div className="col-4" style={{height: '100vh', overflowX: 'auto', borderTop: "solid transparent 60px"}}>
+          <div className="col-5 col-md-4 col-xl-3" style={{height: '100vh', overflowX: 'auto', borderTop: "solid transparent 60px"}}>
             <SettingsForm onSubmit={data => this.updateFunction(data)} onInit={data => this.updateFunction(data)} />
             <div className="table-responsive">
               <table className="table table-sm table-striped">
@@ -67,11 +67,18 @@ class App extends Component {
                       <td>{index}</td>
                       <td>{value}</td>
                     </tr>)}
+                  <tr>
+                    <td colSpan="3">
+                      <button onClick={e => this.moreEigenvalues()} className="btn btn-link">
+                        + more eigenvalues
+                      </button>
+                    </td>
+                  </tr>
                   </tbody>
               </table>
             </div>
           </div>
-          <div className="col-8"  style={{minHeight: '300px', maxHeight: '100vh'}}>
+          <div className="col-7 col-md-8 col-9-xl"  style={{minHeight: '300px', maxHeight: '100vh'}}>
             <Graph
               symmetricY={true}
               x={x}
@@ -80,6 +87,14 @@ class App extends Component {
         </div>
       </div>
       );
+  }
+
+  moreEigenvalues() {
+    let eigenvalues = this.state.eigenvalues;
+    let n = eigenvalues.length;
+    eigenvalues = eigenvalues.concat(
+      this.eigenvalues(n, n + 10));
+    this.setState({eigenvalues});
   }
 
   toggleShowEigenvalue(i) {
@@ -101,7 +116,7 @@ class App extends Component {
 
     this.toDelete.push(matslise);
     this.setState({f, x, steps, matslise,
-      eigenvalues: this.eigenvalues(0, 50, matslise),
+      eigenvalues: this.eigenvalues(0, 10, matslise),
       showPotential: true,
     });
   }

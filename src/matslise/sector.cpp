@@ -10,7 +10,7 @@
 
 using namespace std;
 using namespace matslise;
-using namespace matslise::matslise_sector;
+using namespace matslise::matslise_util;
 
 Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;

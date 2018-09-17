@@ -11,8 +11,8 @@ set(CMAKE_INSTALL_PREFIX /usr/)
 INCLUDE_DIRECTORIES("/home/toon/Programmeren/cpp/eigen")
 
 SET(MATSLISE_SRC src/util/calculateEta.cpp src/util/lobatto.cpp
-        src/matslise/matslise.cpp src/matslise/halfrange.cpp src/matslise/sector.cpp src/matslise/matslise_formulas.cpp
-        src/matscs/matscs.cpp src/matscs/sector.cpp src/matscs/matscs_formulas.cpp
+        src/matslise/matslise.cpp src/matslise/halfrange.cpp src/matslise/sector.cpp src/matslise/matslise_formulas.cpp src/matslise/eigenfunction_calculator.cpp
+        src/matscs/matscs.cpp src/matscs/sector.cpp src/matscs/matscs_formulas.cpp src/matscs/eigenfunction_calculator.cpp
         src/se2d/se2d.cpp src/se2d/sector.cpp)
 
 if (DEFINED EMSCRIPTEN)
@@ -24,7 +24,7 @@ if (DEFINED EMSCRIPTEN)
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")
-    add_library(matslise SHARED ${MATSLISE_SRC})
+    add_library(matslise SHARED ${MATSLISE_SRC} src/matslise/eigenfunction_calculator.cpp)
     # target_link_libraries(matslise Eigen3::Eigen)
 
     install(TARGETS matslise DESTINATION lib)

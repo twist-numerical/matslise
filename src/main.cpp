@@ -118,8 +118,8 @@ void testEigenfunctionCalculator() {
     cout << E << endl;
     delete eigs;
 
-    EigenfunctionCalculator *_ef = coffey.eigenfunctionCalculator(E, y0, y0);
-    EigenfunctionCalculator &ef = *_ef;
+    matslise_util::EigenfunctionCalculator *_ef = coffey.eigenfunctionCalculator(E, y0, y0);
+    matslise_util::EigenfunctionCalculator &ef = *_ef;
     cout << ef(0) << endl;
     delete _ef;
 }

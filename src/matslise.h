@@ -28,14 +28,15 @@ namespace matslise {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Vector2D<D> y, dy;
 
-        Y() : y({D(0), D(0)}), dy({D(0), D(0)}) {}
+        Y() : y({0, 0}), dy({0, 0}) {}
 
-        Y(Vector2D<D> y) : y(y), dy({D(0), D(0)}) {}
+        Y(Vector2D<D> y) : y(y), dy({0, 0}) {}
+
 
         Y(Vector2D<D> y, Vector2D<D> dy) : y(y), dy(dy) {}
 
         Y<D> operator-() const {
-            return Y(-y, -dy);
+            return Y<D>(-y, -dy);
         }
 
         double theta() const {
@@ -46,14 +47,14 @@ namespace matslise {
             return os << "(" << m.y[0] << "," << m.y[1] << ")" << "(" << m.dy[0] << "," << m.dy[1] << ")";
         }
 
-        Y<D> &operator*=(const D &f) {
+        Y<D> &operator*=(double f) {
             y *= f;
             dy *= f;
             return *this;
         }
 
         friend Y<D> operator*(const D &f, const Y<D> &y) {
-            return Y(f * y.y, f * y.dy);
+            return Y<D>(f * y.y, f * y.dy);
         }
     };
 
@@ -68,15 +69,17 @@ namespace matslise {
 
         T(Matrix2D<D> t, Matrix2D<D> dt) : t(t), dt(dt) {}
 
-        Y<D> operator*(Y<D> y) const {
-            return Y<D>(t * y.y, t * y.dy + dt * y.y);
+        template<typename R=D>
+        Y<R> operator*(Y<R> y) const {
+            return Y<R>(t * y.y, t * y.dy + dt * y.y);
         }
 
-        Y<D> operator/(Y<D> y) const {
+        template<typename R=D>
+        Y<R> operator/(Y<R> y) const {
             Matrix2D<D> ti, dti;
             ti = {t.d, -t.b, -t.c, t.a};
             dti = {dt.d, -dt.b, -dt.c, dt.a};
-            return Y<D>(ti * y.y, ti * y.dy + dti * y.y);
+            return Y<R>(ti * y.y, ti * y.dy + dti * y.y);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const T<D> &m) {
@@ -84,9 +87,10 @@ namespace matslise {
         }
     };
 
-    class EigenfunctionCalculator;
-    namespace matslise_sector {
+    namespace matslise_util {
         class Sector;
+
+        class EigenfunctionCalculator;
     }
 
     class Matslise {
@@ -95,7 +99,7 @@ namespace matslise {
         double xmin, xmax;
         int sectorCount;
         double match;
-        matslise::matslise_sector::Sector **sectors;
+        matslise::matslise_util::Sector **sectors;
 
     public:
         Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount);
@@ -123,7 +127,7 @@ namespace matslise {
                            const matslise::Y<double> &left,
                            const matslise::Y<double> &right) const;
 
-        matslise::EigenfunctionCalculator *eigenfunctionCalculator(
+        matslise::matslise_util::EigenfunctionCalculator *eigenfunctionCalculator(
                 double E, const matslise::Y<double> &left, const matslise::Y<double> &right);
 
         virtual ~Matslise();
@@ -148,7 +152,7 @@ namespace matslise {
         virtual ~HalfRange();
     };
 
-    namespace matslise_sector {
+    namespace matslise_util {
         class Sector {
         public:
             Matslise *s;
@@ -175,22 +179,17 @@ namespace matslise {
 
             virtual ~Sector();
         };
-    }
 
+        class EigenfunctionCalculator : public Evaluator<Y<double>, double> {
+        public:
+            Matslise *ms;
+            double E;
+            std::vector<Y<double>> ys;
 
-    class EigenfunctionCalculator : public Evaluator<Y<double>, double> {
-    public:
-        Matslise *ms;
-        double E;
-        Y<double> *ys = NULL;
+            EigenfunctionCalculator(Matslise *ms, double E, const Y<double> &left, const Y<double> &right);
 
-        EigenfunctionCalculator(Matslise *ms, double E, const Y<double> &left, const Y<double> &right);
-
-        virtual Y<double> eval(double x) const;
-
-        EigenfunctionCalculator &operator=(const EigenfunctionCalculator &ec);
-
-        ~EigenfunctionCalculator();
+            virtual Y<double> eval(double x) const;
+        };
     };
 }
 

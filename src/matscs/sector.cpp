@@ -9,7 +9,7 @@
 
 using namespace std;
 using namespace matslise;
-using namespace matslise::matscs_sector;
+using namespace matslise::matscs_util;
 
 Sector::Sector(const Matscs *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
@@ -74,7 +74,8 @@ T<MatrixXd> Sector::calculateT(double E) const {
     return t;
 }
 
-Y<MatrixXd> Sector::propagate(double E, const Y<MatrixXd> &y0, double delta) const {
+template<typename Type, int... Args>
+Y<Matrix<Type, Args...>> Sector::propagate(double E, const Y<Matrix<Type, Args...>> &y0, double delta) const {
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
@@ -82,6 +83,9 @@ Y<MatrixXd> Sector::propagate(double E, const Y<MatrixXd> &y0, double delta) con
     T<MatrixXd> t = calculateT(E, delta);
     return forward ? t * y0 : t / y0;
 }
+
+template Y<Matrix<double, -1, -1>> Sector::propagate(double E, const Y<Matrix<double, -1, -1>> &y0, double delta) const;
+template Y<Matrix<double, -1, 1>> Sector::propagate(double E, const Y<Matrix<double, -1, 1>> &y0, double delta) const;
 
 Sector::~Sector() {
     delete[]vs;

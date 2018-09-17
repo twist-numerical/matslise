@@ -6,10 +6,15 @@
 
 using namespace std;
 using namespace matslise;
-using namespace matslise::matscs_sector;
+using namespace matslise::matscs_util;
 
-Matscs::Matscs(function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount)
-        : V(V), n(n), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
+
+Matscs::Matscs(function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount) {
+    this->V = V;
+    this->n = n;
+    this->xmin = xmin;
+    this->xmax = xmax;
+    this->sectorCount = sectorCount;
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
@@ -17,8 +22,10 @@ Matscs::Matscs(function<MatrixXd(double)> V, int n, double xmin, double xmax, in
 
 }
 
-Y<MatrixXd> Matscs::propagate(const double E, const Y<MatrixXd> &_y, const double a, const double b) const {
-    Y<MatrixXd> y = _y;
+template<typename Type, int... Args>
+Y<Matrix<Type, Args...>>
+Matscs::propagate(const double E, const Y<Matrix<Type, Args...>> &_y, const double a, const double b) const {
+    Y<Matrix<Type, Args...>> y = _y;
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
@@ -54,6 +61,13 @@ Y<MatrixXd> Matscs::propagate(const double E, const Y<MatrixXd> &_y, const doubl
     return y;
 
 }
+
+template Y<Matrix<double, -1, -1>>
+Matscs::propagate(const double E, const Y<Matrix<double, -1, -1>> &_y, const double a, const double b) const;
+
+template Y<Matrix<double, -1, 1>>
+Matscs::propagate(const double E, const Y<Matrix<double, -1, 1>> &_y, const double a, const double b) const;
+
 
 Matscs::~Matscs() {
     for (int i = 0; i < sectorCount; ++i)

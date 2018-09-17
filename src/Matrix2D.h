@@ -59,6 +59,13 @@ public:
         return *this;
     }
 
+    Vector2D<V> &operator=(std::initializer_list<V> xy) {
+        auto i = xy.begin();
+        x = *i;
+        y = *(++i);
+        return *this;
+    };
+
     V operator[](int a) const {
         return a == 0 ? x : y;
     }
@@ -72,7 +79,15 @@ public:
     friend Vector2D<V> operator*(const V &f, const Vector2D<V> &v) {
         return {f * v.x, f * v.y};
     }
+
 };
+
+template<typename V>
+inline Vector2D<V> operator*=(Vector2D<V> &lhs, double rhs) {
+    lhs.x *= rhs;
+    lhs.y *= rhs;
+    return lhs;
+}
 
 template<typename V = double>
 class Matrix2D {
@@ -103,7 +118,8 @@ public:
         return {a * f, b * f, c * f, d * f};
     }
 
-    Vector2D<V> operator*(const Vector2D<V> &r) const {
+    template<typename R=V>
+    Vector2D<R> operator*(const Vector2D<R> &r) const {
         return {a * r.x + b * r.y, c * r.x + d * r.y};
     }
 
