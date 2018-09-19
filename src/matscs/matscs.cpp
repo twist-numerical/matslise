@@ -1,5 +1,4 @@
 #include <functional>
-#include <Eigen/Dense>
 #include "../matscs.h"
 
 #define EPS (1.e-12)

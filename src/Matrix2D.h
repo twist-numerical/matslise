@@ -6,7 +6,12 @@
 #define MATSLISE_MATRIX2D_H
 
 #include <ostream>
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#pragma GCC diagnostic ignored "-Wint-in-bool-context"
 #include <Eigen/Dense>
+#pragma GCC diagnostic pop
 
 template<typename V = double>
 class Vector2D {

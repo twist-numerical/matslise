@@ -1,7 +1,7 @@
 #ifndef SCHRODINGER_CALCULATE_ETA_H
 #define SCHRODINGER_CALCULATE_ETA_H
 
-#include <Eigen/Dense>
+#include "../Matrix2D.h"
 
 
 using namespace Eigen;

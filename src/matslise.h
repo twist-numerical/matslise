@@ -10,7 +10,6 @@
 #include <vector>
 #include <tuple>
 #include <functional>
-#include <Eigen/Dense>
 #include "Array2D.h"
 #include "Matrix2D.h"
 #include "Evaluator.h"
@@ -28,7 +27,7 @@ namespace matslise {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Vector2D<D> y, dy;
 
-        Y() : y({0, 0}), dy({0, 0}) {}
+        Y();
 
         Y(Vector2D<D> y) : y(y), dy({0, 0}) {}
 

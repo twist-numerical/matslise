@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <Eigen/Dense>
 #include "matscs.h"
 #include "se2d.h"
 
@@ -87,6 +86,11 @@ void test2d() {
 
 
     cout << se2d.calculateError(3.19) << endl;
+    ArrayXd xs(5);
+    xs << -2,-1,0,1,2;
+    ArrayXd ys(5);
+    ys << -2,-1,0,1,2;
+    cout << se2d.computeEigenfunction(3.19, xs, ys) << endl;
 }
 
 void testMatscs() {
@@ -126,8 +130,8 @@ void testEigenfunctionCalculator() {
 
 int main() {
     // coffey();
-    // test2d();
+    test2d();
     // testBigE();
     // testMatscs();
-    testEigenfunctionCalculator();
+    // testEigenfunctionCalculator();
 }

@@ -1,5 +1,4 @@
 #include <functional>
-#include <Eigen/Dense>
 #include "matscs_formulas.h"
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"

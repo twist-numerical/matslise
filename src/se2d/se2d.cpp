@@ -8,7 +8,7 @@
 
 using namespace Eigen;
 using namespace matslise;
-using namespace matslise::se2d_sector;
+using namespace matslise::se2d_util;
 using namespace std;
 
 
@@ -67,6 +67,7 @@ MatrixXd SE2D::calculateError(double E) const {
     return yl.y.y * yl.y.x.inverse() - yr.y.y * yr.y.x.inverse();
 }
 
+
 Y<MatrixXd> SE2D::propagate(double E, double y, bool forward) const {
     Y<MatrixXd> c({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     if (forward) {
@@ -101,4 +102,41 @@ Y<MatrixXd> SE2D::propagate(double E, double y, bool forward) const {
     }
 
     return c;
+}
+
+
+ArrayXXd
+SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
+    long nx = x.size();
+    for (int i = 1; i < nx; ++i)
+        if (x[i - 1] > x[i])
+            throw runtime_error("SE2D::computeEigenfunction(): x has to be sorted");
+
+    long ny = y.size();
+    for (int i = 1; i < ny; ++i)
+        if (y[i - 1] > y[i])
+            throw runtime_error("SE2D::computeEigenfunction(): y has to be sorted");
+
+    int match = sectorCount / 2;
+
+    ArrayXXd result(nx, ny);
+    Array<Y<MatrixXd>, Dynamic, 1> steps(sectorCount + 1);
+
+    steps(0) = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
+    steps(sectorCount) = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
+
+    for (int i = 1; i <= match; ++i)
+        steps(i) = sectors[i]->propagate(E, steps(i - 1), true);
+
+    for (int i = sectorCount - 1; i > match; --i)
+        steps(i) = sectors[i]->propagate(E, steps(i + 1), false);
+
+    MatrixXd big = MatrixXd::Zero(2 * N, 2 * N);
+    big << steps(match).y.x, -steps(match + 1).y.x, steps(match).y.y, -steps(match + 1).y.y;
+
+    FullPivLU<MatrixXd> lu(big);
+    MatrixXd A_null_space = lu.kernel();
+    cout << A_null_space << endl;
+
+    return result;
 }

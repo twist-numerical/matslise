@@ -17,8 +17,10 @@
 #define GRID_POINTS 60
 
 namespace matslise {
-    namespace se2d_sector {
+    namespace se2d_util {
         class Sector;
+
+        class EigenfunctionCalculator;
     }
 
     class SE2D {
@@ -27,7 +29,9 @@ namespace matslise {
         MatrixXd *M;
         double xmin, xmax, ymin, ymax;
         int sectorCount;
-        se2d_sector::Sector **sectors;
+        se2d_util::Sector **sectors;
+        ArrayXd xGrid;
+
     public:
         SE2D(std::function<double(double, double)> V,
              double xmin, double xmax, double ymin, double ymax, int xSectorCount, int ySectorCount);
@@ -38,14 +42,17 @@ namespace matslise {
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
+
+        Eigen::ArrayXXd
+        computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
+
         MatrixXd calculateM(int k) const;
 
         virtual ~SE2D();
 
-        ArrayXd xGrid;
     };
 
-    namespace se2d_sector {
+    namespace se2d_util {
         class Sector {
         public:
             SE2D *se2d;
@@ -66,6 +73,18 @@ namespace matslise {
             Eigen::MatrixXd calculateDeltaV(double y) const;
 
             virtual ~Sector();
+        };
+
+
+        class EigenfunctionCalculator : public Evaluator<double, double, double> {
+        public:
+            SE2D *se2d;
+            double E;
+            std::vector<Y<VectorXd>> ys;
+
+            EigenfunctionCalculator(SE2D *se2d, double E);
+
+            virtual double eval(double x, double y) const;
         };
     }
 }

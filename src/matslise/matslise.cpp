@@ -6,8 +6,7 @@
 #include <array>
 #include <vector>
 #include <queue>
-#include <Eigen/Dense>
-#include "../Evaluator.h"
+#include "../matslise.h"
 #include "matslise_formulas.h"
 
 #define EPS (1.e-12)
@@ -16,6 +15,16 @@ using namespace matslise;
 using namespace matslise::matslise_util;
 using namespace std;
 using namespace Eigen;
+
+template<>
+Y<double>::Y() {
+    y = {0, 0};
+    dy = {0, 0};
+}
+
+template<>
+Y<MatrixXd>::Y() {
+}
 
 Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sectorCount)
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {

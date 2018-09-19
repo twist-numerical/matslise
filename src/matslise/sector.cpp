@@ -1,6 +1,5 @@
 #include <cmath>
 #include <array>
-#include <Eigen/Dense>
 #include "matslise_formulas.h"
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"
