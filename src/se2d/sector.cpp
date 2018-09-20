@@ -21,7 +21,7 @@ Array<TO, Dynamic, 1> apply(const Array<FROM, Dynamic, 1> &x, function<TO(FROM)>
 
 
 Sector::Sector(SE2D *se2d, double ymin, double ymax, int sectorCount) : se2d(se2d), ymin(ymin), ymax(ymax) {
-    static const Y<double> y0 = Y<double>({0, 1});
+    const Y<double> y0 = Y<double>({0, 1});
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
@@ -31,6 +31,7 @@ Sector::Sector(SE2D *se2d, double ymin, double ymax, int sectorCount) : se2d(se2
     vector<pair<unsigned int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, N, y0, y0);
     eigenvalues = new double[N];
     eigenfunctions = new ArrayXd[N];
+    eigenfunctionsScaling = new double[N];
     for (int i = 0; i < N; ++i) {
         double E = (*index_eigv)[i].second;
         eigenvalues[i] = E;
@@ -38,7 +39,7 @@ Sector::Sector(SE2D *se2d, double ymin, double ymax, int sectorCount) : se2d(se2
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
-        eigenfunctions[i] /= sqrt(lobatto::quadrature(se2d->xGrid, eigenfunctions[i] * eigenfunctions[i]));
+        eigenfunctions[i] *= (eigenfunctionsScaling[i] = 1/sqrt(lobatto::quadrature(se2d->xGrid, eigenfunctions[i] * eigenfunctions[i])));
     }
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, N, ymin, ymax, 5);
@@ -51,6 +52,7 @@ Sector::~Sector() {
     delete matscs;
     delete[] eigenvalues;
     delete[] eigenfunctions;
+    delete[] eigenfunctionsScaling;
 }
 
 Y<MatrixXd> Sector::propagate(double E, const Y<MatrixXd> &c, bool forward) const {
@@ -76,4 +78,15 @@ MatrixXd Sector::calculateDeltaV(double y) const {
     }
 
     return dV;
+}
+
+ArrayXd Sector::computeEigenfunction(int index, const ArrayXd &x) const {
+    const Y<double> y0 = Y<double>({0, 1});
+    long n = x.size();
+
+    Array<matslise::Y<double>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
+    ArrayXd result(n);
+    for(int i = 0; i < n; ++i)
+        result(i) = raw(i).y.x * eigenfunctionsScaling[index];
+    return result;
 }

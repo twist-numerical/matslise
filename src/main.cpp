@@ -85,12 +85,12 @@ void test2d() {
     SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 32, 32);
 
 
-    cout << se2d.calculateError(3.19) << endl;
+    //cout << se2d.calculateError(3.19) << endl;
     ArrayXd xs(5);
     xs << -2,-1,0,1,2;
     ArrayXd ys(5);
     ys << -2,-1,0,1,2;
-    cout << se2d.computeEigenfunction(3.19, xs, ys) << endl;
+    cout << se2d.computeEigenfunction(3.1991726354645755, xs, ys) << endl;
 }
 
 void testMatscs() {

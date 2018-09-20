@@ -62,6 +62,7 @@ namespace matslise {
             double ymin, ymax;
 
             double *eigenvalues;
+            double *eigenfunctionsScaling;
             Eigen::ArrayXd *eigenfunctions;
 
             Sector(SE2D *se2d, double ymin, double ymax, int sectorCount);
@@ -69,6 +70,8 @@ namespace matslise {
             matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, bool forward) const;
 
             matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, double y, bool forward) const;
+
+            ArrayXd computeEigenfunction(int index, const ArrayXd &x) const;
 
             Eigen::MatrixXd calculateDeltaV(double y) const;
 

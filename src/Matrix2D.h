@@ -44,11 +44,13 @@ public:
         return {x - r.x, y - r.y};
     }
 
-    Vector2D<V> operator*(const V &f) const {
+    template<typename R>
+    Vector2D<V> operator*(const R &f) const {
         return {x * f, y * f};
     }
 
-    Vector2D<V> operator*=(const V &f) {
+    template<typename R>
+    Vector2D<V> operator*=(const R &f) {
         x *= f;
         y *= f;
         return *this;

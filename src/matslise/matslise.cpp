@@ -197,6 +197,8 @@ Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const 
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
+    if(x[0] < xmin || x[n-1] > xmax)
+        throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
 
     Array<Y<double>, Dynamic, 1> ys(n);
 

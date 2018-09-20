@@ -46,7 +46,13 @@ namespace matslise {
             return os << "(" << m.y[0] << "," << m.y[1] << ")" << "(" << m.dy[0] << "," << m.dy[1] << ")";
         }
 
-        Y<D> &operator*=(double f) {
+        template<typename R>
+        Y<D> operator*(const R &f) {
+            return Y<D>(y*f, dy*f);
+        }
+
+        template<typename R>
+        Y<D> &operator*=(const R &f) {
             y *= f;
             dy *= f;
             return *this;
