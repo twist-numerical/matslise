@@ -90,7 +90,8 @@ void test2d() {
     xs << -2,-1,0,1,2;
     ArrayXd ys(5);
     ys << -2,-1,0,1,2;
-    cout << se2d.computeEigenfunction(3.1991726354645755, xs, ys) << endl;
+    for(auto &a : se2d.computeEigenfunction(5.535959903292571, xs, ys))
+        cout <<  a << "\n\n" << endl;
 }
 
 void testMatscs() {

@@ -3,10 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "orbit-controls-es6": "^1.0.12",
     "react": "^16.4.2",
     "react-dom": "^16.4.2",
+    "react-router-dom": "^4.3.1",
     "react-scripts": "1.1.5",
-    "recharts": "^1.1.0"
+    "recharts": "^1.1.0",
+    "three": "^0.96.0"
   },
   "scripts": {
     "start": "react-scripts start",

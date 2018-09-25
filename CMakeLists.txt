@@ -20,7 +20,7 @@ if (DEFINED EMSCRIPTEN)
 
     set_target_properties(matslise
             PROPERTIES SUFFIX ".js"
-            LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2")
+            LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2 -s TOTAL_MEMORY=128mb")
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")

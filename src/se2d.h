@@ -38,12 +38,13 @@ namespace matslise {
 
         matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
 
-        MatrixXd calculateError(double E) const;
+        MatrixXd calculateErrorMatrix(double E) const;
+        double calculateError(double E) const;
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
 
-        Eigen::ArrayXXd
+        std::vector<Eigen::ArrayXXd>
         computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
 
         MatrixXd calculateM(int k) const;

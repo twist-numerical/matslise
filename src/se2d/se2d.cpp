@@ -50,7 +50,7 @@ SE2D::~SE2D() {
     delete[] M;
 }
 
-MatrixXd SE2D::calculateError(double E) const {
+MatrixXd SE2D::calculateErrorMatrix(double E) const {
     int match = sectorCount / 2;
     Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     Y<MatrixXd> yl = y0;
@@ -65,6 +65,12 @@ MatrixXd SE2D::calculateError(double E) const {
         yr = M[i - 1].transpose() * yr;
     }
     return yl.y.y * yl.y.x.inverse() - yr.y.y * yr.y.x.inverse();
+}
+double SE2D::calculateError(double E) const {
+    ArrayXcd eigenvalues = calculateErrorMatrix(E).eigenvalues().array();
+    ArrayXcd::Index index;
+    eigenvalues.abs2().minCoeff(&index);
+    return eigenvalues[index].real();
 }
 
 
@@ -106,7 +112,7 @@ Y<MatrixXd> SE2D::propagate(double E, double y, bool forward) const {
 }
 */
 
-ArrayXXd
+vector<ArrayXXd>
 SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     long nx = x.size();
     for (int i = 1; i < nx; ++i)
@@ -123,7 +129,7 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
 
     int match = sectorCount / 2;
 
-    ArrayXXd result = ArrayXXd::Zero(nx, ny);
+    vector<ArrayXXd> result;
     Array<Y<MatrixXd>, Dynamic, 1> steps(sectorCount + 1);
 
     steps[0] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
@@ -146,6 +152,9 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     FullPivLU<MatrixXd> lu(big);
     MatrixXd kernel = lu.kernel();
     if (!kernel.isZero(0)) {
+        long cols = kernel.cols();
+        for(int i = 0; i < cols; ++i)
+            result.push_back(ArrayXXd::Zero(nx,ny));
         MatrixXd left = kernel.topRows(N);
         MatrixXd right = kernel.bottomRows(N);
 
@@ -169,7 +178,8 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
 
             while (nextY < ny && y[nextY] <= sectors[sector]->ymax) {
                 MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).y.x;
-                result.col(nextY) = prod.col(0);
+                for(int i = 0; i < cols; ++i)
+                    result[i].col(nextY) = prod.col(i);
                 ++nextY;
             }
         }

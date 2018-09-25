@@ -7,11 +7,15 @@
 
 #include <ostream>
 
+#if __GNUG__ >= 8
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #pragma GCC diagnostic ignored "-Wint-in-bool-context"
 #include <Eigen/Dense>
 #pragma GCC diagnostic pop
+#else
+#include <Eigen/Dense>
+#endif
 
 template<typename V = double>
 class Vector2D {
@@ -88,13 +92,6 @@ public:
     }
 
 };
-
-template<typename V>
-inline Vector2D<V> operator*=(Vector2D<V> &lhs, double rhs) {
-    lhs.x *= rhs;
-    lhs.y *= rhs;
-    return lhs;
-}
 
 template<typename V = double>
 class Matrix2D {

@@ -54,12 +54,9 @@ PYBIND11_MODULE(pyslise, m) {
 
     py::class_<SE2D>(m, "PySE2d")
         .def(py::init<function<double(double, double)>, double,double, double,double, int, int>())
-        .def("calculateError", [](const SE2D &m, double E) -> MatrixXd {
-            return m.calculateError(E);
-        })
-        .def("computeEigenfunction", [](const SE2D &m, double E, const ArrayXd &x, const ArrayXd &y) -> ArrayXXd {
-            return m.computeEigenfunction(E, x, y);
-        });
+        .def("calculateError", &SE2D::calculateError)
+        .def("calculateErrorMatrix", &SE2D::calculateErrorMatrix)
+        .def("computeEigenfunction", &SE2D::computeEigenfunction);
 
     py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
