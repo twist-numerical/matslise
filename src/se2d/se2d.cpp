@@ -66,6 +66,7 @@ MatrixXd SE2D::calculateErrorMatrix(double E) const {
     }
     return yl.y.y * yl.y.x.inverse() - yr.y.y * yr.y.x.inverse();
 }
+
 double SE2D::calculateError(double E) const {
     ArrayXcd eigenvalues = calculateErrorMatrix(E).eigenvalues().array();
     ArrayXcd::Index index;
@@ -73,44 +74,45 @@ double SE2D::calculateError(double E) const {
     return eigenvalues[index].real();
 }
 
+Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {
+    int match = sectorCount / 2;
 
-/*
-Y<MatrixXd> SE2D::propagate(double E, double y, bool forward) const {
-    Y<MatrixXd> c({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
-    if (forward) {
-        int i = 0;
+    Y<MatrixXd> *steps = new Y<MatrixXd>[sectorCount + 1];
 
-        Sector *sector = sectors[i];
-        while (i < sectorCount && y > sector->ymax) {
-            if (i > 0) {
-                c.y = M[i - 1] * c.y;
-            }
-            c = sector->propagate(E, c, true);
-            sector = sectors[++i];
-        }
+    steps[0] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
+                           {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
+    steps[sectorCount] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
+                                     {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
 
-        if (i < sectorCount && y > sector->ymin) {
-            if (i > 0) {
-                c.y = M[i - 1] * c.y;
-            }
-            c = sector->propagate(E, c, y, true);
-        }
-    } else {
-        int i = sectorCount - 1;
+    for (int i = sectorCount - 1; i >= match; --i)
+        steps[i] = sectors[i]->propagate(
+                E, i < sectorCount - 1 ? M[i].transpose() * steps[i + 1] : steps[i + 1], false);
+    Y<MatrixXd> matchRight = steps[match];
 
-        Sector *sector = sectors[i];
-        while (i >= 0 && y < sector->ymin) {
-            c = sector->propagate(E, c, false);
-            sector = sectors[--i];
-        }
+    for (int i = 0; i < match; ++i)
+        steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], true);
+    Y<MatrixXd> matchLeft = steps[match];
 
-        if (i >= 0 && y < sector->ymax)
-            c = sector->propagate(E, c, y, false);
+    MatrixXd big = MatrixXd::Zero(2 * N, 2 * N);
+    big << matchLeft.y.x, -matchRight.y.x, matchLeft.y.y, -matchRight.y.y;
+
+    FullPivLU<MatrixXd> lu(big);
+    MatrixXd kernel = lu.kernel();
+
+    if (kernel.isZero(0)) {
+        delete[] steps;
+        return nullptr;
     }
 
-    return c;
-}
-*/
+    MatrixXd left = kernel.topRows(N);
+    MatrixXd right = kernel.bottomRows(N);
+    for (int i = 0; i <= match; ++i)
+        steps[i] *= left;
+    for (int i = sectorCount; i > match; --i)
+        steps[i] *= right;
+
+    return steps;
+};
 
 vector<ArrayXXd>
 SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
@@ -127,41 +129,13 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     if (y[0] < sectors[0]->ymin || y[ny - 1] > sectors[sectorCount - 1]->ymax)
         throw runtime_error("SE2D::computeEigenfunction(): y is out of range");
 
-    int match = sectorCount / 2;
 
     vector<ArrayXXd> result;
-    Array<Y<MatrixXd>, Dynamic, 1> steps(sectorCount + 1);
-
-    steps[0] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
-                           {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
-    steps[sectorCount] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
-                                     {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
-
-    for (int i = sectorCount - 1; i >= match; --i)
-        steps[i] = sectors[i]->propagate(
-                E, i < sectorCount - 1 ? M[i].transpose() * steps[i + 1] : steps[i + 1], false);
-    Y<MatrixXd> matchRight = steps(match);
-
-    for (int i = 0; i < match; ++i)
-        steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], true);
-    Y<MatrixXd> matchLeft = steps[match];
-
-    MatrixXd big = MatrixXd::Zero(2 * N, 2 * N);
-    big << matchLeft.y.x, -matchRight.y.x, matchLeft.y.y, -matchRight.y.y;
-
-    FullPivLU<MatrixXd> lu(big);
-    MatrixXd kernel = lu.kernel();
-    if (!kernel.isZero(0)) {
-        long cols = kernel.cols();
-        for(int i = 0; i < cols; ++i)
-            result.push_back(ArrayXXd::Zero(nx,ny));
-        MatrixXd left = kernel.topRows(N);
-        MatrixXd right = kernel.bottomRows(N);
-
-        for (int i = 0; i <= match; ++i)
-            steps(i) *= left;
-        for (int i = sectorCount; i > match; --i)
-            steps(i) *= right;
+    Y<MatrixXd> *steps = computeEigenfunctionSteps(E);
+    if (steps != nullptr) {
+        int cols = steps[0].y.x.cols();
+        for (int i = 0; i < cols; ++i)
+            result.push_back(ArrayXXd::Zero(nx, ny));
 
         int nextY = 0;
         int sector = 0;
@@ -178,11 +152,22 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
 
             while (nextY < ny && y[nextY] <= sectors[sector]->ymax) {
                 MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).y.x;
-                for(int i = 0; i < cols; ++i)
+                for (int i = 0; i < cols; ++i)
                     result[i].col(nextY) = prod.col(i);
                 ++nextY;
             }
         }
+
+        delete[] steps;
     }
+
     return result;
+}
+
+
+const Sector &SE2D::getSector(double y) const {
+    for (int i = 0; i < sectorCount; ++i)
+        if (y < sectors[i]->ymax)
+            return *sectors[i];
+    throw runtime_error("SE2D::getSector(): no sector found");
 }

@@ -11,7 +11,7 @@ const binarySearch = (f, a, b) => {
     return a;
   if(fb === 0)
     return b;
-  if((fa < 0) == (fb < 0))
+  if((fa < 0) === (fb < 0))
     throw new Error("f(a) and f(b) must have a different sign");
   let c, fc; 
   while(Math.abs(a - b) > 1e-12) {
@@ -19,7 +19,7 @@ const binarySearch = (f, a, b) => {
     fc = f(c);
     if(fc === 0)
       return c;
-    if((fa < 0) == (fc < 0)) {
+    if((fa < 0) === (fc < 0)) {
       fa = fc;
       a = c;
     } else {
@@ -38,11 +38,6 @@ class Poster extends Component {
     V: (x, y) => (1+x*x)*(1+y*y),
     se2d: null,
   };
-
-  xn = 100;
-  yn = 160;
-  x = [];
-  y = [];
   
   SE2D = null;
 
@@ -58,13 +53,7 @@ class Poster extends Component {
   }
 
   render() {
-    this.x = [];
-    this.y = [];
-    const {x: [xmin, xmax], y: [ymin, ymax]} = this.state;
-    for(let i = 0; i <= this.xn; ++i)
-      this.x.push(xmin + i*(xmax-xmin)/this.xn);
-    for(let i = 0; i <= this.yn; ++i)
-      this.y.push(ymin + i*(ymax-ymin)/this.yn);
+    window.se2d = this.state.se2d;
 
     if(!this.state.loaded)
       return <div />;
@@ -73,35 +62,88 @@ class Poster extends Component {
     </div>
   }
 
-  computeEigenfunctions(E) {
-    let zs = this.state.se2d.computeEigenfunction(E, this.x, this.y);
-    console.log(zs);
-    return zs.map(z => {
-      let m = Math.max(...z.map(r => Math.max(...r.map(Math.abs))));
-      m /= height;
-      return z.map(r => r.map(v => v/m));
-    });
+  computeEigenfunctions(E, x ,y) {
+    return this.state.se2d.computeEigenfunction(E, x, y);
   }
 
-  buildGeometries(E) {
-    return this.computeEigenfunctions(E).map(z => {
-      return new THREE.ParametricGeometry((u, v, p) => {
-        const vx = u*this.xn, vy = v*this.yn;
-        const ix = Math.floor(vx), iy = Math.floor(vy);
-        const sx = vx - ix, sy = vy - iy;
+  calculateGeometry(x, y, z) {
+    const get = (r, s, i) => s === 0 ? r[i] : (1-s) * r[i] + s * r[i+1]
 
-        const get = (r, s, i) => s === 0 ? r[i] : (1-s) * r[i] + s * r[i+1]
+    return new THREE.ParametricGeometry((u, v, p) => {
+      const vx = u*(x.length-1), vy = v*(y.length-1);
+      const ix = Math.floor(vx), iy = Math.floor(vy);
+      const sx = vx - ix, sy = vy - iy;
+      p.x = get(x, sx, ix);
 
-        p.x = get(this.x, sx, ix);
+      if(sx === 0)
+        p.y = get(z[ix], sy, iy);
+      else
+        p.y = (1-sx) * get(z[ix], sy, iy) + sx * get(z[ix+1], sy, iy)
 
-        if(sx === 0)
-          p.y = get(z[ix], sy, iy);
-        else
-          p.y = (1-sx) * get(z[ix], sy, iy) + sx * get(z[ix+1], sy, iy)
+      p.z = get(y, sy, iy);
+    }, x.length, y.length);
+  }
 
-        p.z = get(this.y, sy, iy);
-      }, this.xn, this.yn);
+  buildGraph(x, y, z) {
+    const scale = height/Math.max(...z.map(r => Math.max(...r.map(Math.abs))));
+    z = z.map(r => r.map(v => v*scale));
+
+    const group = new THREE.Group();
+    const materialSettings = {
+      color: 0x26b6ff,
+      side: THREE.DoubleSide,
+      reflectivity: 1,
+    };
+    let splits = [];
+    for(let i = 0; i <= 17; ++i)
+      splits.push(i/17);
+
+    splits = splits.map(a => Math.round(a*y.length));
+
+    splits.forEach((s, i) => {
+      if(i+1 == splits.length)
+        return;
+      const moreSettings = i%2 ? {} : {
+        opacity: .3,
+        transparent: true,
+      };
+      group.add(new THREE.Mesh(
+        this.calculateGeometry(x, y.slice(s, splits[i+1]+1), z.map(v => v.slice(s, splits[i+1]+1))),
+        new THREE.MeshStandardMaterial({
+          ...materialSettings,
+          ...moreSettings
+        })));
     });
+
+    return group;
+  }
+
+  buildObjects() {
+    const group = new THREE.Group();
+    const colors = [0xff0000, 0xff00, 0xff, 0x00ffff];
+    const Es = [3.20, 5.53, 7.55, 8.04, 8.46, 9.94, 11.34, 12.13, 12.22];
+
+    const xn = 600, yn = 600;
+    const {x: [xmin, xmax], y: [ymin, ymax]} = {x: [-5, 5], y: [-5,5]};
+
+    const x = [];
+    for(let i = 0; i <= xn; ++i)
+      x.push(xmin + (xmax - xmin)*i/xn);
+    const y = [];
+    for(let i = 0; i <= yn; ++i)
+      y.push(ymin + (ymax - ymin)*i/yn);
+
+    let i = 0;
+    [17.91].forEach(approxE => {
+      const E = binarySearch((E) => this.state.se2d.calculateError(E), approxE-.01, approxE+.01);
+      console.log(E);
+      this.computeEigenfunctions(E, x, y).map(z => {
+        group.add(this.buildGraph(x, y, z));
+      });
+      ++i;
+    });
+
+    return group;
   }
 
   buildScene() {
@@ -111,23 +153,9 @@ class Poster extends Component {
     this.camera.position.z = 10;
 
     this.scene = new THREE.Scene();
+    this.scene.background = new THREE.Color(0xffffff);
 
-    const colors = [0xff0000, 0xff00, 0xff, 0x00ffff];
-    [3.2, 5.5, 7.5, 8].forEach((approxE, i) => {
-      const E = binarySearch((E) => this.state.se2d.calculateError(E), approxE-.1, approxE+.1);
-      this.buildGeometries(E).forEach(geometry => {
-        const material = new THREE.MeshLambertMaterial({
-          color: colors[i%colors.length],
-          opacity: .5,
-          transparent: true,
-          side: THREE.DoubleSide,
-        });
-
-        const mesh = new THREE.Mesh(geometry, material);
-        mesh.position.y = i*height
-        this.scene.add(mesh);
-      });
-    });
+    this.scene.add(this.buildObjects());
 
     this.scene.add(new THREE.AmbientLight(0x404040));
     [[0,20,20], [0,-50,50]].forEach(([x, y, z]) => {
@@ -154,9 +182,11 @@ class Poster extends Component {
   }
 
   injectThree(element) {
-    this.buildScene();
+    if(!this.renderer) {
+      this.buildScene();
+      this.animate();
+    }
     element.appendChild(this.renderer.domElement);
-    this.animate();
   }
 }
 

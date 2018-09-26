@@ -39,6 +39,7 @@ namespace matslise {
         matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
 
         MatrixXd calculateErrorMatrix(double E) const;
+
         double calculateError(double E) const;
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
@@ -47,7 +48,11 @@ namespace matslise {
         std::vector<Eigen::ArrayXXd>
         computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
 
+        Y<MatrixXd>* computeEigenfunctionSteps(double E) const;
+
         MatrixXd calculateM(int k) const;
+
+        const se2d_util::Sector &getSector(double y) const;
 
         virtual ~SE2D();
 

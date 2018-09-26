@@ -32,12 +32,15 @@ val ArrayXd2val(const ArrayXd &a) {
     return rv;
 }
 
+val ArrayXXd2val(const ArrayXXd &a) {
+    val r = val::array();
+    for (int i = 0; i < a.rows(); ++i)
+        r.call<val>("push", ArrayXd2val(a.row(i)));
+    return r;
+}
+
 EMSCRIPTEN_BINDINGS(Matslise) {
     value_array<Vector2d>("Vector2d")
-            .element(emscripten::index<0>())
-            .element(emscripten::index<1>());
-
-    value_array<ArrayXd>("ArrayXd")
             .element(emscripten::index<0>())
             .element(emscripten::index<1>());
 
@@ -70,10 +73,8 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .function("eigenfunction", optional_override(
                     [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                             val {
-                        matslise_util::EigenfunctionCalculator *calculator = m.eigenfunctionCalculator(E,
-                                                                                                       Y<double>(left),
-                                                                                                       Y<double>(
-                                                                                                               right));
+                        matslise_util::EigenfunctionCalculator *calculator =
+                                m.eigenfunctionCalculator(E, Y<double>(left), Y<double>(right));
                         return val::global("Function")
                                 .new_(string("calculator"), string(
                                         "var f = function(x) { return calculator.eval(x); };"
@@ -88,6 +89,20 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                 m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right)));
                     }), allow_raw_pointers());
 
+    class_<se2d_util::Sector>("Sector2D")
+            .function("computeEigenfunction",
+                      optional_override([](const se2d_util::Sector &sector, int index, val x) -> val {
+                          return ArrayXd2val(sector.computeEigenfunction(index, val2ArrayXd(x)));
+                      }))
+            .function("computeEigenfunctions",
+                      optional_override([](const se2d_util::Sector &sector, int index, val x) -> val {
+                          ArrayXd ax = val2ArrayXd(x);
+                          val r = val::array();
+                          for (int i = 0; i < N; ++i)
+                              r.call<val>("push", ArrayXd2val(sector.computeEigenfunction(index, ax)));
+                          return r;
+                      }));
+
     class_<SE2D>("SE2D")
             .constructor(optional_override(
                     [](val f, double xmin, double xmax, double ymin, double ymax, int xSectorCount,
@@ -99,12 +114,20 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .function("computeEigenfunction", optional_override([](SE2D &se2d, double E, val x, val y) -> val {
                 vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                 val r = val::array();
-                for (ArrayXXd &eigenfunction  : result) {
-                    val ef = val::array();
-                    for (int i = 0; i < eigenfunction.rows(); ++i)
-                        ef.call<val>("push", ArrayXd2val(eigenfunction.row(i)));
-                    r.call<val>("push", ef);
+                for (ArrayXXd &eigenfunction  : result)
+                    r.call<val>("push", ArrayXXd2val(eigenfunction));
+                return r;
+            }))
+            .function("computeEigenfunctionSteps", optional_override([](SE2D &se2d, double E) -> val {
+                Y<MatrixXd> *result = se2d.computeEigenfunctionSteps(E);
+                val r = val::array();
+                for (int i = 0; i <= se2d.sectorCount; ++i) {
+                    val y = val::array();
+                    y.call<val>("push", ArrayXXd2val(result[i].y.x.array()));
+                    y.call<val>("push", ArrayXXd2val(result[i].y.y.array()));
+                    r.call<val>("push", y);
                 }
                 return r;
-            }));
+            }))
+            .function("getSector", &SE2D::getSector);
 }
