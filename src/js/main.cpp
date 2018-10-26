@@ -51,7 +51,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
     class_<matslise_util::EigenfunctionCalculator>("EigenfunctionCalculator")
             .function("eval",
                       optional_override([](matslise_util::EigenfunctionCalculator &self, double x) -> Vector2d {
-                          return self(x).y;
+                          return self(x).y.toEigen();
                       }));
 
     class_<Matslise>("Matslise")
@@ -66,7 +66,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         double theta;
                         tie(y0, theta) = m.propagate(E, Y<double>(y), a, b);
                         val rv(val::object());
-                        rv.set("y", val((Vector2d) (y0.y)));
+                        rv.set("y", val(y0.y.toEigen()));
                         rv.set("theta", val(theta));
                         return rv;
                     }))

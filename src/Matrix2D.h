@@ -81,8 +81,8 @@ public:
         return a == 0 ? x : y;
     }
 
-    operator Eigen::Matrix<V, 2, 1>() {
-        Eigen::Matrix<V, 2, 1> e;
+    Eigen::Vector2d toEigen() {
+        Eigen::Vector2d e;
         e << x, y;
         return e;
     };
