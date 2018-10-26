@@ -58,7 +58,6 @@ T<double> Sector::calculateT(double E) const {
             t.dt += t_coeff_h[i] * (-h * h * eta[i + 1] / 2);
     }
     delete[] eta;
-    cout << t << endl;
     return t;
 }
 

@@ -86,7 +86,7 @@ PYBIND11_MODULE(pyslise, m) {
                     Y<double> y0;
                     double theta;
                     tie(y0, theta) = m.propagate(E, Y<double>(y), a, b);
-                    return make_tuple(y0.y, theta);
+                    return make_tuple(y0.y.toEigen(), theta);
                 },
             py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
         .def("propagate",
@@ -95,7 +95,7 @@ PYBIND11_MODULE(pyslise, m) {
                 Y<double> y0;
                 double theta;
                 tie(y0, theta) = m.propagate(E, Y<double>(y, dy), a, b);
-                return make_tuple(y0.y, y0.dy, theta);
+                return make_tuple(y0.y.toEigen(), y0.dy.toEigen(), theta);
             },
             py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
         .def("computeEigenvalues",
