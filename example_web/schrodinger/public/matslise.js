@@ -1,1 +1,1 @@
-/home/toon/Programmeren/cpp/schrodinger/cmake-build-emscripten/matslise.js
+../../../cmake-build-emscripten/matslise.js
