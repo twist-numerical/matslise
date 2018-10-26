@@ -2,6 +2,7 @@
   "name": "schrodinger",
   "version": "0.1.0",
   "private": true,
+  "homepage": "./",
   "dependencies": {
     "orbit-controls-es6": "^1.0.12",
     "react": "^16.4.2",

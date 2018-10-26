@@ -50,7 +50,7 @@ SE2D::~SE2D() {
     delete[] M;
 }
 
-MatrixXd SE2D::calculateErrorMatrix(double E) const {
+pair<MatrixXd, MatrixXd> SE2D::calculateErrorMatrix(double E) const {
     int match = sectorCount / 2;
     Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     Y<MatrixXd> yl = y0;
@@ -64,14 +64,23 @@ MatrixXd SE2D::calculateErrorMatrix(double E) const {
         yr = sectors[i]->propagate(E, yr, false);
         yr = M[i - 1].transpose() * yr;
     }
-    return yl.y.y * yl.y.x.inverse() - yr.y.y * yr.y.x.inverse();
+
+    ColPivHouseholderQR<MatrixXd> left_solver(yl.y.x.transpose());
+    ColPivHouseholderQR<MatrixXd> right_solver(yr.y.x.transpose());
+    MatrixXd Ul = left_solver.solve(yl.y.y.transpose()).transpose();
+    MatrixXd Ur = right_solver.solve(yr.y.y.transpose()).transpose();
+    return make_pair(
+            Ul - Ur,
+            left_solver.solve((yl.dy.y - Ul * yl.dy.x).transpose()).transpose()
+            - right_solver.solve((yr.dy.y - Ur * yr.dy.x).transpose()).transpose()
+    );
 }
 
-double SE2D::calculateError(double E) const {
-    ArrayXcd eigenvalues = calculateErrorMatrix(E).eigenvalues().array();
+pair<double, double> SE2D::calculateError(double E) const {
+    ArrayXcd eigenvalues = calculateErrorMatrix(E).first.eigenvalues().array();
     ArrayXcd::Index index;
     eigenvalues.abs2().minCoeff(&index);
-    return eigenvalues[index].real();
+    return make_pair(eigenvalues[index].real(), 0);
 }
 
 Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {

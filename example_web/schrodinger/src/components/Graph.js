@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ComposedChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Line } from 'recharts';
+import { LineChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Line } from 'recharts';
 
 
 class Graph extends Component {
@@ -8,6 +8,11 @@ class Graph extends Component {
     func: x => x,
     x: [-1, 1],
     symmetricY: false,
+    y: ['auto', 'auto'],
+    xAxis: true,
+    yAxis: true,
+    grid: true,
+    strokeWidth: 1,
   };
 
   constructor(props) {
@@ -19,6 +24,7 @@ class Graph extends Component {
   calculateState(props) {
     return {
       x: props.x,
+      y: props.y,
       f: props.func ? Array.isArray(props.func) ? props.func : [props.func] : [],
     };
   }
@@ -37,7 +43,7 @@ class Graph extends Component {
 
   render() {
     const {x: [xmin, xmax]} = this.state;
-    let ymin = 'auto', ymax = 'auto';
+    let [ymin, ymax] = this.state.y;
     let func = this.getFunc();
 
     const data = [];
@@ -53,20 +59,20 @@ class Graph extends Component {
         data.push(obj);
       }
 
-      ymin = Number.POSITIVE_INFINITY;
-      ymax = Number.NEGATIVE_INFINITY;
+      let newYmin = Number.POSITIVE_INFINITY;
+      let newYmax = Number.NEGATIVE_INFINITY;
 
       data.forEach((point) => {
         this.getFunc().forEach((_, i) => {
           let y = point['y'+i];
-          if(y < ymin)
-            ymin = y;
-          if(y > ymax)
-            ymax = y;
+          if(y < newYmin)
+            newYmin = y;
+          if(y > newYmax)
+            newYmax = y;
         });
       })
 
-      let d = Math.max(ymax-ymin, 1e-13);
+      let d = Math.max(newYmax-newYmin, 1e-13);
       let step = 1;
       while(step < d)
         step *= 1e1;
@@ -75,42 +81,51 @@ class Graph extends Component {
 
       if(step < 1) {
         const istep = Math.round(1/step);
-        ymin = Math.floor(ymin*istep)/istep;
-        ymax = Math.ceil(ymax*istep)/istep;
+        newYmin = Math.floor(newYmin*istep)/istep;
+        newYmax = Math.ceil(newYmax*istep)/istep;
       } else {
-        ymin = Math.floor(ymin/step)*step;
-        ymax = Math.ceil(ymax/step)*step;
+        newYmin = Math.floor(newYmin/step)*step;
+        newYmax = Math.ceil(newYmax/step)*step;
       }
 
       if(this.props.symmetricY) {
-        ymax = Math.max(ymax, -ymin);
-        ymin = -ymax;
+        newYmax = Math.max(newYmax, -newYmin);
+        newYmin = -newYmax;
       }
+
+      if(ymin === 'auto')
+        ymin = newYmin;
+      if(ymax === 'auto')
+        ymax = newYmax;
     }
 
     return (
       <ResponsiveContainer>
-      <ComposedChart
+      <LineChart
       data={data}>
-      <CartesianGrid strokeDasharray="3 3"/>
+      {this.props.grid?<CartesianGrid strokeDasharray="3 3"/>:""}
       <XAxis 
       allowDataOverflow={true}
       dataKey="x"
       type="number"
       domain={[xmin, xmax]}
+      hide={!this.props.xAxis}
       />
       <YAxis 
       allowDataOverflow={true}
       type="number"
       domain={[ymin, ymax]}
+      hide={!this.props.yAxis}
       />
       { func.map((_, i) => 
         <Line key={i} isAnimationActive={false}
         dataKey={'y'+i}
-        stroke={'#' + ('000000'+Math.floor(Math.random()*0x10000007).toString(16)).substr(-6)}
+        strokeWidth={this.props.strokeWidth}
+        stroke={'#' + ('000000'+Math.floor(Math.random()*0x1000000).toString(16)).substr(-6)}
         dot={false} />
         )}
-      </ComposedChart>
+      {this.props.children}
+      </LineChart>
       </ResponsiveContainer>
       );
   }

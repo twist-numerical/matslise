@@ -88,7 +88,7 @@ namespace matslise {
         }
 
         friend std::ostream &operator<<(std::ostream &os, const T<D> &m) {
-            return os << m.t;
+            return os << m.t << ", " << m.dt;
         }
     };
 

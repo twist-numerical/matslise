@@ -7,7 +7,6 @@
 
 
 #include <functional>
-#include <tuple>
 #include <vector>
 #include "matslise.h"
 #include "matscs.h"
@@ -38,9 +37,9 @@ namespace matslise {
 
         matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
 
-        MatrixXd calculateErrorMatrix(double E) const;
+        std::pair<MatrixXd, MatrixXd> calculateErrorMatrix(double E) const;
 
-        double calculateError(double E) const;
+        std::pair<double, double> calculateError(double E) const;
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 

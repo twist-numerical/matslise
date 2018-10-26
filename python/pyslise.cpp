@@ -34,8 +34,8 @@ Y<double> packY(const tuple<double, double> &t, const tuple<double, double> &dt)
 }
 
 template<typename D>
-tuple<D, D> unpackY(const Y<D> &y) {
-    return make_tuple(y.y[0], y.y[1]);
+pair<pair<D, D>, pair<D, D>> unpackY(const Y<D> &y) {
+    return make_pair(make_pair(y.y[0], y.y[1]), make_pair(y.dy[0], y.dy[1]));
 };
 
 template <class R, class... A>
@@ -49,7 +49,7 @@ public:
 PYBIND11_MODULE(pyslise, m) {
     py::class_<Evaluator<Y<double>, double>, PyEvaluator<Y<double>, double>>(m, "EvaluatorY1")
         .def("__call__", [](Evaluator<Y<double>, double> &e, double x) -> tuple<double, double> {
-            return unpackY(e(x));
+            return unpackY(e(x)).first;
         }, py::is_operator());
 
     py::class_<SE2D>(m, "PySE2d")
@@ -137,7 +137,7 @@ PYBIND11_MODULE(pyslise, m) {
     py::class_<Matscs>(m, "Pyscs")
         .def(py::init<function<MatrixXd(double)>, int, double, double, int>())
         .def("propagate",
-            [](Matscs &m, double E, tuple<MatrixXd, MatrixXd> y, double a, double b) -> tuple<MatrixXd, MatrixXd> {
+            [](Matscs &m, double E, tuple<MatrixXd, MatrixXd> y, double a, double b) -> pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> {
                 return unpackY(m.propagate(E, packY(y), a, b));
         });
 }

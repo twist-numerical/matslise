@@ -85,7 +85,8 @@ void test2d() {
     SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 32, 32);
 
 
-    //cout << se2d.calculateError(3.19) << endl;
+    for(double a = 3.1; a < 3.3; a += .001)
+        cout << se2d.calculateError(a).first << endl;
     ArrayXd xs(5);
     xs << -2,-1,0,1,2;
     ArrayXd ys(5);

@@ -48,7 +48,8 @@ T<double> Sector::calculateT(double E, double delta) const {
 
 T<double> Sector::calculateT(double E) const {
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA);
-    T<double> t({0, 0, (vs[0] - E) * h * eta[1], 0}, {0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0});
+    T<double> t({0, 0, (vs[0] - E) * h * eta[1], 0},
+                {0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0});
 
     for (int i = 0; i < MATSLISE_ETA; ++i) {
         t.t += t_coeff_h[i] * eta[i];
@@ -57,6 +58,7 @@ T<double> Sector::calculateT(double E) const {
             t.dt += t_coeff_h[i] * (-h * h * eta[i + 1] / 2);
     }
     delete[] eta;
+    cout << t << endl;
     return t;
 }
 

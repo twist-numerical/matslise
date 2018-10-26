@@ -42,11 +42,15 @@ T<MatrixXd> Sector::calculateT(double E, double delta) const {
 
     VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(s->n, E)) * delta;
     MatrixXd *eta = calculateEta(VEd * delta, s->n, MATSCS_ETA);
-    T<MatrixXd> t({zero, zero, eta[1] * VEd.asDiagonal(), zero}, {zero, zero, zero, zero});
+    T<MatrixXd> t({zero, zero, eta[1] * VEd.asDiagonal(), zero},
+                  {zero, zero, -delta * eta[1] - (delta * delta / 2) * eta[2] * VEd.asDiagonal(), zero});
 
     for (int i = 0; i < MATSCS_ETA; ++i) {
         Matrix2D<MatrixXd> hor = horner(t_coeff[i], delta, MATSCS_HMAX);
         t.t += hor * eta[i];
+
+        if (i + 1 < MATSCS_ETA)
+            t.dt += hor * (eta[i + 1] * (-delta * delta / 2.));
     }
 
 
@@ -62,10 +66,15 @@ T<MatrixXd> Sector::calculateT(double E) const {
 
     VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(s->n, E)) * h;
     MatrixXd *eta = calculateEta(VEd * h, s->n, MATSCS_ETA);
-    T<MatrixXd> t({zero, zero, eta[1] * VEd.asDiagonal(), zero}, {zero, zero, zero, zero});
+    T<MatrixXd> t({zero, zero, eta[1] * VEd.asDiagonal(), zero},
+                  {zero, zero, -h * eta[1] - (h * h / 2) * eta[2] * VEd.asDiagonal(), zero});
 
-    for (int i = 0; i < MATSCS_ETA; ++i)
+    for (int i = 0; i < MATSCS_ETA; ++i) {
         t.t += t_coeff_h[i] * eta[i];
+
+        if (i + 1 < MATSCS_ETA)
+            t.dt += t_coeff_h[i] * (eta[i + 1] * (-h * h / 2));
+    }
     delete[] eta;
 
     t.t = D.transpose() * t.t * D;
@@ -84,6 +93,7 @@ Y<Matrix<Type, Args...>> Sector::propagate(double E, const Y<Matrix<Type, Args..
 }
 
 template Y<Matrix<double, -1, -1>> Sector::propagate(double E, const Y<Matrix<double, -1, -1>> &y0, double delta) const;
+
 template Y<Matrix<double, -1, 1>> Sector::propagate(double E, const Y<Matrix<double, -1, 1>> &y0, double delta) const;
 
 Sector::~Sector() {

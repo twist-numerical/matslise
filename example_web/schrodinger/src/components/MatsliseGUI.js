@@ -104,11 +104,11 @@ class MatsliseGUI extends Component {
       ...this.state,
       ...newState
     };
-
+    
     while(this.toDelete.length > 0)
       this.toDelete.pop().delete();
 
-    const matslise = new Matslise(f, ...x, steps);
+    const matslise = new Matslise.Matslise(f, ...x, steps);
 
     this.toDelete.push(matslise);
     this.setState({f, x, steps, matslise,
