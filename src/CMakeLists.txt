@@ -17,8 +17,6 @@ if (DEFINED EMSCRIPTEN)
             LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2 -s TOTAL_MEMORY=128mb")
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")
-
     add_library(matslise SHARED ${MATSLISE_SRC})
     target_link_libraries(matslise Eigen3::Eigen)
 

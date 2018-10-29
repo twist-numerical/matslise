@@ -94,7 +94,7 @@ TEST_CASE("Mathieproblem eigenfunctions", "[mathieu][matslise][eigenfunctions]")
         auto *eigenvalues = ms.computeEigenvaluesByIndex(0, 1, ystart, ystart);
         REQUIRE(eigenvalues->size() == 1);
         double e = eigenvalues->at(0).second;
-        delete eigenvalues;16
+        delete eigenvalues;
 
         REQUIRE(Approx(-0.11024881635796).margin(1e-12) == e);
         Array<Y<double>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);

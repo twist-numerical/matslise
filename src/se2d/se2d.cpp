@@ -14,14 +14,15 @@ using namespace std;
 
 SE2D::SE2D(function<double(double, double)> V,
            double xmin, double xmax, double ymin, double ymax,
-           int xSectorCount, int ySectorCount, int N, int matscs_count) :
-        V(V), xmin(xmin), xmax(xmax), ymin(ymin), ymax(ymax), sectorCount(ySectorCount), N(N) {
+           int xSectorCount, int ySectorCount, int N, int matscs_count, int gridPoints) :
+        V(V), xmin(xmin), xmax(xmax), ymin(ymin), ymax(ymax),
+        sectorCount(ySectorCount), N(N), gridPoints(gridPoints) {
     sectors = new Sector *[sectorCount];
 
 
-    ArrayXd xs(GRID_POINTS);
-    for (int i = 0; i < GRID_POINTS; ++i)
-        xs[i] = xmin + (xmax - xmin) * i / (GRID_POINTS - 1);
+    ArrayXd xs(gridPoints);
+    for (int i = 0; i < gridPoints; ++i)
+        xs[i] = xmin + (xmax - xmin) * i / (gridPoints - 1);
     xGrid = lobatto::grid(xs);
 
     double h = (ymax - ymin) / sectorCount;
@@ -40,6 +41,7 @@ MatrixXd SE2D::calculateM(int k) const {
         for (int j = 0; j < N; ++j)
             M(i, j) = lobatto::quadrature(xGrid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
 
+    cout << M * M.transpose() << endl << endl;
     return M;
 }
 
@@ -158,7 +160,7 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     vector<ArrayXXd> result;
     Y<MatrixXd> *steps = computeEigenfunctionSteps(E);
     if (steps != nullptr) {
-        int cols = steps[0].y.x.cols();
+        int cols = (int) steps[0].y.x.cols();
         for (int i = 0; i < cols; ++i)
             result.push_back(ArrayXXd::Zero(nx, ny));
 

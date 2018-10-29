@@ -13,7 +13,7 @@
 #include "matslise.h"
 #include <Eigen/Dense>
 
-#define MATSCS_HMAX 9
+#define MATSCS_HMAX 10
 #define MATSCS_ETA 5
 
 using namespace Eigen;

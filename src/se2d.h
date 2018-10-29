@@ -11,8 +11,6 @@
 #include "matslise.h"
 #include "matscs.h"
 
-#define GRID_POINTS 60
-
 namespace matslise {
     namespace se2d_util {
         class Sector;
@@ -29,11 +27,12 @@ namespace matslise {
         se2d_util::Sector **sectors;
         ArrayXd xGrid;
         int N;
+        int gridPoints;
 
     public:
         SE2D(std::function<double(double, double)> V,
              double xmin, double xmax, double ymin, double ymax,
-             int xSectorCount, int ySectorCount, int N = 12, int matscs_count = 5);
+             int xSectorCount, int ySectorCount, int N = 12, int matscs_count = 5, int gridPoints=60);
 
         matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
 
@@ -42,7 +41,6 @@ namespace matslise {
         std::pair<double, double> calculateError(double E) const;
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
-
 
         std::vector<Eigen::ArrayXXd>
         computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
