@@ -53,7 +53,12 @@ PYBIND11_MODULE(pyslise, m) {
         }, py::is_operator());
 
     py::class_<SE2D>(m, "PySE2d")
-        .def(py::init<function<double(double, double)>, double,double, double,double, int, int>())
+        .def(py::init<function<double(double, double)>,
+                double,double, double,double,
+                int, int, int, int>(), "Init SE2d",
+                py::arg("V"),
+                py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
+                py::arg("x_count")=16, py::arg("y_count")=16, py::arg("N")=12, py::arg("in_sector_count")=5)
         .def("calculateError", &SE2D::calculateError)
         .def("calculateErrorMatrix", &SE2D::calculateErrorMatrix)
         .def("computeEigenfunction", &SE2D::computeEigenfunction);

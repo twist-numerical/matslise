@@ -8,9 +8,6 @@ cmake_minimum_required(VERSION 3.5)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
-set(CMAKE_INSTALL_PREFIX /usr/)
-
-
 SET(MATSLISE_SRC src/util/calculateEta.cpp src/util/lobatto.cpp
         src/matslise/matslise.cpp src/matslise/halfrange.cpp src/matslise/sector.cpp src/matslise/matslise_formulas.cpp src/matslise/eigenfunction_calculator.cpp
         src/matscs/matscs.cpp src/matscs/sector.cpp src/matscs/matscs_formulas.cpp src/matscs/eigenfunction_calculator.cpp

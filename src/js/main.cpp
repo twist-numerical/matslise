@@ -98,7 +98,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                       optional_override([](const se2d_util::Sector &sector, int index, val x) -> val {
                           ArrayXd ax = val2ArrayXd(x);
                           val r = val::array();
-                          for (int i = 0; i < N; ++i)
+                          for (int i = 0; i < sector.se2d->N; ++i)
                               r.call<val>("push", ArrayXd2val(sector.computeEigenfunction(index, ax)));
                           return r;
                       }));

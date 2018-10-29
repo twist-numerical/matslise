@@ -13,8 +13,9 @@ using namespace std;
 
 
 SE2D::SE2D(function<double(double, double)> V,
-           double xmin, double xmax, double ymin, double ymax, int xSectorCount, int ySectorCount) :
-        V(V), xmin(xmin), xmax(xmax), ymin(ymin), ymax(ymax), sectorCount(ySectorCount) {
+           double xmin, double xmax, double ymin, double ymax,
+           int xSectorCount, int ySectorCount, int N, int matscs_count) :
+        V(V), xmin(xmin), xmax(xmax), ymin(ymin), ymax(ymax), sectorCount(ySectorCount), N(N) {
     sectors = new Sector *[sectorCount];
 
 
@@ -25,7 +26,7 @@ SE2D::SE2D(function<double(double, double)> V,
 
     double h = (ymax - ymin) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
-        sectors[i] = new Sector(this, ymin + i * h, ymin + (i + 1) * h, xSectorCount);
+        sectors[i] = new Sector(this, ymin + i * h, ymin + (i + 1) * h, xSectorCount, matscs_count);
 
     M = new MatrixXd[sectorCount - 1];
     for (int i = 0; i < sectorCount - 1; ++i)
@@ -77,10 +78,25 @@ pair<MatrixXd, MatrixXd> SE2D::calculateErrorMatrix(double E) const {
 }
 
 pair<double, double> SE2D::calculateError(double E) const {
-    ArrayXcd eigenvalues = calculateErrorMatrix(E).first.eigenvalues().array();
-    ArrayXcd::Index index;
-    eigenvalues.abs2().minCoeff(&index);
-    return make_pair(eigenvalues[index].real(), 0);
+    pair<MatrixXd, MatrixXd> error_matrix = calculateErrorMatrix(E);
+    EigenSolver<MatrixXd> solver(N);
+
+    solver.compute(error_matrix.first, true);
+    ArrayXcd eigenvaluesRight = solver.eigenvalues().array();
+    ArrayXcd::Index indexRight;
+    eigenvaluesRight.abs2().minCoeff(&indexRight);
+    MatrixXcd right = solver.eigenvectors();
+
+
+    solver.compute(error_matrix.first.transpose(), true);
+    ArrayXcd eigenvaluesLeft = solver.eigenvalues().array();
+    ArrayXcd::Index indexLeft;
+    eigenvaluesLeft.abs2().minCoeff(&indexLeft);
+    MatrixXcd left = solver.eigenvectors().transpose();
+
+    return make_pair(eigenvaluesLeft[indexLeft].real(),
+                     (left.row(indexLeft) * error_matrix.second * right.col(indexRight) /
+                      (left.row(indexLeft) * right.col(indexRight)))[0].real());
 }
 
 Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {
