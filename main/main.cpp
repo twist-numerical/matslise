@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cmath>
-#include "matscs.h"
-#include "se2d.h"
+#include <matslise/matscs.h>
+#include <matslise/se2d.h>
 
 using namespace std;
 using namespace Eigen;
