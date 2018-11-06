@@ -13,7 +13,8 @@ using namespace matslise::matslise_util;
 
 Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
-    vs = legendre::getCoefficients(16, s->V, xmin, xmax);
+    vs = legendre::getCoefficients(MATSLISE_N, s->V, xmin, xmax);
+
     calculateTCoeffs();
 }
 

@@ -16,6 +16,7 @@
 
 #define MATSLISE_HMAX 17
 #define MATSLISE_ETA 9
+#define MATSLISE_N 13
 
 using namespace Eigen;
 

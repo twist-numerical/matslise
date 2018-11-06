@@ -144,5 +144,6 @@ PYBIND11_MODULE(pyslise, m) {
         .def("propagate",
             [](Matscs &m, double E, tuple<MatrixXd, MatrixXd> y, double a, double b) -> pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> {
                 return unpackY(m.propagate(E, packY(y), a, b));
-        });
+        })
+        .def("propagatePsi", &Matscs::propagatePsi);
 }

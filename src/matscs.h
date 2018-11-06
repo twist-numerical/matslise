@@ -15,6 +15,7 @@
 
 #define MATSCS_HMAX 10
 #define MATSCS_ETA 5
+#define MATSCS_N 8
 
 using namespace Eigen;
 
@@ -38,6 +39,8 @@ namespace matslise {
 
         template<typename Type, int... Args>
         matslise::Y<Matrix<Type, Args...>> propagate(double E, const matslise::Y<Matrix<Type, Args...>> &y, double a, double b) const;
+
+        MatrixXd propagatePsi(double E, const MatrixXd &psi, double a, double b) const;
 
         std::vector<matslise::Y<MatrixXd>> *computeEigenfunction(double E, std::vector<double> &x) const;
 
@@ -68,6 +71,8 @@ namespace matslise {
 
             template<typename Type, int... Args>
             Y<Matrix<Type, Args...>> propagate(double E, const Y<Matrix<Type, Args...>> &y0, double delta) const;
+
+            MatrixXd propagatePsi(double E, const MatrixXd &psi, double delta) const;
 
             virtual ~Sector();
 

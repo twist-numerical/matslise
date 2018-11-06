@@ -14,7 +14,9 @@
 #include <Eigen/Dense>
 #pragma GCC diagnostic pop
 #else
+
 #include <Eigen/Dense>
+
 #endif
 
 template<typename V = double>
@@ -142,6 +144,14 @@ public:
 
     friend std::ostream &operator<<(std::ostream &os, const Matrix2D<V> &m) {
         return os << "/" << m.a << ", " << m.b << "\\\n\\" << m.c << ", " << m.d << "/";
+    }
+
+    const V operator()(int i, int j) const {
+        return *(&a + (2 * i + j));
+    }
+
+    V operator()(int i, int j) {
+        return *(&a + (2 * i + j));
     }
 };
 

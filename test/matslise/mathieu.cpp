@@ -48,7 +48,7 @@ TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
     delete eigenvalues;
 }
 
-TEST_CASE("Mathieproblem eigenfunctions", "[mathieu][matslise][eigenfunctions]") {
+TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]") {
     ArrayXd x(30);
     x << 0.000000000000000, 0.108330781158269, 0.216661562316537, 0.324992343474806, 0.433323124633075,
                         0.541653905791344, 0.649984686949612, 0.758315468107881, 0.866646249266150, 0.974977030424419,

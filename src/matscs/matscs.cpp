@@ -58,7 +58,43 @@ Matscs::propagate(const double E, const Y<Matrix<Type, Args...>> &_y, const doub
         }
     }
     return y;
+}
 
+MatrixXd Matscs::propagatePsi(const double E, const MatrixXd &_psi, const double a, const double b) const {
+    MatrixXd psi = _psi;
+    if (a < b) {
+        for (int i = 0; i < sectorCount; ++i) {
+            Sector *sector = sectors[i];
+            if (sector->xmax > a) {
+                if (sector->xmin < a) // first
+                    psi = sector->propagatePsi(E, psi, sector->xmin - a);
+
+                if (sector->xmax >= b) { // last
+                    psi = sector->propagatePsi(E, psi, b - sector->xmin);
+                    break;
+                }
+
+                psi = sector->propagatePsi(E, psi, sector->xmax - sector->xmin);
+            }
+        }
+    } else {
+        for (int i = sectorCount - 1; i >= 0; --i) {
+            Sector *sector = sectors[i];
+            if (sector->xmin < a) {
+                if (sector->xmax > a) // first
+                    psi = sector->propagatePsi(E, psi, sector->xmin - a);
+                else
+                    psi = sector->propagatePsi(E, psi, sector->xmin - sector->xmax);
+
+                if (sector->xmin <= b) { // last
+                    psi = sector->propagatePsi(E, psi, b - sector->xmin);
+                    break;
+                }
+
+            }
+        }
+    }
+    return psi;
 }
 
 template Y<Matrix<double, -1, -1>>

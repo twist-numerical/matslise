@@ -12,11 +12,11 @@ using namespace matslise::matscs_util;
 
 Sector::Sector(const Matscs *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
-    vs = legendre::getCoefficients(16, s->V, xmin, xmax);
+    vs = legendre::getCoefficients(MATSCS_N, s->V, xmin, xmax);
     SelfAdjointEigenSolver<MatrixXd> es(vs[0]);
     D = es.eigenvectors();
 
-    for (int i = 0; i < 16; ++i)
+    for (int i = 0; i < MATSCS_N; ++i)
         vs[i] = D * vs[i] * D.transpose();
 
     calculateTCoeffs();
@@ -95,6 +95,24 @@ Y<Matrix<Type, Args...>> Sector::propagate(double E, const Y<Matrix<Type, Args..
 template Y<Matrix<double, -1, -1>> Sector::propagate(double E, const Y<Matrix<double, -1, -1>> &y0, double delta) const;
 
 template Y<Matrix<double, -1, 1>> Sector::propagate(double E, const Y<Matrix<double, -1, 1>> &y0, double delta) const;
+
+MatrixXd Sector::propagatePsi(double E, const MatrixXd &psi, double delta) const {
+    if (delta > 0) {
+        Matrix2D<MatrixXd> t = calculateT(E, delta).t;
+        return (t(1, 1) + t(1, 0) * psi).transpose()
+                .colPivHouseholderQr()
+                .solve((t(0, 1) + t(0, 0) * psi).transpose())
+                .transpose();
+    } else if (delta < 0) {
+        Matrix2D<MatrixXd> t = calculateT(E, -delta).t;
+        return (t(0, 0) - t(1, 0) * psi).transpose()
+                .colPivHouseholderQr()
+                .solve((-t(0, 1) + t(1, 1) * psi).transpose())
+                .transpose();
+    } else {
+        return psi;
+    }
+}
 
 Sector::~Sector() {
     delete[]vs;
