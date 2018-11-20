@@ -13,8 +13,9 @@
 #include "matslise.h"
 #include <Eigen/Dense>
 
-#define MATSCS_HMAX 10
-#define MATSCS_ETA 5
+#define MATSCS_HMAX_delta 7
+#define MATSCS_ETA_delta 3
+#define MATSCS_ETA_h 5
 #define MATSCS_N 8
 
 using namespace Eigen;
@@ -33,7 +34,6 @@ namespace matslise {
         double xmin, xmax;
         int sectorCount;
         matslise::matscs_util::Sector **sectors;
-        MatrixXd zero, one;
     public:
         Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount);
 
@@ -57,8 +57,8 @@ namespace matslise {
         public:
             MatrixXd *vs;
             double xmin, xmax, h;
-            Array2D<Matrix2D<MatrixXd>, MATSCS_ETA, MATSCS_HMAX> t_coeff;
-            Matrix2D<MatrixXd> t_coeff_h[MATSCS_ETA];
+            Array2D<Matrix2D<MatrixXd>, MATSCS_ETA_delta, MATSCS_HMAX_delta> t_coeff;
+            Matrix2D<MatrixXd> t_coeff_h[MATSCS_ETA_h];
             MatrixXd D;
 
             Sector(const Matscs *problem, double xmin, double xmax);

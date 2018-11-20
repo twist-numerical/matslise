@@ -41,7 +41,6 @@ MatrixXd SE2D::calculateM(int k) const {
         for (int j = 0; j < N; ++j)
             M(i, j) = lobatto::quadrature(xGrid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
 
-    cout << M * M.transpose() << endl << endl;
     return M;
 }
 

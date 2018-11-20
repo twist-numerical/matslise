@@ -40,8 +40,8 @@ Sector::Sector(SE2D *se2d, double ymin, double ymax, int matslise_count, int mat
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
-        eigenfunctions[i] *= (eigenfunctionsScaling[i] = 1 / sqrt(lobatto::quadrature(se2d->xGrid, eigenfunctions[i] *
-                                                                                                   eigenfunctions[i])));
+        eigenfunctions[i] *= (eigenfunctionsScaling[i] = 1 /
+                sqrt(lobatto::quadrature(se2d->xGrid, eigenfunctions[i] * eigenfunctions[i])));
     }
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, ymin, ymax,
