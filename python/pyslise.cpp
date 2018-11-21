@@ -61,6 +61,8 @@ PYBIND11_MODULE(pyslise, m) {
                 py::arg("x_count")=16, py::arg("y_count")=16, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=60)
         .def("calculateError", &SE2D::calculateError,
             py::arg("E"), py::arg("sorter")=SE2D::NEWTON_RAPHSON_SORTER)
+        .def("calculateErrors", &SE2D::sortedErrors,
+            py::arg("E"), py::arg("sorter")=SE2D::NEWTON_RAPHSON_SORTER)
         .def("calculateErrorMatrix", &SE2D::calculateErrorMatrix)
         .def("computeEigenfunction", &SE2D::computeEigenfunction)
         .def_readonly_static("NEWTON_RAPHSON_SORTER", &SE2D::NEWTON_RAPHSON_SORTER)
