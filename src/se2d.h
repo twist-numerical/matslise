@@ -32,13 +32,20 @@ namespace matslise {
     public:
         SE2D(std::function<double(double, double)> V,
              double xmin, double xmax, double ymin, double ymax,
-             int xSectorCount, int ySectorCount, int N = 12, int matscs_count = 5, int gridPoints=60);
-
-        matslise::Y<MatrixXd> propagate(double E, double y, bool forward) const;
+             int xSectorCount, int ySectorCount, int N = 12, int matscs_count = 5, int gridPoints = 60);
 
         std::pair<MatrixXd, MatrixXd> calculateErrorMatrix(double E) const;
 
-        std::pair<double, double> calculateError(double E) const;
+        static const std::function<bool(std::pair<double, double>, std::pair<double, double>)>
+                NEWTON_RAPHSON_SORTER, ABS_SORTER;
+
+        std::pair<double, double> calculateError(double E, const std::function<bool(
+                std::pair<double, double>, std::pair<double, double>)> &sorter = SE2D::NEWTON_RAPHSON_SORTER) const;
+
+        std::vector<std::pair<double, double>> *calculateErrors(double E) const;
+
+        std::vector<std::pair<double, double>> *sortedErrors(double E, const std::function<bool(
+                std::pair<double, double>, std::pair<double, double>)> &sorter = SE2D::NEWTON_RAPHSON_SORTER) const;
 
         std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
@@ -52,7 +59,6 @@ namespace matslise {
         const se2d_util::Sector &getSector(double y) const;
 
         virtual ~SE2D();
-
     };
 
     namespace se2d_util {

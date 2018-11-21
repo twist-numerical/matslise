@@ -3,6 +3,7 @@
 //
 
 #include <iostream>
+#include <map>
 #include "../se2d.h"
 #include "../util/lobatto.h"
 
@@ -78,26 +79,68 @@ pair<MatrixXd, MatrixXd> SE2D::calculateErrorMatrix(double E) const {
     );
 }
 
-pair<double, double> SE2D::calculateError(double E) const {
+vector<pair<double, double>> *SE2D::calculateErrors(double E) const {
     pair<MatrixXd, MatrixXd> error_matrix = calculateErrorMatrix(E);
     EigenSolver<MatrixXd> solver(N);
 
     solver.compute(error_matrix.first, true);
+
+    multimap<double, int> rightMap;
     ArrayXcd eigenvaluesRight = solver.eigenvalues().array();
-    ArrayXcd::Index indexRight;
-    eigenvaluesRight.abs2().minCoeff(&indexRight);
+    for (int i = 0; i < N; ++i)
+        rightMap.insert({eigenvaluesRight[i].real(), i});
     MatrixXcd right = solver.eigenvectors();
 
-
+    multimap<double, int> leftMap;
     solver.compute(error_matrix.first.transpose(), true);
     ArrayXcd eigenvaluesLeft = solver.eigenvalues().array();
-    ArrayXcd::Index indexLeft;
-    eigenvaluesLeft.abs2().minCoeff(&indexLeft);
+    for (int i = 0; i < N; ++i)
+        leftMap.insert({eigenvaluesLeft[i].real(), i});
     MatrixXcd left = solver.eigenvectors().transpose();
 
-    return make_pair(eigenvaluesLeft[indexLeft].real(),
-                     (left.row(indexLeft) * error_matrix.second * right.col(indexRight) /
-                      (left.row(indexLeft) * right.col(indexRight)))[0].real());
+
+    auto errors = new vector<pair<double, double>>();
+    for (auto leftI = leftMap.begin(), rightI = rightMap.begin();
+         leftI != leftMap.end() && rightI != rightMap.end();
+         ++leftI, ++rightI) {
+        int &li = leftI->second;
+        int &ri = rightI->second;
+        errors->push_back({eigenvaluesLeft[li].real(),
+                           (left.row(li) * error_matrix.second * right.col(ri) /
+                            (left.row(li) * right.col(ri)))[0].real()});
+    }
+
+    return errors;
+}
+
+const function<bool(pair<double, double>, pair<double, double>)>SE2D::NEWTON_RAPHSON_SORTER =
+        [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
+            if (abs(a.first) > 100 || abs(b.first) > 100)
+                return abs(a.first) < abs(b.first);
+            return abs(a.first / a.second) < abs(b.first / b.second);
+        };
+
+const function<bool(pair<double, double>, pair<double, double>)>SE2D::ABS_SORTER =
+        [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
+            return abs(a.first) < abs(b.first);
+        };
+
+vector<pair<double, double>> *
+SE2D::sortedErrors(double E,
+                   const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
+    vector<pair<double, double>> *errors = calculateErrors(E);
+
+    sort(errors->begin(), errors->end(), sorter);
+
+    return errors;
+}
+
+pair<double, double> SE2D::calculateError(
+        double E, const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
+    vector<pair<double, double>> *errors = sortedErrors(E, sorter);
+    pair<double, double> best = (*errors)[0];
+    delete errors;
+    return best;
 }
 
 Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {
