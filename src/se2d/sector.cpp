@@ -90,6 +90,6 @@ ArrayXd Sector::computeEigenfunction(int index, const ArrayXd &x) const {
     Array<matslise::Y<double>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
     ArrayXd result(n);
     for (int i = 0; i < n; ++i)
-        result(i) = raw(i).y.x * eigenfunctionsScaling[index];
+        result(i) = raw(i).y[0] * eigenfunctionsScaling[index];
     return result;
 }

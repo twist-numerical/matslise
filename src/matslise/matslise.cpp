@@ -8,6 +8,7 @@
 #include <queue>
 #include "../matslise.h"
 #include "matslise_formulas.h"
+#include "../util/theta.h"
 
 #define EPS (1.e-12)
 
@@ -43,9 +44,9 @@ Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sec
 }
 
 
-tuple<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, double a, double b) const {
+pair<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, double a, double b) const {
     Y<double> y = _y;
-    double theta = y.theta();
+    double theta = matslise::theta(y);
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
@@ -78,7 +79,7 @@ tuple<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, doub
             }
         }
     }
-    return make_tuple(y, theta);
+    return {y, theta};
 }
 
 tuple<double, double, double>

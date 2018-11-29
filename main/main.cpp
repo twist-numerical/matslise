@@ -83,17 +83,17 @@ void mathieu() {
 
 void test2d() {
     std::cout.precision(10);
-    SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 32, 32);
+    SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 64, 64);
 
 
     /*for(double a = 3.1; a < 3.3; a += .001)
         cout << se2d.calculateError(a).first << endl;*/
     ArrayXd xs(5);
-    xs << -2,-1,0,1,2;
+    xs << -2, -1, 0, 1, 2;
     ArrayXd ys(5);
-    ys << -2,-1,0,1,2;
-    for(auto &a : se2d.computeEigenfunction(5.535959903292571, xs, ys))
-        cout <<  a << "\n\n" << endl;
+    ys << -2, -1, 0, 1, 2;
+    for (auto &a : se2d.computeEigenfunction(5.535959903292571, xs, ys))
+        cout << a << "\n\n" << endl;
 }
 
 void testMatscs() {
@@ -131,9 +131,23 @@ void testEigenfunctionCalculator() {
     delete _ef;
 }
 
+void testPrufer() {
+    //Matslise ms([](double x) { return 0.0; }, 0., 3.14, 60);
+
+    Matslise ms([](double x) {
+        return 2 * cos(2 * x);
+        //return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
+    }, -M_PI_2, M_PI_2, 16);
+    matslise::Y<double> y0({0, 1});
+    cout << y0 << endl;
+    cout << get<0>(ms.propagate(110, y0, -M_PI_2, -M_PI_2 + 2 * M_PI/33)) << endl;
+   // cout << get<0>(ms.propagate(16, y0, .1, 1.6)) << endl;
+}
+
 int main() {
     // coffey();
-    test2d();
+    testPrufer();
+    // test2d();
     // testBigE();
     // testMatscs();
     // testEigenfunctionCalculator();

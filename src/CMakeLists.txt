@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -fPIC")
+set(CMAKE_CXX_FLAGS "-O0 -Wall -Wextra -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -14,11 +14,12 @@ if (DEFINED EMSCRIPTEN)
 
     set_target_properties(matslise
             PROPERTIES SUFFIX ".js"
-            LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2 -s TOTAL_MEMORY=128mb")
+            LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2 -s TOTAL_MEMORY=128mb -s BINARYEN_TRAP_MODE='clamp'")
     em_link_js_library(matslise ${libraryJsFiles})
+
 else ()
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsave-optimization-record")
+    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsave-optimization-record")
 
     add_library(matslise SHARED ${MATSLISE_SRC})
     target_link_libraries(matslise Eigen3::Eigen)

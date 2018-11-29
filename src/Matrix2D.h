@@ -21,8 +21,9 @@
 
 template<typename V = double>
 class Vector2D {
-public:
+private:
     V x, y;
+public:
 
     Vector2D() {
     };
@@ -126,7 +127,7 @@ public:
 
     template<typename R=V>
     Vector2D<R> operator*(const Vector2D<R> &r) const {
-        return {a * r.x + b * r.y, c * r.x + d * r.y};
+        return {a * r[0] + b * r[1], c * r[0] + d * r[1]};
     }
 
     Matrix2D<V> operator*=(double f) {

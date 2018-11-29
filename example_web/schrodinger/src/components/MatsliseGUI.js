@@ -9,6 +9,8 @@ class MatsliseGUI extends Component {
   state = {
     f: (x) => 0,
     x: [0, 1],
+    ymin: [1,0],
+    ymax: [1,0],
     steps: 32,
     matslise: null,
     eigenvalues: [],
@@ -48,7 +50,9 @@ class MatsliseGUI extends Component {
         <h1 style={{position: 'absolute', top:0, width: '100%', height: "50px"}}>Schrödinger</h1>
         <div className="row h-100">
           <div className="col-5 col-md-4 col-xl-3" style={{height: '100vh', overflowX: 'auto', borderTop: "solid transparent 60px"}}>
-            <SettingsForm onSubmit={data => this.updateFunction(data)} onInit={data => this.updateFunction(data)} />
+            <SettingsForm
+              onSubmit={data => this.updateFunction(data)}
+              onInit={data => this.updateFunction(data)} />
             <div className="table-responsive">
               <table className="table table-sm table-striped">
                 <tbody>
@@ -100,10 +104,11 @@ class MatsliseGUI extends Component {
   }
 
   updateFunction(newState) {
-    let {f, x, steps} = {
+    let {f, x, ymin, ymax, steps} = {
       ...this.state,
       ...newState
     };
+    console.log(newState);
     
     while(this.toDelete.length > 0)
       this.toDelete.pop().delete();
@@ -111,18 +116,22 @@ class MatsliseGUI extends Component {
     const matslise = new Matslise.Matslise(f, ...x, steps);
 
     this.toDelete.push(matslise);
-    this.setState({f, x, steps, matslise,
-      eigenvalues: this.eigenvalues(0, 10, matslise),
+    this.setState({f, x, ymin, ymax, steps, matslise,
+      eigenvalues: this.eigenvalues(0, 10, matslise, ymin, ymax),
       showPotential: true,
     });
   }
 
-  eigenvalues(imin, imax, matslise=this.state.matslise) {
-    return matslise.eigenvaluesByIndex(imin, imax, [0,1], [0,1]);
+  eigenvalues(imin, imax, matslise=this.state.matslise, ymin=[1,0], ymax=[1,0]) {
+    const [ya, dya] = ymin, [yb, dyb] = ymax;
+    let eigs = matslise.eigenvaluesByIndex(imin, imax, [dya,-ya], [dyb, -yb]);
+    console.log(eigs);
+    return eigs;
   }
 
   eigenfunction(e) {
-    let eigen = this.state.matslise.eigenfunction(e, [0,1], [0,1]);
+    const {ymin: [ya, dya], ymax: [yb, dyb]} = this.state;
+    let eigen = this.state.matslise.eigenfunction(e, [dya,-ya], [dyb, -yb]);
     this.toDelete.push(eigen);
     return (x) => eigen(x)[0];
   }

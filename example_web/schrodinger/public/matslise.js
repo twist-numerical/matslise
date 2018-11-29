@@ -1,1 +1,1 @@
-../../../cmake-build-emscripten/matslise.js
+/home/toon/Documents/matslise/matslise-cpp/cmake-build-emscripten/src/matslise.js

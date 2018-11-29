@@ -18,7 +18,7 @@ EigenfunctionCalculator::EigenfunctionCalculator(Matslise *ms, double E, const Y
     for (int i = ms->sectorCount - 1; i > m; --i)
         ys[i] = ms->sectors[i]->propagate(E, ys[i + 1], false);
     Y<double> yr = ms->sectors[m]->propagate(E, ys[m + 1], false);
-    double s = ys[m].y.x / yr.y.x;
+    double s = ys[m].y[0] / yr.y[0];
     for (int i = m + 1; i < ms->sectorCount; ++i)
         ys[i] *= s;
 }

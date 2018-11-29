@@ -19,7 +19,7 @@ EigenfunctionCalculator::EigenfunctionCalculator(Matscs *ms, double E, const Y<V
     for (int i = ms->sectorCount - 1; i > m; --i)
         ys[i] = ms->sectors[i]->propagate(E, ys[i + 1], false);
     Y<VectorXd> yr = ms->sectors[m]->propagate(E, ys[m + 1], false);
-    double s = ys[m].y.x.norm() / yr.y.x.norm();
+    double s = ys[m].y[0].norm() / yr.y[0].norm();
     for (int i = m + 1; i < ms->sectorCount; ++i)
         ys[i] *= s;
 }

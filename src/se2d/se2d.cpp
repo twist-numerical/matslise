@@ -68,14 +68,14 @@ pair<MatrixXd, MatrixXd> SE2D::calculateErrorMatrix(double E) const {
         yr = M[i - 1].transpose() * yr;
     }
 
-    ColPivHouseholderQR<MatrixXd> left_solver(yl.y.x.transpose());
-    ColPivHouseholderQR<MatrixXd> right_solver(yr.y.x.transpose());
-    MatrixXd Ul = left_solver.solve(yl.y.y.transpose()).transpose();
-    MatrixXd Ur = right_solver.solve(yr.y.y.transpose()).transpose();
+    ColPivHouseholderQR<MatrixXd> left_solver(yl.y[0].transpose());
+    ColPivHouseholderQR<MatrixXd> right_solver(yr.y[0].transpose());
+    MatrixXd Ul = left_solver.solve(yl.y[1].transpose()).transpose();
+    MatrixXd Ur = right_solver.solve(yr.y[1].transpose()).transpose();
     return make_pair(
             Ul - Ur,
-            left_solver.solve((yl.dy.y - Ul * yl.dy.x).transpose()).transpose()
-            - right_solver.solve((yr.dy.y - Ur * yr.dy.x).transpose()).transpose()
+            left_solver.solve((yl.dy[1] - Ul * yl.dy[0]).transpose()).transpose()
+            - right_solver.solve((yr.dy[1] - Ur * yr.dy[0]).transpose()).transpose()
     );
 }
 
@@ -163,7 +163,7 @@ Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {
     Y<MatrixXd> matchLeft = steps[match];
 
     MatrixXd big = MatrixXd::Zero(2 * N, 2 * N);
-    big << matchLeft.y.x, -matchRight.y.x, matchLeft.y.y, -matchRight.y.y;
+    big << matchLeft.y[0], -matchRight.y[0], matchLeft.y[1], -matchRight.y[1];
 
     FullPivLU<MatrixXd> lu(big);
     MatrixXd kernel = lu.kernel();
@@ -202,7 +202,7 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     vector<ArrayXXd> result;
     Y<MatrixXd> *steps = computeEigenfunctionSteps(E);
     if (steps != nullptr) {
-        int cols = (int) steps[0].y.x.cols();
+        int cols = (int) steps[0].y[0].cols();
         for (int i = 0; i < cols; ++i)
             result.push_back(ArrayXXd::Zero(nx, ny));
 
@@ -220,7 +220,7 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
                 B.col(j) = sectors[sector]->computeEigenfunction(j, x);
 
             while (nextY < ny && y[nextY] <= sectors[sector]->ymax) {
-                MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).y.x;
+                MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).y[0];
                 for (int i = 0; i < cols; ++i)
                     result[i].col(nextY) = prod.col(i);
                 ++nextY;

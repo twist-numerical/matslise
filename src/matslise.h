@@ -14,9 +14,10 @@
 #include "Matrix2D.h"
 #include "Evaluator.h"
 
-#define MATSLISE_HMAX 17
-#define MATSLISE_ETA 9
-#define MATSLISE_N 13
+#define MATSLISE_HMAX_delta 7
+#define MATSLISE_ETA_delta 3
+#define MATSLISE_ETA_h 5
+#define MATSLISE_N 7
 
 using namespace Eigen;
 
@@ -39,17 +40,13 @@ namespace matslise {
             return Y<D>(-y, -dy);
         }
 
-        double theta() const {
-            return atan(y[0] / y[1]);
-        }
-
         friend std::ostream &operator<<(std::ostream &os, const Y<D> &m) {
             return os << "(" << m.y[0] << "," << m.y[1] << ")" << "(" << m.dy[0] << "," << m.dy[1] << ")";
         }
 
         template<typename R>
         Y<D> operator*(const R &f) {
-            return Y<D>(y*f, dy*f);
+            return Y<D>(y * f, dy * f);
         }
 
         template<typename R>
@@ -110,7 +107,7 @@ namespace matslise {
     public:
         Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount);
 
-        std::tuple<matslise::Y<double>, double>
+        std::pair<matslise::Y<double>, double>
         propagate(double E, const matslise::Y<double> &y, double a, double b) const;
 
         Eigen::Array<matslise::Y<double>, Eigen::Dynamic, 1>
@@ -164,8 +161,8 @@ namespace matslise {
             Matslise *s;
             double *vs;
             double xmin, xmax, h;
-            Array2D<Matrix2D<>, MATSLISE_ETA, MATSLISE_HMAX> t_coeff;
-            Matrix2D<> t_coeff_h[MATSLISE_ETA];
+            Array2D<Matrix2D<double>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> t_coeff;
+            Matrix2D<double> t_coeff_h[MATSLISE_ETA_h];
 
             Sector(Matslise *problem, double xmin, double xmax);
 

@@ -12,6 +12,9 @@ const DF = function(f, df, toString) {
 	r.toFunction = function (...args) {
 		return new Function(...args, "return "+this.toString());
 	};
+	r.toValue = function() {
+		return r.toFunction()();
+	}
 	return r;
 }
 
