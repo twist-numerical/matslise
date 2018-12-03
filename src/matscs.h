@@ -16,7 +16,7 @@
 #define MATSCS_HMAX_delta 7
 #define MATSCS_ETA_delta 3
 #define MATSCS_ETA_h 5
-#define MATSCS_N 8
+#define MATSCS_N 11
 
 using namespace Eigen;
 

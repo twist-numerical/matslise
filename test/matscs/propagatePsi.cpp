@@ -28,11 +28,11 @@ MatrixXd f(double x) {
 TEST_CASE("Test propagatePsi", "[matscs][propagatePsi]") {
     Matscs scs(&f, 2, 0, 20, 64);
     double Es[] = {-64, -36, -30.25, -20.25, -16};
-    double mid = .5;
+    double mid = 20./64*2;
     for (double E : Es) {
         MatrixXd left = scs.propagatePsi(E, MatrixXd::Zero(2, 2), 0, mid);
         MatrixXd right = scs.propagatePsi(E, MatrixXd::Zero(2, 2), 20, mid);
-        REQUIRE(Approx(0).margin(1e-5) == (left - right).determinant());
+        REQUIRE(Approx(0).margin(1e-3) == (left - right).determinant());
     }
 }
 

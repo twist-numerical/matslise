@@ -3,18 +3,15 @@
 
 #include "../matslise.h"
 
-inline double atan_pos(double y, double x) {
+inline double atan_safe(double y, double x) {
     if (x == 0)
         return y == 0 ? 0 : M_PI_2;
-    double r = atan(y / x);
-    if (r < 0)
-        r += M_PI;
-    return r;
+    return atan(y / x);
 }
 
 namespace matslise {
     inline double theta(const Y<double> &y) {
-        return atan_pos(y.y[0], y.y[1]);
+        return atan_safe(y.y[0], y.y[1]);
     }
 }
 

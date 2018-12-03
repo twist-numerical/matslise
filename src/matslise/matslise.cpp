@@ -31,11 +31,11 @@ Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sec
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
-    double mid = (xmax + xmin) / 2;
+    double mid = .51 * xmax + .49 * xmin;
     for (int i = 0; i < sectorCount; ++i) {
         double a = xmin + i * h;
         double b = a + h;
-        if (b - 1.e-5 > mid) {
+        if (b > mid) {
             match = b;
             mid = xmax + 1;
         }
@@ -47,7 +47,7 @@ Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sec
 pair<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, double a, double b) const {
     Y<double> y = _y;
     double theta = matslise::theta(y);
-    if (a < b) {
+    if (a <= b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
             if (sector->xmax > a) {
@@ -63,6 +63,8 @@ pair<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, doubl
             }
         }
     } else {
+        if(theta == 0)
+            theta += M_PI;
         for (int i = sectorCount - 1; i >= 0; --i) {
             Sector *sector = sectors[i];
             if (sector->xmin < a) {
@@ -93,7 +95,7 @@ Matslise::calculateError(double E, const Y<double> &left, const Y<double> &right
                       thetaL - thetaR);
 }
 
-pair<unsigned int, double>
+pair<int, double>
 newtonIteration(const Matslise *ms, double E, const Y<double> &left, const Y<double> &right, double tol) {
     double adjust, error, derror, theta;
     int i = 0;
@@ -107,19 +109,20 @@ newtonIteration(const Matslise *ms, double E, const Y<double> &left, const Y<dou
         }
     } while (fabs(adjust) > tol);
 
-    int index = (int) (round(theta / M_PI) - 1);
+    int index = (int) round(theta / M_PI);
     if (index < 0)
         index = 0;
     return make_pair(index, E);
 }
 
-vector<pair<unsigned int, double>> *
-Matslise::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y<double> &left,
+vector<pair<int, double>> *
+Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<double> &left,
                                     const Y<double> &right) const {
     double Emin = -1;
     double Emax = 1;
     while (true) {
-        unsigned int i = (unsigned int) floor(get<2>(calculateError(Emax, left, right)) / M_PI);
+        double t = get<2>(calculateError(Emax, left, right)) / M_PI;
+        int i = (int) floor(t);
         if (i >= Imax)
             break;
         else {
@@ -130,7 +133,8 @@ Matslise::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const 
     }
     if (Emin == -1) {
         while (true) {
-            unsigned int i = (unsigned int) floor(get<2>(calculateError(Emin, left, right)) / M_PI);
+            double t = get<2>(calculateError(Emin, left, right)) / M_PI;
+            int i = (int) ceil(t);
             if (i <= Imin)
                 break;
             else {
@@ -143,28 +147,32 @@ Matslise::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const 
     return computeEigenvalues(Emin, Emax, Imin, Imax, left, right);
 };
 
-vector<pair<unsigned int, double>> *
+vector<pair<int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, const Y<double> &left, const Y<double> &right) const {
-    return computeEigenvalues(Emin, Emax, 0, UINT_MAX, left, right);
+    return computeEigenvalues(Emin, Emax, 0, INT_MAX, left, right);
 };
 
-vector<pair<unsigned int, double>> *
-Matslise::computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax, const Y<double> &left,
+vector<pair<int, double>> *
+Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const Y<double> &left,
                              const Y<double> &right) const {
-    vector<pair<unsigned int, double>> *eigenvalues = new vector<pair<unsigned int, double>>();
-    queue<tuple<double, double, double, double, unsigned int>> toCheck;
+    if(Imin < 0)
+        throw runtime_error("Matslise::computeEigenvalues(): Imin has to be at least 0");
+    if(Imin > Imax)
+        throw runtime_error("Matslise::computeEigenvalues(): Imax can't be less then Imin");
+    vector<pair<int, double>> *eigenvalues = new vector<pair<int, double>>();
+    queue<tuple<double, double, double, double, int>> toCheck;
 
     toCheck.push(make_tuple(Emin, get<2>(calculateError(Emin, left, right)) / M_PI,
                             Emax, get<2>(calculateError(Emax, left, right)) / M_PI,
                             0));
 
     double a, ta, b, tb, c, tc;
-    unsigned int ia, ib, depth;
+    int ia, ib, depth;
     while (!toCheck.empty()) {
         tie(a, ta, b, tb, depth) = toCheck.front();
         toCheck.pop();
-        ia = (unsigned int) floor(ta);
-        ib = (unsigned int) floor(tb);
+        ia = (int) ceil(ta);
+        ib = (int) ceil(tb);
         if (ta >= tb || ia == ib || ib <= Imin || Imax <= ia)
             continue;
         if (ia + 1 == ib)
@@ -175,8 +183,12 @@ Matslise::computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsign
             eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9));
         else {
             tc = get<2>(calculateError(c, left, right)) / M_PI;
-            toCheck.push(make_tuple(a, ta, c, tc, depth));
-            toCheck.push(make_tuple(c, tc, b, tb, depth));
+            if(isnan(tc)) {
+                cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
+            } else {
+                toCheck.push(make_tuple(a, ta, c, tc, depth));
+                toCheck.push(make_tuple(c, tc, b, tb, depth));
+            }
         }
     }
 
@@ -198,7 +210,7 @@ Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const 
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
-    if(x[0] < xmin || x[n-1] > xmax)
+    if (x[0] < xmin || x[n - 1] > xmax)
         throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
 
     Array<Y<double>, Dynamic, 1> ys(n);

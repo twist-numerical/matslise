@@ -7,10 +7,10 @@ using namespace emscripten;
 using namespace std;
 using namespace Eigen;
 
-val transformEigenvalues(vector<pair<unsigned int, double>> *values) {
+val transformEigenvalues(vector<pair<int, double>> *values) {
     val result(val::array());
 
-    for (pair<unsigned int, double> value: *values)
+    for (pair<int, double> value: *values)
         result.call<val>("push", val(value));
 
     delete values;
@@ -44,9 +44,9 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .element(emscripten::index<0>())
             .element(emscripten::index<1>());
 
-    value_object<pair<unsigned int, double>>("PairIntDouble")
-            .field("index", &pair<unsigned int, double>::first)
-            .field("value", &pair<unsigned int, double>::second);
+    value_object<pair<int, double>>("PairIntDouble")
+            .field("index", &pair<int, double>::first)
+            .field("value", &pair<int, double>::second);
 
     class_<matslise_util::EigenfunctionCalculator>("EigenfunctionCalculator")
             .function("eval",
@@ -83,7 +83,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                 )(calculator);
                     }))
             .function("eigenvaluesByIndex", optional_override(
-                    [](Matslise &m, unsigned int Imin, unsigned int Imax, const Vector2d &left,
+                    [](Matslise &m, int Imin, int Imax, const Vector2d &left,
                        const Vector2d &right) -> val {
                         return transformEigenvalues(
                                 m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right)));

@@ -67,15 +67,15 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<double> &side, const
     return ys;
 }
 
-vector<pair<unsigned int, double>> *
-mergeEigenvalues(vector<pair<unsigned int, double>> *even, vector<pair<unsigned int, double>> *odd) {
-    vector<pair<unsigned int, double>> *values = new vector<pair<unsigned int, double>>();
+vector<pair<int, double>> *
+mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd) {
+    vector<pair<int, double>> *values = new vector<pair<int, double>>();
 
 
-    for (pair<unsigned int, double> &iE : *even)
+    for (pair<int, double> &iE : *even)
         iE.first *= 2;
 
-    for (pair<unsigned int, double> &iE : *odd)
+    for (pair<int, double> &iE : *odd)
         iE.first = 2 * iE.first + 1;
 
     auto a = even->begin();
@@ -99,14 +99,14 @@ mergeEigenvalues(vector<pair<unsigned int, double>> *even, vector<pair<unsigned 
 
 };
 
-vector<pair<unsigned int, double>> *
-HalfRange::computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const Y<double> &side) const {
+vector<pair<int, double>> *
+HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<double> &side) const {
     return mergeEigenvalues(
             ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<double>({1, 0}), side),
             ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<double>({0, 1}), side));
 };
 
-vector<pair<unsigned int, double>> *
+vector<pair<int, double>> *
 HalfRange::computeEigenvalues(double Emin, double Emax, const Y<double> &side) const {
     return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<double>({1, 0}), side),
                             ms->computeEigenvalues(Emin, Emax, Y<double>({0, 1}), side));

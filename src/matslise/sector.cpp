@@ -67,8 +67,8 @@ double Sector::prufer(double E, double delta, const Y<double> &y0, const Y<doubl
     double ff = E - vs[0];
     if (ff > 0) {
         double f = sqrt(ff);
-        double C = atan_pos(y0.y[0] * f, y0.y[1]) / f;
-        theta1 += round(((C + delta) * f - theta1) / M_PI) * M_PI;
+        double C = atan_safe(y0.y[0] * f, y0.y[1]) / f;
+        theta0 -= round(((C + delta) * f - theta1) / M_PI) * M_PI;
     } else {
         double s0 = y0.y[0] * y0.y[1];
         double s1 = y1.y[0] * y1.y[1];

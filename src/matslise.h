@@ -14,10 +14,10 @@
 #include "Matrix2D.h"
 #include "Evaluator.h"
 
-#define MATSLISE_HMAX_delta 7
-#define MATSLISE_ETA_delta 3
-#define MATSLISE_ETA_h 5
-#define MATSLISE_N 7
+#define MATSLISE_HMAX_delta 11
+#define MATSLISE_ETA_delta  5
+#define MATSLISE_ETA_h 7
+#define MATSLISE_N 17
 
 using namespace Eigen;
 
@@ -117,16 +117,16 @@ namespace matslise {
         std::tuple<double, double, double>
         calculateError(double E, const matslise::Y<double> &left, const matslise::Y<double> &right) const;
 
-        std::vector<std::pair<unsigned int, double>> *
+        std::vector<std::pair<int, double>> *
         computeEigenvalues(double Emin, double Emax, const matslise::Y<double> &left,
                            const matslise::Y<double> &right) const;
 
-        std::vector<std::pair<unsigned int, double>> *
-        computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y<double> &left,
+        std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<double> &left,
                                   const matslise::Y<double> &right) const;
 
-        std::vector<std::pair<unsigned int, double>> *
-        computeEigenvalues(double Emin, double Emax, unsigned int Imin, unsigned int Imax,
+        std::vector<std::pair<int, double>> *
+        computeEigenvalues(double Emin, double Emax, int Imin, int Imax,
                            const matslise::Y<double> &left,
                            const matslise::Y<double> &right) const;
 
@@ -146,11 +146,11 @@ namespace matslise {
         Array<matslise::Y<double>, Dynamic, 1>
         computeEigenfunction(double E, const matslise::Y<double> &side, const ArrayXd &x) const;
 
-        std::vector<std::pair<unsigned int, double>> *
+        std::vector<std::pair<int, double>> *
         computeEigenvalues(double Emin, double Emax, const matslise::Y<double> &side) const;
 
-        std::vector<std::pair<unsigned int, double>> *
-        computeEigenvaluesByIndex(unsigned int Imin, unsigned int Imax, const matslise::Y<double> &side) const;
+        std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<double> &side) const;
 
         virtual ~HalfRange();
     };

@@ -29,7 +29,7 @@ Sector::Sector(SE2D *se2d, double ymin, double ymax, int matslise_count, int mat
     vbar = apply(se2d->xGrid, vbar_fun);
     matslise = new Matslise(vbar_fun, se2d->xmin, se2d->xmax, matslise_count);
 
-    vector<pair<unsigned int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
+    vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
     eigenvalues = new double[se2d->N];
     eigenfunctions = new ArrayXd[se2d->N];
     eigenfunctionsScaling = new double[se2d->N];
