@@ -83,8 +83,8 @@ void mathieu() {
 
 void test2d() {
     std::cout.precision(10);
-    SE2D se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, -5.5, 5.5, -5.5, 5.5, 64, 64);
-
+    SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{{}, -5.5, 5.5}, -5.5, 5.5},
+            Options<2>().sectorCount(64).nested(Options<1>().sectorCount(64)));
 
     /*for(double a = 3.1; a < 3.3; a += .001)
         cout << se2d.calculateError(a).first << endl;*/

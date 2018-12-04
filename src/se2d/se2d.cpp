@@ -9,33 +9,36 @@
 
 using namespace Eigen;
 using namespace matslise;
-using namespace matslise::se2d_util;
+using namespace matslise::SEnD_util;
 using namespace std;
 
 
-SE2D::SE2D(function<double(double, double)> V,
-           double xmin, double xmax, double ymin, double ymax,
-           int xSectorCount, int ySectorCount, int N, int matscs_count, int gridPoints) :
-        V(V), xmin(xmin), xmax(xmax), ymin(ymin), ymax(ymax),
-        sectorCount(ySectorCount), N(N), gridPoints(gridPoints) {
-    sectors = new Sector *[sectorCount];
+ArrayXd getGrid(const Rectangle<1> &r, int count) {
+    ArrayXd points(count);
+    for (int i = 0; i < count; ++i)
+        points[i] = r.min + (r.max - r.min) * i / (count - 1);
+    return points;
+}
 
+template<int n>
+SEnD<n>:: SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options) :
+        V(V), domain(domain),
+        sectorCount(options._sectorCount), N(options._N) {
+    sectors = new Sector<n> *[sectorCount];
 
-    ArrayXd xs(gridPoints);
-    for (int i = 0; i < gridPoints; ++i)
-        xs[i] = xmin + (xmax - xmin) * i / (gridPoints - 1);
-    xGrid = lobatto::grid(xs);
+    xGrid = lobatto::grid(getGrid(domain.sub, options._gridPoints));
 
-    double h = (ymax - ymin) / sectorCount;
+    double h = (domain.max - domain.min) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
-        sectors[i] = new Sector(this, ymin + i * h, ymin + (i + 1) * h, xSectorCount, matscs_count);
+        sectors[i] = new Sector<n>(this, domain.min + i * h, domain.min + (i + 1) * h, options);
 
     M = new MatrixXd[sectorCount - 1];
     for (int i = 0; i < sectorCount - 1; ++i)
         M[i] = calculateM(i);
 }
 
-MatrixXd SE2D::calculateM(int k) const {
+template<int n>
+MatrixXd SEnD<n>::calculateM(int k) const {
     MatrixXd M(N, N);
 
     for (int i = 0; i < N; ++i)
@@ -46,14 +49,16 @@ MatrixXd SE2D::calculateM(int k) const {
 }
 
 
-SE2D::~SE2D() {
+template<int n>
+SEnD<n>::~SEnD() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
     delete[] sectors;
     delete[] M;
 }
 
-pair<MatrixXd, MatrixXd> SE2D::calculateErrorMatrix(double E) const {
+template<int n>
+pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
     int match = sectorCount / 2;
     Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     Y<MatrixXd> yl = y0;
@@ -79,7 +84,8 @@ pair<MatrixXd, MatrixXd> SE2D::calculateErrorMatrix(double E) const {
     );
 }
 
-vector<pair<double, double>> *SE2D::calculateErrors(double E) const {
+template<int n>
+vector<pair<double, double>> *SEnD<n>::calculateErrors(double E) const {
     pair<MatrixXd, MatrixXd> error_matrix = calculateErrorMatrix(E);
     EigenSolver<MatrixXd> solver(N);
 
@@ -113,21 +119,10 @@ vector<pair<double, double>> *SE2D::calculateErrors(double E) const {
     return errors;
 }
 
-const function<bool(pair<double, double>, pair<double, double>)>SE2D::NEWTON_RAPHSON_SORTER =
-        [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
-            if (abs(a.first) > 100 || abs(b.first) > 100)
-                return abs(a.first) < abs(b.first);
-            return abs(a.first / a.second) < abs(b.first / b.second);
-        };
-
-const function<bool(pair<double, double>, pair<double, double>)>SE2D::ABS_SORTER =
-        [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
-            return abs(a.first) < abs(b.first);
-        };
-
+template<int n>
 vector<pair<double, double>> *
-SE2D::sortedErrors(double E,
-                   const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
+SEnD<n>::sortedErrors(double E,
+                      const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
     vector<pair<double, double>> *errors = calculateErrors(E);
 
     sort(errors->begin(), errors->end(), sorter);
@@ -135,7 +130,8 @@ SE2D::sortedErrors(double E,
     return errors;
 }
 
-pair<double, double> SE2D::calculateError(
+template<int n>
+pair<double, double> SEnD<n>::calculateError(
         double E, const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
     vector<pair<double, double>> *errors = sortedErrors(E, sorter);
     pair<double, double> best = (*errors)[0];
@@ -143,7 +139,8 @@ pair<double, double> SE2D::calculateError(
     return best;
 }
 
-Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {
+template<int n>
+Y<MatrixXd> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     int match = sectorCount / 2;
 
     Y<MatrixXd> *steps = new Y<MatrixXd>[sectorCount + 1];
@@ -183,8 +180,9 @@ Y<MatrixXd> *SE2D::computeEigenfunctionSteps(double E) const {
     return steps;
 };
 
+template<int n>
 vector<ArrayXXd>
-SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
+SEnD<n>::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     long nx = x.size();
     for (int i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])
@@ -233,10 +231,13 @@ SE2D::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
     return result;
 }
 
-
-const Sector &SE2D::getSector(double y) const {
+template<int n>
+const Sector<n> &SEnD<n>::getSector(double y) const {
     for (int i = 0; i < sectorCount; ++i)
         if (y < sectors[i]->ymax)
             return *sectors[i];
     throw runtime_error("SE2D::getSector(): no sector found");
 }
+
+template
+class matslise::SEnD<2>;

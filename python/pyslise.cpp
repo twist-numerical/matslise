@@ -52,21 +52,30 @@ PYBIND11_MODULE(pyslise, m) {
             return unpackY(e(x)).first;
         }, py::is_operator());
 
-    py::class_<SE2D>(m, "PySE2d")
-        .def(py::init<function<double(double, double)>,
-                double,double, double,double,
-                int, int, int, int, int>(), "Init SE2d",
-                py::arg("V"),
-                py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
-                py::arg("x_count")=16, py::arg("y_count")=16, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=60)
-        .def("calculateError", &SE2D::calculateError,
-            py::arg("E"), py::arg("sorter")=SE2D::NEWTON_RAPHSON_SORTER)
-        .def("calculateErrors", &SE2D::sortedErrors,
-            py::arg("E"), py::arg("sorter")=SE2D::NEWTON_RAPHSON_SORTER)
-        .def("calculateErrorMatrix", &SE2D::calculateErrorMatrix)
-        .def("computeEigenfunction", &SE2D::computeEigenfunction)
-        .def_readonly_static("NEWTON_RAPHSON_SORTER", &SE2D::NEWTON_RAPHSON_SORTER)
-        .def_readonly_static("ABS_SORTER", &SE2D::ABS_SORTER);
+    py::class_<SEnD<2>>(m, "PySE2d")
+        .def(py::init([](function<double(double, double)> V,
+                         double xmin, double xmax, double ymin, double ymax,
+                         int x_count, int y_count, int N, int in_sector_count, int grid_points){
+                return std::unique_ptr<SEnD<2>>(new SEnD<2>(V, {{{}, xmin, xmax}, ymin, ymax},
+                        Options<2>()
+                                .sectorCount(y_count)
+                                .N(N)
+                                .stepsPerSector(in_sector_count)
+                                .gridPoints(grid_points)
+                                .nested(Options<1>().sectorCount(x_count))
+                        ));
+            }), "Init SE2D",
+            py::arg("V"),
+            py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
+            py::arg("x_count")=16, py::arg("y_count")=16, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=60)
+        .def("calculateError", &SEnD<2>::calculateError,
+            py::arg("E"), py::arg("sorter")=SEnD_util::NEWTON_RAPHSON_SORTER)
+        .def("calculateErrors", &SEnD<2>::sortedErrors,
+            py::arg("E"), py::arg("sorter")=SEnD_util::NEWTON_RAPHSON_SORTER)
+        .def("calculateErrorMatrix", &SEnD<2>::calculateErrorMatrix)
+        .def("computeEigenfunction", &SEnD<2>::computeEigenfunction)
+        .def_readonly_static("NEWTON_RAPHSON_SORTER", &SEnD_util::NEWTON_RAPHSON_SORTER)
+        .def_readonly_static("ABS_SORTER", &SEnD_util::ABS_SORTER);
 
     py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())

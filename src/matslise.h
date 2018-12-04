@@ -14,10 +14,10 @@
 #include "Matrix2D.h"
 #include "Evaluator.h"
 
-#define MATSLISE_HMAX_delta 11
-#define MATSLISE_ETA_delta  5
-#define MATSLISE_ETA_h 7
-#define MATSLISE_N 17
+#define MATSLISE_HMAX_delta 15
+#define MATSLISE_ETA_delta  7
+#define MATSLISE_ETA_h 9
+#define MATSLISE_N 15
 
 using namespace Eigen;
 
@@ -103,7 +103,6 @@ namespace matslise {
         int sectorCount;
         double match;
         matslise::matslise_util::Sector **sectors;
-
     public:
         Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount);
 
