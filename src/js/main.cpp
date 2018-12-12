@@ -89,20 +89,6 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                 m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right)));
                     }), allow_raw_pointers());
 
-    class_<se2d_util::Sector>("Sector2D")
-            .function("computeEigenfunction",
-                      optional_override([](const se2d_util::Sector &sector, int index, val x) -> val {
-                          return ArrayXd2val(sector.computeEigenfunction(index, val2ArrayXd(x)));
-                      }))
-            .function("computeEigenfunctions",
-                      optional_override([](const se2d_util::Sector &sector, int index, val x) -> val {
-                          ArrayXd ax = val2ArrayXd(x);
-                          val r = val::array();
-                          for (int i = 0; i < sector.se2d->N; ++i)
-                              r.call<val>("push", ArrayXd2val(sector.computeEigenfunction(index, ax)));
-                          return r;
-                      }));
-
     class_<SE2D>("SE2D")
             .constructor(optional_override(
                     [](val f, double xmin, double xmax, double ymin, double ymax, int xSectorCount,
@@ -128,6 +114,5 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     r.call<val>("push", y);
                 }
                 return r;
-            }))
-            .function("getSector", &SE2D::getSector);
+            }));
 }

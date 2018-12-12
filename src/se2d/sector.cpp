@@ -3,7 +3,6 @@
 //
 
 #include <iostream>
-#include <matslise/se2d.h>
 #include "../se2d.h"
 #include "../util/lobatto.h"
 
@@ -21,13 +20,13 @@ Array<TO, Dynamic, 1> apply(const Array<FROM, Dynamic, 1> &x, function<TO(FROM)>
 }
 
 template<int n>
-Sector<n>::Sector(SEnD<n> *se2d, double ymin, double ymax, const Options<n> &options)
+Sector<n>::Sector(SEBase<n> *se2d, double ymin, double ymax, const Options<n> &options)
         : se2d(se2d), ymin(ymin), ymax(ymax) {
     const Y<double> y0 = Y<double>({0, 1});
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
-    vbar = apply(se2d->xGrid, vbar_fun);
+    vbar = apply(se2d->grid[0], vbar_fun);
     matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, options.nestedOptions._sectorCount);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
@@ -37,12 +36,12 @@ Sector<n>::Sector(SEnD<n> *se2d, double ymin, double ymax, const Options<n> &opt
     for (int i = 0; i < se2d->N; ++i) {
         double E = (*index_eigv)[i].second;
         eigenvalues[i] = E;
-        Array<Y<double>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->xGrid);
+        Array<Y<double>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid[0]);
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
         eigenfunctions[i] *= (eigenfunctionsScaling[i] = 1 /
-                sqrt(lobatto::quadrature(se2d->xGrid, eigenfunctions[i] * eigenfunctions[i])));
+                sqrt(lobatto::quadrature(se2d->grid[0], eigenfunctions[i] * eigenfunctions[i])));
     }
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, ymin, ymax,
@@ -75,11 +74,11 @@ MatrixXd Sector<n>::calculateDeltaV(double y) const {
     Eigen::MatrixXd dV(se2d->N, se2d->N);
 
     ArrayXd vDiff =
-            apply<double, double>(se2d->xGrid, [this, y](double x) -> double { return this->se2d->V(x, y); }) - vbar;
+            apply<double, double>(se2d->grid[0], [this, y](double x) -> double { return this->se2d->V(x, y); }) - vbar;
 
     for (int i = 0; i < se2d->N; ++i) {
         for (int j = 0; j <= i; ++j) {
-            dV(i, j) = lobatto::quadrature(se2d->xGrid, eigenfunctions[i] * eigenfunctions[j] * vDiff);
+            dV(i, j) = lobatto::multi_quadrature<n-1>(se2d->grid, eigenfunctions[i] * eigenfunctions[j] * vDiff);
             if (j < i) dV(j, i) = dV(i, j);
         }
         dV(i, i) += eigenvalues[i];
@@ -88,8 +87,8 @@ MatrixXd Sector<n>::calculateDeltaV(double y) const {
     return dV;
 }
 
-template<int n>
-ArrayXd Sector<n>::computeEigenfunction(int index, const ArrayXd &x) const {
+template<>
+ArrayXd Sector<2>::computeEigenfunction(int index, const ArrayXd &x) const {
     const Y<double> y0 = Y<double>({0, 1});
     long size = x.size();
 
@@ -99,7 +98,6 @@ ArrayXd Sector<n>::computeEigenfunction(int index, const ArrayXd &x) const {
         result(i) = raw(i).y[0] * eigenfunctionsScaling[index];
     return result;
 }
-
 
 template
 class matslise::SEnD_util::Sector<2>;

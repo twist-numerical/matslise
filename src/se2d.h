@@ -10,6 +10,7 @@
 #include <vector>
 #include "matslise.h"
 #include "matscs.h"
+#include "schrodinger.h"
 
 namespace matslise {
     namespace SEnD_util {
@@ -35,87 +36,46 @@ namespace matslise {
     }
 
     template<int n>
-    struct Options {
-        Options<n - 1> nestedOptions;
-        int _sectorCount = 22;
-        int _stepsPerSector = 3;
-        int _N = 12;
-        int _gridPoints = 50;
-
-        Options<n> &nested(Options<n - 1> &nested) {
-            nestedOptions = nested;
-            return *this;
-        }
-
-        Options<n> &sectorCount(int count) {
-            _sectorCount = count;
-            return *this;
-        }
-
-        Options<n> &stepsPerSector(int count) {
-            _stepsPerSector = count;
-            return *this;
-        }
-
-        Options<n> &N(int value) {
-            _N = value;
-            return *this;
-        }
-
-        Options<n> &gridPoints(int value) {
-            _gridPoints = value;
-            return *this;
-        }
-    };
-
-    template<>
-    struct Options<1> {
-        int _sectorCount = 26;
-
-        Options<1> &sectorCount(int count) {
-            _sectorCount = count;
-            return *this;
-        }
-    };
+    class SEnD;
 
     template<int n>
     struct dim {
     };
 
     template<>
+    struct dim<1> {
+        typedef std::function<double(double)> function;
+        typedef ArrayXd array;
+        typedef Matslise SEsolver;
+    };
+
+    template<>
     struct dim<2> {
         typedef std::function<double(double, double)> function;
+        typedef ArrayXXd array;
+        typedef SEnD<2> SEsolver;
     };
 
     template<>
     struct dim<3> {
         typedef std::function<double(double, double, double)> function;
-    };
-
-    template<int n>
-    class Rectangle {
-    public:
-        Rectangle<n - 1> sub;
-        double min, max;
-    };
-
-    template<>
-    class Rectangle<0> {
+        typedef Tensor<double, 3> array;
+        typedef SEnD<3> SEsolver;
     };
 
     template<int n = 2>
-    class SEnD {
+    class SEBase {
     public:
         typename dim<n>::function V;
         MatrixXd *M;
         Rectangle<n> domain;
         int sectorCount;
         SEnD_util::Sector<n> **sectors;
-        ArrayXd xGrid;
+        ArrayXd grid[n];
         int N;
 
     public:
-        SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
+        SEBase(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
 
         std::pair<MatrixXd, MatrixXd> calculateErrorMatrix(double E) const;
 
@@ -129,45 +89,64 @@ namespace matslise {
                 std::pair<double, double>,
                 std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
 
-        std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
+        // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
-        std::vector<Eigen::ArrayXXd>
-        computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
 
+        virtual ~SEBase();
+
+    protected:
         Y<MatrixXd> *computeEigenfunctionSteps(double E) const;
 
         MatrixXd calculateM(int k) const;
+    };
 
-        const SEnD_util::Sector<n> &getSector(double y) const;
+    template<int n>
+    class SEnD : public SEBase<n> {
+    public:
+        using SEBase<n>::SEBase;
+    };
 
-        virtual ~SEnD();
+    template<>
+    class SEnD<2> : public SEBase<2> {
+    public:
+        using SEBase<2>::SEBase;
+
+        std::vector<typename dim<2>::array>
+        computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
+
+        std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<double> &left,
+                                  const matslise::Y<double> &right) const;
+
+
     };
 
     namespace SEnD_util {
         template<int n = 2>
         class Sector {
         public:
-            SEnD<n> *se2d;
-            Matslise *matslise;
+            SEBase<n> *se2d;
+            typename dim<n - 1>::SEsolver *matslise;
             Matscs *matscs;
-            ArrayXd vbar;
+            typename dim<n - 1>::array vbar;
             double ymin, ymax;
 
             double *eigenvalues;
             double *eigenfunctionsScaling;
-            Eigen::ArrayXd *eigenfunctions;
+            typename dim<n - 1>::array *eigenfunctions;
 
-            Sector(SEnD<n> *se2d, double ymin, double ymax, const Options<n> &options);
+            Sector(SEBase<n> *se2d, double ymin, double ymax, const Options<n> &options);
 
             matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, bool forward) const;
 
             matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, double y, bool forward) const;
 
-            ArrayXd computeEigenfunction(int index, const ArrayXd &x) const;
-
-            Eigen::MatrixXd calculateDeltaV(double y) const;
+            typename dim<n - 1>::array computeEigenfunction(int index, const ArrayXd &x) const;
 
             virtual ~Sector();
+
+        private:
+            Eigen::MatrixXd calculateDeltaV(double y) const;
         };
 
 

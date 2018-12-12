@@ -56,7 +56,7 @@ PYBIND11_MODULE(pyslise, m) {
         .def(py::init([](function<double(double, double)> V,
                          double xmin, double xmax, double ymin, double ymax,
                          int x_count, int y_count, int N, int in_sector_count, int grid_points){
-                return std::unique_ptr<SEnD<2>>(new SEnD<2>(V, {{{}, xmin, xmax}, ymin, ymax},
+                return std::unique_ptr<SEnD<2>>(new SEnD<2>(V, {{xmin, xmax}, ymin, ymax},
                         Options<2>()
                                 .sectorCount(y_count)
                                 .N(N)

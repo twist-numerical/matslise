@@ -27,3 +27,19 @@ double lobatto::quadrature(const ArrayXd &x, const ArrayXd &f) {
 
     return result;
 }
+
+template<>
+double lobatto::multi_quadrature<1>(const ArrayXd x[1], const typename Dim<1>::grid &f) {
+    return lobatto::quadrature(x[0], f);
+}
+
+template<>
+double lobatto::multi_quadrature<2>(const ArrayXd x[2], const typename Dim<2>::grid &f) {
+    long n = x[0].size();
+    ArrayXd result = ArrayXd::Zero(n);
+
+    for (int i = 0; i < n - 1; i += 3)
+        result += (x[0][i + 3] - x[0][i]) / 2 * ((f.col(i) + f.col(i + 3)) / 6 + (f.col(i + 1) + f.col(i + 2)) * 5 / 6);
+
+    return lobatto::quadrature(x[1], result);
+}

@@ -83,8 +83,8 @@ void mathieu() {
 
 void test2d() {
     std::cout.precision(10);
-    SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{{}, -5.5, 5.5}, -5.5, 5.5},
-            Options<2>().sectorCount(64).nested(Options<1>().sectorCount(64)));
+    SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{-5.5, 5.5}, -5.5, 5.5},
+                 Options<2>().sectorCount(64).nested(Options<1>().sectorCount(64)).N(8));
 
     /*for(double a = 3.1; a < 3.3; a += .001)
         cout << se2d.calculateError(a).first << endl;*/
@@ -94,6 +94,19 @@ void test2d() {
     ys << -2, -1, 0, 1, 2;
     for (auto &a : se2d.computeEigenfunction(5.535959903292571, xs, ys))
         cout << a << "\n\n" << endl;
+}
+
+
+void test3d() {
+    std::cout.precision(10);
+    SEnD<3> se3d([](double x, double y, double z) -> double { return (1 + x * x) * (1 + y * y) * (1 + z * z); },
+                 {{{-5.5, 5.5}, -5.5, 5.5}, -5.5, 5.5},
+                 Options<3>().sectorCount(25).stepsPerSector(5).N(8).nested(
+                         Options<2>().sectorCount(25).stepsPerSector(5).N(8).nested(
+                                 Options<1>().sectorCount(35))));
+
+    for (double a = 3.1; a < 3.3; a += .01)
+        cout << se3d.calculateError(a).first << endl;
 }
 
 void testMatscs() {
@@ -139,13 +152,13 @@ void testPrufer() {
     }, -M_PI_2, M_PI_2, 18);
     matslise::Y<double> y0({0, 1});
     cout << get<1>(ms.propagate(1, y0, -M_PI_2, -1)) << endl;
-   // cout << get<0>(ms.propagate(16, y0, .1, 1.6)) << endl;
+    // cout << get<0>(ms.propagate(16, y0, .1, 1.6)) << endl;
 }
 
 int main() {
     // coffey();
     // testPrufer();
-    test2d();
+    test3d();
     // testBigE();
     // testMatscs();
     // testEigenfunctionCalculator();

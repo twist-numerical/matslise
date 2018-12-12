@@ -13,20 +13,22 @@ using namespace matslise::SEnD_util;
 using namespace std;
 
 
-ArrayXd getGrid(const Rectangle<1> &r, int count) {
+ArrayXd getGrid(double min, double max, int count) {
     ArrayXd points(count);
     for (int i = 0; i < count; ++i)
-        points[i] = r.min + (r.max - r.min) * i / (count - 1);
+        points[i] = min + (max - min) * i / (count - 1);
     return points;
 }
 
 template<int n>
-SEnD<n>:: SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options) :
+SEBase<n>::SEBase(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options) :
         V(V), domain(domain),
         sectorCount(options._sectorCount), N(options._N) {
     sectors = new Sector<n> *[sectorCount];
 
-    xGrid = lobatto::grid(getGrid(domain.sub, options._gridPoints));
+    for(int i = 0; i < n-1; ++i) {
+        grid[i] = lobatto::grid(getGrid(domain.getMin(i), domain.getMax(i), options._gridPoints));
+    }
 
     double h = (domain.max - domain.min) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
@@ -38,19 +40,19 @@ SEnD<n>:: SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Op
 }
 
 template<int n>
-MatrixXd SEnD<n>::calculateM(int k) const {
+MatrixXd SEBase<n>::calculateM(int k) const {
     MatrixXd M(N, N);
 
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            M(i, j) = lobatto::quadrature(xGrid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
+            M(i, j) = lobatto::quadrature(grid[0], sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
 
     return M;
 }
 
 
 template<int n>
-SEnD<n>::~SEnD() {
+SEBase<n>::~SEBase() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
     delete[] sectors;
@@ -58,7 +60,7 @@ SEnD<n>::~SEnD() {
 }
 
 template<int n>
-pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
+pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
     int match = sectorCount / 2;
     Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     Y<MatrixXd> yl = y0;
@@ -85,7 +87,7 @@ pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
 }
 
 template<int n>
-vector<pair<double, double>> *SEnD<n>::calculateErrors(double E) const {
+vector<pair<double, double>> *SEBase<n>::calculateErrors(double E) const {
     pair<MatrixXd, MatrixXd> error_matrix = calculateErrorMatrix(E);
     EigenSolver<MatrixXd> solver(N);
 
@@ -121,8 +123,8 @@ vector<pair<double, double>> *SEnD<n>::calculateErrors(double E) const {
 
 template<int n>
 vector<pair<double, double>> *
-SEnD<n>::sortedErrors(double E,
-                      const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
+SEBase<n>::sortedErrors(double E,
+                        const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
     vector<pair<double, double>> *errors = calculateErrors(E);
 
     sort(errors->begin(), errors->end(), sorter);
@@ -131,7 +133,7 @@ SEnD<n>::sortedErrors(double E,
 }
 
 template<int n>
-pair<double, double> SEnD<n>::calculateError(
+pair<double, double> SEBase<n>::calculateError(
         double E, const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
     vector<pair<double, double>> *errors = sortedErrors(E, sorter);
     pair<double, double> best = (*errors)[0];
@@ -140,7 +142,7 @@ pair<double, double> SEnD<n>::calculateError(
 }
 
 template<int n>
-Y<MatrixXd> *SEnD<n>::computeEigenfunctionSteps(double E) const {
+Y<MatrixXd> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     int match = sectorCount / 2;
 
     Y<MatrixXd> *steps = new Y<MatrixXd>[sectorCount + 1];
@@ -180,9 +182,9 @@ Y<MatrixXd> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     return steps;
 };
 
-template<int n>
-vector<ArrayXXd>
-SEnD<n>::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) const {
+
+std::vector<typename dim<2>::array>
+SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const {
     long nx = x.size();
     for (int i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])
@@ -231,13 +233,8 @@ SEnD<n>::computeEigenfunction(double E, const ArrayXd &x, const ArrayXd &y) cons
     return result;
 }
 
-template<int n>
-const Sector<n> &SEnD<n>::getSector(double y) const {
-    for (int i = 0; i < sectorCount; ++i)
-        if (y < sectors[i]->ymax)
-            return *sectors[i];
-    throw runtime_error("SE2D::getSector(): no sector found");
-}
+template
+class matslise::SEBase<2>;
 
 template
-class matslise::SEnD<2>;
+class matslise::SEBase<3>;
