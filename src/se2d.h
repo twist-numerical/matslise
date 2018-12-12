@@ -114,11 +114,7 @@ namespace matslise {
         std::vector<typename dim<2>::array>
         computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
 
-        std::vector<std::pair<int, double>> *
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<double> &left,
-                                  const matslise::Y<double> &right) const;
-
-
+        std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;
     };
 
     namespace SEnD_util {
@@ -129,13 +125,13 @@ namespace matslise {
             typename dim<n - 1>::SEsolver *matslise;
             Matscs *matscs;
             typename dim<n - 1>::array vbar;
-            double ymin, ymax;
+            double min, max;
 
             double *eigenvalues;
             double *eigenfunctionsScaling;
             typename dim<n - 1>::array *eigenfunctions;
 
-            Sector(SEBase<n> *se2d, double ymin, double ymax, const Options<n> &options);
+            Sector(SEBase<n> *se2d, double min, double max, const Options<n> &options);
 
             matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, bool forward) const;
 

@@ -84,7 +84,7 @@ void mathieu() {
 void test2d() {
     std::cout.precision(10);
     SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{-5.5, 5.5}, -5.5, 5.5},
-                 Options<2>().sectorCount(64).nested(Options<1>().sectorCount(64)).N(8));
+                 Options<2>().sectorCount(32).nested(Options<1>().sectorCount(32)).N(8));
 
     /*for(double a = 3.1; a < 3.3; a += .001)
         cout << se2d.calculateError(a).first << endl;*/
@@ -101,7 +101,7 @@ void test3d() {
     std::cout.precision(10);
     SEnD<3> se3d([](double x, double y, double z) -> double { return (1 + x * x) * (1 + y * y) * (1 + z * z); },
                  {{{-5.5, 5.5}, -5.5, 5.5}, -5.5, 5.5},
-                 Options<3>().sectorCount(25).stepsPerSector(5).N(8).nested(
+                 Options<3>().sectorCount(10).stepsPerSector(5).N(8).nested(
                          Options<2>().sectorCount(25).stepsPerSector(5).N(8).nested(
                                  Options<1>().sectorCount(35))));
 

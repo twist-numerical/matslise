@@ -65,13 +65,13 @@ namespace matslise {
         double min, max;
 
         double getMin(int axis) const {
-            if(axis == n)
+            if(axis+1 == n)
                 return min;
             return sub.getMin(axis);
         }
 
         double getMax(int axis) const {
-            if(axis == n)
+            if(axis+1 == n)
                 return max;
             return sub.getMax(axis);
         }
