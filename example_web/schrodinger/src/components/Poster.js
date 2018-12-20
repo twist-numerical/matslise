@@ -101,7 +101,7 @@ class Poster extends Component {
     splits = splits.map(a => Math.round(a*y.length));
 
     splits.forEach((s, i) => {
-      if(i+1 == splits.length)
+      if(i+1 === splits.length)
         return;
       const moreSettings = i%2 ? {} : {
         opacity: .3,
@@ -120,8 +120,7 @@ class Poster extends Component {
 
   buildObjects() {
     const group = new THREE.Group();
-    const colors = [0xff0000, 0xff00, 0xff, 0x00ffff];
-    const Es = [3.20, 5.53, 7.55, 8.04, 8.46, 9.94, 11.34, 12.13, 12.22];
+    // const Es = [3.20, 5.53, 7.55, 8.04, 8.46, 9.94, 11.34, 12.13, 12.22];
 
     const xn = 600, yn = 600;
     const {x: [xmin, xmax], y: [ymin, ymax]} = {x: [-5, 5], y: [-5,5]};
@@ -133,14 +132,12 @@ class Poster extends Component {
     for(let i = 0; i <= yn; ++i)
       y.push(ymin + (ymax - ymin)*i/yn);
 
-    let i = 0;
     [17.91].forEach(approxE => {
       const E = binarySearch((E) => this.state.se2d.calculateError(E), approxE-.01, approxE+.01);
       console.log(E);
-      this.computeEigenfunctions(E, x, y).map(z => {
+      this.computeEigenfunctions(E, x, y).forEach(z => {
         group.add(this.buildGraph(x, y, z));
       });
-      ++i;
     });
 
     return group;

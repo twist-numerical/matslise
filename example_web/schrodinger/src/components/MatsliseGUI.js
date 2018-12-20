@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import SettingsForm from './SettingsForm'
 import Graph from './Graph'
 import loadMatslise from '../lib/loadMatslise'
+import Color from 'color';
 
 let Matslise = null;
 
@@ -34,13 +35,17 @@ class MatsliseGUI extends Component {
     const {x, f} = this.state;
 
     let funcs = [];
-    if(this.state.showPotential)
+    if(this.state.showPotential) {
+      f.color="#000000";
       funcs.push(f);
+    }
     this.state.eigenvalues.forEach((eigenvalue) => {
-      const {value, show} = eigenvalue;
+      const {value, show, index} = eigenvalue;
       if(show) {
-        if(eigenvalue.eigenfunction === undefined)
+        if(eigenvalue.eigenfunction === undefined) {
           eigenvalue.eigenfunction = this.eigenfunction(value);
+          eigenvalue.eigenfunction.color = Color.hsl((index*1.618)%1*360, 80, 50).hex();
+        }
         funcs.push(eigenvalue.eigenfunction);
       }
     });
@@ -82,7 +87,8 @@ class MatsliseGUI extends Component {
             <Graph
               symmetricY={true}
               x={x}
-              func={funcs} />
+              func={funcs}
+              strokeWidth={1.25} />
           </div>
         </div>
       </div>
@@ -108,7 +114,6 @@ class MatsliseGUI extends Component {
       ...this.state,
       ...newState
     };
-    console.log(newState);
     
     while(this.toDelete.length > 0)
       this.toDelete.pop().delete();
@@ -124,9 +129,7 @@ class MatsliseGUI extends Component {
 
   eigenvalues(imin, imax, matslise=this.state.matslise, ymin=[1,0], ymax=[1,0]) {
     const [ya, dya] = ymin, [yb, dyb] = ymax;
-    let eigs = matslise.eigenvaluesByIndex(imin, imax, [dya,-ya], [dyb, -yb]);
-    console.log(eigs);
-    return eigs;
+    return matslise.eigenvaluesByIndex(imin, imax, [dya,-ya], [dyb, -yb]);
   }
 
   eigenfunction(e) {

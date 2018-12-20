@@ -89,30 +89,23 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                 m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right)));
                     }), allow_raw_pointers());
 
-    class_<SE2D>("SE2D")
+    class_<SEnD<2>>("SE2D")
             .constructor(optional_override(
-                    [](val f, double xmin, double xmax, double ymin, double ymax, int xSectorCount,
-                       int ySectorCount) -> SE2D * {
-                        return new SE2D([f](double x, double y) -> double { return f(x, y).as<double>(); }, xmin, xmax,
-                                        ymin, ymax, xSectorCount, ySectorCount);
+                    [](val f, double xmin, double xmax, double ymin, double ymax,
+                       int xSectorCount, int ySectorCount) -> SEnD<2> * {
+                        return new SEnD<2>([f](double x, double y) -> double { return f(x, y).as<double>(); },
+                                           {{xmin, xmax}, ymin, ymax},
+                                           Options<2>().sectorCount(ySectorCount).nested(
+                                                   Options<1>().sectorCount(xSectorCount)));
                     }))
-            .function("calculateError", &SE2D::calculateError)
-            .function("computeEigenfunction", optional_override([](SE2D &se2d, double E, val x, val y) -> val {
+            .function("calculateError", optional_override([](SEnD<2> &se2d, double E) -> std::pair<int, int> {
+                return se2d.calculateError(E, SEnD_util::ABS_SORTER);
+            }))
+            .function("computeEigenfunction", optional_override([](SEnD<2> &se2d, double E, val x, val y) -> val {
                 vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                 val r = val::array();
                 for (ArrayXXd &eigenfunction  : result)
                     r.call<val>("push", ArrayXXd2val(eigenfunction));
-                return r;
-            }))
-            .function("computeEigenfunctionSteps", optional_override([](SE2D &se2d, double E) -> val {
-                Y<MatrixXd> *result = se2d.computeEigenfunctionSteps(E);
-                val r = val::array();
-                for (int i = 0; i <= se2d.sectorCount; ++i) {
-                    val y = val::array();
-                    y.call<val>("push", ArrayXXd2val(result[i].y.x.array()));
-                    y.call<val>("push", ArrayXXd2val(result[i].y.y.array()));
-                    r.call<val>("push", y);
-                }
                 return r;
             }));
 }

@@ -103,7 +103,7 @@ class Eigenfunctions extends Component {
     splits = splits.map(a => Math.round(a*y.length));
 
     splits.forEach((s, i) => {
-      if(i+1 == splits.length)
+      if(i+1 === splits.length)
         return;
       const moreSettings = i%2 ? {} : {
         opacity: .3,
@@ -122,7 +122,6 @@ class Eigenfunctions extends Component {
 
   buildObjects() {
     const group = new THREE.Group();
-    const colors = [0xff0000, 0xff00, 0xff, 0x00ffff];
     const Es = [3.20, 5.53, 7.55, 8.04, 8.46, 9.94, 11.34, 12.13, 12.22];
 
     const xn = 600, yn = 600;
@@ -135,13 +134,11 @@ class Eigenfunctions extends Component {
     for(let i = 0; i <= yn; ++i)
       y.push(ymin + (ymax - ymin)*i/yn);
 
-    let i = 0;
     [Es[this.props.match.params.index]].forEach(approxE => {
       const E = binarySearch((E) => this.state.se2d.calculateError(E), approxE-.01, approxE+.01);
       console.log(E);
       const z = this.computeEigenfunctions(E, x, y)[this.props.match.params.multiplicity]
       group.add(this.buildGraph(x, y, z));
-      ++i;
     });
 
     return group;

@@ -10,6 +10,7 @@ const DF = function(f, df, toString) {
 	r.diff = df;
 	r.toString = toString;
 	r.toFunction = function (...args) {
+		// eslint-disable-next-line 
 		return new Function(...args, "return "+this.toString());
 	};
 	r.toValue = function() {

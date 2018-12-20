@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import Graph from './Graph'
 import loadMatslise from '../lib/loadMatslise'
-import { ReferenceDot, ReferenceLine } from 'recharts';
+import { ReferenceDot } from 'recharts';
 
 const Es = [3.20, 5.53, 7.55, 8.04, 8.46, 9.94, 11.34];
 

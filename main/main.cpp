@@ -84,7 +84,7 @@ void mathieu() {
 void test2d() {
     std::cout.precision(10);
     SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{-5.5, 5.5}, -5.5, 5.5},
-                 Options<2>().sectorCount(32).nested(Options<1>().sectorCount(32)).N(8));
+                 Options<2>().sectorCount(32).nested(Options<1>().sectorCount(32)).N(14));
 
     /*for(double a = 3.1; a < 3.3; a += .001)
         cout << se2d.calculateError(a).first << endl;*/
@@ -158,7 +158,8 @@ void testPrufer() {
 int main() {
     // coffey();
     // testPrufer();
-    test3d();
+    test2d();
+    // test3d();
     // testBigE();
     // testMatscs();
     // testEigenfunctionCalculator();

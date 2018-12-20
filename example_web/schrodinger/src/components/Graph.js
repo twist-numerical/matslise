@@ -47,6 +47,7 @@ class Graph extends Component {
     let func = this.getFunc();
 
     const data = [];
+    const color = func.map(f => f.color || '#' + ('000000'+Math.floor(Math.random()*0x1000000).toString(16)).substr(-6));
     if(func.length > 0) {
       for(let i = 0; i < this.props.numPoints; ++i) {
         const x = xmin + (xmax-xmin)*(i+.5+Math.random()/4)/this.props.numPoints;
@@ -121,7 +122,7 @@ class Graph extends Component {
         <Line key={i} isAnimationActive={false}
         dataKey={'y'+i}
         strokeWidth={this.props.strokeWidth}
-        stroke={'#' + ('000000'+Math.floor(Math.random()*0x1000000).toString(16)).substr(-6)}
+        stroke={color[i]}
         dot={false} />
         )}
       {this.props.children}

@@ -84,11 +84,13 @@ namespace matslise {
 
         double getMin(int axis) const {
             assert(axis == 0);
+            (void)(axis); // UNUSED
             return min;
         }
 
         double getMax(int axis) const {
             assert(axis == 0);
+            (void)(axis); // UNUSED
             return max;
         }
     };
