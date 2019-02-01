@@ -68,6 +68,7 @@ PYBIND11_MODULE(pyslise, m) {
             py::arg("V"),
             py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
             py::arg("x_count")=16, py::arg("y_count")=16, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=60)
+        .def_readonly("N", &SEnD<2>::N)
         .def("calculateError", &SEnD<2>::calculateError,
             py::arg("E"), py::arg("sorter")=SEnD_util::NEWTON_RAPHSON_SORTER)
         .def("calculateErrors", &SEnD<2>::sortedErrors,
