@@ -12,6 +12,7 @@
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
 #pragma GCC diagnostic ignored "-Wint-in-bool-context"
 #include <Eigen/Dense>
+#include <unsupported/Eigen/CXX11/Tensor>
 #pragma GCC diagnostic pop
 #else
 
