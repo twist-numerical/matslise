@@ -65,14 +65,11 @@ pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
     Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     Y<MatrixXd> yl = y0;
     for (int i = 0; i <= match; ++i) {
-        if (i > 0)
-            yl = M[i - 1] * yl;
-        yl = sectors[i]->propagate(E, yl, true);
+        yl = M[i] * sectors[i]->propagate(E, yl, true);
     }
-    Y<MatrixXd> yr = y0;
-    for (int i = sectorCount - 1; i > match; --i) {
-        yr = sectors[i]->propagate(E, yr, false);
-        yr = M[i - 1].transpose() * yr;
+    Y<MatrixXd> yr = sectors[sectorCount-1]->propagate(E,y0, false);
+    for (int i = sectorCount - 2; i > match; --i) {
+        yr = sectors[i]->propagate(E, M[i].transpose() * yr, false);
     }
 
     ColPivHouseholderQR<MatrixXd> left_solver(yl.y[0].transpose());

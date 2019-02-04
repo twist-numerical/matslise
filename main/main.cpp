@@ -84,16 +84,23 @@ void mathieu() {
 void test2d() {
     std::cout.precision(10);
     SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{-5.5, 5.5}, -5.5, 5.5},
-                 Options<2>().sectorCount(32).nested(Options<1>().sectorCount(32)).N(14));
+                 Options<2>().sectorCount(26).gridPoints(100).nested(Options<1>().sectorCount(32)).N(10));
 
-    /*for(double a = 3.1; a < 3.3; a += .001)
-        cout << se2d.calculateError(a).first << endl;*/
+    double err, derr, E = 5.5;
+    for (int i = 0; i < 10; ++i) {
+        tie(err, derr) = se2d.calculateError(E, SEnD_util::ABS_SORTER);
+        E -= err / derr;
+    }
+    cout << E << endl;
+
     ArrayXd xs(5);
     xs << -2, -1, 0, 1, 2;
     ArrayXd ys(5);
     ys << -2, -1, 0, 1, 2;
-    for (auto &a : se2d.computeEigenfunction(5.535959903292571, xs, ys))
+    vector<ArrayXXd> *fs = se2d.computeEigenfunction(E, xs, ys);
+    for (auto &a : *fs)
         cout << a << "\n\n" << endl;
+    delete fs;
 }
 
 

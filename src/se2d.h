@@ -111,7 +111,7 @@ namespace matslise {
     public:
         using SEBase<2>::SEBase;
 
-        std::vector<typename dim<2>::array>
+        std::vector<typename dim<2>::array>*
         computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
 
         std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;

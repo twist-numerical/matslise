@@ -80,8 +80,8 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
     for (int i = 0; i < se2d->N;) {
         double E = (*index_eigv)[i];
         eigenvalues[i] = E;
-        std::vector<typename dim<2>::array> funcs = matslise->computeEigenfunction(E, se2d->grid[0], se2d->grid[1]);
-        for (auto func : funcs) {
+        std::vector<typename dim<2>::array>* funcs = matslise->computeEigenfunction(E, se2d->grid[0], se2d->grid[1]);
+        for (auto func : *funcs) {
             eigenfunctions[i] = func;
             eigenfunctions[i] *= (
                     eigenfunctionsScaling[i] =
@@ -90,6 +90,7 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
             if (++i >= se2d->N)
                 break;
         }
+        delete funcs;
     }
 
     delete index_eigv;
