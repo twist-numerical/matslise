@@ -13,7 +13,7 @@ const binarySearch = (f, a, b) => {
     return b;
   if((fa < 0) === (fb < 0))
     throw new Error("f(a) and f(b) must have a different sign");
-  let c, fc; 
+  let c, fc;
   while(Math.abs(a - b) > 1e-12) {
     c = (a+b)/2;
     fc = f(c);
@@ -38,7 +38,7 @@ class Poster extends Component {
     V: (x, y) => (1+x*x)*(1+y*y),
     se2d: null,
   };
-  
+
   SE2D = null;
 
   componentDidMount() {
@@ -120,9 +120,8 @@ class Poster extends Component {
 
   buildObjects() {
     const group = new THREE.Group();
-    // const Es = [3.20, 5.53, 7.55, 8.04, 8.46, 9.94, 11.34, 12.13, 12.22];
 
-    const xn = 600, yn = 600;
+    const xn = 300, yn = 300;
     const {x: [xmin, xmax], y: [ymin, ymax]} = {x: [-5, 5], y: [-5,5]};
 
     const x = [];
@@ -132,8 +131,8 @@ class Poster extends Component {
     for(let i = 0; i <= yn; ++i)
       y.push(ymin + (ymax - ymin)*i/yn);
 
-    [17.91].forEach(approxE => {
-      const E = binarySearch((E) => this.state.se2d.calculateError(E), approxE-.01, approxE+.01);
+    [5.5].forEach(approxE => {
+      const E = binarySearch((E) => this.state.se2d.calculateError(E).first, approxE-.1, approxE+.1);
       console.log(E);
       this.computeEigenfunctions(E, x, y).forEach(z => {
         group.add(this.buildGraph(x, y, z));
@@ -172,13 +171,15 @@ class Poster extends Component {
     controls.minDistance = 0;
   }
 
-  animate() {   
+  animate() {
     requestAnimationFrame(() => this.animate());
 
     this.renderer.render(this.scene, this.camera);
   }
 
   injectThree(element) {
+    if(!element)
+    return;
     if(!this.renderer) {
       this.buildScene();
       this.animate();

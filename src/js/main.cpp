@@ -45,8 +45,12 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .element(emscripten::index<1>());
 
     value_object<pair<int, double>>("PairIntDouble")
-            .field("index", &pair<int, double>::first)
-            .field("value", &pair<int, double>::second);
+            .field("first", &pair<int, double>::first)
+            .field("second", &pair<int, double>::second);
+
+    value_object<pair<double, double>>("PairDoubleDouble")
+            .field("first", &pair<double, double>::first)
+            .field("second", &pair<double, double>::second);
 
     class_<matslise_util::EigenfunctionCalculator>("EigenfunctionCalculator")
             .function("eval",
@@ -98,14 +102,15 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                            Options<2>().sectorCount(ySectorCount).nested(
                                                    Options<1>().sectorCount(xSectorCount)));
                     }))
-            .function("calculateError", optional_override([](SEnD<2> &se2d, double E) -> std::pair<int, int> {
+            .function("calculateError", optional_override([](SEnD<2> &se2d, double E) -> std::pair<double, double> {
                 return se2d.calculateError(E, SEnD_util::ABS_SORTER);
             }))
             .function("computeEigenfunction", optional_override([](SEnD<2> &se2d, double E, val x, val y) -> val {
-                vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
+                vector<ArrayXXd> *result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                 val r = val::array();
-                for (ArrayXXd &eigenfunction  : result)
+                for (ArrayXXd &eigenfunction  : *result)
                     r.call<val>("push", ArrayXXd2val(eigenfunction));
+                delete result;
                 return r;
             }));
 }
