@@ -47,8 +47,8 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<double> &side, const
         xPos[i - negatives] = x[i];
 
 
-    Y<double> y0({0, 1});
-    Y<double> y1({1, 0});
+	Y<double> y0({ 0, 1 }, { 0,0 });
+    Y<double> y1({1, 0}, { 0,0 });
 
     double error0 = get<0>(ms->calculateError(E, y0, side));
     double error1 = get<0>(ms->calculateError(E, y1, side));
@@ -102,14 +102,14 @@ mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd
 vector<pair<int, double>> *
 HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<double> &side) const {
     return mergeEigenvalues(
-            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<double>({1, 0}), side),
-            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<double>({0, 1}), side));
+            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<double>({1, 0}, { 0,0 }), side),
+            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<double>({0, 1}, { 0,0 }), side));
 };
 
 vector<pair<int, double>> *
 HalfRange::computeEigenvalues(double Emin, double Emax, const Y<double> &side) const {
-    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<double>({1, 0}), side),
-                            ms->computeEigenvalues(Emin, Emax, Y<double>({0, 1}), side));
+    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<double>({1, 0}, { 0,0 }), side),
+                            ms->computeEigenvalues(Emin, Emax, Y<double>({0, 1}, { 0,0 }), side));
 }
 
 HalfRange::~HalfRange() {

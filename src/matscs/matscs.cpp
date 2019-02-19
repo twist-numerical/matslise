@@ -23,7 +23,7 @@ Matscs::Matscs(function<MatrixXd(double)> V, int n, double xmin, double xmax, in
 
 template<typename Type, int... Args>
 Y<Matrix<Type, Args...>>
-Matscs::propagate(const double E, const Y<Matrix<Type, Args...>> &_y, const double a, const double b) const {
+Matscs::propagate(double E, const Y<Matrix<Type, Args...>> &_y, double a, double b) const {
     Y<Matrix<Type, Args...>> y = _y;
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
@@ -60,7 +60,7 @@ Matscs::propagate(const double E, const Y<Matrix<Type, Args...>> &_y, const doub
     return y;
 }
 
-MatrixXd Matscs::propagatePsi(const double E, const MatrixXd &_psi, const double a, const double b) const {
+MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b) const {
     MatrixXd psi = _psi;
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
@@ -98,11 +98,10 @@ MatrixXd Matscs::propagatePsi(const double E, const MatrixXd &_psi, const double
 }
 
 template Y<Matrix<double, -1, -1>>
-Matscs::propagate(const double E, const Y<Matrix<double, -1, -1>> &_y, const double a, const double b) const;
+Matscs::propagate<double, -1, -1>(double E, const Y<Matrix<double, -1, -1>> &y, double a, double b) const;
 
 template Y<Matrix<double, -1, 1>>
-Matscs::propagate(const double E, const Y<Matrix<double, -1, 1>> &_y, const double a, const double b) const;
-
+Matscs::propagate<double, -1, 1>(double E, const Y<Matrix<double, -1, 1>> &y, double a, double b) const;
 
 Matscs::~Matscs() {
     for (int i = 0; i < sectorCount; ++i)

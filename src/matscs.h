@@ -5,12 +5,12 @@
 #ifndef SCHRODINGER_MATSCS_H
 #define SCHRODINGER_MATSCS_H
 
+#include "matslise.h"
 #include <ostream>
 #include <array>
 #include <vector>
 #include <functional>
 #include "Array2D.h"
-#include "matslise.h"
 #include <Eigen/Dense>
 
 #define MATSCS_HMAX_delta 7

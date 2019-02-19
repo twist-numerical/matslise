@@ -21,7 +21,7 @@ ArrayXd getGrid(double min, double max, int count) {
 }
 
 template<int n>
-SEBase<n>::SEBase(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options) :
+SEBase<n>::SEBase(typename dim<n>::function V, const matslise::Rectangle<n> &domain, const Options<n> &options) :
         V(V), domain(domain),
         sectorCount(options._sectorCount), N(options._N) {
     sectors = new Sector<n> *[sectorCount];

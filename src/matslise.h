@@ -5,6 +5,9 @@
 #ifndef SCHRODINGER_MATSLISE_H
 #define SCHRODINGER_MATSLISE_H
 
+#define _USE_MATH_DEFINES
+#define NOMINMAX
+#include <cmath>
 #include <iostream>
 #include <array>
 #include <vector>
@@ -30,9 +33,6 @@ namespace matslise {
         Vector2D<D> y, dy;
 
         Y();
-
-        Y(Vector2D<D> y) : y(y), dy({0, 0}) {}
-
 
         Y(Vector2D<D> y, Vector2D<D> dy) : y(y), dy(dy) {}
 

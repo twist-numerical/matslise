@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "-O2 -Wall -Wextra -fPIC")
+set(CMAKE_CXX_FLAGS "-O2 -Wall -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
@@ -23,8 +23,11 @@ else ()
 
     add_library(matslise SHARED ${MATSLISE_SRC})
     target_link_libraries(matslise Eigen3::Eigen)
-
-    install(TARGETS matslise LIBRARY DESTINATION lib)
+	if(WIN32)
+		install(TARGETS matslise RUNTIME DESTINATION lib)
+	else()
+		install(TARGETS matslise LIBRARY DESTINATION lib)
+	endif() 
     install(FILES matslise.h Array2D.h matscs.h se2d.h Matrix2D.h Evaluator.h schrodinger.h DESTINATION include/matslise/)
 
 

@@ -34,7 +34,7 @@ typename dim<2>::array apply<2>(const ArrayXd grid[2], const dim<2>::function &f
 template<>
 Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &options)
         : se2d(se2d), min(ymin), max(ymax) {
-    const Y<double> y0 = Y<double>({0, 1});
+    const Y<double> y0 = Y<double>({0, 1}, { 0,0 });
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
@@ -151,7 +151,7 @@ MatrixXd Sector<n>::calculateDeltaV(double z) const {
 
 template<>
 ArrayXd Sector<2>::computeEigenfunction(int index, const ArrayXd &x) const {
-    const Y<double> y0 = Y<double>({0, 1});
+    const Y<double> y0 = Y<double>({0, 1}, { 0,0 });
     long size = x.size();
 
     Array<matslise::Y<double>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);

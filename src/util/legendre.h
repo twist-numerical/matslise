@@ -200,7 +200,7 @@ namespace legendre {
 
         double m = (a + b) / 2;
         double h = (b - a) / 2;
-        D aV[data.n];
+        D *aV = new D[data.n];
         for (int j = 0; j < data.n; ++j)
             aV[j] = V(m + data.nodes[j] * h);
 
@@ -212,6 +212,7 @@ namespace legendre {
                 coeffs[i] += aV[j] * data.weights[j] * data.polynomial[i][j] * (i + .5) / H;
             H *= h * 2;
         }
+		delete[] aV;
 
         return coeffs;
     }
