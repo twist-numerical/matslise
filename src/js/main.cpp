@@ -68,7 +68,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                             val {
                         Y<double> y0;
                         double theta;
-                        tie(y0, theta) = m.propagate(E, Y<double>(y), a, b);
+                        tie(y0, theta) = m.propagate(E, Y<double>(y, {0, 0}), a, b);
                         val rv(val::object());
                         rv.set("y", val(y0.y.toEigen()));
                         rv.set("theta", val(theta));
@@ -78,7 +78,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                             val {
                         matslise_util::EigenfunctionCalculator *calculator =
-                                m.eigenfunctionCalculator(E, Y<double>(left), Y<double>(right));
+                                m.eigenfunctionCalculator(E, Y<double>(left, {0, 0}), Y<double>(right, {0, 0}));
                         return val::global("Function")
                                 .new_(string("calculator"), string(
                                         "var f = function(x) { return calculator.eval(x); };"
@@ -90,7 +90,8 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     [](Matslise &m, int Imin, int Imax, const Vector2d &left,
                        const Vector2d &right) -> val {
                         return transformEigenvalues(
-                                m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right)));
+                                m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left, {0, 0}),
+                                                            Y<double>(right, {0, 0})));
                     }), allow_raw_pointers());
 
     class_<SEnD<2>>("SE2D")
