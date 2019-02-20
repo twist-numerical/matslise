@@ -12,17 +12,30 @@ const indexOf = (arr, x) => {
   return a;
 };
 
-const interpolate = (metric, d) => (xs, ys) => x => {
-  const i = Math.min(xs.length - d - 2, Math.max(0, indexOf(xs, x) - d + 1));
-  const xnorm = [],
-    y = [];
-  const norm = xs[i + 2 * d - 1] - xs[i];
-  for (let j = 0; j < 2 * d; ++j) {
-    xnorm.push((xs[i + j] - xs[i]) / norm);
-    y.push(ys[i + j]);
-  }
-  const m = metric(xnorm, y, (x - xs[i]) / norm);
-  return m;
+const interpolate = (metric, d) => (xs, ys, outside = "interpolate") => {
+  const minX = xs[0];
+  const maxX = xs[xs.length - 1];
+  return x => {
+    if ((x >= minX && x <= maxX) || outside === "interpolate") {
+      const i = Math.min(
+        xs.length - d - 2,
+        Math.max(0, indexOf(xs, x) - d + 1)
+      );
+      const xnorm = [],
+        y = [];
+      const norm = xs[i + 2 * d - 1] - xs[i];
+      for (let j = 0; j < 2 * d; ++j) {
+        xnorm.push((xs[i + j] - xs[i]) / norm);
+        y.push(ys[i + j]);
+      }
+      const m = metric(xnorm, y, (x - xs[i]) / norm);
+      return m;
+    } else if (outside === "constant") {
+      return x <= minX ? ys[0] : ys[ys.length - 1];
+    } else {
+      return outside;
+    }
+  };
 };
 
 export default {

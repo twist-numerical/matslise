@@ -1,32 +1,52 @@
 import React, { Component } from "react";
 import Settings from "./Settings";
-import ParsedInput from "../ParsedInput";
-import DF from "../../lib/Differentiable";
+import Eigenfunction from "./Eigenfunction";
 import interpolate from "../../lib/interpolate";
 import Graph from "../Graph";
+import { ReferenceDot } from "recharts";
+import WorkerDelegator from "../../lib/WorkerDelegator";
 
 class MatsliseGUI extends Component {
   state = {
-    init: false,
+    calculating: true,
     settings: null,
-    E: [DF.parse("0"), DF.parse("10")],
+    E: [0, 10],
     drawErrors: false,
     errors: null,
-    time: 0
+    time: 0,
+    eigenvalues: []
   };
   worker = null;
+  errorHistory = [];
 
   constructor() {
     super();
-    this.worker = new Worker("./se2d.worker.js", { type: "module" });
-    this.worker.onmessage = ({ data: stateUpdate }) =>
-      this.setState(stateUpdate);
+    this.worker = new WorkerDelegator(
+      new Worker("./se2d.worker.js", { type: "module" })
+    );
+    const setState = state => this.setState(state);
+    this.worker.addListener("init", setState);
+    this.worker.addListener("errors", setState);
+    this.worker.addListener("locate", setState);
+    this.worker.addListener("time", time => this.setState({ time }));
   }
 
   render() {
+    const [Emin, Emax] = this.state.E;
+    const Ed = (Emax - Emin) / 2;
+    if (this.state.errors) {
+      if (this.errorHistory.length > 5) {
+        this.errorHistory.pop();
+      }
+      this.errorHistory.unshift(
+        interpolate.linear(this.state.errors.E, this.state.errors.errors, NaN)
+      );
+    }
+
     return (
       <div className="container-fluid h-100">
         <div style={{ position: "absolute", bottom: "5px", left: "5px" }}>
+          {this.state.calculating ? ["Loading...", <br key="br" />] : ""}
           Last calculation: {this.state.time}ms
         </div>
         <h1
@@ -52,95 +72,160 @@ class MatsliseGUI extends Component {
               onSubmit={data => this.updateFunction(data)}
               onInit={data => this.updateFunction(data)}
             />
-            <div>
-              {this.state.init
-                ? "Loaded"
-                : this.state.settings
-                ? "Loading..."
-                : "Waiting for input"}
+            <div style={{ height: "200px" }}>
+              <Graph
+                selectable={true}
+                onClick={e => {
+                  if (e && isFinite(e.activeLabel))
+                    this.findEigenvalue(+e.activeLabel);
+                }}
+                height={400}
+                x={this.state.E}
+                func={
+                  this.state.errors
+                    ? [
+                        (() => {
+                          const f = x => 0;
+                          f.color = "#666";
+                          return f;
+                        })(),
+                        (() => {
+                          const f = x => {
+                            for (let i = 0; i < this.errorHistory.length; ++i) {
+                              const v = this.errorHistory[i](x);
+                              if (isFinite(v)) return v;
+                            }
+                          };
+                          f.color = "#ff0000";
+                          f.selectable = true;
+                          return f;
+                        })()
+                      ]
+                    : []
+                }
+              >
+                {this.state.eigenvalues
+                  .filter(E => Emin <= E && E <= Emax)
+                  .map(E => (
+                    <ReferenceDot
+                      key={E}
+                      x={E}
+                      y={0}
+                      r={3}
+                      fill={"#30a"}
+                      ifOverflow={"extendDomain"}
+                    />
+                  ))}
+              </Graph>
             </div>
-          </div>
-          <div className="col-7 col-md-8 col-9-xl">
-            {this.state.drawErrors ? (
-              this.state.errors ? (
-                <Graph
-                  x={this.state.E.map(v => v.toValue())}
-                  func={interpolate.linear(
-                    this.state.errors.E,
-                    this.state.errors.errors
-                  )}
-                />
-              ) : (
-                <div>Loading</div>
-              )
-            ) : (
-              <div style={{ maxWidth: "400px", margin: "10vh auto" }}>
-                <div className="row">
-                  <label className="input-group col-6">
-                    <div className="input-group-prepend">
-                      <div className="input-group-text">
-                        E<sub>min</sub>&nbsp;=
-                      </div>
-                    </div>
-                    <ParsedInput
-                      className="form-control"
-                      onParsed={val =>
-                        this.setState({ E: [val, this.state.E[1]] })
-                      }
-                      parsed={this.state.E[0]}
-                    />
-                  </label>
-                  <label className="input-group col-6">
-                    <div className="input-group-prepend">
-                      <div className="input-group-text">
-                        E<sub>max</sub>&nbsp;=
-                      </div>
-                    </div>
-                    <ParsedInput
-                      className="form-control"
-                      onParsed={val =>
-                        this.setState({ E: [this.state.E[0], val] })
-                      }
-                      parsed={this.state.E[1]}
-                    />
-                  </label>
-                </div>
-                <div className="row">
+            {this.state.errors ? (
+              <div className="text-center">
+                <div
+                  className="btn-group"
+                  role="group"
+                  aria-label="Basic example"
+                >
                   <button
-                    className="btn btn-primary"
-                    style={{ margin: "2vh auto" }}
-                    onClick={() => {
-                      this.setState({ drawErrors: true });
-                      this.worker.postMessage({
-                        type: "errors",
-                        E: this.state.E.map(v => v.toValue())
-                      });
-                    }}
+                    className="btn"
+                    onClick={() => this.setE(Emin - Ed, Emax - Ed)}
                   >
-                    Calculate errors
+                    &lt;&lt;
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => this.setE(Emin - Ed, Emax + Ed)}
+                  >
+                    -
+                  </button>
+                  <button className="btn" onClick={() => this.setE(0, 10)}>
+                    0
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => this.setE(Emin + Ed / 2, Emax - Ed / 2)}
+                  >
+                    +
+                  </button>
+                  <button
+                    className="btn"
+                    onClick={() => this.setE(Emin + Ed, Emax + Ed)}
+                  >
+                    &gt;&gt;
                   </button>
                 </div>
               </div>
-            )}
+            ) : null}
+            <div>
+              <ul>
+                {this.state.eigenvalues.map(E => (
+                  <li key={E}>
+                    <button
+                      className="btn btn-link"
+                      onClick={e => {
+                        e.preventDefault();
+                        this.viewEigenfunctions(E);
+                      }}
+                    >
+                      {E}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+          <div className="col-7 col-md-8 col-9-xl">
+            <Eigenfunction
+              E={this.state.eigenfunction}
+              worker={this.worker}
+              xn={60}
+              yn={60}
+            />
           </div>
         </div>
       </div>
     );
   }
 
+  viewEigenfunctions(E) {
+    this.setState({ eigenfunction: E });
+  }
+
+  findEigenvalue(Eguess) {
+    this.setState({
+      calculating: true
+    });
+    this.worker.send("locate", {
+      E: Eguess,
+      eigenvalues: this.state.eigenvalues
+    });
+  }
+
+  setE(Emin, Emax) {
+    this.setState({
+      calculating: true,
+      E: [Emin, Emax]
+    });
+    this.worker.send("errors", {
+      E: [Emin, Emax]
+    });
+  }
+
   updateFunction(data) {
+    const E = [0, 10];
     this.setState({
       init: false,
       settings: data,
       errors: null,
-      drawErrors: false
+      drawErrors: false,
+      calculating: true,
+      eigenvalues: [],
+      E
     });
-    this.worker.postMessage({
-      type: "init",
-      settings: {
-        ...data,
-        f: data.f.value
-      }
+    this.errorHistory = [];
+    this.worker.send("init", {
+      ...data,
+      f: data.f.value,
+      E
     });
   }
 }

@@ -1,46 +1,66 @@
 import React, { Component } from "react";
-import loadMatslise from "../lib/loadMatslise";
 import * as THREE from "three";
 import OrbitControls from "orbit-controls-es6";
-import binarySearch from "../lib/binarySearch";
 
-const height = 3;
-
-class Poster extends Component {
-  state = {
-    loaded: false,
-    x: [-5.5, 5.5],
-    y: [-5.5, 5.5],
-    V: (x, y) => (1 + x * x) * (1 + y * y),
-    se2d: null
+class Eigenfunction extends Component {
+  static defaultProps = {
+    E: false,
+    worker: null,
+    xn: 50,
+    yn: 50
   };
 
-  SE2D = null;
+  state = {
+    value: false
+  };
+  currentGroup = null;
+
+  updateWorker(oldWorker, currentWorker) {
+    if (oldWorker !== currentWorker) {
+      if (oldWorker) oldWorker.removeListener("eigenfunction");
+      if (currentWorker)
+        currentWorker.addListener("eigenfunction", state => {
+          this.setState(state);
+        });
+    }
+  }
 
   componentDidMount() {
-    loadMatslise.then(({ Matslise, SE2D }) => {
-      this.SE2D = SE2D;
+    this.updateWorker(null, this.props.worker);
+  }
 
+  componentDidUpdate(prevProps, prevState, snapshot) {
+    this.updateWorker(prevProps.worker, this.props.worker);
+
+    if (prevProps.E !== this.props.E) {
+      const E = this.props.E;
+      const isValue = E === 0 || (!!E && isFinite(E));
       this.setState({
-        loaded: true,
-        se2d: new SE2D(this.state.V, ...this.state.x, ...this.state.y, 32, 32)
+        value: isValue,
+        loading: isValue,
+        eigenfunction: null
       });
-    });
+      if (isValue) {
+        this.props.worker.send("eigenfunction", {
+          E,
+          xn: this.props.xn,
+          yn: this.props.yn
+        });
+      }
+    }
   }
 
   render() {
-    window.se2d = this.state.se2d;
-
-    if (!this.state.loaded) return <div />;
-    return (
-      <div>
-        <div ref={e => this.injectThree(e)} />
-      </div>
-    );
-  }
-
-  computeEigenfunctions(E, x, y) {
-    return this.state.se2d.computeEigenfunction(E, x, y);
+    if (this.currentGroup) {
+      this.scene.remove(this.currentGroup);
+      this.currentGroup = null;
+    }
+    if (this.state.eigenfunction) {
+      const { x, y, zs } = this.state.eigenfunction;
+      this.currentGroup = this.buildObjects(x, y, zs);
+      this.scene.add(this.currentGroup);
+    }
+    return <div ref={div => this.injectThree(div)} />;
   }
 
   calculateGeometry(x, y, z) {
@@ -67,75 +87,31 @@ class Poster extends Component {
   }
 
   buildGraph(x, y, z) {
-    const scale =
-      height / Math.max(...z.map(r => Math.max(...r.map(Math.abs))));
+    const scale = 3 / Math.max(...z.map(r => Math.max(...r.map(Math.abs))));
     z = z.map(r => r.map(v => v * scale));
 
     const group = new THREE.Group();
     const materialSettings = {
       color: 0x26b6ff,
-      side: THREE.DoubleSide,
-      reflectivity: 1
+      side: THREE.DoubleSide
     };
-    let splits = [];
-    for (let i = 0; i <= 17; ++i) splits.push(i / 17);
 
-    splits = splits.map(a => Math.round(a * y.length));
-
-    splits.forEach((s, i) => {
-      if (i + 1 === splits.length) return;
-      const moreSettings =
-        i % 2
-          ? {}
-          : {
-              opacity: 0.3,
-              transparent: true
-            };
-      group.add(
-        new THREE.Mesh(
-          this.calculateGeometry(
-            x,
-            y.slice(s, splits[i + 1] + 1),
-            z.map(v => v.slice(s, splits[i + 1] + 1))
-          ),
-          new THREE.MeshStandardMaterial({
-            ...materialSettings,
-            ...moreSettings
-          })
-        )
-      );
-    });
+    group.add(
+      new THREE.Mesh(
+        this.calculateGeometry(x, y, z),
+        new THREE.MeshStandardMaterial(materialSettings)
+      )
+    );
 
     return group;
   }
 
-  buildObjects() {
+  buildObjects(x, y, zs) {
     const group = new THREE.Group();
 
-    const xn = 300,
-      yn = 300;
-    const {
-      x: [xmin, xmax],
-      y: [ymin, ymax]
-    } = { x: [-5, 5], y: [-5, 5] };
-
-    const x = [];
-    for (let i = 0; i <= xn; ++i) x.push(xmin + ((xmax - xmin) * i) / xn);
-    const y = [];
-    for (let i = 0; i <= yn; ++i) y.push(ymin + ((ymax - ymin) * i) / yn);
-
-    [5.5].forEach(approxE => {
-      const E = binarySearch(
-        E => this.state.se2d.calculateError(E).first,
-        approxE - 0.1,
-        approxE + 0.1
-      );
-      console.log(E);
-      this.computeEigenfunctions(E, x, y).forEach(z => {
-        group.add(this.buildGraph(x, y, z));
-      });
+    zs.forEach(z => {
+      group.add(this.buildGraph(x, y, z));
     });
-
     return group;
   }
 
@@ -152,8 +128,6 @@ class Poster extends Component {
 
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0xffffff);
-
-    this.scene.add(this.buildObjects());
 
     this.scene.add(new THREE.AmbientLight(0x404040));
     [[0, 20, 20], [0, -50, 50]].forEach(([x, y, z]) => {
@@ -189,4 +163,4 @@ class Poster extends Component {
   }
 }
 
-export default Poster;
+export default Eigenfunction;

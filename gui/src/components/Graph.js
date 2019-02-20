@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import {
+  Tooltip,
   LineChart,
   CartesianGrid,
   ResponsiveContainer,
@@ -19,7 +20,9 @@ class Graph extends Component {
     yAxis: true,
     grid: true,
     strokeWidth: 1,
-    verbose: false
+    verbose: false,
+    selectable: false,
+    onClick: () => {}
   };
 
   constructor(props) {
@@ -127,7 +130,7 @@ class Graph extends Component {
 
     return (
       <ResponsiveContainer>
-        <LineChart data={data}>
+        <LineChart data={data} onClick={this.props.onClick}>
           {this.props.grid ? <CartesianGrid strokeDasharray="3 3" /> : ""}
           <XAxis
             allowDataOverflow={true}
@@ -142,6 +145,7 @@ class Graph extends Component {
             domain={[ymin, ymax]}
             hide={!this.props.yAxis}
           />
+          {this.props.selectable ? <Tooltip content={() => null} /> : null}
           {func.map((f, i) => (
             <Line
               key={i}
@@ -150,6 +154,7 @@ class Graph extends Component {
               strokeWidth={this.props.strokeWidth}
               stroke={color[i]}
               dot={false}
+              activeDot={!!f.selectable}
             />
           ))}
           {this.props.children}
