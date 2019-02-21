@@ -8,9 +8,9 @@ class Settings extends Component {
     onInit: () => {}
   };
   state = {
-    x: [DF.parse("-pi"), DF.parse("pi")],
-    y: [DF.parse("-pi"), DF.parse("pi")],
-    parsed: DF.parse("0")
+    x: [DF.parse("-5.5"), DF.parse("5.5")],
+    y: [DF.parse("-5.5"), DF.parse("5.5")],
+    parsed: DF.parse("(1+x^2)*(1+y^2)", ["x", "y"])
   };
 
   componentDidMount() {
@@ -80,7 +80,7 @@ class Settings extends Component {
             </div>
             <ParsedInput
               className="form-control"
-              onParsed={val => this.setState({ y: [val, x[1]] })}
+              onParsed={val => this.setState({ y: [val, y[1]] })}
               parsed={y[0]}
             />
           </label>
@@ -92,7 +92,7 @@ class Settings extends Component {
             </div>
             <ParsedInput
               className="form-control"
-              onParsed={val => this.setState({ y: [x[0], val] })}
+              onParsed={val => this.setState({ y: [y[0], val] })}
               parsed={y[1]}
             />
           </label>

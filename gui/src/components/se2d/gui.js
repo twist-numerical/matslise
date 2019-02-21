@@ -45,7 +45,15 @@ class MatsliseGUI extends Component {
 
     return (
       <div className="container-fluid h-100">
-        <div style={{ position: "absolute", bottom: "5px", left: "5px" }}>
+        <div
+          style={{
+            position: "absolute",
+            bottom: "5px",
+            right: "5px",
+            zIndex: 10,
+            textAlign: "right"
+          }}
+        >
           {this.state.calculating ? ["Loading...", <br key="br" />] : ""}
           Last calculation: {this.state.time}ms
         </div>
