@@ -20,8 +20,12 @@ using namespace Eigen;
 using namespace std;
 using namespace matslise;
 
+inline Y<double> make_y(const Vector2d &value) {
+    return Y<double>(value, {0,0});
+}
+
 Y<double> packY(const tuple<double, double> &t) {
-    return Y<double>({get<0>(t), get<1>(t)});
+    return make_y({get<0>(t), get<1>(t)});
 }
 
 Y<MatrixXd> packY(const tuple<MatrixXd, MatrixXd> &t) {
@@ -81,14 +85,14 @@ PYBIND11_MODULE(pyslise, m) {
     py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
         .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<pair<int, double>>* {
-            return m.computeEigenvalues(Emin, Emax, Y<double>(side));
+            return m.computeEigenvalues(Emin, Emax, make_y(side));
         })
         .def("computeEigenvaluesByIndex", [](HalfRange &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>>* {
-            return m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(side));
+            return m.computeEigenvaluesByIndex(Imin, Imax, make_y(side));
         })
         .def("computeEigenfunction", [](HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
             -> tuple<ArrayXd, ArrayXd> {
-                auto ysY = m.computeEigenfunction(E, Y<double>(side), xs);
+                auto ysY = m.computeEigenfunction(E, make_y(side), xs);
                 ArrayXd ys(ysY.size());
                 ArrayXd dys(ysY.size());
                 for(int i = 0; i < ysY.size(); ++i) {
@@ -105,7 +109,7 @@ PYBIND11_MODULE(pyslise, m) {
                 tuple<Vector2d, double> {
                     Y<double> y0;
                     double theta;
-                    tie(y0, theta) = m.propagate(E, Y<double>(y), a, b);
+                    tie(y0, theta) = m.propagate(E, make_y(y), a, b);
                     return make_tuple(y0.y.toEigen(), theta);
                 },
             py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
@@ -121,18 +125,18 @@ PYBIND11_MODULE(pyslise, m) {
         .def("computeEigenvalues",
             [](Matslise &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right)
             -> vector<pair<int, double>>* {
-                return m.computeEigenvalues(Emin, Emax, Y<double>(left), Y<double>(right));
+                return m.computeEigenvalues(Emin, Emax, make_y(left), make_y(right));
             },
             py::arg("Emin"), py::arg("Emax"), py::arg("left"), py::arg("right"))
         .def("computeEigenvaluesByIndex",
             [](Matslise &m, int Imin, int Imax, const Vector2d &left, const Vector2d &right)
             -> vector<pair<int, double>>* {
-                return m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left), Y<double>(right));
+                return m.computeEigenvaluesByIndex(Imin, Imax, make_y(left), make_y(right));
             },
             py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("right"))
         .def("computeEigenfunction", [](Matslise &m, double E, const Vector2d &left, const Vector2d &right, const ArrayXd &xs)
              -> tuple<ArrayXd, ArrayXd> {
-                auto ysY = m.computeEigenfunction(E, Y<double>(left), Y<double>(right), xs);
+                auto ysY = m.computeEigenfunction(E, make_y(left), make_y(right), xs);
                 ArrayXd ys(ysY.size());
                 ArrayXd dys(ysY.size());
                 for(int i = 0; i < ysY.size(); ++i) {
@@ -145,12 +149,12 @@ PYBIND11_MODULE(pyslise, m) {
         .def("calculateError",
             [](Matslise &m, double E, const Vector2d &left, const Vector2d &right)
             -> tuple<double, double, double> {
-                return m.calculateError(E, Y<double>(left), Y<double>(right));
+                return m.calculateError(E, make_y(left), make_y(right));
             },
             py::arg("E"), py::arg("left"), py::arg("right"))
         .def("eigenfunctionCalculator",
             [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) -> Evaluator<Y<double>, double>* {
-                return m.eigenfunctionCalculator(E, Y<double>(left), Y<double>(right));
+                return m.eigenfunctionCalculator(E, make_y(left), make_y(right));
             },
             py::arg("E"), py::arg("left"), py::arg("right"));
 
