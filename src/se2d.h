@@ -89,6 +89,8 @@ namespace matslise {
                 std::pair<double, double>,
                 std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
 
+        double findEigenvalue(double Eguess) const;
+
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
 

@@ -5,22 +5,60 @@ import interpolate from "../../lib/interpolate";
 import Graph from "../Graph";
 import { ReferenceDot } from "recharts";
 import WorkerDelegator from "../../lib/WorkerDelegator";
+import { addUrlProps, UrlQueryParamTypes } from "react-url-query";
+
+const urlPropsQueryConfig = {
+  eigenfunction: {
+    type: {
+      encode: v => (isNaN(v) ? undefined : v),
+      decode: v => +v
+    },
+    addChangeHandlers: false
+  },
+  settings: {
+    type: {
+      encode: ({ x, y, V }) => [x.join(","), y.join(","), V].join(","),
+      decode: v => {
+        if (!v) return v;
+        const [xmin, xmax, ymin, ymax, V] = v.split(",");
+        return {
+          x: [xmin, xmax],
+          y: [ymin, ymax],
+          V
+        };
+      }
+    },
+    addChangeHandlers: false
+  }
+};
 
 class MatsliseGUI extends Component {
+  static defaultProps = {
+    eigenfunction: NaN,
+    settings: {
+      x: [-5.5, 5.5],
+      y: [-5.5, 5.5],
+      V: "(1+x^2)*(1+y^2)"
+    }
+  };
+
+  worker = null;
+  errorHistory = [];
   state = {
     calculating: true,
-    settings: null,
+    settings: this.props.settings,
+    eigenfunction: this.props.eigenfunction,
     E: [0, 10],
     drawErrors: false,
     errors: null,
     time: 0,
-    eigenvalues: []
+    eigenvalues: isNaN(this.props.eigenfunction)
+      ? []
+      : [this.props.eigenfunction]
   };
-  worker = null;
-  errorHistory = [];
 
-  constructor() {
-    super();
+  constructor(...args) {
+    super(...args);
     this.worker = new WorkerDelegator(
       new Worker("./se2d.worker.js", { type: "module" })
     );
@@ -78,7 +116,8 @@ class MatsliseGUI extends Component {
           >
             <Settings
               onSubmit={data => this.updateFunction(data)}
-              onInit={data => this.updateFunction(data)}
+              onInit={data => this.updateFunction(data, false)}
+              {...this.state.settings}
             />
             <div style={{ height: "200px" }}>
               <Graph
@@ -168,11 +207,13 @@ class MatsliseGUI extends Component {
                 {this.state.eigenvalues.map(E => (
                   <li key={E}>
                     <button
-                      className="btn btn-link"
-                      onClick={e => {
-                        e.preventDefault();
-                        this.viewEigenfunctions(E);
-                      }}
+                      className={
+                        "btn btn-link" +
+                        (E === this.state.eigenfunction
+                          ? " font-weight-bold"
+                          : "")
+                      }
+                      onClick={e => this.viewEigenfunctions(E)}
                     >
                       {E}
                     </button>
@@ -194,8 +235,13 @@ class MatsliseGUI extends Component {
     );
   }
 
+  setStateAndUrl(state) {
+    this.props.onChangeUrlQueryParams(state);
+    this.setState(state);
+  }
+
   viewEigenfunctions(E) {
-    this.setState({ eigenfunction: E });
+    this.setStateAndUrl({ eigenfunction: E });
   }
 
   findEigenvalue(Eguess) {
@@ -218,24 +264,35 @@ class MatsliseGUI extends Component {
     });
   }
 
-  updateFunction(data) {
+  updateFunction(data, reset = true) {
     const E = [0, 10];
+    const settings = {
+      ...data,
+      V: data.V.value
+    };
+    this.setStateAndUrl({
+      settings,
+      ...(reset ? { eigenfunction: NaN } : {})
+    });
     this.setState({
       init: false,
-      settings: data,
       errors: null,
       drawErrors: false,
       calculating: true,
-      eigenvalues: [],
-      E
+      E,
+      ...(reset
+        ? {
+            eigenvalues: [],
+            eigenfunction: NaN
+          }
+        : {})
     });
     this.errorHistory = [];
     this.worker.send("init", {
-      ...data,
-      f: data.f.value,
+      ...settings,
       E
     });
   }
 }
 
-export default MatsliseGUI;
+export default addUrlProps({ urlPropsQueryConfig })(MatsliseGUI);

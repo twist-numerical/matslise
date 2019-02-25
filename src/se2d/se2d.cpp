@@ -26,7 +26,7 @@ SEBase<n>::SEBase(typename dim<n>::function V, const matslise::Rectangle<n> &dom
         sectorCount(options._sectorCount), N(options._N) {
     sectors = new Sector<n> *[sectorCount];
 
-    for(int i = 0; i < n-1; ++i) {
+    for (int i = 0; i < n - 1; ++i) {
         grid[i] = lobatto::grid(getGrid(domain.getMin(i), domain.getMax(i), options._gridPoints));
     }
 
@@ -45,7 +45,8 @@ MatrixXd SEBase<n>::calculateM(int k) const {
 
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            M(i, j) = lobatto::multi_quadrature<n-1>(grid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
+            M(i, j) = lobatto::multi_quadrature<n - 1>(grid, sectors[k]->eigenfunctions[j] *
+                                                             sectors[k + 1]->eigenfunctions[i]);
 
     return M;
 }
@@ -67,7 +68,7 @@ pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
     for (int i = 0; i <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, true);
     }
-    Y<MatrixXd> yr = sectors[sectorCount-1]->propagate(E,y0, false);
+    Y<MatrixXd> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
     for (int i = sectorCount - 2; i > match; --i) {
         yr = sectors[i]->propagate(E, M[i].transpose() * yr, false);
     }
@@ -127,6 +128,21 @@ SEBase<n>::sortedErrors(double E,
     sort(errors->begin(), errors->end(), sorter);
 
     return errors;
+}
+
+template<int n>
+double SEBase<n>::findEigenvalue(double E) const {
+    double error, derror;
+    int i = 0;
+    do {
+        tie(error, derror) = calculateError(E, NEWTON_RAPHSON_SORTER);
+        E -= error / derror;
+        ++i;
+    } while (i < 30 && abs(error) > 1e-9);
+
+    if (abs(error) > 1e-5)
+        return NAN;
+    return E;
 }
 
 template<int n>

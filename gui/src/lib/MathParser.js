@@ -12,7 +12,7 @@ class Parser {
 		const arr = applied.filter(([v, s]) => s.length === 0).map(([v,s]) => v);
 		if(arr.length === 1)
 			return arr[0];
-		
+
 		if(arr.length === 0) {
 			const error = new Error("Could not parse the given query");
 			error.todo = str;
@@ -83,7 +83,7 @@ Parser.regex = regex => new Parser(s => {
 		return [[found[0], s.substr(found[0].length)]];
 });
 
-Parser.unsignedFloat 
+Parser.unsignedFloat
 = Parser.regex(/^(([0-9]+(\.[0-9]*)?)|([0-9]*\.[0-9]+))(e-?[0-9]+)?/g);
 
 Parser.word
@@ -130,7 +130,7 @@ class MathParser {
 
 		const unaryExp = (priority, ops) => ops.reduce((c, [op, f]) =>
 			c.mplus(Parser.regex(op).bind(_ =>
-				cumul[priority-1].bind(v => 
+				cumul[priority-1].bind(v =>
 					Parser.pure(this.operators[f](v))))),
 			Parser.empty);
 
@@ -138,7 +138,7 @@ class MathParser {
 			let opParser = ops.reduce((c, [op, f]) =>
 				c.mplus(Parser.whitespaceWrap(Parser.regex(op)).chain(Parser.pure(f))),
 				Parser.empty);
-			return Parser.pure(null).bind(_ => cumul[priority-1].bind(first => 
+			return Parser.pure(null).bind(_ => cumul[priority-1].bind(first =>
 				Parser.plus(opParser.bind(f => cumul[priority-1]
 					.bind(d => Parser.pure([f, d])))
 				).bind(st => Parser.pure(

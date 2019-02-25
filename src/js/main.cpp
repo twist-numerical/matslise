@@ -106,6 +106,9 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .function("calculateError", optional_override([](SEnD<2> &se2d, double E) -> std::pair<double, double> {
                 return se2d.calculateError(E, SEnD_util::ABS_SORTER);
             }))
+            .function("findEigenvalue", optional_override([](SEnD<2> &se2d, double E) -> double {
+                return se2d.findEigenvalue(E);
+            }))
             .function("computeEigenfunction", optional_override([](SEnD<2> &se2d, double E, val x, val y) -> val {
                 vector<ArrayXXd> *result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                 val r = val::array();

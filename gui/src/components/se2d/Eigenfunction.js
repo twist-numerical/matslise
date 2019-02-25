@@ -4,7 +4,7 @@ import OrbitControls from "orbit-controls-es6";
 
 class Eigenfunction extends Component {
   static defaultProps = {
-    E: false,
+    E: NaN,
     worker: null,
     xn: 50,
     yn: 50
@@ -33,26 +33,33 @@ class Eigenfunction extends Component {
     this.animate();
     this.updateWorker(null, this.props.worker);
     window.addEventListener("resize", this.resize);
+    this.calculateEigenfunction(this.props.E);
+  }
+
+  calculateEigenfunction(E) {
+    const isValue = E === 0 || (!!E && isFinite(E));
+    this.setState({
+      value: isValue,
+      loading: isValue,
+      eigenfunction: null
+    });
+    console.log(E, this.props, isValue);
+    if (isValue) {
+      this.props.worker.send("eigenfunction", {
+        E,
+        xn: this.props.xn,
+        yn: this.props.yn
+      });
+    }
   }
 
   componentDidUpdate(prevProps, prevState, snapshot) {
     this.updateWorker(prevProps.worker, this.props.worker);
-
-    if (prevProps.E !== this.props.E) {
-      const E = this.props.E;
-      const isValue = E === 0 || (!!E && isFinite(E));
-      this.setState({
-        value: isValue,
-        loading: isValue,
-        eigenfunction: null
-      });
-      if (isValue) {
-        this.props.worker.send("eigenfunction", {
-          E,
-          xn: this.props.xn,
-          yn: this.props.yn
-        });
-      }
+    if (
+      prevProps.E !== this.props.E &&
+      !(isNaN(prevProps.E) && isNaN(this.props.E))
+    ) {
+      this.calculateEigenfunction(this.props.E);
     }
   }
 

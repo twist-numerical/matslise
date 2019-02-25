@@ -2,15 +2,28 @@ import React, { Component } from "react";
 import ParsedInput from "../ParsedInput";
 import DF from "../../lib/Differentiable";
 
+const zero = DF.parse("0");
+const parse = vars => t => {
+  try {
+    return DF.parse("" + t, vars);
+  } catch (e) {
+    console.error(e);
+    return zero;
+  }
+};
+
 class Settings extends Component {
   static defaultProps = {
     onSubmit: () => {},
-    onInit: () => {}
+    onInit: () => {},
+    x: ["-1", "1"],
+    y: ["-1", "1"],
+    V: "0"
   };
   state = {
-    x: [DF.parse("-5.5"), DF.parse("5.5")],
-    y: [DF.parse("-5.5"), DF.parse("5.5")],
-    parsed: DF.parse("(1+x^2)*(1+y^2)", ["x", "y"])
+    x: this.props.x.map(parse([])),
+    y: this.props.y.map(parse([])),
+    V: parse(["x", "y"])(this.props.V)
   };
 
   componentDidMount() {
@@ -35,10 +48,10 @@ class Settings extends Component {
             </div>
             <ParsedInput
               className="form-control"
-              onParsed={parsed => {
-                this.setState({ parsed });
+              onParsed={V => {
+                this.setState({ V });
               }}
-              parsed={this.state.parsed}
+              parsed={this.state.V}
               variables={["x", "y"]}
             />
           </label>
@@ -106,13 +119,13 @@ class Settings extends Component {
   }
 
   calculateData() {
-    const { parsed, x, y } = this.state;
-    const f = parsed.toFunction("x");
-    f.value = parsed.value;
+    const { V, x, y } = this.state;
+    const f = V.toFunction("x", "y");
+    f.value = V.value;
     return {
       x: x.map(v => v.toValue()),
       y: y.map(v => v.toValue()),
-      f: f
+      V: f
     };
   }
 }
