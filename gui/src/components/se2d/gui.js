@@ -5,7 +5,7 @@ import interpolate from "../../lib/interpolate";
 import Graph from "../Graph";
 import { ReferenceDot } from "recharts";
 import WorkerDelegator from "../../lib/WorkerDelegator";
-import { addUrlProps, UrlQueryParamTypes } from "react-url-query";
+import { addUrlProps } from "react-url-query";
 
 const urlPropsQueryConfig = {
   eigenfunction: {
@@ -158,8 +158,8 @@ class MatsliseGUI extends Component {
                       key={E}
                       x={E}
                       y={0}
-                      r={3}
-                      fill={"#30a"}
+                      r={E === this.state.eigenfunction ? 4 : 3}
+                      fill={E === this.state.eigenfunction ? "#03a" : "#30a"}
                       ifOverflow={"extendDomain"}
                     />
                   ))}
