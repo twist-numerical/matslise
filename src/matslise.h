@@ -5,8 +5,6 @@
 #ifndef SCHRODINGER_MATSLISE_H
 #define SCHRODINGER_MATSLISE_H
 
-#define _USE_MATH_DEFINES
-#define NOMINMAX
 #include <cmath>
 #include <iostream>
 #include <array>

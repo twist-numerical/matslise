@@ -67,6 +67,7 @@ MatrixXd *calculateEta(const VectorXd &Z, int n, int etaCount) {
     MatrixXd *eta_mat = new MatrixXd[etaCount];
     for (int j = 0; j < etaCount; ++j)
         eta_mat[j] = eta[j].asDiagonal();
-	delete[] eta;
+
+    delete[] eta;
     return eta_mat;
 }
