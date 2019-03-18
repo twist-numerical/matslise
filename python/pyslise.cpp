@@ -79,6 +79,7 @@ PYBIND11_MODULE(pyslise, m) {
             py::arg("E"), py::arg("sorter")=SEnD_util::NEWTON_RAPHSON_SORTER)
         .def("calculateErrorMatrix", &SEnD<2>::calculateErrorMatrix)
         .def("computeEigenfunction", &SEnD<2>::computeEigenfunction)
+        .def("findEigenvalue", &SEnD<2>::findEigenvalue)
         .def_readonly_static("NEWTON_RAPHSON_SORTER", &SEnD_util::NEWTON_RAPHSON_SORTER)
         .def_readonly_static("ABS_SORTER", &SEnD_util::ABS_SORTER);
 
