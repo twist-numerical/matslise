@@ -17,10 +17,10 @@ namespace matslise {
     template<int n>
     struct Options {
         Options<n - 1> nestedOptions;
-        int _sectorCount = 22;
-        int _stepsPerSector = 3;
+        int _sectorCount = 17;
+        int _stepsPerSector = 4;
         int _N = 12;
-        int _gridPoints = 50;
+        int _gridPoints = 52;
 
         Options<n> &nested(Options<n - 1> &nested) {
             nestedOptions = nested;

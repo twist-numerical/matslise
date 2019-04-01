@@ -71,8 +71,14 @@ PYBIND11_MODULE(pyslise, m) {
             }), "Init SE2D",
             py::arg("V"),
             py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
-            py::arg("x_count")=16, py::arg("y_count")=16, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=60)
+            py::arg("x_count")=17, py::arg("y_count")=17, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=52)
         .def_readonly("N", &SEnD<2>::N)
+        .def_property_readonly("M", [](SEnD<2> &p) -> vector<MatrixXd>* {
+            auto l = new vector<MatrixXd>(p.sectorCount-1);
+            for(int i = 0; i < p.sectorCount-1; ++i)
+                l->at(i) = p.M[i];
+            return l;
+        })
         .def("calculateError", &SEnD<2>::calculateError,
             py::arg("E"), py::arg("sorter")=SEnD_util::NEWTON_RAPHSON_SORTER)
         .def("calculateErrors", &SEnD<2>::sortedErrors,
