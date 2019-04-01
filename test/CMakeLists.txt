@@ -5,6 +5,7 @@ if (NOT (DEFINED EMSCRIPTEN))
             main.cpp
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp
             matscs/propagatePsi.cpp
-            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp)
+            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp
+            util/lobatto.cpp)
     target_link_libraries(matslise_test matslise Eigen3::Eigen)
 endif ()

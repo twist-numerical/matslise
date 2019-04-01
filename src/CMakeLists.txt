@@ -27,8 +27,9 @@ else ()
 		install(TARGETS matslise RUNTIME DESTINATION lib)
 	else()
 		install(TARGETS matslise LIBRARY DESTINATION lib)
-	endif() 
+	endif()
     install(FILES matslise.h Array2D.h matscs.h se2d.h Matrix2D.h Evaluator.h schrodinger.h DESTINATION include/matslise/)
+    install(FILES util/lobatto.h DESTINATION include/matslise/util)
 
 
 endif (DEFINED EMSCRIPTEN)

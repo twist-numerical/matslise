@@ -43,3 +43,20 @@ double lobatto::multi_quadrature<2>(const ArrayXd x[2], const typename Dim<2>::g
 
     return lobatto::quadrature(x[1], result);
 }
+
+template<>
+typename lobatto::Dim<1>::grid lobatto::apply<1>(const ArrayXd grid[1], const Dim<1>::function &f) {
+    ArrayXd r(grid[0].size());
+    for (int i = 0; i < r.size(); ++i)
+        r[i] = f(grid[0][i]);
+    return r;
+}
+
+template<>
+typename lobatto::Dim<2>::grid lobatto::apply<2>(const ArrayXd grid[2], const Dim<2>::function &f) {
+    ArrayXXd r(grid[1].size(), grid[0].size());
+    for (int i = 0; i < grid[1].size(); ++i)
+        for (int j = 0; j < grid[0].size(); ++j)
+            r(i, j) = f(grid[0][j], grid[1][i]);
+    return r;
+}

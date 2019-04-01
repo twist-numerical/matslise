@@ -11,26 +11,6 @@ using namespace std;
 using namespace Eigen;
 using namespace matslise::SEnD_util;
 
-template<int n>
-typename dim<n>::array apply(const ArrayXd grid[n], const typename dim<n>::function &f);
-
-template<>
-typename dim<1>::array apply<1>(const ArrayXd grid[1], const dim<1>::function &f) {
-    ArrayXd r(grid[0].size());
-    for (int i = 0; i < r.size(); ++i)
-        r[i] = f(grid[0][i]);
-    return r;
-}
-
-template<>
-typename dim<2>::array apply<2>(const ArrayXd grid[2], const dim<2>::function &f) {
-    ArrayXXd r(grid[1].size(), grid[0].size());
-    for (int i = 0; i < grid[1].size(); ++i)
-        for (int j = 0; j < grid[0].size(); ++j)
-            r(i, j) = f(grid[0][j], grid[1][i]);
-    return r;
-}
-
 template<>
 Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &options)
         : se2d(se2d), min(ymin), max(ymax) {
@@ -38,7 +18,7 @@ Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &o
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
-    vbar = apply<1>(se2d->grid, vbar_fun);
+    vbar = lobatto::apply<1>(se2d->grid, vbar_fun);
     matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, options.nestedOptions._sectorCount);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
@@ -70,7 +50,7 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
     function<double(double, double)> vbar_fun = [se2d, zbar](double x, double y) -> double {
         return se2d->V(x, y, zbar);
     };
-    vbar = apply<2>(se2d->grid, vbar_fun);
+    vbar = lobatto::apply<2>(se2d->grid, vbar_fun);
     matslise = new SEnD<2>(vbar_fun, se2d->domain.sub, options.nestedOptions);
 
     vector<double> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N);
@@ -136,7 +116,7 @@ template<int n>
 MatrixXd Sector<n>::calculateDeltaV(double z) const {
     Eigen::MatrixXd dV(se2d->N, se2d->N);
 
-    typename dim<n - 1>::array vDiff = apply<n - 1>(se2d->grid, fillIn<n>(this->se2d->V, z)) - vbar;
+    typename dim<n - 1>::array vDiff = lobatto::apply<n - 1>(se2d->grid, fillIn<n>(this->se2d->V, z)) - vbar;
 
     for (int i = 0; i < se2d->N; ++i) {
         for (int j = 0; j <= i; ++j) {
