@@ -56,6 +56,20 @@ PYBIND11_MODULE(pyslise, m) {
             return unpackY(e(x)).first;
         }, py::is_operator());
 
+    py::class_<SEnD_util::Sector<2>>(m, "PySE2dSector") // ?? std::unique_ptr<SEnD_util::Sector<2>,py::nodelete>
+        .def_property_readonly("eigenvalues", [](SEnD_util::Sector<2> &s) -> vector<double>* {
+            auto l = new vector<double>(s.se2d->N);
+            for(int i = 0; i < l->size(); ++i)
+                l->at(i) = s.eigenvalues[i];
+            return l;
+        })
+        .def_property_readonly("eigenfunctions", [](SEnD_util::Sector<2> &s) -> vector<ArrayXd>* {
+            auto l = new vector<ArrayXd>(s.se2d->N);
+            for(int i = 0; i < l->size(); ++i)
+                l->at(i) = s.eigenfunctions[i];
+            return l;
+        });
+
     py::class_<SEnD<2>>(m, "PySE2d")
         .def(py::init([](function<double(double, double)> V,
                          double xmin, double xmax, double ymin, double ymax,
@@ -77,6 +91,18 @@ PYBIND11_MODULE(pyslise, m) {
             auto l = new vector<MatrixXd>(p.sectorCount-1);
             for(int i = 0; i < p.sectorCount-1; ++i)
                 l->at(i) = p.M[i];
+            return l;
+        })
+        .def_property_readonly("sectors", [](SEnD<2> &p) -> vector<SEnD_util::Sector<2>*>* {
+            auto l = new vector<SEnD_util::Sector<2>*>(p.sectorCount);
+            for(int i = 0; i < p.sectorCount; ++i)
+                l->at(i) = p.sectors[i];
+            return l;
+        })
+        .def_property_readonly("grid", [](SEnD<2> &p) -> vector<ArrayXd>* {
+            auto l = new vector<ArrayXd>(2);
+            for(int i = 0; i < l->size(); ++i)
+                l->at(i) = p.grid[i];
             return l;
         })
         .def("calculateError", &SEnD<2>::calculateError,
