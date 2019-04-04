@@ -83,6 +83,8 @@ namespace matslise {
                 std::pair<double, double>,
                 std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
 
+        std::pair<std::vector<MatrixXd>, std::vector<MatrixXd>> calculateAllSteps(double E) const;
+
         std::vector<std::pair<double, double>> *calculateErrors(double E) const;
 
         std::vector<std::pair<double, double>> *sortedErrors(double E, const std::function<bool(
@@ -113,7 +115,7 @@ namespace matslise {
     public:
         using SEBase<2>::SEBase;
 
-        std::vector<typename dim<2>::array>*
+        std::vector<typename dim<2>::array> *
         computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
 
         std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;

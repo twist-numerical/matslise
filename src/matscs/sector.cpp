@@ -89,9 +89,11 @@ Y<Matrix<Type, Args...>> Sector::propagate(double E, const Y<Matrix<Type, Args..
     return forward ? t * y0 : t / y0;
 }
 
-template Y<Matrix<double, -1, -1>> Sector::propagate<double, -1, -1>(double E, const Y<Matrix<double, -1, -1>> &y0, double delta) const;
+template Y<Matrix<double, -1, -1>>
+Sector::propagate<double, -1, -1>(double E, const Y<Matrix<double, -1, -1>> &y0, double delta) const;
 
-template Y<Matrix<double, -1, 1>> Sector::propagate<double, -1, 1>(double E, const Y<Matrix<double, -1, 1>> &y0, double delta) const;
+template Y<Matrix<double, -1, 1>>
+Sector::propagate<double, -1, 1>(double E, const Y<Matrix<double, -1, 1>> &y0, double delta) const;
 
 MatrixXd Sector::propagatePsi(double E, const MatrixXd &psi, double delta) const {
     if (delta > 0) {

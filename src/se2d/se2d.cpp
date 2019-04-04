@@ -48,6 +48,7 @@ MatrixXd SEBase<n>::calculateM(int k) const {
             M(i, j) = lobatto::multi_quadrature<n - 1>(grid, sectors[k]->eigenfunctions[j] *
                                                              sectors[k + 1]->eigenfunctions[i]);
 
+    // MatrixXd Q = M.householderQr().householderQ();
     return M;
 }
 
@@ -61,17 +62,44 @@ SEBase<n>::~SEBase() {
 }
 
 template<int n>
+pair<vector<MatrixXd>, vector<MatrixXd>> SEBase<n>::calculateAllSteps(double E) const {
+    vector<MatrixXd> y(sectorCount - 1);
+    vector<MatrixXd> dy(sectorCount - 1);
+
+    int match = sectorCount / 2;
+    Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
+    Y<MatrixXd> yl = y0;
+    for (int i = 0; i <= match; ++i) {
+        yl = M[i] * sectors[i]->propagate(E, yl, true);
+        y[i] = yl.y[0];
+        dy[i] = yl.y[1];
+        yl *= (yl.y[0].colwise().norm()).cwiseInverse().asDiagonal();
+    }
+    Y<MatrixXd> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
+    for (int i = sectorCount - 2; i > match; --i) {
+        yr = sectors[i]->propagate(E, M[i].transpose() * yr, false);
+        y[i] = yr.y[0];
+        dy[i] = yr.y[1];
+        yr *= (yr.y[0].colwise().norm()).cwiseInverse().asDiagonal();
+    }
+    return make_pair(y, dy);
+}
+
+template<int n>
 pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
     int match = sectorCount / 2;
     Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
     Y<MatrixXd> yl = y0;
     for (int i = 0; i <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, true);
+        yl *= (yl.y[0].colwise().norm()).cwiseInverse().asDiagonal();
     }
     Y<MatrixXd> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
     for (int i = sectorCount - 2; i > match; --i) {
         yr = sectors[i]->propagate(E, M[i].transpose() * yr, false);
+        yr *= (yr.y[0].colwise().norm()).cwiseInverse().asDiagonal();
     }
+
 
     ColPivHouseholderQR<MatrixXd> left_solver(yl.y[0].transpose());
     ColPivHouseholderQR<MatrixXd> right_solver(yr.y[0].transpose());
