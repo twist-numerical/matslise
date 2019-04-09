@@ -1,4 +1,5 @@
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include <array>
 #include "matslise_formulas.h"
@@ -24,18 +25,19 @@ void Sector::calculateTCoeffs() {
     calculate_tcoeff_matrix(h, vs, t_coeff, t_coeff_h);
 }
 
-T<double> Sector::calculateT(double E, double delta) const {
+T<> Sector::calculateT(double E, double delta) const {
     if (fabs(delta) <= EPS)
-        return T<double>();
+        return T<>();
     if (fabs(delta - h) <= EPS)
         return calculateT(E);
 
     double *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA_delta);
-    T<double> t({0, 0, (vs[0] - E) * delta * eta[1], 0},
-                {0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0});
+    T<> t(1);
+    t.t << 0, 0, (vs[0] - E) * delta * eta[1], 0;
+    t.dt << 0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0;
 
     for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
-        Matrix2D<> hor = horner(t_coeff[i], delta, MATSLISE_HMAX_delta);
+        Matrix2d hor = horner(t_coeff[i], delta, MATSLISE_HMAX_delta);
         t.t += hor * eta[i];
 
         if (i + 1 < MATSLISE_ETA_delta)
@@ -46,10 +48,11 @@ T<double> Sector::calculateT(double E, double delta) const {
     return t;
 }
 
-T<double> Sector::calculateT(double E) const {
+T<> Sector::calculateT(double E) const {
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA_h);
-    T<double> t({0, 0, (vs[0] - E) * h * eta[1], 0},
-                {0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0});
+    T<> t(1);
+    t.t << 0, 0, (vs[0] - E) * h * eta[1], 0;
+    t.dt << 0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0;
 
     for (int i = 0; i < MATSLISE_ETA_h; ++i) {
         t.t += t_coeff_h[i] * eta[i];
@@ -61,7 +64,7 @@ T<double> Sector::calculateT(double E) const {
     return t;
 }
 
-double Sector::prufer(double E, double delta, const Y<double> &y0, const Y<double> &y1) const {
+double Sector::prufer(double E, double delta, const Y<> &y0, const Y<> &y1) const {
     double theta0 = theta(y0);
 
     double theta1 = theta(y1);
@@ -86,25 +89,25 @@ double Sector::prufer(double E, double delta, const Y<double> &y0, const Y<doubl
     return theta1 - theta0;
 }
 
-Y<double> Sector::propagate(double E, const Y<double> &y0, bool forward) const {
-    const T<double> &t = calculateT(E);
+Y<> Sector::propagate(double E, const Y<> &y0, bool forward) const {
+    const T<> &t = calculateT(E);
     return forward ? t * y0 : t / y0;
 }
 
-Y<double> Sector::propagate(double E, const Y<double> &y0, double delta) const {
+Y<> Sector::propagate(double E, const Y<> &y0, double delta) const {
     if (delta >= 0)
         return calculateT(E, delta) * y0;
     else
         return calculateT(E, -delta) / y0;
 }
 
-Y<double> Sector::propagate(double E, const Y<double> &y0, double delta, double &theta) const {
+Y<> Sector::propagate(double E, const Y<> &y0, double delta, double &theta) const {
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
 
-    const T<double> &t = calculateT(E, delta);
-    Y<double> y1 = forward ? t * y0 : t / y0;
+    const T<> &t = calculateT(E, delta);
+    Y<> y1 = forward ? t * y0 : t / y0;
 
     if (forward)
         theta += prufer(E, delta, y0, y1);

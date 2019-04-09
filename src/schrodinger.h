@@ -5,7 +5,6 @@
 #ifndef MATSLISE_SCHRODINGER_H
 #define MATSLISE_SCHRODINGER_H
 
-#include "Matrix2D.h"
 #include "matslise.h"
 #include "se2d.h"
 

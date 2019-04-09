@@ -6,29 +6,25 @@ using namespace matslise::SEnD_util;
 using namespace std;
 
 template<int n>
-Y<MatrixXd> *SEBase<n>::computeEigenfunctionSteps(double E) const {
-    int match = sectorCount / 2 + 1;
+Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
+    Y<Dynamic> *steps = new Y<Dynamic>[sectorCount + 1];
 
-    Y<MatrixXd> *steps = new Y<MatrixXd>[sectorCount + 1];
-
-    steps[0] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
-                           {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
-    steps[sectorCount] = Y<MatrixXd>({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)},
-                                     {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
+    steps[0] = Y<Dynamic>::Dirichlet(N);
+    steps[sectorCount] = Y<Dynamic>::Dirichlet(N);
 
     for (int i = sectorCount - 1; i >= match; --i)
         steps[i] = sectors[i]->propagate(
-                E, i < sectorCount - 1 ? M[i].transpose() * steps[i + 1] : steps[i + 1], false);
-    Y<MatrixXd> matchRight = steps[match];
+                E, i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1], false);
+    Y<Dynamic> matchRight = steps[match];
 
     for (int i = 0; i < match; ++i)
         steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], true);
-    Y<MatrixXd> matchLeft = steps[match];
+    Y<Dynamic> matchLeft = steps[match];
 
-    ColPivHouseholderQR<MatrixXd> left_solver(matchLeft.y[0].transpose());
-    ColPivHouseholderQR<MatrixXd> right_solver(matchRight.y[0].transpose());
-    MatrixXd Ul = left_solver.solve(matchLeft.y[1].transpose()).transpose();
-    MatrixXd Ur = right_solver.solve(matchRight.y[1].transpose()).transpose();
+    ColPivHouseholderQR<MatrixXd> left_solver(matchLeft.getY(0).transpose());
+    ColPivHouseholderQR<MatrixXd> right_solver(matchRight.getY(0).transpose());
+    MatrixXd Ul = left_solver.solve(matchLeft.getY(1).transpose()).transpose();
+    MatrixXd Ur = right_solver.solve(matchRight.getY(1).transpose()).transpose();
 
     FullPivLU<MatrixXd> lu(Ul - Ur);
     lu.setThreshold(1e-4);
@@ -38,14 +34,16 @@ Y<MatrixXd> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     }
     MatrixXd kernel = lu.kernel();
 
-    MatrixXd left = matchLeft.y[0].colPivHouseholderQr().solve(kernel);
-    MatrixXd right = matchRight.y[0].colPivHouseholderQr().solve(kernel);
+    Y<Dynamic> *elements = new Y<Dynamic>[sectorCount + 1];
+    MatrixXd left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
+    MatrixXd right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
     for (int i = 0; i <= match; ++i)
-        steps[i] *= left;
+        elements[i] = steps[i] * left;
     for (int i = sectorCount; i > match; --i)
-        steps[i] *= right;
+        elements[i] = steps[i] * right;
+    delete[] steps;
 
-    return steps;
+    return elements;
 };
 
 
@@ -66,9 +64,9 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::Ar
 
 
     auto result = new vector<ArrayXXd>;
-    Y<MatrixXd> *steps = computeEigenfunctionSteps(E);
+    Y<Dynamic> *steps = computeEigenfunctionSteps(E);
     if (steps != nullptr) {
-        int cols = (int) steps[0].y[0].cols();
+        int cols = (int) steps[0].getY(0).cols();
         for (int i = 0; i < cols; ++i)
             result->push_back(ArrayXXd::Zero(nx, ny));
 
@@ -86,7 +84,7 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::Ar
                 B.col(j) = sectors[sector]->computeEigenfunction(j, x);
 
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
-                MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).y[0];
+                MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).getY(0);
                 for (int i = 0; i < cols; ++i)
                     result->at(i).col(nextY) = prod.col(i);
                 ++nextY;

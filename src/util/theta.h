@@ -10,8 +10,8 @@ inline double atan_safe(double y, double x) {
 }
 
 namespace matslise {
-    inline double theta(const Y<double> &y) {
-        return atan_safe(y.y[0], y.y[1]);
+    inline double theta(const Y<> &y) {
+        return atan_safe(y.y(0, 0), y.y(1, 0));
     }
 }
 

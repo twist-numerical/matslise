@@ -7,7 +7,7 @@
 using namespace matslise;
 using namespace matslise::matslise_util;
 
-EigenfunctionCalculator::EigenfunctionCalculator(Matslise *ms, double E, const Y<double> &left, const Y<double> &right)
+EigenfunctionCalculator::EigenfunctionCalculator(Matslise *ms, double E, const Y<> &left, const Y<> &right)
         : ms(ms), E(E) {
     ys.reserve(ms->sectorCount + 1);
     int m = ms->sectorCount / 2 + 1;
@@ -17,13 +17,13 @@ EigenfunctionCalculator::EigenfunctionCalculator(Matslise *ms, double E, const Y
     ys[ms->sectorCount] = right;
     for (int i = ms->sectorCount - 1; i > m; --i)
         ys[i] = ms->sectors[i]->propagate(E, ys[i + 1], false);
-    Y<double> yr = ms->sectors[m]->propagate(E, ys[m + 1], false);
+    Y<> yr = ms->sectors[m]->propagate(E, ys[m + 1], false);
     double s = ys[m].y[0] / yr.y[0];
     for (int i = m + 1; i < ms->sectorCount; ++i)
         ys[i] *= s;
 }
 
-Y<double> EigenfunctionCalculator::eval(double x) const {
+Y<> EigenfunctionCalculator::eval(double x) const {
     int a = 0;
     int b = ms->sectorCount;
     while (a + 1 < b) {

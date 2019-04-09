@@ -16,16 +16,6 @@ using namespace matslise::matslise_util;
 using namespace std;
 using namespace Eigen;
 
-template<>
-Y<double>::Y() {
-    y = {0, 0};
-    dy = {0, 0};
-}
-
-template<>
-Y<MatrixXd>::Y() {
-}
-
 Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sectorCount)
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
@@ -43,8 +33,8 @@ Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sec
 }
 
 
-pair<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, double a, double b) const {
-    Y<double> y = _y;
+pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double b) const {
+    Y<> y = _y;
     double theta = matslise::theta(y);
     if (a <= b) {
         for (int i = 0; i < sectorCount; ++i) {
@@ -84,8 +74,8 @@ pair<Y<double>, double> Matslise::propagate(double E, const Y<double> &_y, doubl
 }
 
 tuple<double, double, double>
-Matslise::calculateError(double E, const Y<double> &left, const Y<double> &right) const {
-    Y<double> l, r;
+Matslise::calculateError(double E, const Y<> &left, const Y<> &right) const {
+    Y<> l, r;
     double thetaL, thetaR;
     tie(l, thetaL) = propagate(E, left, xmin, match);
     tie(r, thetaR) = propagate(E, right, xmax, match);
@@ -95,7 +85,7 @@ Matslise::calculateError(double E, const Y<double> &left, const Y<double> &right
 }
 
 pair<int, double>
-newtonIteration(const Matslise *ms, double E, const Y<double> &left, const Y<double> &right, double tol) {
+newtonIteration(const Matslise *ms, double E, const Y<> &left, const Y<> &right, double tol) {
     double adjust, error, derror, theta;
     int i = 0;
     do {
@@ -115,8 +105,8 @@ newtonIteration(const Matslise *ms, double E, const Y<double> &left, const Y<dou
 }
 
 vector<pair<int, double>> *
-Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<double> &left,
-                                    const Y<double> &right) const {
+Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &left,
+                                    const Y<> &right) const {
     double Emin = -1;
     double Emax = 1;
     while (true) {
@@ -147,13 +137,13 @@ Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<double> &left,
 };
 
 vector<pair<int, double>> *
-Matslise::computeEigenvalues(double Emin, double Emax, const Y<double> &left, const Y<double> &right) const {
+Matslise::computeEigenvalues(double Emin, double Emax, const Y<> &left, const Y<> &right) const {
     return computeEigenvalues(Emin, Emax, 0, INT_MAX, left, right);
 };
 
 vector<pair<int, double>> *
-Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const Y<double> &left,
-                             const Y<double> &right) const {
+Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const Y<> &left,
+                             const Y<> &right) const {
     if(Imin < 0)
         throw runtime_error("Matslise::computeEigenvalues(): Imin has to be at least 0");
     if(Imin > Imax)
@@ -202,8 +192,8 @@ Matslise::~Matslise() {
     delete[] sectors;
 }
 
-Array<Y<double>, Dynamic, 1>
-Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const matslise::Y<double> &right,
+Array<Y<>, Dynamic, 1>
+Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matslise::Y<> &right,
                                const ArrayXd &x) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
@@ -212,10 +202,10 @@ Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const 
     if (x[0] < xmin || x[n - 1] > xmax)
         throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
 
-    Array<Y<double>, Dynamic, 1> ys(n);
+    Array<Y<>, Dynamic, 1> ys(n);
 
     long forward = 0;
-    Y<double> y = left;
+    Y<> y = left;
     int iLeft = 0;
     { // left
         while (forward < n && x[forward] < xmin - EPS)
@@ -237,7 +227,7 @@ Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const 
     }
 
     { // right
-        Y<double> yLeft = y;
+        Y<> yLeft = y;
 
         long reverse = n;
         while (reverse-- > forward && x[reverse] > xmax + EPS);
@@ -258,7 +248,7 @@ Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const 
         }
         allRightSectorsDone:;
 
-        Y<double> yRight = y;
+        Y<> yRight = y;
         double scale = yLeft.y[0] / yRight.y[0];
         for (long i = reverse + 1; i <= lastValid; ++i) {
             ys[i].y *= scale;
@@ -270,6 +260,6 @@ Matslise::computeEigenfunction(double E, const matslise::Y<double> &left, const 
 }
 
 EigenfunctionCalculator
-*Matslise::eigenfunctionCalculator(double E, const Y<double> &left, const Y<double> &right) {
+*Matslise::eigenfunctionCalculator(double E, const Y<> &left, const Y<> &right) {
     return new EigenfunctionCalculator(this, E, left, right);
 }

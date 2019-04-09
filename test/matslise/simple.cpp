@@ -13,7 +13,7 @@ TEST_CASE("V(x) = 0", "[matslise][simple]") {
     Matslise ms([](double x) -> double { return 0; }, -M_PI / 2, M_PI / 2, 11);
 
 
-    Y<double> y0({0, 1}, {0, 0});
+    Y<> y0({0, 1}, {0, 0});
 
     for (int a = 1; a < 10; ++a) {
         double E = a * a;

@@ -3,6 +3,7 @@
 #include <tuple>
 #include "../catch.hpp"
 #include <matslise/matslise.h>
+#include <matslise/util/eigen.h>
 
 
 using namespace matslise;
@@ -21,8 +22,8 @@ TEST_CASE("Solving the mathieu problem (first 10)", "[matslise][mathieu]") {
                               81.00625032615399, 100.00505067428990, 121.00416676119610};
 
     vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(),
-                                                                          Y<double>({0, 1}, {0, 0}),
-                                                                          Y<double>({0, 1}, {0, 0}));
+                                                                          Y<>({0, 1}, {0, 0}),
+                                                                          Y<>({0, 1}, {0, 0}));
     for (unsigned int i = 0; i < correct.size(); ++i) {
         REQUIRE(i == eigenvalues->at(i).first);
         REQUIRE(Approx(correct[i]).margin(1e-12) == eigenvalues->at(i).second);
@@ -38,7 +39,7 @@ TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
                               11881.000042087542, 12100.000041325728, 12321.000040584415};
     unsigned int offset = 100;
     vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(
-            offset, offset + (unsigned int) correct.size(), Y<double>({0, 1}, {0, 0}), Y<double>({0, 1}, {0, 0}));
+            offset, offset + (unsigned int) correct.size(), Y<>({0, 1}, {0, 0}), Y<>({0, 1}, {0, 0}));
 
     REQUIRE(correct.size() == eigenvalues->size());
     for (unsigned int i = 0; i < correct.size(); ++i) {
@@ -88,7 +89,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
     Matslise ms(&mathieu, 0, M_PI, 8);
-    Y<double> ystart({0, 1},{0,0});
+    Y<> ystart({0, 1},{0,0});
 
     {
         auto *eigenvalues = ms.computeEigenvaluesByIndex(0, 1, ystart, ystart);
@@ -98,7 +99,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         delete eigenvalues;
 
         REQUIRE(Approx(-0.11024881635796).margin(1e-12) == e);
-        Array<Y<double>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
+        Array<Y<>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
         REQUIRE(result.size() == y0.size());
         for (long i = result.size() - 1; i >= 0; --i)
             result[i] *= dy0[0] / result[0].y[1];
@@ -116,7 +117,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         delete eigenvalues;
 
         REQUIRE(Approx(16.03297008140580).margin(1e-12) == e);
-        Array<Y<double>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
+        Array<Y<>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
         REQUIRE(result.size() == y0.size());
         for (long i = result.size() - 1; i >= 0; --i)
             result[i] *= dy3[0] / result[0].y[1];

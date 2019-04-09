@@ -27,86 +27,88 @@ void Sector::calculateTCoeffs() {
 }
 
 
-T<MatrixXd> Sector::calculateT(double E, double delta) const {
+T<Dynamic> Sector::calculateT(double E, double delta) const {
     MatrixXd zero = MatrixXd::Zero(s->n, s->n);
     MatrixXd one = MatrixXd::Identity(s->n, s->n);
 
     if (fabs(delta) <= EPS) {
-        return T<MatrixXd>({one, zero, zero, one}, {zero, zero, zero, zero});
+        return T<Dynamic>(s->n);
     }
     if (fabs(delta - h) <= EPS)
         return calculateT(E);
 
     VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(s->n, E)) * delta;
     MatrixXd *eta = calculateEta(VEd * delta, s->n, MATSCS_ETA_delta);
-    T<MatrixXd> t({zero, zero, eta[1] * VEd.asDiagonal(), zero},
-                  {zero, zero, -delta * eta[1] - (delta * delta / 2) * eta[2] * VEd.asDiagonal(), zero});
+    T<Dynamic> t(s->n);
+    t.t << zero, zero, eta[1] * VEd.asDiagonal(), zero;
+    t.dt << zero, zero, -delta * eta[1] - (delta * delta / 2) * eta[2] * VEd.asDiagonal(), zero;
 
     for (int i = 0; i < MATSCS_ETA_delta; ++i) {
-        Matrix2D<MatrixXd> hor = horner(t_coeff[i], delta, MATSCS_HMAX_delta);
-        t.t += hor * eta[i];
+        MatrixXd hor = horner(t_coeff[i], delta, MATSCS_HMAX_delta);
+        t.t += hor * kroneckerProduct(Matrix2d::Identity(), eta[i]);
 
         if (i + 1 < MATSCS_ETA_delta)
-            t.dt += hor * (eta[i + 1] * (-delta * delta / 2.));
+            t.dt += hor * kroneckerProduct(Matrix2d::Identity(), eta[i + 1] * (-delta * delta / 2.));
     }
 
 
     delete[] eta;
 
-    t.t = D * t.t * D.transpose();
+    t.t = kroneckerProduct(Matrix2d::Identity(), D) * t.t * kroneckerProduct(Matrix2d::Identity(), D.transpose());
     return t;
 }
 
-T<MatrixXd> Sector::calculateT(double E) const {
-    MatrixXd zero = MatrixXd::Zero(s->n, s->n);
-    MatrixXd one = MatrixXd::Identity(s->n, s->n);
+T<Dynamic> Sector::calculateT(double E) const {
+    int N = s->n;
+    MatrixXd zero = MatrixXd::Zero(N, N);
+    MatrixXd one = MatrixXd::Identity(N, N);
 
-    VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(s->n, E)) * h;
-    MatrixXd *eta = calculateEta(VEd * h, s->n, MATSCS_ETA_h);
-    T<MatrixXd> t({zero, zero, eta[1] * VEd.asDiagonal(), zero},
-                  {zero, zero, -h * eta[1] - (h * h / 2) * eta[2] * VEd.asDiagonal(), zero});
+    VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(N, E)) * h;
+    MatrixXd *eta = calculateEta(VEd * h, N, MATSCS_ETA_h);
+    T<Dynamic> t(N);
+    t.t << zero, zero, eta[1] * VEd.asDiagonal(), zero;
+    t.dt << zero, zero, -h * eta[1] - (h * h / 2) * eta[2] * VEd.asDiagonal(), zero;
 
     for (int i = 0; i < MATSCS_ETA_h; ++i) {
-        t.t += t_coeff_h[i] * eta[i];
+        t.t += t_coeff_h[i] * kroneckerProduct(Matrix2d::Identity(), eta[i]);
 
         if (i + 1 < MATSCS_ETA_h)
-            t.dt += t_coeff_h[i] * (eta[i + 1] * (-h * h / 2));
+            t.dt += t_coeff_h[i] * kroneckerProduct(Matrix2d::Identity(), eta[i + 1] * (-h * h / 2));
     }
     delete[] eta;
 
-    t.t = D * t.t * D.transpose();
-
+    t.t = kroneckerProduct(Matrix2d::Identity(), D) * t.t * kroneckerProduct(Matrix2d::Identity(), D.transpose());
     return t;
 }
 
-template<typename Type, int... Args>
-Y<Matrix<Type, Args...>> Sector::propagate(double E, const Y<Matrix<Type, Args...>> &y0, double delta) const {
+template<int r>
+Y<Dynamic, r> Sector::propagate(double E, const Y<Dynamic, r> &y0, double delta) const {
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
 
-    T<MatrixXd> t = calculateT(E, delta);
+    T<Dynamic> t = calculateT(E, delta);
     return forward ? t * y0 : t / y0;
 }
 
-template Y<Matrix<double, -1, -1>>
-Sector::propagate<double, -1, -1>(double E, const Y<Matrix<double, -1, -1>> &y0, double delta) const;
+template Y<Dynamic, -1>
+Sector::propagate<-1>(double E, const Y<Dynamic, -1> &y0, double delta) const;
 
-template Y<Matrix<double, -1, 1>>
-Sector::propagate<double, -1, 1>(double E, const Y<Matrix<double, -1, 1>> &y0, double delta) const;
+template Y<Dynamic, 1>
+Sector::propagate<1>(double E, const Y<Dynamic, 1> &y0, double delta) const;
 
 MatrixXd Sector::propagatePsi(double E, const MatrixXd &psi, double delta) const {
     if (delta > 0) {
-        Matrix2D<MatrixXd> t = calculateT(E, delta).t;
-        return (t(1, 1) + t(1, 0) * psi).transpose()
+        T<Dynamic> T = calculateT(E, delta);
+        return (T.getT(1, 1) + T.getT(1, 0) * psi).transpose()
                 .colPivHouseholderQr()
-                .solve((t(0, 1) + t(0, 0) * psi).transpose())
+                .solve((T.getT(0, 1) + T.getT(0, 0) * psi).transpose())
                 .transpose();
     } else if (delta < 0) {
-        Matrix2D<MatrixXd> t = calculateT(E, -delta).t;
-        return (t(0, 0) - t(1, 0) * psi).transpose()
+        T<Dynamic> T = calculateT(E, -delta);
+        return (T.getT(0, 0) - T.getT(1, 0) * psi).transpose()
                 .colPivHouseholderQr()
-                .solve((-t(0, 1) + t(1, 1) * psi).transpose())
+                .solve((-T.getT(0, 1) + T.getT(1, 1) * psi).transpose())
                 .transpose();
     } else {
         return psi;

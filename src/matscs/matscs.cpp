@@ -21,10 +21,10 @@ Matscs::Matscs(function<MatrixXd(double)> V, int n, double xmin, double xmax, in
 
 }
 
-template<typename Type, int... Args>
-Y<Matrix<Type, Args...>>
-Matscs::propagate(double E, const Y<Matrix<Type, Args...>> &_y, double a, double b) const {
-    Y<Matrix<Type, Args...>> y = _y;
+template<int r>
+Y<Dynamic, r>
+Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b) const {
+    Y<Dynamic, r> y = _y;
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
@@ -97,11 +97,11 @@ MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b
     return psi;
 }
 
-template Y<Matrix<double, -1, -1>>
-Matscs::propagate<double, -1, -1>(double E, const Y<Matrix<double, -1, -1>> &y, double a, double b) const;
+template Y<-1, -1>
+Matscs::propagate<-1>(double E, const Y<-1, -1> &y, double a, double b) const;
 
-template Y<Matrix<double, -1, 1>>
-Matscs::propagate<double, -1, 1>(double E, const Y<Matrix<double, -1, 1>> &y, double a, double b) const;
+template Y<-1, 1>
+Matscs::propagate<1>(double E, const Y<-1, 1> &y, double a, double b) const;
 
 Matscs::~Matscs() {
     for (int i = 0; i < sectorCount; ++i)
@@ -109,9 +109,9 @@ Matscs::~Matscs() {
     delete[] sectors;
 }
 
-vector<Y<MatrixXd>> *Matscs::computeEigenfunction(double E, vector<double> &x) const {
+vector<Y<Dynamic>> *Matscs::computeEigenfunction(double E, vector<double> &x) const {
     sort(x.begin(), x.end());
-    vector<Y<MatrixXd>> *ys = new vector<Y<MatrixXd>>();
+    vector<Y<Dynamic>> *ys = new vector<Y<Dynamic>>();
 
     auto iterator = x.begin();
 
@@ -119,7 +119,7 @@ vector<Y<MatrixXd>> *Matscs::computeEigenfunction(double E, vector<double> &x) c
         iterator = x.erase(iterator);
 
     Sector *sector;
-    Y<MatrixXd> y({MatrixXd::Zero(n, n), MatrixXd::Identity(n, n)}, {MatrixXd::Zero(n, n), MatrixXd::Zero(n, n)});
+    Y<Dynamic> y(n);
     for (int i = 0; iterator != x.end(); ++iterator) {
         while ((sector = sectors[i])->xmax < *iterator) {
             y = sector->calculateT(E) * y;

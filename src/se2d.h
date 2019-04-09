@@ -73,6 +73,7 @@ namespace matslise {
         SEnD_util::Sector<n> **sectors;
         ArrayXd grid[n];
         int N;
+        int match;
 
     public:
         SEBase(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
@@ -99,7 +100,7 @@ namespace matslise {
         virtual ~SEBase();
 
     protected:
-        Y<MatrixXd> *computeEigenfunctionSteps(double E) const;
+        Y<Dynamic> *computeEigenfunctionSteps(double E) const;
 
         MatrixXd calculateM(int k) const;
     };
@@ -137,9 +138,11 @@ namespace matslise {
 
             Sector(SEBase<n> *se2d, double min, double max, const Options<n> &options);
 
-            matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, bool forward) const;
+            matslise::Y<Eigen::Dynamic> propagate(double E, const matslise::Y<Eigen::Dynamic> &c, bool forward) const;
 
-            matslise::Y<MatrixXd> propagate(double E, const matslise::Y<MatrixXd> &c, double y, bool forward) const;
+            matslise::Y<Eigen::Dynamic>
+
+            propagate(double E, const matslise::Y<Eigen::Dynamic> &c, double y, bool forward) const;
 
             typename dim<n - 1>::array computeEigenfunction(int index, const ArrayXd &x) const;
 
@@ -155,7 +158,7 @@ namespace matslise {
         public:
             SEnD<n> *se2d;
             double E;
-            std::vector<Y<VectorXd>> ys;
+            std::vector<Y<Eigen::Dynamic, 1>> ys;
 
             EigenfunctionCalculator(SEnD<n> *se2d, double E);
 

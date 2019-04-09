@@ -26,8 +26,8 @@ void removeDoubles(vector<T> &x) {
     x.erase(x.begin() + i + 1, x.end());
 }
 
-Array<Y<double>, Dynamic, 1>
-HalfRange::computeEigenfunction(double E, const matslise::Y<double> &side, const ArrayXd &x) const {
+Array<Y<>, Dynamic, 1>
+HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -48,20 +48,23 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<double> &side, const
         xPos[i - negatives] = x[i];
 
 
-    Y<double> y0({0, 1}, {0, 0});
-    Y<double> y1({1, 0}, {0, 0});
+    Y<> y0({0, 1}, {0, 0});
+    Y<> y1({1, 0}, {0, 0});
 
     double error0 = get<0>(ms->calculateError(E, y0, side));
     double error1 = get<0>(ms->calculateError(E, y1, side));
 
-    Array<Y<double>, Dynamic, 1> yNeg, yPos, ys(n);
+    Array<Y<>, Dynamic, 1> yNeg, yPos, ys(n);
     bool is0 = abs(error0) < abs(error1);
 
     yNeg = ms->computeEigenfunction(E, is0 ? y0 : y1, side, xNeg);
     yPos = ms->computeEigenfunction(E, is0 ? y0 : y1, side, xPos);
 
-    for (long i = 0; i < negatives; ++i)
-        ys[negatives - 1 - i] = is0 ? -yNeg[i] : yNeg[i];
+    for (long i = 0; i < negatives; ++i) {
+        ys[negatives - 1 - i] = yNeg[i];
+        if(is0)
+            ys[negatives - 1 - i] *= -1;
+    }
     for (long i = negatives; i < n; ++i)
         ys[i] = yPos[i - negatives];
 
@@ -101,16 +104,16 @@ mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd
 };
 
 vector<pair<int, double>> *
-HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<double> &side) const {
+HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &side) const {
     return mergeEigenvalues(
-            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<double>({1, 0}, {0, 0}), side),
-            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<double>({0, 1}, {0, 0}), side));
+            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<>({1, 0}, {0, 0}), side),
+            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<>({0, 1}, {0, 0}), side));
 };
 
 vector<pair<int, double>> *
-HalfRange::computeEigenvalues(double Emin, double Emax, const Y<double> &side) const {
-    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<double>({1, 0}, {0, 0}), side),
-                            ms->computeEigenvalues(Emin, Emax, Y<double>({0, 1}, {0, 0}), side));
+HalfRange::computeEigenvalues(double Emin, double Emax, const Y<> &side) const {
+    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<>({1, 0}, {0, 0}), side),
+                            ms->computeEigenvalues(Emin, Emax, Y<>({0, 1}, {0, 0}), side));
 }
 
 HalfRange::~HalfRange() {

@@ -37,6 +37,11 @@ SEBase<n>::SEBase(typename dim<n>::function V, const matslise::Rectangle<n> &dom
     M = new MatrixXd[sectorCount - 1];
     for (int i = 0; i < sectorCount - 1; ++i)
         M[i] = calculateM(i);
+
+
+    match = sectorCount / 2 + 1;
+    if (match == sectorCount)
+        --match;
 }
 
 template<int n>
@@ -66,49 +71,47 @@ pair<vector<MatrixXd>, vector<MatrixXd>> SEBase<n>::calculateAllSteps(double E) 
     vector<MatrixXd> y(sectorCount - 1);
     vector<MatrixXd> dy(sectorCount - 1);
 
-    int match = sectorCount / 2;
-    Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
-    Y<MatrixXd> yl = y0;
-    for (int i = 0; i <= match; ++i) {
+    Y<Dynamic> y0(N);
+    Y<Dynamic> yl = y0;
+    for (int i = 0; i < match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, true);
-        y[i] = yl.y[0];
-        dy[i] = yl.y[1];
-        yl *= (yl.y[0].colwise().norm()).cwiseInverse().asDiagonal();
+        y[i] = yl.getY(0);
+        dy[i] = yl.getY(1);
+        yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
-    Y<MatrixXd> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
-    for (int i = sectorCount - 2; i > match; --i) {
-        yr = sectors[i]->propagate(E, M[i].transpose() * yr, false);
-        y[i] = yr.y[0];
-        dy[i] = yr.y[1];
-        yr *= (yr.y[0].colwise().norm()).cwiseInverse().asDiagonal();
+    Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
+    for (int i = sectorCount - 2; i >= match; --i) {
+        yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, false);
+        y[i] = yr.getY(0);
+        dy[i] = yr.getY(1);
+        yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
     return make_pair(y, dy);
 }
 
 template<int n>
 pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
-    int match = sectorCount / 2;
-    Y<MatrixXd> y0({MatrixXd::Zero(N, N), MatrixXd::Identity(N, N)}, {MatrixXd::Zero(N, N), MatrixXd::Zero(N, N)});
-    Y<MatrixXd> yl = y0;
-    for (int i = 0; i <= match; ++i) {
+    Y<Dynamic> y0(N);
+    Y<Dynamic> yl = y0;
+    for (int i = 0; i < match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, true);
-        yl *= (yl.y[0].colwise().norm()).cwiseInverse().asDiagonal();
+        yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
-    Y<MatrixXd> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
-    for (int i = sectorCount - 2; i > match; --i) {
-        yr = sectors[i]->propagate(E, M[i].transpose() * yr, false);
-        yr *= (yr.y[0].colwise().norm()).cwiseInverse().asDiagonal();
+    Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
+    for (int i = sectorCount - 2; i >= match; --i) {
+        yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, false);
+        yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
 
 
-    ColPivHouseholderQR<MatrixXd> left_solver(yl.y[0].transpose());
-    ColPivHouseholderQR<MatrixXd> right_solver(yr.y[0].transpose());
-    MatrixXd Ul = left_solver.solve(yl.y[1].transpose()).transpose();
-    MatrixXd Ur = right_solver.solve(yr.y[1].transpose()).transpose();
+    ColPivHouseholderQR<MatrixXd> left_solver(yl.getY(0).transpose());
+    ColPivHouseholderQR<MatrixXd> right_solver(yr.getY(0).transpose());
+    MatrixXd Ul = left_solver.solve(yl.getY(1).transpose()).transpose();
+    MatrixXd Ur = right_solver.solve(yr.getY(1).transpose()).transpose();
     return make_pair(
             Ul - Ur,
-            left_solver.solve((yl.dy[1] - Ul * yl.dy[0]).transpose()).transpose()
-            - right_solver.solve((yr.dy[1] - Ur * yr.dy[0]).transpose()).transpose()
+            left_solver.solve((yl.getdY(1) - Ul * yl.getdY(0)).transpose()).transpose()
+            - right_solver.solve((yr.getdY(1) - Ur * yr.getdY(0)).transpose()).transpose()
     );
 }
 

@@ -14,7 +14,7 @@ using namespace matslise::SEnD_util;
 template<>
 Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &options)
         : se2d(se2d), min(ymin), max(ymax) {
-    const Y<double> y0 = Y<double>({0, 1}, { 0,0 });
+    const Y<> y0 = Y<>({0, 1}, {0, 0});
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
@@ -28,7 +28,7 @@ Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &o
     for (int i = 0; i < se2d->N; ++i) {
         double E = (*index_eigv)[i].second;
         eigenvalues[i] = E;
-        Array<Y<double>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid[0]);
+        Array<Y<>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid[0]);
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
@@ -60,7 +60,7 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
     for (int i = 0; i < se2d->N;) {
         double E = (*index_eigv)[i];
         eigenvalues[i] = E;
-        std::vector<typename dim<2>::array>* funcs = matslise->computeEigenfunction(E, se2d->grid[0], se2d->grid[1]);
+        std::vector<typename dim<2>::array> *funcs = matslise->computeEigenfunction(E, se2d->grid[0], se2d->grid[1]);
         for (auto func : *funcs) {
             eigenfunctions[i] = func;
             eigenfunctions[i] *= (
@@ -90,12 +90,12 @@ Sector<n>::~Sector() {
 }
 
 template<int n>
-Y<MatrixXd> Sector<n>::propagate(double E, const Y<MatrixXd> &c, bool forward) const {
+Y<Dynamic> Sector<n>::propagate(double E, const Y<Dynamic> &c, bool forward) const {
     return propagate(E, c, forward ? max : min, forward);
 }
 
 template<int n>
-Y<MatrixXd> Sector<n>::propagate(double E, const Y<MatrixXd> &c, double y, bool forward) const {
+Y<Dynamic> Sector<n>::propagate(double E, const Y<Dynamic> &c, double y, bool forward) const {
     return matscs->propagate(E, c, forward ? min : max, y);
 }
 
@@ -120,7 +120,7 @@ MatrixXd Sector<n>::calculateDeltaV(double z) const {
 
     for (int i = 0; i < se2d->N; ++i) {
         for (int j = 0; j <= i; ++j) {
-            dV(i, j) = lobatto::multi_quadrature<n - 1>(se2d->grid, eigenfunctions[i] * eigenfunctions[j] * vDiff);
+            dV(i, j) = lobatto::multi_quadrature<n - 1>(se2d->grid, eigenfunctions[i] * vDiff * eigenfunctions[j]);
             if (j < i) dV(j, i) = dV(i, j);
         }
         dV(i, i) += eigenvalues[i];
@@ -131,10 +131,10 @@ MatrixXd Sector<n>::calculateDeltaV(double z) const {
 
 template<>
 ArrayXd Sector<2>::computeEigenfunction(int index, const ArrayXd &x) const {
-    const Y<double> y0 = Y<double>({0, 1}, { 0,0 });
+    const Y<> y0 = Y<>({0, 1}, {0, 0});
     long size = x.size();
 
-    Array<matslise::Y<double>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
+    Array<matslise::Y<>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
     ArrayXd result(size);
     for (int i = 0; i < size; ++i)
         result(i) = raw(i).y[0] * eigenfunctionsScaling[index];

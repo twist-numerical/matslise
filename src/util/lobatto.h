@@ -1,7 +1,7 @@
 #ifndef MATSLISE_LOBATTO_H
 #define MATSLISE_LOBATTO_H
 
-#include "../Matrix2D.h"
+#include "eigen.h"
 
 using namespace Eigen;
 
