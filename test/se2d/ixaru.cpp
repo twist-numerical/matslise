@@ -35,13 +35,24 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
     x << -1, 0, 1;
     double E;
     int multiplicity;
+    for (int i = 0; i < 3; ++i) {
+        double error = get<0>(p2.calculateError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
+        CHECK(abs(error) > 1e-3);
+    }
     for (auto &Em  : eigenvalues) {
         tie(E, multiplicity) = Em;
         const pair<double, double> &error = p2.calculateError(E);
-        REQUIRE(abs(error.first) < 1e-3);
+        CHECK(abs(error.first) < 1e-3);
+
+        if (E < 6) {
+            double El = p2.findEigenvalue(E - 0.01);
+            double Em = p2.findEigenvalue(E + 0.01);
+            CHECK(Approx(El).margin(1e-7) == E);
+            CHECK(Approx(Em).margin(1e-7) == E);
+        }
 
         const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
-        REQUIRE(f->size() == multiplicity);
+        CHECK(f->size() == multiplicity);
         delete f;
     }
 }

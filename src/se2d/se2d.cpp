@@ -71,36 +71,36 @@ pair<vector<MatrixXd>, vector<MatrixXd>> SEBase<n>::calculateAllSteps(double E) 
     vector<MatrixXd> y(sectorCount - 1);
     vector<MatrixXd> dy(sectorCount - 1);
 
-    Y<Dynamic> y0(N);
+    Y<Dynamic> y0 = Y<Dynamic>::Dirichlet(N);
     Y<Dynamic> yl = y0;
     for (int i = 0; i < match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, true);
         y[i] = yl.getY(0);
         dy[i] = yl.getY(1);
-        yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
+        //yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
     Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
     for (int i = sectorCount - 2; i >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, false);
         y[i] = yr.getY(0);
         dy[i] = yr.getY(1);
-        yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
+        //yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
     return make_pair(y, dy);
 }
 
 template<int n>
 pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
-    Y<Dynamic> y0(N);
+    Y<Dynamic> y0 = Y<Dynamic>::Dirichlet(N);
     Y<Dynamic> yl = y0;
     for (int i = 0; i < match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, true);
-        yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
+        //yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
     Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
     for (int i = sectorCount - 2; i >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, false);
-        yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
+        //yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
 
 

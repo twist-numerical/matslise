@@ -11,16 +11,16 @@ template<>
 template<>
 Y<-1, -1> T<-1>::operator/(Y<-1, -1> y) const {
     HouseholderQR<Matrix<double, -1, -1>> qr_t = t.householderQr();
-    HouseholderQR<Matrix<double, -1, -1>> qr_dt = dt.householderQr();
-    return Y<-1, -1>(qr_t.solve(y.y), qr_t.solve(y.dy) + qr_dt.solve(y.y));
+    Matrix<double, -1, -1> yinv = qr_t.solve(y.y);
+    return Y<-1, -1>(yinv, qr_t.solve(y.dy) - qr_t.solve(dt * yinv));
 }
 
 template<>
 template<>
 Y<-1, 1> T<-1>::operator/(Y<-1, 1> y) const {
     HouseholderQR<Matrix<double, -1, -1>> qr_t = t.householderQr();
-    HouseholderQR<Matrix<double, -1, -1>> qr_dt = dt.householderQr();
-    return Y<-1, 1>(qr_t.solve(y.y), qr_t.solve(y.dy) + qr_dt.solve(y.y));
+    Matrix<double, -1, 1> yinv = qr_t.solve(y.y);
+    return Y<-1, 1>(yinv, qr_t.solve(y.dy) - qr_t.solve(dt * yinv));
 }
 
 template<>

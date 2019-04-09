@@ -20,29 +20,36 @@ using namespace Eigen;
 using namespace std;
 using namespace matslise;
 
-inline Y<double> make_y(const Vector2d &value) {
-    return Y<double>(value, {0,0});
+inline Y<> make_y(const Vector2d &value) {
+    return Y<>(value, {0, 0});
 }
 
-Y<double> packY(const tuple<double, double> &t) {
+Y<> packY(const tuple<double, double> &t) {
     return make_y({get<0>(t), get<1>(t)});
 }
 
-Y<MatrixXd> packY(const tuple<MatrixXd, MatrixXd> &t) {
-    int rows = get<0>(t).rows(), cols = get<0>(t).rows();
-    return Y<MatrixXd>({get<0>(t), get<1>(t)}, {MatrixXd::Zero(rows, cols), MatrixXd::Zero(rows, cols)});
+Y<Dynamic> packY(const tuple<MatrixXd, MatrixXd> &t) {
+    MatrixXd a, b;
+    tie(a, b) = t;
+    Y<Dynamic> result(a.rows(), a.cols());
+    result.getY(0) = a;
+    result.getY(1) = b;
+    return result;
 }
 
-Y<double> packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
-    return Y<double>({get<0>(t), get<1>(t)}, {get<0>(dt), get<1>(dt)});
+Y<> packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
+    return Y<>({get<0>(t), get<1>(t)}, {get<0>(dt), get<1>(dt)});
 }
 
-template<typename D>
-pair<pair<D, D>, pair<D, D>> unpackY(const Y<D> &y) {
+pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> unpackY(const Y<Dynamic> &y) {
+    return make_pair(make_pair(y.getY(0), y.getY(1)), make_pair(y.getdY(0), y.getdY(1)));
+};
+
+pair<pair<double, double>, pair<double, double>> unpackY(const Y<> &y) {
     return make_pair(make_pair(y.y[0], y.y[1]), make_pair(y.dy[0], y.dy[1]));
 };
 
-template <class R, class... A>
+template<class R, class... A>
 class PyEvaluator : public Evaluator<R, A...> {
 public:
     /* Trampoline (need one for each virtual function) */
@@ -51,8 +58,8 @@ public:
 
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {
-    py::class_<Evaluator<Y<double>, double>, PyEvaluator<Y<double>, double>>(m, "EvaluatorY1")
-        .def("__call__", [](Evaluator<Y<double>, double> &e, double x) -> tuple<double, double> {
+    py::class_<Evaluator<Y<>, double>, PyEvaluator<Y<>, double>>(m, "EvaluatorY1")
+        .def("__call__", [](Evaluator<Y<>, double> &e, double x) -> tuple<double, double> {
             return unpackY(e(x)).first;
         }, py::is_operator());
 
@@ -141,19 +148,19 @@ PYBIND11_MODULE(pyslise, m) {
         .def("propagate",
             [](Matslise &m, double E, const Vector2d &y, double a, double b) ->
                 tuple<Vector2d, double> {
-                    Y<double> y0;
+                    Y<> y0;
                     double theta;
                     tie(y0, theta) = m.propagate(E, make_y(y), a, b);
-                    return make_tuple(y0.y.toEigen(), theta);
+                    return make_tuple(y0.y, theta);
                 },
             py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
         .def("propagate",
             [](Matslise &m, double E, const Vector2d &y, const Vector2d &dy, double a, double b)
             -> tuple<Vector2d, Vector2d, double> {
-                Y<double> y0;
+                Y<> y0;
                 double theta;
-                tie(y0, theta) = m.propagate(E, Y<double>(y, dy), a, b);
-                return make_tuple(y0.y.toEigen(), y0.dy.toEigen(), theta);
+                tie(y0, theta) = m.propagate(E, Y<>(y, dy), a, b);
+                return make_tuple(y0.y, y0.dy, theta);
             },
             py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
         .def("computeEigenvalues",
@@ -187,7 +194,7 @@ PYBIND11_MODULE(pyslise, m) {
             },
             py::arg("E"), py::arg("left"), py::arg("right"))
         .def("eigenfunctionCalculator",
-            [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) -> Evaluator<Y<double>, double>* {
+            [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) -> Evaluator<Y<>, double>* {
                 return m.eigenfunctionCalculator(E, make_y(left), make_y(right));
             },
             py::arg("E"), py::arg("left"), py::arg("right"));

@@ -78,31 +78,24 @@ namespace matslise {
         }
 
         template<int count>
-        Y<n, count> operator*(const Matrix<double, cols, count> &f) const {
-            long N = getN();
-            Y<n, count> result(N, f.cols());
-            for (int d = 0; d < 2; ++d) {
-                result.getY(d) = getY(d) * f;
-                result.getdY(d) = getdY(d) * f;
-            }
+        Y<n, count> operator*(const Matrix<double, cols, count> &M) const {
+            Y<n, count> result(getN(), M.cols());
+            result.y = y * M;
+            result.dy = dy * M;
             return result;
         }
 
         template<int rows>
-        friend Y<rows, cols> operator*(const Matrix<double, rows, n> &f, const Y<n, cols> &y) {
-            Y<rows, cols> result(f.rows());
-            for (int d = 0; d < 2; ++d) {
-                result.getY(d) = f * y.getY(d);
-                result.getdY(d) = f * y.getdY(d);
-            }
+        friend Y<rows, cols> operator*(const Matrix<double, rows, n> &M, const Y<n, cols> &y) {
+            Y<rows, cols> result;
+            result.y = kroneckerProduct(Matrix2d::Identity(), M) * y.y;
+            result.dy = kroneckerProduct(Matrix2d::Identity(), M) * y.dy;
             return result;
         }
 
-        Y<n, cols> &operator*=(const Matrix<double, cols, cols> &f) {
-            for (int d = 0; d < 2; ++d) {
-                getY(d) *= f;
-                getdY(d) *= f;
-            }
+        Y<n, cols> &operator*=(const Matrix<double, cols, cols> &M) {
+            y *= M;
+            dy *= M;
             return *this;
         }
     };

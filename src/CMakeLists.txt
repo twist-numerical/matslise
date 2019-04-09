@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "-O0 -Wall -fPIC")
+set(CMAKE_CXX_FLAGS "-O2 -Wall -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)

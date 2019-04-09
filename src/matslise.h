@@ -16,10 +16,10 @@
 #include "util/y.h"
 #include "Evaluator.h"
 
-#define MATSLISE_HMAX_delta 11 // 15
-#define MATSLISE_ETA_delta 5 // 7
-#define MATSLISE_ETA_h 7 // 9
-#define MATSLISE_N 11 // 15
+#define MATSLISE_HMAX_delta 15
+#define MATSLISE_ETA_delta 7
+#define MATSLISE_ETA_h 9
+#define MATSLISE_N 15
 
 using namespace Eigen;
 
