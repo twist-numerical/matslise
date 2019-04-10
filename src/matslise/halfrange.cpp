@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include "../matslise.h"
+#include <memory>
 
 using namespace std;
 using namespace matslise;
@@ -62,13 +63,29 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const Array
 
     for (long i = 0; i < negatives; ++i) {
         ys[negatives - 1 - i] = yNeg[i];
-        if(is0)
+        if (is0)
             ys[negatives - 1 - i] *= -1;
     }
     for (long i = negatives; i < n; ++i)
         ys[i] = yPos[i - negatives];
 
     return ys;
+}
+
+
+std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<> &side) {
+    const Y<> y0({0, 1}, {0, 0});
+    const Y<> y1({1, 0}, {0, 0});
+    double error0 = get<0>(ms->calculateError(E, y0, side));
+    double error1 = get<0>(ms->calculateError(E, y1, side));
+    bool is0 = abs(error0) < abs(error1);
+    function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, is0 ? y0 : y1, side));
+    return [calculator, is0](double x) -> Y<> {
+        Y<> c = calculator(x < 0 ? -x : x);
+        if (x < 0 && is0)
+            c *= -1;
+        return c;
+    };
 }
 
 vector<pair<int, double>> *

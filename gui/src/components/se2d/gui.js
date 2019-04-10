@@ -51,7 +51,10 @@ class MatsliseGUI extends Component {
     E: [0, 10],
     drawErrors: false,
     errors: null,
-    time: 0,
+    last: {
+      time: 0,
+      action: ""
+    },
     eigenvalues: isNaN(this.props.eigenfunction)
       ? []
       : [this.props.eigenfunction]
@@ -66,20 +69,26 @@ class MatsliseGUI extends Component {
     this.worker.addListener("init", setState);
     this.worker.addListener("errors", setState);
     this.worker.addListener("locate", setState);
-    this.worker.addListener("time", time => this.setState({ time }));
+    this.worker.addListener("time", last => this.setState({ last }));
   }
 
   render() {
     const [Emin, Emax] = this.state.E;
     const Ed = (Emax - Emin) / 2;
+    let maxError = 1;
+
+    const functions = [x => 0];
+    functions[0].color = "#666";
     if (this.state.errors) {
-      if (this.errorHistory.length > 5) {
-        this.errorHistory.pop();
-      }
-      this.errorHistory.unshift(
-        interpolate.linear(this.state.errors.E, this.state.errors.errors, NaN)
-      );
+      maxError = Graph.nextPower(2., this.state.errors.max);
+      this.state.errors.functions.forEach(({ E, errors }) => {
+        const f = interpolate.linear(E, errors, NaN);
+        f.color = "#ff0000";
+        f.selectable = true;
+        functions.push(f);
+      });
     }
+    window.functions = functions;
 
     return (
       <div className="container-fluid h-100">
@@ -93,7 +102,7 @@ class MatsliseGUI extends Component {
           }}
         >
           {this.state.calculating ? ["Loading...", <br key="br" />] : ""}
-          Last calculation: {this.state.time}ms
+          Last calculation ({this.state.last.action}): {this.state.last.time}ms
         </div>
         <h1
           style={{
@@ -127,29 +136,9 @@ class MatsliseGUI extends Component {
                     this.findEigenvalue(+e.activeLabel);
                 }}
                 height={400}
+                y={[-maxError, maxError]}
                 x={this.state.E}
-                func={
-                  this.state.errors
-                    ? [
-                        (() => {
-                          const f = x => 0;
-                          f.color = "#666";
-                          return f;
-                        })(),
-                        (() => {
-                          const f = x => {
-                            for (let i = 0; i < this.errorHistory.length; ++i) {
-                              const v = this.errorHistory[i](x);
-                              if (isFinite(v)) return v;
-                            }
-                          };
-                          f.color = "#ff0000";
-                          f.selectable = true;
-                          return f;
-                        })()
-                      ]
-                    : []
-                }
+                func={functions}
               >
                 {this.state.eigenvalues
                   .filter(E => Emin <= E && E <= Emax)
@@ -222,7 +211,7 @@ class MatsliseGUI extends Component {
               </ul>
             </div>
           </div>
-          <div className="col-7 col-md-8 col-9-xl">
+          <div className="col-7 col-md-8 col-xl-9" style={{ paddingRight: 0 }}>
             <Eigenfunction
               E={this.state.eigenfunction}
               worker={this.worker}

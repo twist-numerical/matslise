@@ -64,8 +64,8 @@ namespace matslise {
                            const matslise::Y<> &left,
                            const matslise::Y<> &right) const;
 
-        matslise::matslise_util::EigenfunctionCalculator *eigenfunctionCalculator(
-                double E, const matslise::Y<> &left, const matslise::Y<> &right);
+        std::function<Y<>(double)> eigenfunctionCalculator(
+                double E, const matslise::Y<> &left, const matslise::Y<> &right) const;
 
         virtual ~Matslise();
     };
@@ -85,6 +85,9 @@ namespace matslise {
 
         std::vector<std::pair<int, double>> *
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &side) const;
+
+        std::function<Y<>(double)> eigenfunctionCalculator(
+                double E, const matslise::Y<> &left);
 
         virtual ~HalfRange();
     };
@@ -118,15 +121,17 @@ namespace matslise {
             virtual ~Sector();
         };
 
-        class EigenfunctionCalculator : public Evaluator<Y<>, double> {
+        class EigenfunctionCalculator : public std::function<Y<>(double)> {
         public:
-            Matslise *ms;
+            const Matslise *ms;
             double E;
             std::vector<Y<>> ys;
 
-            EigenfunctionCalculator(Matslise *ms, double E, const Y<> &left, const Y<> &right);
+            EigenfunctionCalculator(const Matslise *ms, double E, const Y<> &left, const Y<> &right);
 
-            virtual Y<> eval(double x) const;
+            virtual Y<> operator()(double x) const;
+
+            virtual ~EigenfunctionCalculator();
         };
     };
 }

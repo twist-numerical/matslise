@@ -24,7 +24,8 @@ class MatsliseLoader {
   found() {
     this.Matslise = {
       Matslise: Module.Matslise,
-      SE2D: Module.SE2D
+      SE2D: Module.SE2D,
+      HalfRange: Module.HalfRange
     };
 
     while (this.callbacks.length > 0) this.callbacks.pop()(this.Matslise);

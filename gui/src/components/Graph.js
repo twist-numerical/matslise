@@ -55,6 +55,14 @@ class Graph extends Component {
     this.setState(this.calculateState(newProps));
   }
 
+  static nextPower(base, goal) {
+    let d = 1;
+    while (d > goal) d /= base;
+    while (d < goal) d *= base;
+    console.log(d, base, goal);
+    return d;
+  }
+
   render() {
     const startTime = +new Date();
     const {

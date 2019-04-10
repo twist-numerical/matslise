@@ -26,7 +26,8 @@ class ParsedInput extends Component {
       }
     },
     parsed: null,
-    variables: []
+    variables: [],
+    disabled: false
   };
   state = {
     parsed: this.props.parsed,
@@ -40,12 +41,19 @@ class ParsedInput extends Component {
   }
 
   render() {
-    const { parsed, onParsed, variables, onEnter, ...restProps } = this.props;
+    const {
+      disabled,
+      parsed,
+      onParsed,
+      variables,
+      onEnter,
+      ...restProps
+    } = this.props;
 
     return (
       <div
         {...restProps}
-        contentEditable={true}
+        contentEditable={!disabled}
         onInput={e =>
           this.onInput(e.target.textContent.replace(/[\n\r]/g, " "))
         }
@@ -68,7 +76,15 @@ class ParsedInput extends Component {
     );
   }
 
-  componentDidUpdate() {
+  componentDidUpdate(prevProps) {
+    if (this.props.parsed !== prevProps.parsed) {
+      this.setState({
+        parsed: this.props.parsed,
+        done: this.props.parsed ? this.props.parsed.value : "",
+        todo: ""
+      });
+    }
+
     if (!this.input.firstChild) return;
     if (this.cursorPosition >= 0) {
       if (this.cursorPosition <= this.state.done.length)

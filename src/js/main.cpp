@@ -52,10 +52,10 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .field("first", &pair<double, double>::first)
             .field("second", &pair<double, double>::second);
 
-    class_<matslise_util::EigenfunctionCalculator>("EigenfunctionCalculator")
+    class_<std::function<Y<>(double)>>("EigenfunctionCalculator")
             .function("eval",
-                      optional_override([](matslise_util::EigenfunctionCalculator &self, double x) -> Vector2d {
-                          return self(x).y.toEigen();
+                      optional_override([](std::function<Y<>(double)> &self, double x) -> Vector2d {
+                          return self(x).y;
                       }));
 
     class_<Matslise>("Matslise")
@@ -66,19 +66,19 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .function("propagate", optional_override(
                     [](Matslise &m, double E, const Vector2d &y, double a, double b) ->
                             val {
-                        Y<double> y0;
+                        Y<> y0;
                         double theta;
-                        tie(y0, theta) = m.propagate(E, Y<double>(y, {0, 0}), a, b);
+                        tie(y0, theta) = m.propagate(E, Y<>(y, {0, 0}), a, b);
                         val rv(val::object());
-                        rv.set("y", val(y0.y.toEigen()));
+                        rv.set("y", val(y0.y));
                         rv.set("theta", val(theta));
                         return rv;
                     }))
             .function("eigenfunction", optional_override(
                     [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) ->
                             val {
-                        matslise_util::EigenfunctionCalculator *calculator =
-                                m.eigenfunctionCalculator(E, Y<double>(left, {0, 0}), Y<double>(right, {0, 0}));
+                        std::function<Y<>(double)> calculator =
+                                m.eigenfunctionCalculator(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}));
                         return val::global("Function")
                                 .new_(string("calculator"), string(
                                         "var f = function(x) { return calculator.eval(x); };"
@@ -90,9 +90,31 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     [](Matslise &m, int Imin, int Imax, const Vector2d &left,
                        const Vector2d &right) -> val {
                         return transformEigenvalues(
-                                m.computeEigenvaluesByIndex(Imin, Imax, Y<double>(left, {0, 0}),
-                                                            Y<double>(right, {0, 0})));
-                    }), allow_raw_pointers());
+                                m.computeEigenvaluesByIndex(Imin, Imax, Y<>(left, {0, 0}),
+                                                            Y<>(right, {0, 0})));
+                    }));
+
+    class_<HalfRange>("HalfRange")
+            .constructor(optional_override(
+                    [](val f, double max, int steps) -> HalfRange * {
+                        return new HalfRange([f](double x) -> double { return f(x).as<double>(); }, max, steps);
+                    }))
+            .function("eigenfunction", optional_override(
+                    [](HalfRange &m, double E, const Vector2d &left) ->
+                            val {
+                        std::function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, Y<>(left, {0, 0}));
+                        return val::global("Function")
+                                .new_(string("calculator"), string(
+                                        "var f = function(x) { return calculator.eval(x); };"
+                                        "f.delete = function() { calculator.delete(); };"
+                                        "return f;")
+                                )(calculator);
+                    }))
+            .function("eigenvaluesByIndex", optional_override(
+                    [](HalfRange &m, int Imin, int Imax, const Vector2d &left) -> val {
+                        return transformEigenvalues(
+                                m.computeEigenvaluesByIndex(Imin, Imax, Y<>(left, {0, 0})));
+                    }));
 
     class_<SEnD<2>>("SE2D")
             .constructor(optional_override(
@@ -103,8 +125,16 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                            Options<2>().sectorCount(ySectorCount).nested(
                                                    Options<1>().sectorCount(xSectorCount)));
                     }))
-            .function("calculateError", optional_override([](SEnD<2> &se2d, double E) -> std::pair<double, double> {
+            .function("calculateError", optional_override([](SEnD<2> &se2d, double E) -> pair<double, double> {
                 return se2d.calculateError(E, SEnD_util::ABS_SORTER);
+            }))
+            .function("calculateErrors", optional_override([](SEnD<2> &se2d, double E) -> val {
+                vector<pair<double, double>> *result = se2d.calculateErrors(E);
+                val r = val::array();
+                for (pair<double, double> &eigenvalue  :*result)
+                    r.call<val>("push", eigenvalue);
+                delete result;
+                return r;
             }))
             .function("findEigenvalue", optional_override([](SEnD<2> &se2d, double E) -> double {
                 return se2d.findEigenvalue(E);

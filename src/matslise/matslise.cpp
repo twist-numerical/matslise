@@ -52,7 +52,7 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
             }
         }
     } else {
-        if(theta == 0)
+        if (theta == 0)
             theta += M_PI;
         for (int i = sectorCount - 1; i >= 0; --i) {
             Sector *sector = sectors[i];
@@ -144,9 +144,9 @@ Matslise::computeEigenvalues(double Emin, double Emax, const Y<> &left, const Y<
 vector<pair<int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const Y<> &left,
                              const Y<> &right) const {
-    if(Imin < 0)
+    if (Imin < 0)
         throw runtime_error("Matslise::computeEigenvalues(): Imin has to be at least 0");
-    if(Imin > Imax)
+    if (Imin > Imax)
         throw runtime_error("Matslise::computeEigenvalues(): Imax can't be less then Imin");
     vector<pair<int, double>> *eigenvalues = new vector<pair<int, double>>();
     queue<tuple<double, double, double, double, int>> toCheck;
@@ -172,7 +172,7 @@ Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const
             eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9));
         else {
             tc = get<2>(calculateError(c, left, right)) / M_PI;
-            if(isnan(tc)) {
+            if (isnan(tc)) {
                 cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
             } else {
                 toCheck.push(make_tuple(a, ta, c, tc, depth));
@@ -259,7 +259,30 @@ Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matsli
     return ys;
 }
 
-EigenfunctionCalculator
-*Matslise::eigenfunctionCalculator(double E, const Y<> &left, const Y<> &right) {
-    return new EigenfunctionCalculator(this, E, left, right);
+std::function<Y<>(double)> Matslise::eigenfunctionCalculator(double E, const Y<> &left, const Y<> &right) const {
+    int m = sectorCount / 2 + 1;
+    vector<Y<>> ys(sectorCount + 1);
+    ys[0] = left;
+    for (int i = 1; i <= m; ++i)
+        ys[i] = sectors[i - 1]->propagate(E, ys[i - 1], true);
+    ys[sectorCount] = right;
+    for (int i = sectorCount - 1; i > m; --i)
+        ys[i] = sectors[i]->propagate(E, ys[i + 1], false);
+    Y<> yr = sectors[m]->propagate(E, ys[m + 1], false);
+    double s = ys[m].y[0] / yr.y[0];
+    for (int i = m + 1; i < sectorCount; ++i)
+        ys[i] *= s;
+
+    return [this, E, ys](double x) -> Y<> {
+        int a = 0;
+        int b = this->sectorCount;
+        while (a + 1 < b) {
+            int c = (a + b) / 2;
+            if (x < this->sectors[c]->xmin)
+                b = c;
+            else
+                a = c;
+        }
+        return this->sectors[a]->propagate(E, ys[a], x - this->sectors[a]->xmin);
+    };
 }

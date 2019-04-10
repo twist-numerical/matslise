@@ -2,12 +2,13 @@
 // Created by toon on 9/11/18.
 //
 
+#include <functional>
 #include "../matslise.h"
 
 using namespace matslise;
 using namespace matslise::matslise_util;
 
-EigenfunctionCalculator::EigenfunctionCalculator(Matslise *ms, double E, const Y<> &left, const Y<> &right)
+EigenfunctionCalculator::EigenfunctionCalculator(const Matslise *ms, double E, const Y<> &left, const Y<> &right)
         : ms(ms), E(E) {
     ys.reserve(ms->sectorCount + 1);
     int m = ms->sectorCount / 2 + 1;
@@ -23,7 +24,7 @@ EigenfunctionCalculator::EigenfunctionCalculator(Matslise *ms, double E, const Y
         ys[i] *= s;
 }
 
-Y<> EigenfunctionCalculator::eval(double x) const {
+Y<> EigenfunctionCalculator::operator()(double x) const {
     int a = 0;
     int b = ms->sectorCount;
     while (a + 1 < b) {
@@ -34,4 +35,7 @@ Y<> EigenfunctionCalculator::eval(double x) const {
             a = c;
     }
     return ms->sectors[a]->propagate(E, ys[a], x - ms->sectors[a]->xmin);
+}
+
+EigenfunctionCalculator::~EigenfunctionCalculator() {
 }
