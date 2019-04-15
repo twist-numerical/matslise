@@ -100,9 +100,9 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         return new HalfRange([f](double x) -> double { return f(x).as<double>(); }, max, steps);
                     }))
             .function("eigenfunction", optional_override(
-                    [](HalfRange &m, double E, const Vector2d &left) ->
+                    [](HalfRange &m, double E, const Vector2d &left, int even = -1) ->
                             val {
-                        std::function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, Y<>(left, {0, 0}));
+                        std::function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, Y<>(left, {0, 0}), even);
                         return val::global("Function")
                                 .new_(string("calculator"), string(
                                         "var f = function(x) { return calculator.eval(x); };"

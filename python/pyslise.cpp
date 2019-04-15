@@ -131,9 +131,9 @@ PYBIND11_MODULE(pyslise, m) {
         .def("computeEigenvaluesByIndex", [](HalfRange &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>>* {
             return m.computeEigenvaluesByIndex(Imin, Imax, make_y(side));
         })
-        .def("computeEigenfunction", [](HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs)
+        .def("computeEigenfunction", [](HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs, int even)
             -> tuple<ArrayXd, ArrayXd> {
-                auto ysY = m.computeEigenfunction(E, make_y(side), xs);
+                auto ysY = m.computeEigenfunction(E, make_y(side), xs, even);
                 ArrayXd ys(ysY.size());
                 ArrayXd dys(ysY.size());
                 for(int i = 0; i < ysY.size(); ++i) {
@@ -141,7 +141,9 @@ PYBIND11_MODULE(pyslise, m) {
                     dys[i] = ysY[i].y[1];
                 }
                 return make_tuple(ys, dys);
-        });
+            },
+            "Compute eigenfunction (in the values xs) for a given eigenvalue. You can indicate if the eigenfunction should be even or odd.",
+            py::arg("E"), py::arg("side"), py::arg("xs"), py::arg("even")=-1);
 
     py::class_<Matslise>(m, "Pyslise")
         .def(py::init<function<double(double)>, double, double, int>())
@@ -194,7 +196,7 @@ PYBIND11_MODULE(pyslise, m) {
             },
             py::arg("E"), py::arg("left"), py::arg("right"))
         .def("eigenfunctionCalculator",
-            [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) -> Evaluator<Y<>, double>* {
+            [](Matslise &m, double E, const Vector2d &left, const Vector2d &right) -> std::function<Y<>(double)> {
                 return m.eigenfunctionCalculator(E, make_y(left), make_y(right));
             },
             py::arg("E"), py::arg("left"), py::arg("right"));

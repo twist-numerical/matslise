@@ -73,12 +73,14 @@ namespace matslise {
     class HalfRange {
     public:
         const Matslise *ms;
-
+        static const int AUTO = -1;
+        static const int ODD = 0;
+        static const int EVEN = 1;
     public:
         HalfRange(std::function<double(double)> V, double xmax, int sectorCount);
 
         Array<matslise::Y<>, Dynamic, 1>
-        computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x) const;
+        computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int even = AUTO) const;
 
         std::vector<std::pair<int, double>> *
         computeEigenvalues(double Emin, double Emax, const matslise::Y<> &side) const;
@@ -87,7 +89,7 @@ namespace matslise {
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &side) const;
 
         std::function<Y<>(double)> eigenfunctionCalculator(
-                double E, const matslise::Y<> &left);
+                double E, const matslise::Y<> &left, int even = AUTO);
 
         virtual ~HalfRange();
     };

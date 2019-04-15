@@ -27,8 +27,22 @@ void removeDoubles(vector<T> &x) {
     x.erase(x.begin() + i + 1, x.end());
 }
 
+
+inline bool isEven(const HalfRange *hr, double E, const matslise::Y<> &side, int even) {
+    if (even == HalfRange::AUTO) {
+        double error0 = get<0>(hr->ms->calculateError(E, Y<>({0, 1}, {0, 0}), side));
+        double error1 = get<0>(hr->ms->calculateError(E, Y<>({0, 1}, {0, 0}), side));
+        return abs(error0) < abs(error1);
+    }
+    return bool(even);
+}
+
+inline Y<> getY0(bool even) {
+    return Y<>({even ? 1 : 0, even ? 0 : 1}, {0, 0});
+}
+
 Array<Y<>, Dynamic, 1>
-HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x) const {
+HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int _even) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -49,21 +63,15 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const Array
         xPos[i - negatives] = x[i];
 
 
-    Y<> y0({0, 1}, {0, 0});
-    Y<> y1({1, 0}, {0, 0});
-
-    double error0 = get<0>(ms->calculateError(E, y0, side));
-    double error1 = get<0>(ms->calculateError(E, y1, side));
-
+    bool even = isEven(this, E, side, _even);
+    Y<> y = getY0(even);
     Array<Y<>, Dynamic, 1> yNeg, yPos, ys(n);
-    bool is0 = abs(error0) < abs(error1);
-
-    yNeg = ms->computeEigenfunction(E, is0 ? y0 : y1, side, xNeg);
-    yPos = ms->computeEigenfunction(E, is0 ? y0 : y1, side, xPos);
+    yNeg = ms->computeEigenfunction(E, y, side, xNeg);
+    yPos = ms->computeEigenfunction(E, y, side, xPos);
 
     for (long i = 0; i < negatives; ++i) {
         ys[negatives - 1 - i] = yNeg[i];
-        if (is0)
+        if (even)
             ys[negatives - 1 - i] *= -1;
     }
     for (long i = negatives; i < n; ++i)
@@ -73,16 +81,12 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const Array
 }
 
 
-std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<> &side) {
-    const Y<> y0({0, 1}, {0, 0});
-    const Y<> y1({1, 0}, {0, 0});
-    double error0 = get<0>(ms->calculateError(E, y0, side));
-    double error1 = get<0>(ms->calculateError(E, y1, side));
-    bool is0 = abs(error0) < abs(error1);
-    function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, is0 ? y0 : y1, side));
-    return [calculator, is0](double x) -> Y<> {
+std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) {
+    bool even = isEven(this, E, side, _even);
+    function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, getY0(even), side));
+    return [calculator, even](double x) -> Y<> {
         Y<> c = calculator(x < 0 ? -x : x);
-        if (x < 0 && is0)
+        if (x < 0 && !even)
             c *= -1;
         return c;
     };

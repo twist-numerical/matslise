@@ -12,7 +12,7 @@ class MatsliseGUI extends Component {
     x: [0, 1],
     ymin: [1, 0],
     ymax: [1, 0],
-    steps: 32,
+    steps: 31,
     matslise: null,
     eigenvalues: [],
     showPotential: true,
@@ -43,7 +43,7 @@ class MatsliseGUI extends Component {
       const { value, show, index } = eigenvalue;
       if (show) {
         if (eigenvalue.eigenfunction === undefined) {
-          eigenvalue.eigenfunction = this.eigenfunction(value);
+          eigenvalue.eigenfunction = this.eigenfunction(value, index);
           eigenvalue.eigenfunction.color = Color.hsl(
             ((index * 1.618) % 1) * 360,
             80,
@@ -155,7 +155,6 @@ class MatsliseGUI extends Component {
       ...this.state,
       ...newState
     };
-    console.log(newState);
 
     while (this.toDelete.length > 0) this.toDelete.pop().delete();
 
@@ -172,19 +171,16 @@ class MatsliseGUI extends Component {
       steps,
       matslise,
       symmetric,
-      eigenvalues: this.eigenvalues(0, 10, matslise, ymin, ymax, symmetric),
+      eigenvalues: this.eigenvalues(0, 10, { matslise, ymin, ymax, symmetric }),
       showPotential: true
     });
   }
 
-  eigenvalues(
-    imin,
-    imax,
-    matslise = this.state.matslise,
-    ymin = [1, 0],
-    ymax = [1, 0],
-    symmetric = this.state.symmetric
-  ) {
+  eigenvalues(imin, imax, options = {}) {
+    const { matslise, ymin, ymax, symmetric } = {
+      ...this.state,
+      ...options
+    };
     const [ya, dya] = ymin,
       [yb, dyb] = ymax;
     return matslise
@@ -200,17 +196,15 @@ class MatsliseGUI extends Component {
       });
   }
 
-  eigenfunction(e) {
+  eigenfunction(e, index) {
     const {
       ymin: [ya, dya],
       ymax: [yb, dyb],
       symmetric
     } = this.state;
-    let eigen = this.state.matslise.eigenfunction(
-      e,
-      ...(symmetric ? [] : [[dya, -ya]]),
-      [dyb, -yb]
-    );
+    let eigen = symmetric
+      ? this.state.matslise.eigenfunction(e, [dyb, -yb], 1 - (index % 2))
+      : this.state.matslise.eigenfunction(e, [dya, -ya], [dyb, -yb]);
     this.toDelete.push(eigen);
     return x => eigen(x)[0];
   }
