@@ -1,5 +1,7 @@
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 
+set(CMAKE_CXX_FLAGS "-O2 -Wall")
+
 if (NOT (DEFINED EMSCRIPTEN))
     add_executable(matslise_test EXCLUDE_FROM_ALL
             main.cpp

@@ -10,9 +10,8 @@ using namespace std;
 using namespace Eigen;
 
 TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
-    double m = 0.001;
     SEnD<2> p2(
-            [m](double x, double y) -> double {
+            [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
@@ -35,7 +34,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
     x << -1, 0, 1;
     double E;
     int multiplicity;
-    for (int i = 0; i < 3; ++i) {
+    for (int i = 0; i < 9; ++i) {
         double error = get<0>(p2.calculateError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
         CHECK(abs(error) > 1e-3);
     }
