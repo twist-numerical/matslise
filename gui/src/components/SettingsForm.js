@@ -10,8 +10,8 @@ class SettingsForm extends Component {
   state = {
     x: [DF.parse("0"), DF.parse("1")],
     ymin: [DF.parse("1"), DF.parse("0")],
-    ymax: [DF.parse("0"), DF.parse("1")],
-    parsed: DF.parse("(1-cos(2*pi*x))/2*1000", ["x"]), //"0"),
+    ymax: [DF.parse("1"), DF.parse("0")],
+    parsed: DF.parse("0"), //"(1-cos(2*pi*x))/2*1000", ["x"])
     symmetric: false
   };
 
