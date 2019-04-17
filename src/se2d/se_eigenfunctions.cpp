@@ -5,6 +5,8 @@ using namespace matslise;
 using namespace matslise::SEnD_util;
 using namespace std;
 
+#define cec_cce(y) ((y).getdY(0).transpose()*(y).getY(1) - (y).getY(0).transpose()*(y).getdY(1))
+
 template<int n>
 Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     Y<Dynamic> *steps = new Y<Dynamic>[sectorCount + 1];
@@ -12,13 +14,20 @@ Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     steps[0] = Y<Dynamic>::Dirichlet(N);
     steps[sectorCount] = Y<Dynamic>::Dirichlet(N);
 
-    for (int i = sectorCount - 1; i >= match; --i)
-        steps[i] = sectors[i]->propagate(
-                E, i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1], false);
+    MatrixXd normRight = MatrixXd::Zero(N, N);
+    for (int i = sectorCount - 1; i >= match; --i) {
+        Y<Dynamic> next = i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1];
+        steps[i] = sectors[i]->propagate(E, next, false);
+        normRight += cec_cce(next) - cec_cce(steps[i]);
+    }
     Y<Dynamic> matchRight = steps[match];
 
-    for (int i = 0; i < match; ++i)
-        steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], true);
+    MatrixXd normLeft = MatrixXd::Zero(N, N);
+    for (int i = 0; i < match; ++i) {
+        Y<Dynamic> next = sectors[i]->propagate(E, steps[i], true);
+        steps[i + 1] = M[i] * next;
+        normLeft += cec_cce(next) - cec_cce(steps[i]);
+    }
     Y<Dynamic> matchLeft = steps[match];
 
     ColPivHouseholderQR<MatrixXd> left_solver(matchLeft.getY(0).transpose());
@@ -37,6 +46,13 @@ Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     Y<Dynamic> *elements = new Y<Dynamic>[sectorCount + 1];
     MatrixXd left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
     MatrixXd right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
+
+    VectorXd scaling = (left.transpose() * normLeft * left).diagonal();
+    scaling += (right.transpose() * normRight * right).diagonal();
+    scaling = scaling.unaryExpr([](double s) { return s < 0 ? 1 : 1. / sqrt(s); });
+
+    left *= scaling.asDiagonal();
+    right *= scaling.asDiagonal();
     for (int i = 0; i <= match; ++i)
         elements[i] = steps[i] * left;
     for (int i = sectorCount; i > match; --i)

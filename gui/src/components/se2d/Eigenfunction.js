@@ -43,7 +43,6 @@ class Eigenfunction extends Component {
       loading: isValue,
       eigenfunction: null
     });
-    console.log(E, this.props, isValue);
     if (isValue) {
       this.props.worker.send("eigenfunction", {
         E,
@@ -103,7 +102,11 @@ class Eigenfunction extends Component {
   }
 
   buildGraph(x, y, z) {
-    const scale = 3 / Math.max(...z.map(r => Math.max(...r.map(Math.abs))));
+    const xmin = Math.min(...x);
+    const xmax = Math.max(...x);
+    const ymin = Math.min(...y);
+    const ymax = Math.min(...y);
+    const scale = (xmax - xmin + (ymax - ymin)) / 4;
     z = z.map(r => r.map(v => v * scale));
 
     const materialSettings = {

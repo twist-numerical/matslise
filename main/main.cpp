@@ -163,9 +163,9 @@ void testPrufer() {
 int main() {
     // coffey();
     // testPrufer();
-    // test2d();
+    test2d();
     // test3d();
     // testBigE();
     // testMatscs();
-    testEigenfunctionCalculator();
+    // testEigenfunctionCalculator();
 }

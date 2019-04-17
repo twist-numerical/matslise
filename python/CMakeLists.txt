@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
 project(pyslise)
 
+set(CMAKE_CXX_FLAGS "-O2 ${CMAKE_CXX_FLAGS}")
+
 find_package(Eigen3 REQUIRED NO_MODULE)
 
 add_subdirectory(pybind11)

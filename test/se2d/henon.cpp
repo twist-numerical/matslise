@@ -10,9 +10,8 @@ using namespace std;
 using namespace Eigen;
 
 TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
-    double m = 0.001;
     SEnD<2> p2(
-            [m](double x, double y) -> double {
+            [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2 * sqrt(5)) * x * (y * y - x * x / 3);
             },
             {{-6, 6}, -6, 6},

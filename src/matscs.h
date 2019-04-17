@@ -46,7 +46,7 @@ namespace matslise {
 
         std::vector<matslise::Y<Eigen::Dynamic>> *computeEigenfunction(double E, std::vector<double> &x) const;
 
-        matslise::matscs_util::EigenfunctionCalculator *eigenfunctionCalculator(
+        std::function<Y<Dynamic, 1>(double)> eigenfunctionCalculator(
                 double E, const matslise::Y<Eigen::Dynamic, 1> &left, const matslise::Y<Eigen::Dynamic, 1> &right);
 
         virtual ~Matscs();

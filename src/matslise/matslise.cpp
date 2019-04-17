@@ -23,7 +23,7 @@ Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sec
     double mid = .51 * xmax + .49 * xmin;
     for (int i = 0; i < sectorCount; ++i) {
         double a = xmin + i * h;
-        double b = a + h;
+        double b = xmax - (sectorCount - i - 1) * h;
         if (b > mid) {
             match = b;
             mid = xmax + 1;
@@ -192,6 +192,34 @@ Matslise::~Matslise() {
     delete[] sectors;
 }
 
+vector<Y<>> propagationSteps(const Matslise &ms, double E, const matslise::Y<> &left, const matslise::Y<> &right) {
+    int n = ms.sectorCount;
+    int m = n / 2 + 1;
+    vector<Y<>> ys(n + 1);
+    ys[0] = left;
+    for (int i = 1; i <= m; ++i)
+        ys[i] = ms.sectors[i - 1]->propagate(E, ys[i - 1], true);
+    ys[n] = right;
+    for (int i = n - 1; i > m; --i)
+        ys[i] = ms.sectors[i]->propagate(E, ys[i + 1], false);
+    Y<> yr = ms.sectors[m]->propagate(E, ys[m + 1], false);
+    double s = ys[m].y[0] / yr.y[0];
+    double norm = ys[m].dy[0] * ys[m].y[1] - ys[m].dy[1] * ys[m].y[0];
+    norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
+    if (norm > 0) {
+        norm = sqrt(norm);
+    } else {
+        cerr << "There are problems with the normalization." << endl;
+        norm = 1;
+    }
+    int i = 0;
+    for (; i <= m; ++i)
+        ys[i] *= 1. / norm;
+    for (; i <= n; ++i)
+        ys[i] *= s / norm;
+    return ys;
+}
+
 Array<Y<>, Dynamic, 1>
 Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matslise::Y<> &right,
                                const ArrayXd &x) const {
@@ -202,77 +230,21 @@ Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matsli
     if (x[0] < xmin || x[n - 1] > xmax)
         throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
 
+    vector<Y<>> steps = propagationSteps(*this, E, left, right);
     Array<Y<>, Dynamic, 1> ys(n);
 
-    long forward = 0;
-    Y<> y = left;
-    int iLeft = 0;
-    { // left
-        while (forward < n && x[forward] < xmin - EPS)
-            ++forward;
-
-        Sector *sector = sectors[0];
-        for (; forward < n; ++forward) {
-            while (sector->xmax < x[forward]) {
-                y = sector->calculateT(E) * y;
-                ++iLeft;
-                sector = sectors[iLeft];
-                if (iLeft >= sectorCount || sector->xmin > match)
-                    goto allLeftSectorsDone;
-            }
-
-            ys[forward] = sector->calculateT(E, x[forward] - sector->xmin) * y;
-        }
-        allLeftSectorsDone:;
-    }
-
-    { // right
-        Y<> yLeft = y;
-
-        long reverse = n;
-        while (reverse-- > forward && x[reverse] > xmax + EPS);
-        long lastValid = reverse;
-
-        Sector *sector = sectors[sectorCount - 1];
-        y = sector->calculateT(E) / right;
-        for (int i = sectorCount - 1; reverse >= 0; --reverse) {
-            while (sector->xmin > x[reverse]) {
-                --i;
-                sector = sectors[i];
-                if (i < iLeft || sector->xmax < match)
-                    goto allRightSectorsDone;
-                y = sector->calculateT(E) / y;
-            }
-
-            ys[reverse] = sector->calculateT(E, x[reverse] - sector->xmin) * y;
-        }
-        allRightSectorsDone:;
-
-        Y<> yRight = y;
-        double scale = yLeft.y[0] / yRight.y[0];
-        for (long i = reverse + 1; i <= lastValid; ++i) {
-            ys[i].y *= scale;
-            ys[i].dy *= scale;
-        }
+    int sector = 0;
+    for (int i = 0; i < n; ++i) {
+        while (x[i] > sectors[sector]->xmax)
+            ++sector;
+        ys[i] = sectors[sector]->propagate(E, steps[sector], x[i] - sectors[sector]->xmin);
     }
 
     return ys;
 }
 
 std::function<Y<>(double)> Matslise::eigenfunctionCalculator(double E, const Y<> &left, const Y<> &right) const {
-    int m = sectorCount / 2 + 1;
-    vector<Y<>> ys(sectorCount + 1);
-    ys[0] = left;
-    for (int i = 1; i <= m; ++i)
-        ys[i] = sectors[i - 1]->propagate(E, ys[i - 1], true);
-    ys[sectorCount] = right;
-    for (int i = sectorCount - 1; i > m; --i)
-        ys[i] = sectors[i]->propagate(E, ys[i + 1], false);
-    Y<> yr = sectors[m]->propagate(E, ys[m + 1], false);
-    double s = ys[m].y[0] / yr.y[0];
-    for (int i = m + 1; i < sectorCount; ++i)
-        ys[i] *= s;
-
+    vector<Y<>> ys = propagationSteps(*this, E, left, right);
     return [this, E, ys](double x) -> Y<> {
         int a = 0;
         int b = this->sectorCount;

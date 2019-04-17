@@ -24,7 +24,7 @@ Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &o
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
     eigenvalues = new double[se2d->N];
     eigenfunctions = new ArrayXd[se2d->N];
-    eigenfunctionsScaling = new double[se2d->N];
+    //eigenfunctionsScaling = new double[se2d->N];
     for (int i = 0; i < se2d->N; ++i) {
         double E = (*index_eigv)[i].second;
         eigenvalues[i] = E;
@@ -32,9 +32,6 @@ Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &o
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
-        eigenfunctions[i] *= (eigenfunctionsScaling[i] = 1 /
-                                                         sqrt(lobatto::quadrature(se2d->grid[0], eigenfunctions[i] *
-                                                                                                 eigenfunctions[i])));
     }
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, ymin, ymax,
@@ -56,17 +53,17 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
     vector<double> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N);
     eigenvalues = new double[se2d->N];
     eigenfunctions = new ArrayXXd[se2d->N];
-    eigenfunctionsScaling = new double[se2d->N];
+    //eigenfunctionsScaling = new double[se2d->N];
     for (int i = 0; i < se2d->N;) {
         double E = (*index_eigv)[i];
         eigenvalues[i] = E;
         std::vector<typename dim<2>::array> *funcs = matslise->computeEigenfunction(E, se2d->grid[0], se2d->grid[1]);
         for (auto func : *funcs) {
             eigenfunctions[i] = func;
-            eigenfunctions[i] *= (
-                    eigenfunctionsScaling[i] =
-                            1. / sqrt(lobatto::multi_quadrature<2>(se2d->grid, eigenfunctions[i] * eigenfunctions[i]))
-            );
+            /*  eigenfunctions[i] *= (
+                      eigenfunctionsScaling[i] =
+                              1. / sqrt(lobatto::multi_quadrature<2>(se2d->grid, eigenfunctions[i] * eigenfunctions[i]))
+              ); */
             if (++i >= se2d->N)
                 break;
         }
@@ -86,7 +83,7 @@ Sector<n>::~Sector() {
     delete matscs;
     delete[] eigenvalues;
     delete[] eigenfunctions;
-    delete[] eigenfunctionsScaling;
+    //delete[] eigenfunctionsScaling;
 }
 
 template<int n>
@@ -137,7 +134,7 @@ ArrayXd Sector<2>::computeEigenfunction(int index, const ArrayXd &x) const {
     Array<matslise::Y<>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
     ArrayXd result(size);
     for (int i = 0; i < size; ++i)
-        result(i) = raw(i).y[0] * eigenfunctionsScaling[index];
+        result(i) = raw(i).y[0];
     return result;
 }
 

@@ -49,6 +49,27 @@ TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
     delete eigenvalues;
 }
 
+TEST_CASE("Mathieu normalized", "[mathieu][matslise][eigenfunctionCalculator]") {
+    Matslise ms(&mathieu, 0, M_PI, 8);
+    Y<> ystart({0, 1}, {0, 0});
+
+    vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 10, ystart, ystart);
+    for (pair<int, double> ie : *eigenvalues) {
+        double e = ie.second;
+        function<Y<>(double)> f = ms.eigenfunctionCalculator(e, ystart, ystart);
+
+        int n = 61;
+        double v = 0;
+        for (int i = 0; i < n; ++i) {
+            double q = f((i + .5) / n * M_PI).y[0];
+            v += q * q;
+        }
+        v *= M_PI / n;
+        REQUIRE(Approx(v).margin(1e-7) == 1);
+    }
+    delete eigenvalues;
+}
+
 TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]") {
     ArrayXd x(30);
     x << 0.000000000000000, 0.108330781158269, 0.216661562316537, 0.324992343474806, 0.433323124633075,
@@ -89,7 +110,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
     Matslise ms(&mathieu, 0, M_PI, 8);
-    Y<> ystart({0, 1},{0,0});
+    Y<> ystart({0, 1}, {0, 0});
 
     {
         auto *eigenvalues = ms.computeEigenvaluesByIndex(0, 1, ystart, ystart);

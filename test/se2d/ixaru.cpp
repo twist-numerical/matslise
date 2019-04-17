@@ -2,6 +2,7 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
+#include "checkOrthonormality.h"
 #include <matslise/se2d.h>
 
 
@@ -38,8 +39,10 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
         double error = get<0>(p2.calculateError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
         CHECK(abs(error) > 1e-3);
     }
+    vector<double> eigenvalues_simple;
     for (auto &Em  : eigenvalues) {
         tie(E, multiplicity) = Em;
+        eigenvalues_simple.push_back(E);
         const pair<double, double> &error = p2.calculateError(E);
         CHECK(abs(error.first) < 1e-3);
 
@@ -54,4 +57,5 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
         CHECK(f->size() == multiplicity);
         delete f;
     }
+    checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }

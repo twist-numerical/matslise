@@ -3,8 +3,8 @@ set(CMAKE_CXX_STANDARD 11)
 
 
 SET(MATSLISE_SRC util/calculateEta.cpp util/lobatto.cpp util/y.cpp
-        matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp matslise/matslise_formulas.cpp matslise/eigenfunction_calculator.cpp
-        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp matscs/eigenfunction_calculator.cpp
+        matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp matslise/matslise_formulas.cpp
+        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
         se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h util/y.cpp util/y.h util/eigen.h)
 
 if (DEFINED EMSCRIPTEN)
@@ -27,7 +27,6 @@ else ()
         set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
         set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
         set(BLA_DEFINITIONS USE_MKL)
-        message(STATUS "MKL found")
         target_compile_definitions(matslise PUBLIC ${BLA_DEFINITIONS})
         target_include_directories(matslise PUBLIC ${BLA_INCLUDE_DIR})
 

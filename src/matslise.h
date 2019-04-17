@@ -122,19 +122,6 @@ namespace matslise {
 
             virtual ~Sector();
         };
-
-        class EigenfunctionCalculator : public std::function<Y<>(double)> {
-        public:
-            const Matslise *ms;
-            double E;
-            std::vector<Y<>> ys;
-
-            EigenfunctionCalculator(const Matslise *ms, double E, const Y<> &left, const Y<> &right);
-
-            virtual Y<> operator()(double x) const;
-
-            virtual ~EigenfunctionCalculator();
-        };
     };
 }
 

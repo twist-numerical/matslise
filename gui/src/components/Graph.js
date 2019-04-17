@@ -59,7 +59,6 @@ class Graph extends Component {
     let d = 1;
     while (d > goal) d /= base;
     while (d < goal) d *= base;
-    console.log(d, base, goal);
     return d;
   }
 

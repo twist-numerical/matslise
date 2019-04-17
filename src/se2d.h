@@ -133,7 +133,6 @@ namespace matslise {
             double min, max;
 
             double *eigenvalues;
-            double *eigenfunctionsScaling;
             typename dim<n - 1>::array *eigenfunctions;
 
             Sector(SEBase<n> *se2d, double min, double max, const Options<n> &options);
