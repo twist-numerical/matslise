@@ -46,11 +46,9 @@ Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     Y<Dynamic> *elements = new Y<Dynamic>[sectorCount + 1];
     MatrixXd left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
     MatrixXd right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-
-    VectorXd scaling = (left.transpose() * normLeft * left).diagonal();
-    scaling += (right.transpose() * normRight * right).diagonal();
+    VectorXd scaling = (left.transpose() * normLeft * left
+                        + right.transpose() * normRight * right).diagonal();
     scaling = scaling.unaryExpr([](double s) { return s < 0 ? 1 : 1. / sqrt(s); });
-
     left *= scaling.asDiagonal();
     right *= scaling.asDiagonal();
     for (int i = 0; i <= match; ++i)

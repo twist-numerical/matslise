@@ -25,10 +25,10 @@ void Sector::calculateTCoeffs() {
     calculate_tcoeff_matrix(h, vs, t_coeff, t_coeff_h);
 }
 
-T<> Sector::calculateT(double E, double delta) const {
+T<> Sector::calculateT(double E, double delta, bool use_h) const {
     if (fabs(delta) <= EPS)
         return T<>();
-    if (fabs(delta - h) <= EPS)
+    if (use_h && fabs(delta - h) <= EPS)
         return calculateT(E);
 
     double *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA_delta);
@@ -94,19 +94,19 @@ Y<> Sector::propagate(double E, const Y<> &y0, bool forward) const {
     return forward ? t * y0 : t / y0;
 }
 
-Y<> Sector::propagate(double E, const Y<> &y0, double delta) const {
+Y<> Sector::propagate(double E, const Y<> &y0, double delta, bool use_h) const {
     if (delta >= 0)
-        return calculateT(E, delta) * y0;
+        return calculateT(E, delta, use_h) * y0;
     else
-        return calculateT(E, -delta) / y0;
+        return calculateT(E, -delta, use_h) / y0;
 }
 
-Y<> Sector::propagate(double E, const Y<> &y0, double delta, double &theta) const {
+Y<> Sector::propagate(double E, const Y<> &y0, double delta, double &theta, bool use_h) const {
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
 
-    const T<> &t = calculateT(E, delta);
+    const T<> &t = calculateT(E, delta, use_h);
     Y<> y1 = forward ? t * y0 : t / y0;
 
     if (forward)

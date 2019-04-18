@@ -21,12 +21,14 @@ TEST_CASE("Solving the mathieu problem (first 10)", "[matslise][mathieu]") {
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
                               81.00625032615399, 100.00505067428990, 121.00416676119610};
 
-    vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(),
-                                                                          Y<>({0, 1}, {0, 0}),
-                                                                          Y<>({0, 1}, {0, 0}));
+    Y<> y0({0, 1}, {0, 0});
+    vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(), y0, y0);
     for (unsigned int i = 0; i < correct.size(); ++i) {
         REQUIRE(i == eigenvalues->at(i).first);
-        REQUIRE(Approx(correct[i]).margin(1e-12) == eigenvalues->at(i).second);
+        double E = eigenvalues->at(i).second;
+        double error = ms.computeEigenvalueError(E, y0, y0);
+        REQUIRE(fabs(error) < 1e-6);
+        REQUIRE(Approx(correct[i]).margin(error) == E);
     }
     delete eigenvalues;
 }

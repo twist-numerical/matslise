@@ -70,12 +70,12 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const Array
     yPos = ms->computeEigenfunction(E, y, side, xPos);
 
     for (long i = 0; i < negatives; ++i) {
-        ys[negatives - 1 - i] = yNeg[i];
+        ys[negatives - 1 - i] = yNeg[i] * M_SQRT1_2;
         if (even)
             ys[negatives - 1 - i] *= -1;
     }
     for (long i = negatives; i < n; ++i)
-        ys[i] = yPos[i - negatives];
+        ys[i] = yPos[i - negatives] * M_SQRT1_2;
 
     return ys;
 }
@@ -86,6 +86,7 @@ std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<
     function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, getY0(even), side));
     return [calculator, even](double x) -> Y<> {
         Y<> c = calculator(x < 0 ? -x : x);
+        c *= M_SQRT1_2;
         if (x < 0 && !even)
             c *= -1;
         return c;

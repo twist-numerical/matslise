@@ -16,7 +16,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options<2>().sectorCount(23));
+            Options<2>().sectorCount(23).N(10));
     pair<double, int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
@@ -40,8 +40,8 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
         CHECK(abs(error) > 1e-3);
     }
     vector<double> eigenvalues_simple;
-    for (auto &Em  : eigenvalues) {
-        tie(E, multiplicity) = Em;
+    for (auto &Emult  : eigenvalues) {
+        tie(E, multiplicity) = Emult;
         eigenvalues_simple.push_back(E);
         const pair<double, double> &error = p2.calculateError(E);
         CHECK(abs(error.first) < 1e-3);

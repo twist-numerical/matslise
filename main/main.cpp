@@ -86,11 +86,7 @@ void test2d() {
     SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{-5.5, 5.5}, -5.5, 5.5},
                  Options<2>().sectorCount(26).gridPoints(100).nested(Options<1>().sectorCount(32)).N(10));
 
-    double err, derr, E = 5.5;
-    for (int i = 0; i < 10; ++i) {
-        tie(err, derr) = se2d.calculateError(E, SEnD_util::ABS_SORTER);
-        E -= err / derr;
-    }
+    double E = se2d.findEigenvalue(8);
     cout << E << endl;
 
     ArrayXd xs(5);

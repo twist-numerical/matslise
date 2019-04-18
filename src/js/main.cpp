@@ -92,6 +92,11 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         return transformEigenvalues(
                                 m.computeEigenvaluesByIndex(Imin, Imax, Y<>(left, {0, 0}),
                                                             Y<>(right, {0, 0})));
+                    }))
+            .function("eigenvalueError", optional_override(
+                    [](Matslise &m, double E, const Vector2d &left,
+                       const Vector2d &right) -> double {
+                        return m.computeEigenvalueError(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}));
                     }));
 
     class_<HalfRange>("HalfRange")

@@ -36,8 +36,9 @@ class MatsliseGUI extends Component {
 
     let funcs = [];
     if (this.state.showPotential) {
-      f.color = "#000000";
-      funcs.push(f);
+      const potential = this.state.symmetric ? x => f(x < 0 ? -x : x) : f;
+      potential.color = "#000000";
+      funcs.push(potential);
     }
     this.state.eigenvalues.forEach(eigenvalue => {
       const { value, show, index } = eigenvalue;
@@ -99,21 +100,24 @@ class MatsliseGUI extends Component {
                     <td />
                     <td>V(x) = {f.value}</td>
                   </tr>
-                  {this.state.eigenvalues.map(({ index, show, value }, i) => (
-                    <tr key={i} onClick={_ => this.toggleShowEigenvalue(i)}>
-                      <th>
-                        <input
-                          type="checkbox"
-                          checked={!!show}
-                          onChange={_ => _}
-                        />
-                      </th>
-                      <td>{index}</td>
-                      <td>{value}</td>
-                    </tr>
-                  ))}
+                  {this.state.eigenvalues.map(
+                    ({ index, show, value, error }, i) => (
+                      <tr key={i} onClick={_ => this.toggleShowEigenvalue(i)}>
+                        <th>
+                          <input
+                            type="checkbox"
+                            checked={!!show}
+                            onChange={_ => _}
+                          />
+                        </th>
+                        <td>{index}</td>
+                        <td>{value}</td>
+                        <td>{error.toExponential(1)}</td>
+                      </tr>
+                    )
+                  )}
                   <tr>
-                    <td colSpan="3">
+                    <td colSpan="4">
                       <button
                         onClick={e => this.moreEigenvalues()}
                         className="btn btn-link"
@@ -188,10 +192,13 @@ class MatsliseGUI extends Component {
         dyb,
         -yb
       ])
-      .map(({ first, second }) => {
+      .map(({ first: index, second: E }) => {
         return {
-          index: first,
-          value: second
+          index: index,
+          value: E,
+          error: symmetric
+            ? 0
+            : matslise.eigenvalueError(E, [dya, -ya], [dyb, -yb])
         };
       });
   }

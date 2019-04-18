@@ -20,20 +20,23 @@ Matslise::Matslise(function<double(double)> V, double xmin, double xmax, int sec
         : V(V), xmin(xmin), xmax(xmax), sectorCount(sectorCount) {
     sectors = new Sector *[sectorCount];
     double h = (xmax - xmin) / sectorCount;
-    double mid = .51 * xmax + .49 * xmin;
+
     for (int i = 0; i < sectorCount; ++i) {
         double a = xmin + i * h;
         double b = xmax - (sectorCount - i - 1) * h;
-        if (b > mid) {
-            match = b;
-            mid = xmax + 1;
-        }
         sectors[i] = new Sector(this, a, b);
     }
+
+    int matchIndex = 0;
+    for (int i = 1; i < sectorCount; ++i) {
+        if (sectors[i]->vs[0] < sectors[matchIndex]->vs[0])
+            matchIndex = i;
+    }
+    match = sectors[matchIndex]->xmax;
 }
 
 
-pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double b) const {
+pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double b, bool use_h) const {
     Y<> y = _y;
     double theta = matslise::theta(y);
     if (a <= b) {
@@ -41,14 +44,14 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
             Sector *sector = sectors[i];
             if (sector->xmax > a) {
                 if (sector->xmin < a) // first
-                    y = sector->propagate(E, y, sector->xmin - a, theta);
+                    y = sector->propagate(E, y, sector->xmin - a, theta, use_h);
 
                 if (sector->xmax >= b) { // last
-                    y = sector->propagate(E, y, b - sector->xmin, theta);
+                    y = sector->propagate(E, y, b - sector->xmin, theta, use_h);
                     break;
                 }
 
-                y = sector->propagate(E, y, sector->xmax - sector->xmin, theta);
+                y = sector->propagate(E, y, sector->xmax - sector->xmin, theta, use_h);
             }
         }
     } else {
@@ -58,12 +61,12 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
             Sector *sector = sectors[i];
             if (sector->xmin < a) {
                 if (sector->xmax > a) // first
-                    y = sector->propagate(E, y, sector->xmin - a, theta);
+                    y = sector->propagate(E, y, sector->xmin - a, theta, use_h);
                 else
-                    y = sector->propagate(E, y, sector->xmin - sector->xmax, theta);
+                    y = sector->propagate(E, y, sector->xmin - sector->xmax, theta, use_h);
 
                 if (sector->xmin <= b) { // last
-                    y = sector->propagate(E, y, b - sector->xmin, theta);
+                    y = sector->propagate(E, y, b - sector->xmin, theta, use_h);
                     break;
                 }
 
@@ -74,22 +77,22 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
 }
 
 tuple<double, double, double>
-Matslise::calculateError(double E, const Y<> &left, const Y<> &right) const {
+Matslise::calculateError(double E, const Y<> &left, const Y<> &right, bool use_h) const {
     Y<> l, r;
     double thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, left, xmin, match);
-    tie(r, thetaR) = propagate(E, right, xmax, match);
+    tie(l, thetaL) = propagate(E, left, xmin, match, use_h);
+    tie(r, thetaR) = propagate(E, right, xmax, match, use_h);
     return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
                       l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
                       thetaL - thetaR);
 }
 
 pair<int, double>
-newtonIteration(const Matslise *ms, double E, const Y<> &left, const Y<> &right, double tol) {
+newtonIteration(const Matslise *ms, double E, const Y<> &left, const Y<> &right, double tol, bool use_h) {
     double adjust, error, derror, theta;
     int i = 0;
     do {
-        tie(error, derror, theta) = ms->calculateError(E, left, right);
+        tie(error, derror, theta) = ms->calculateError(E, left, right, use_h);
         adjust = error / derror;
         E = E - adjust;
         if (++i > 50) {
@@ -141,6 +144,10 @@ Matslise::computeEigenvalues(double Emin, double Emax, const Y<> &left, const Y<
     return computeEigenvalues(Emin, Emax, 0, INT_MAX, left, right);
 };
 
+double Matslise::computeEigenvalueError(double E, const Y<> &left, const Y<> &right) const {
+    return fabs(E - newtonIteration(this, E, left, right, 1e-9, false).second);
+}
+
 vector<pair<int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const Y<> &left,
                              const Y<> &right) const {
@@ -169,7 +176,7 @@ Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const
 
         c = (a + b) / 2;
         if (tb - ta < 0.05 || depth > 20)
-            eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9));
+            eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9, true));
         else {
             tc = get<2>(calculateError(c, left, right)) / M_PI;
             if (isnan(tc)) {
