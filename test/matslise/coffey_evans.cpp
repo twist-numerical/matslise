@@ -57,3 +57,15 @@ TEST_CASE("high potential", "[matslise][high]") {
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }
+
+TEST_CASE("high potential (auto)", "[matslise][high]") {
+    Matslise ms([](double x) -> double {
+        return (1 - cos(2 * M_PI * x)) / 2 * 1000;
+    }, 0, 1, Matslise::AUTO(1e-6));
+
+    Y<> y0({1, 0}, {0, 0});
+    Y<> y1({0, -1}, {0, 0});
+    vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}

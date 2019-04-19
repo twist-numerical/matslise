@@ -33,6 +33,25 @@ TEST_CASE("Solving the mathieu problem (first 10)", "[matslise][mathieu]") {
     delete eigenvalues;
 }
 
+TEST_CASE("Solving the mathieu problem (first 10) (auto)", "[matslise][mathieu][auto]") {
+    Matslise ms(&mathieu, 0, M_PI, Matslise::AUTO(1e-8));
+
+    vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
+                              25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
+                              81.00625032615399, 100.00505067428990, 121.00416676119610};
+
+    Y<> y0({0, 1}, {0, 0});
+    vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(), y0, y0);
+    for (unsigned int i = 0; i < correct.size(); ++i) {
+        REQUIRE(i == eigenvalues->at(i).first);
+        double E = eigenvalues->at(i).second;
+        double error = ms.computeEigenvalueError(E, y0, y0);
+        REQUIRE(fabs(error) < 1e-6);
+        REQUIRE(Approx(correct[i]).margin(error) == E);
+    }
+    delete eigenvalues;
+}
+
 TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
     Matslise ms(&mathieu, 0, M_PI, 8);
 

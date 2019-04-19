@@ -17,7 +17,7 @@ void coffey() {
 
     cout << endl;
 
-    matslise::Y<> y0({0, 1});
+    matslise::Y<> y0 = Y<>::Dirichlet();
     ArrayXd x(6);
     x << 0.0700000000000000,
             0.0760000000000000,
@@ -48,15 +48,15 @@ void coffey() {
 }
 
 void mathieu() {
-    double m = -M_PI_2, M = M_PI_2;
+    double m = 0, M = M_PI;
 
     Matslise mathieu([](double x) {
         return 2 * cos(2 * x);
         //return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
-    }, m, M, 16);
+    }, m, M, Matslise::AUTO(.00000001));
     double h = M_PI / 16;
 
-    matslise::Y<> y0({0, 1});
+    matslise::Y<> y0({0, 1}, {0, 0});
     cout << get<0>(mathieu.propagate(110, y0, m, m + 2 * h)) << endl;
     cout << get<0>(mathieu.propagate(120, y0, m, m + 2 * h)) << endl;
     cout << get<0>(mathieu.propagate(130, y0, m, m + 2 * h)) << endl;
@@ -156,12 +156,22 @@ void testPrufer() {
     // cout << get<0>(ms.propagate(16, y0, .1, 1.6)) << endl;
 }
 
+void testHigh() {
+
+    Matslise ms([](double x) -> double {
+        return (1 - cos(2 * M_PI * x)) / 2 * 1000;
+    }, 0, 1, Matslise::AUTO(1e-6));
+    cout << ms.computeEigenvaluesByIndex(0, 10, Y<>::Dirichlet(), Y<>::Dirichlet()) << endl;
+}
+
 int main() {
     // coffey();
     // testPrufer();
-    test2d();
+    // test2d();
     // test3d();
     // testBigE();
     // testMatscs();
     // testEigenfunctionCalculator();
+    testHigh();
+    mathieu();
 }

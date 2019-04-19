@@ -146,7 +146,16 @@ PYBIND11_MODULE(pyslise, m) {
             py::arg("E"), py::arg("side"), py::arg("xs"), py::arg("even")=-1);
 
     py::class_<Matslise>(m, "Pyslise")
-        .def(py::init<function<double(double)>, double, double, int>())
+        .def(py::init([](function<double(double)> V, double xmin, double xmax, int steps, double tolerance) {
+            if(steps != -1 && tolerance != -1)
+                throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
+            if(steps == -1 && tolerance == -1)
+                throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
+            return std::unique_ptr<Matslise>(
+                    new Matslise(V, xmin, xmax, steps != -1 ?
+                                                Matslise::UNIFORM(steps):
+                                                Matslise::AUTO(tolerance)));
+        }), "Pyslise", py::arg("V"), py::arg("xmin"), py::arg("xmax"), py::arg("steps")=-1, py::arg("tolerance")=-1)
         .def("propagate",
             [](Matslise &m, double E, const Vector2d &y, double a, double b) ->
                 tuple<Vector2d, double> {

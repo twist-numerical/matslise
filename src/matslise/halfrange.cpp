@@ -11,8 +11,9 @@ using namespace matslise;
 
 #define EPS (1e-12)
 
-HalfRange::HalfRange(function<double(double)> V, double xmax, int sectorCount) {
-    ms = new Matslise(V, 0, xmax, sectorCount);
+HalfRange::HalfRange(function<double(double)> V, double xmax,
+                     const matslise::matslise_util::SectorBuilder &sectorBuilder) {
+    ms = new Matslise(V, 0, xmax, sectorBuilder);
 }
 
 template<typename T>
@@ -81,7 +82,7 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const Array
 }
 
 
-std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) {
+std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) const {
     bool even = isEven(this, E, side, _even);
     function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, getY0(even), side));
     return [calculator, even](double x) -> Y<> {
@@ -124,6 +125,10 @@ mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd
     return values;
 
 };
+
+double HalfRange::computeEigenvalueError(double E, const matslise::Y<> &side, int _even) const {
+    return ms->computeEigenvalueError(E, getY0(isEven(this, E, side, _even)), side);
+}
 
 vector<pair<int, double>> *
 HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &side) const {

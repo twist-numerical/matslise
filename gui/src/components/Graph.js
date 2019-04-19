@@ -155,7 +155,7 @@ class Graph extends Component {
           {this.props.selectable ? <Tooltip content={() => null} /> : null}
           {func.map((f, i) => (
             <Line
-              key={i}
+              key={"graph_"+i}
               isAnimationActive={false}
               dataKey={"y" + i}
               strokeWidth={this.props.strokeWidth}

@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ParsedInput from "./ParsedInput";
 import DF from "../lib/Differentiable";
+import problems from "./problems";
 
 class SettingsForm extends Component {
   static defaultProps = {
@@ -12,7 +13,8 @@ class SettingsForm extends Component {
     ymin: [DF.parse("1"), DF.parse("0")],
     ymax: [DF.parse("1"), DF.parse("0")],
     parsed: DF.parse("0"), //"(1-cos(2*pi*x))/2*1000", ["x"])
-    symmetric: false
+    symmetric: false,
+    loadDialog: false
   };
 
   componentDidMount() {
@@ -29,7 +31,76 @@ class SettingsForm extends Component {
           e.preventDefault();
           this.onSubmit();
         }}
+        className={this.state.loadDialog ? "modal-open" : ""}
       >
+        <div
+          className="modal show fade"
+          style={this.state.loadDialog ? { display: "block" } : {}}
+          tabIndex="-1"
+          role="dialog"
+        >
+          <div className="modal-dialog" role="document">
+            <div className="modal-content">
+              <div className="modal-header">
+                <h5 className="modal-title" id="exampleModalLabel">
+                  Load a problem
+                </h5>
+                <button
+                  className="close"
+                  onClick={() =>
+                    this.setState({
+                      loadDialog: false
+                    })
+                  }
+                >
+                  &times;
+                </button>
+              </div>
+              <div className="modal-body">
+                {Object.keys(problems)
+                  .sort()
+                  .map(name => {
+                    const problem = problems[name];
+                    return (
+                      <button
+                        key={name}
+                        onClick={() => {
+                          const newState = {
+                            loadDialog: false,
+                            symmetric: !!problem.symmetric,
+                            parsed: DF.parse(problem.f, ["x"])
+                          };
+                          ["x", "ymin", "ymax"].forEach(k => {
+                            newState[k] = problem[k].map(v => DF.parse(v));
+                          });
+                          this.setState(newState);
+                        }}
+                        className="btn btn-link"
+                      >
+                        {name}
+                      </button>
+                    );
+                  })}
+              </div>
+              <div className="modal-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={() =>
+                    this.setState({
+                      loadDialog: false
+                    })
+                  }
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div
+          className="modal-backdrop show"
+          style={{ display: this.state.loadDialog ? "block" : "none" }}
+        />
         <div className="form-row">
           <label className="input-group col-12">
             <div className="input-group-prepend">
@@ -128,18 +199,40 @@ class SettingsForm extends Component {
               </span>
             </div>
           </label>
-          <label>
-            <input
-              type="checkbox"
-              checked={symmetric}
-              onChange={e => {
-                this.setState({ symmetric: !!e.target.checked }, () =>
-                  this.onSubmit()
-                );
-              }}
-            />{" "}
-            Symmetric
+        </div>
+        <div className="form-row">
+          <label className="input-group col-6">
+            <div className="input-group">
+              <div className="input-group-prepend">
+                <span className="input-group-text">
+                  <input
+                    type="checkbox"
+                    checked={symmetric}
+                    onChange={e => {
+                      this.setState({ symmetric: !!e.target.checked }, () =>
+                        this.onSubmit()
+                      );
+                    }}
+                  />
+                </span>
+              </div>
+              <div className="input-group-append">
+                <span className="input-group-text">Symmetric</span>
+              </div>
+            </div>
           </label>
+          <div className="input-group col-6 justify-content-end">
+            <button
+              className="btn btn-link"
+              onClick={() =>
+                this.setState({
+                  loadDialog: true
+                })
+              }
+            >
+              Load a problem
+            </button>
+          </div>
         </div>
       </form>
     );

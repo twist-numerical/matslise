@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import SettingsForm from "./SettingsForm";
 import Graph from "./Graph";
+import { ReferenceLine } from "recharts";
 import loadMatslise from "../lib/loadMatslise";
 import Color from "color";
 
@@ -12,11 +13,16 @@ class MatsliseGUI extends Component {
     x: [0, 1],
     ymin: [1, 0],
     ymax: [1, 0],
-    steps: 31,
     matslise: null,
     eigenvalues: [],
     showPotential: true,
-    symmetric: false
+    symmetric: false,
+    sectorPoints: [],
+    sectors: {
+      type: "auto",
+      //count: 31
+      tolerance: 1e-3
+    }
   };
   toDelete = [];
 
@@ -98,7 +104,7 @@ class MatsliseGUI extends Component {
                       />
                     </th>
                     <td />
-                    <td>V(x) = {f.value}</td>
+                    <td colSpan="2">V(x) = {f.value}</td>
                   </tr>
                   {this.state.eigenvalues.map(
                     ({ index, show, value, error }, i) => (
@@ -111,7 +117,7 @@ class MatsliseGUI extends Component {
                           />
                         </th>
                         <td>{index}</td>
-                        <td>{value}</td>
+                        <td>{value.toFixed(10)}</td>
                         <td>{error.toExponential(1)}</td>
                       </tr>
                     )
@@ -134,7 +140,22 @@ class MatsliseGUI extends Component {
             className="col-7 col-md-8 col-9-xl"
             style={{ minHeight: "300px", maxHeight: "100vh" }}
           >
-            <Graph symmetricY={true} x={x} func={funcs} strokeWidth={1.25} />
+            <Graph
+              symmetricY={true}
+              x={x}
+              func={funcs}
+              grid={false}
+              strokeWidth={1.25}
+            >
+              {this.state.sectorPoints.map(p => (
+                <ReferenceLine
+                  key={"ref_" + p}
+                  x={p}
+                  stroke="#f99"
+                  strokeDasharray="3 3"
+                />
+              ))}
+            </Graph>
           </div>
         </div>
       </div>
@@ -155,7 +176,7 @@ class MatsliseGUI extends Component {
   }
 
   updateFunction(newState) {
-    let { f, x, ymin, ymax, steps, symmetric } = {
+    let { f, x, ymin, ymax, symmetric, sectors } = {
       ...this.state,
       ...newState
     };
@@ -163,8 +184,8 @@ class MatsliseGUI extends Component {
     while (this.toDelete.length > 0) this.toDelete.pop().delete();
 
     const matslise = symmetric
-      ? new Matslise.HalfRange(f, x[1], steps)
-      : new Matslise.Matslise(f, ...x, steps);
+      ? new Matslise.HalfRange(f, x[1], sectors)
+      : new Matslise.Matslise(f, ...x, sectors);
 
     this.toDelete.push(matslise);
     this.setState({
@@ -172,11 +193,12 @@ class MatsliseGUI extends Component {
       x,
       ymin,
       ymax,
-      steps,
       matslise,
       symmetric,
+      sectors,
       eigenvalues: this.eigenvalues(0, 10, { matslise, ymin, ymax, symmetric }),
-      showPotential: true
+      showPotential: true,
+      sectorPoints: matslise.sectorPoints()
     });
   }
 
@@ -197,7 +219,7 @@ class MatsliseGUI extends Component {
           index: index,
           value: E,
           error: symmetric
-            ? 0
+            ? matslise.eigenvalueError(E, [dyb, -yb], 1 - (index % 2))
             : matslise.eigenvalueError(E, [dya, -ya], [dyb, -yb])
         };
       });

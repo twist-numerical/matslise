@@ -48,7 +48,9 @@ T<> Sector::calculateT(double E, double delta, bool use_h) const {
     return t;
 }
 
-T<> Sector::calculateT(double E) const {
+T<> Sector::calculateT(double E, bool use_h) const {
+    if (!use_h)
+        return calculateT(E, h, false);
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA_h);
     T<> t(1);
     t.t << 0, 0, (vs[0] - E) * h * eta[1], 0;
@@ -89,8 +91,8 @@ double Sector::prufer(double E, double delta, const Y<> &y0, const Y<> &y1) cons
     return theta1 - theta0;
 }
 
-Y<> Sector::propagate(double E, const Y<> &y0, bool forward) const {
-    const T<> &t = calculateT(E);
+Y<> Sector::propagate(double E, const Y<> &y0, bool forward, bool use_h) const {
+    const T<> &t = calculateT(E, use_h);
     return forward ? t * y0 : t / y0;
 }
 
@@ -125,6 +127,10 @@ Y<> Sector::propagate(double E, const Y<> &y0, double delta, double &theta, bool
     */
 
     return y1;
+}
+
+double Sector::calculateError() const {
+    return (calculateT(vs[0], true).t - calculateT(vs[0], false).t).cwiseAbs().sum();
 }
 
 Sector::~Sector() {
