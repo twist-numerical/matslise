@@ -75,7 +75,7 @@ class MatsliseGUI extends Component {
         </h1>
         <div className="row h-100">
           <div
-            className="col-5 col-md-4 col-xl-3"
+            className="col-5 col-md-5 col-xl-4"
             style={{
               height: "100vh",
               overflowX: "auto",
@@ -137,7 +137,7 @@ class MatsliseGUI extends Component {
             </div>
           </div>
           <div
-            className="col-7 col-md-8 col-9-xl"
+            className="col-7 col-md-7 col-8-xl"
             style={{ minHeight: "300px", maxHeight: "100vh" }}
           >
             <Graph

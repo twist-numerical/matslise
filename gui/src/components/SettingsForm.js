@@ -14,7 +14,12 @@ class SettingsForm extends Component {
     ymax: [DF.parse("1"), DF.parse("0")],
     parsed: DF.parse("0"), //"(1-cos(2*pi*x))/2*1000", ["x"])
     symmetric: false,
-    loadDialog: false
+    loadDialog: false,
+    sectors: {
+      type: "auto",
+      tolerance: DF.parse("1e-3"),
+      count: DF.parse("30")
+    }
   };
 
   componentDidMount() {
@@ -24,6 +29,14 @@ class SettingsForm extends Component {
   render() {
     window.DF = DF;
     const { symmetric, ymin, ymax, x } = this.state;
+    const sectorTypeValue = {
+      auto: "tolerance",
+      uniform: "count"
+    }[this.state.sectors.type];
+    const sectorTypeValueName = {
+      auto: "Tolerance",
+      uniform: "Count"
+    }[this.state.sectors.type];
 
     return (
       <form
@@ -102,7 +115,7 @@ class SettingsForm extends Component {
           style={{ display: this.state.loadDialog ? "block" : "none" }}
         />
         <div className="form-row">
-          <label className="input-group col-12">
+          <label className="input-group col-12 mb-2">
             <div className="input-group-prepend">
               <div className="input-group-text">V(x) = </div>
             </div>
@@ -120,7 +133,7 @@ class SettingsForm extends Component {
         <div className="form-row">
           <label
             className={
-              "input-group col-6 " + (symmetric ? "disabled" : "enabled")
+              "input-group col-6 mb-2 " + (symmetric ? "disabled" : "enabled")
             }
           >
             <div className="input-group-prepend">
@@ -135,7 +148,7 @@ class SettingsForm extends Component {
               parsed={symmetric ? DF.parse("-(" + x[1].value + ")") : x[0]}
             />
           </label>
-          <label className="input-group col-6">
+          <label className="input-group col-6 mb-2">
             <div className="input-group-prepend">
               <div className="input-group-text">
                 x<sub>max</sub>&nbsp;=
@@ -150,7 +163,7 @@ class SettingsForm extends Component {
         </div>
 
         <div className={"form-row " + (symmetric ? "disabled" : "enabled")}>
-          <label className="input-group col-12">
+          <div className="input-group col-12 mb-2">
             <ParsedInput
               disabled={symmetric}
               className="form-control"
@@ -173,11 +186,11 @@ class SettingsForm extends Component {
                 y'(x<sub>min</sub>)&nbsp;=&nbsp;0
               </span>
             </div>
-          </label>
+          </div>
         </div>
 
         <div className="form-row">
-          <label className="input-group col-12">
+          <div className="input-group col-12 mb-2">
             <ParsedInput
               className="form-control"
               onParsed={val => this.setState({ ymax: [val, ymax[1]] })}
@@ -198,6 +211,51 @@ class SettingsForm extends Component {
                 y'(x<sub>max</sub>)&nbsp;=&nbsp;0
               </span>
             </div>
+          </div>
+        </div>
+        <div className="form-row">
+          <label className="input-group col-6 mb-2">
+            <div className="input-group-prepend">
+              <span className="input-group-text">Mesh</span>
+            </div>
+            <select
+              className="custom-select"
+              value={this.state.sectors.type}
+              onChange={e => {
+                this.setState(
+                  {
+                    sectors: {
+                      ...this.state.sectors,
+                      type: e.target.value
+                    }
+                  },
+                  () => this.onSubmit()
+                );
+              }}
+            >
+              {["auto", "uniform"].map(t => (
+                <option value={t} key={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="input-group col-6 mb-2">
+            <div className="input-group-prepend">
+              <span className="input-group-text">{sectorTypeValueName}</span>
+            </div>
+            <ParsedInput
+              className="form-control"
+              onParsed={val =>
+                this.setState({
+                  sectors: {
+                    ...this.state.sectors,
+                    [sectorTypeValue]: val
+                  }
+                })
+              }
+              parsed={this.state.sectors[sectorTypeValue]}
+            />
           </label>
         </div>
         <div className="form-row">
@@ -243,7 +301,14 @@ class SettingsForm extends Component {
   }
 
   calculateData() {
-    const { parsed, x, ymin, ymax, symmetric } = this.state;
+    const {
+      parsed,
+      x,
+      ymin,
+      ymax,
+      symmetric,
+      sectors: { type, tolerance, count }
+    } = this.state;
     const f = parsed.toFunction("x");
     f.value = parsed.value;
     const x_val = x.map(v => v.toValue());
@@ -253,6 +318,11 @@ class SettingsForm extends Component {
       ymax: ymax_val,
       x: symmetric ? [-x_val[1], x_val[1]] : x_val,
       f: f,
+      sectors: {
+        type,
+        tolerance: tolerance.toValue(),
+        count: count.toValue()
+      },
       symmetric
     };
   }

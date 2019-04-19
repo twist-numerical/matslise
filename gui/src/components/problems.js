@@ -33,7 +33,7 @@ export default {
   },
   Hydrogen: {
     f: "-1/x+2/x^2",
-    x: ["0", "1500"],
+    x: ["0", "150"],
     ...dirichlet
   },
   Marletta: {
