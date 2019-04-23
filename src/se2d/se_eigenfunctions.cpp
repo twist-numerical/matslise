@@ -8,7 +8,7 @@ using namespace std;
 #define cec_cce(y) ((y).getdY(0).transpose()*(y).getY(1) - (y).getY(0).transpose()*(y).getdY(1))
 
 template<int n>
-Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
+Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     Y<Dynamic> *steps = new Y<Dynamic>[sectorCount + 1];
 
     steps[0] = Y<Dynamic>::Dirichlet(N);
@@ -60,9 +60,11 @@ Y<Dynamic> *SEBase<n>::computeEigenfunctionSteps(double E) const {
     return elements;
 };
 
-
+template<>
 std::vector<typename dim<2>::array> *
-SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const {
+SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
+    const Eigen::ArrayXd &x = xs[0];
+    const Eigen::ArrayXd &y = xs[1];
     long nx = x.size();
     for (int i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])

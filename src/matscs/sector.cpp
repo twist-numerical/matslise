@@ -9,9 +9,9 @@
 using namespace std;
 using namespace matslise;
 
-Matscs::Sector::Sector(const Matscs *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
-    h = xmax - xmin;
-    vs = legendre::getCoefficients(MATSCS_N, s->V, xmin, xmax);
+Matscs::Sector::Sector(const Matscs *s, double min, double max) : s(s), min(min), max(max) {
+    h = max - min;
+    vs = legendre::getCoefficients(MATSCS_N, s->V, min, max);
     SelfAdjointEigenSolver<MatrixXd> es(vs[0]);
     D = es.eigenvectors();
 

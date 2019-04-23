@@ -2,7 +2,7 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include <matslise/se2d.h>
+#include "../../src/se2d.h"
 
 
 using namespace matslise;
@@ -10,7 +10,7 @@ using namespace std;
 using namespace Eigen;
 
 TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
-    SEnD<2> p2(
+    auto *p2 = new SEnD<2>(
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2 * sqrt(5)) * x * (y * y - x * x / 3);
             },
@@ -35,11 +35,12 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
         tie(E, multiplicity) = Em;
         E *= 2;
 
-        const pair<double, double> &error = p2.calculateError(E);
+        const pair<double, double> &error = p2->calculateError(E);
         REQUIRE(abs(error.first) < 1e-3);
 
-        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
+        const vector<Array<double, -1, -1>> *f = p2->computeEigenfunction(E, {x, x});
         REQUIRE(f->size() == multiplicity);
         delete f;
     }
+    delete p2;
 }

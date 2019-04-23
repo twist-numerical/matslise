@@ -45,7 +45,7 @@ namespace matslise {
 
         Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax,
                std::unique_ptr<matslise::SectorBuilder<Matscs>> sectorBuilder) : V(V), n(n), xmin(xmin), xmax(xmax) {
-            sectorBuilder->build(this);
+            sectorBuilder->build(this, xmin, xmax);
         }
 
         Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount)
@@ -69,12 +69,12 @@ namespace matslise {
             const Matscs *s;
         public:
             MatrixXd *vs;
-            double xmin, xmax, h;
+            double min, max, h;
             Array2D<MatrixXd, MATSCS_ETA_delta, MATSCS_HMAX_delta> t_coeff;
             MatrixXd t_coeff_h[MATSCS_ETA_h];
             MatrixXd D;
 
-            Sector(const Matscs *problem, double xmin, double xmax);
+            Sector(const Matscs *problem, double min, double max);
 
             void calculateTCoeffs();
 

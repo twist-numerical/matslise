@@ -12,14 +12,15 @@ using namespace Eigen;
 using namespace matslise::SEnD_util;
 
 template<>
-Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &options)
+SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax)
         : se2d(se2d), min(ymin), max(ymax) {
     const Y<> y0 = Y<>({0, 1}, {0, 0});
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
     vbar = lobatto::apply<1>(se2d->grid, vbar_fun);
-    matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, options.nestedOptions._sectorCount);
+    matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
+                            se2d->options.nestedOptions._sectorCount);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
     eigenvalues = new double[se2d->N];
@@ -35,20 +36,20 @@ Sector<2>::Sector(SEBase<2> *se2d, double ymin, double ymax, const Options<2> &o
     }
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, ymin, ymax,
-                        options._stepsPerSector);
+                        se2d->options._stepsPerSector);
 
     delete index_eigv;
 }
 
 template<>
-Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &options)
+SEnD<3>::Sector::Sector(SEnD<3> *se2d, double zmin, double zmax)
         : se2d(se2d), min(zmin), max(zmax) {
     const double zbar = (zmax + zmin) / 2;
     function<double(double, double)> vbar_fun = [se2d, zbar](double x, double y) -> double {
         return se2d->V(x, y, zbar);
     };
     vbar = lobatto::apply<2>(se2d->grid, vbar_fun);
-    matslise = new SEnD<2>(vbar_fun, se2d->domain.sub, options.nestedOptions);
+    matslise = new SEnD<2>(vbar_fun, se2d->domain.sub, se2d->options.nestedOptions);
 
     vector<double> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N);
     eigenvalues = new double[se2d->N];
@@ -57,7 +58,7 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
     for (int i = 0; i < se2d->N;) {
         double E = (*index_eigv)[i];
         eigenvalues[i] = E;
-        std::vector<typename dim<2>::array> *funcs = matslise->computeEigenfunction(E, se2d->grid[0], se2d->grid[1]);
+        std::vector<typename dim<2>::array> *funcs = matslise->computeEigenfunction(E, {se2d->grid[0], se2d->grid[1]});
         for (auto func : *funcs) {
             eigenfunctions[i] = func;
             /*  eigenfunctions[i] *= (
@@ -73,12 +74,12 @@ Sector<3>::Sector(SEBase<3> *se2d, double zmin, double zmax, const Options<3> &o
     delete index_eigv;
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, zmin, zmax,
-                        options._stepsPerSector);
+                        se2d->options._stepsPerSector);
 
 }
 
 template<int n>
-Sector<n>::~Sector() {
+SEnD<n>::Sector::~Sector() {
     delete matslise;
     delete matscs;
     delete[] eigenvalues;
@@ -87,12 +88,12 @@ Sector<n>::~Sector() {
 }
 
 template<int n>
-Y<Dynamic> Sector<n>::propagate(double E, const Y<Dynamic> &c, bool forward) const {
+Y<Dynamic> SEnD<n>::Sector::propagate(double E, const Y<Dynamic> &c, bool forward) const {
     return propagate(E, c, forward ? max : min, forward);
 }
 
 template<int n>
-Y<Dynamic> Sector<n>::propagate(double E, const Y<Dynamic> &c, double y, bool forward) const {
+Y<Dynamic> SEnD<n>::Sector::propagate(double E, const Y<Dynamic> &c, double y, bool forward) const {
     return matscs->propagate(E, c, forward ? min : max, y);
 }
 
@@ -109,8 +110,17 @@ typename dim<2>::function fillIn<3>(typename dim<3>::function &f, double z) {
     return [f, z](double x, double y) -> double { return f(x, y, z); };
 }
 
+
 template<int n>
-MatrixXd Sector<n>::calculateDeltaV(double z) const {
+double SEnD<n>::Sector::calculateError() const {
+    double error = 0;
+    for (int i = 0; i < matscs->sectorCount; ++i)
+        error += matscs->sectors[i]->calculateError();
+    return error;
+}
+
+template<int n>
+MatrixXd SEnD<n>::Sector::calculateDeltaV(double z) const {
     Eigen::MatrixXd dV(se2d->N, se2d->N);
 
     typename dim<n - 1>::array vDiff = lobatto::apply<n - 1>(se2d->grid, fillIn<n>(this->se2d->V, z)) - vbar;
@@ -127,7 +137,7 @@ MatrixXd Sector<n>::calculateDeltaV(double z) const {
 }
 
 template<>
-ArrayXd Sector<2>::computeEigenfunction(int index, const ArrayXd &x) const {
+ArrayXd SEnD<2>::Sector::computeEigenfunction(int index, const ArrayXd &x) const {
     const Y<> y0 = Y<>({0, 1}, {0, 0});
     long size = x.size();
 
@@ -139,7 +149,7 @@ ArrayXd Sector<2>::computeEigenfunction(int index, const ArrayXd &x) const {
 }
 
 template
-class matslise::SEnD_util::Sector<2>;
+class SEnD<2>::Sector;
 
 template
-class matslise::SEnD_util::Sector<3>;
+class SEnD<3>::Sector;

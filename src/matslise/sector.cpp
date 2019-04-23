@@ -13,9 +13,9 @@
 using namespace std;
 using namespace matslise;
 
-Matslise::Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
-    h = xmax - xmin;
-    vs = legendre::getCoefficients(MATSLISE_N, s->V, xmin, xmax);
+Matslise::Sector::Sector(Matslise *s, double min, double max) : s(s), min(min), max(max) {
+    h = max - min;
+    vs = legendre::getCoefficients(MATSLISE_N, s->V, min, max);
 
     calculateTCoeffs();
 }

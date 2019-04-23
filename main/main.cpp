@@ -93,7 +93,7 @@ void test2d() {
     xs << -2, -1, 0, 1, 2;
     ArrayXd ys(5);
     ys << -2, -1, 0, 1, 2;
-    vector<ArrayXXd> *fs = se2d.computeEigenfunction(E, xs, ys);
+    vector<ArrayXXd> *fs = se2d.computeEigenfunction(E, {xs, ys});
     for (auto &a : *fs)
         cout << a << "\n\n" << endl;
     delete fs;

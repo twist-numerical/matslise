@@ -19,7 +19,7 @@ void checkOrthonormality(const SEnD<2> &p, const doubleIterator &begin, const do
 
     vector<ArrayXXd> eigenfunctions;
     for (auto i = begin; i != end; ++i) {
-        vector<ArrayXXd> *fs = p.computeEigenfunction(*i, xy[0], xy[1]);
+        vector<ArrayXXd> *fs = p.computeEigenfunction(*i, xy);
         for (const ArrayXXd &f : *fs)
             eigenfunctions.push_back(f);
         delete fs;

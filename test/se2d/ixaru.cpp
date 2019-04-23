@@ -3,7 +3,7 @@
 #include <tuple>
 #include "../catch.hpp"
 #include "checkOrthonormality.h"
-#include <matslise/se2d.h>
+#include "../../src/se2d.h"
 
 
 using namespace matslise;
@@ -53,7 +53,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
             CHECK(Approx(Em).margin(1e-7) == E);
         }
 
-        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
+        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, {x, x});
         CHECK(f->size() == multiplicity);
         delete f;
     }

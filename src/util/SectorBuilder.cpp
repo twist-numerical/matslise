@@ -5,6 +5,7 @@
 #include "SectorBuilder.h"
 #include "../matslise.h"
 #include "../matscs.h"
+#include "../se2d.h"
 
 using namespace matslise;
 using namespace matslise::sectorbuilder;
@@ -24,15 +25,20 @@ bool compareSectors<Matscs>(Matscs::Sector *a, Matscs::Sector *b) {
     return (a->vs[0].diagonal() - b->vs[0].diagonal()).sum() < 0;
 }
 
+template<>
+bool compareSectors<SEnD<2>>(SEnD<2>::Sector *a, SEnD<2>::Sector *b) {
+    return a->vbar.minCoeff() < b->vbar.minCoeff();
+}
+
 template<typename Problem>
-void Uniform<Problem>::build(Problem *ms) const {
+void Uniform<Problem>::build(Problem *ms, double min, double max) const {
     ms->sectorCount = sectorCount;
     ms->sectors = new typename Problem::Sector *[sectorCount];
-    double h = (ms->xmax - ms->xmin) / sectorCount;
+    double h = (max - min) / sectorCount;
 
     for (int i = 0; i < sectorCount; ++i) {
-        double a = ms->xmin + i * h;
-        double b = ms->xmax - (sectorCount - i - 1) * h;
+        double a = min + i * h;
+        double b = max - (sectorCount - i - 1) * h;
         ms->sectors[i] = new typename Problem::Sector(ms, a, b);
     }
 
@@ -41,29 +47,29 @@ void Uniform<Problem>::build(Problem *ms) const {
         if (compareSectors<Problem>(ms->sectors[i], ms->sectors[matchIndex]))
             matchIndex = i;
     }
-    ms->match = ms->sectors[matchIndex]->xmax;
+    ms->match = ms->sectors[matchIndex]->max;
 }
 
 template<typename Problem>
-void Auto<Problem>::build(Problem *ms) const {
+void Auto<Problem>::build(Problem *ms, double min, double max) const {
     vector<typename Problem::Sector *> forward;
     vector<typename Problem::Sector *> backward;
-    double mid = (ms->xmax + ms->xmin) / 2;
-    double h = mid - ms->xmin;
-    forward.push_back(nextSector<true>(ms, h, ms->xmin, mid));
-    backward.push_back(nextSector<false>(ms, h, mid, ms->xmax));
+    double mid = (max + min) / 2;
+    double h = mid - min;
+    forward.push_back(nextSector<true>(ms, h, min, mid));
+    backward.push_back(nextSector<false>(ms, h, mid, max));
 
 
-    while (forward.back()->xmax != backward.back()->xmin) {
+    while (forward.back()->max != backward.back()->min) {
         if (compareSectors<Problem>(forward.back(), backward.back()))
-            forward.push_back(nextSector<true>(ms, forward.back()->xmax - forward.back()->xmin,
-                                               forward.back()->xmax, backward.back()->xmin));
+            forward.push_back(nextSector<true>(ms, forward.back()->max - forward.back()->min,
+                                               forward.back()->max, backward.back()->min));
         else
-            backward.push_back(nextSector<false>(ms, backward.back()->xmax - backward.back()->xmin,
-                                                 forward.back()->xmax, backward.back()->xmin));
+            backward.push_back(nextSector<false>(ms, backward.back()->max - backward.back()->min,
+                                                 forward.back()->max, backward.back()->min));
     }
 
-    ms->match = forward.back()->xmax;
+    ms->match = forward.back()->max;
     ms->sectorCount = (int) (forward.size() + backward.size());
     ms->sectors = new typename Problem::Sector *[ms->sectorCount];
     int i = 0;
@@ -139,11 +145,15 @@ Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) cons
     return s;
 }
 
-template void Uniform<Matslise>::build(Matslise *) const;
+template void Uniform<Matslise>::build(Matslise *, double, double) const;
 
-template void Auto<Matslise>::build(Matslise *) const;
+template void Auto<Matslise>::build(Matslise *, double, double) const;
 
-template void Uniform<Matscs>::build(Matscs *) const;
+template void Uniform<Matscs>::build(Matscs *, double, double) const;
 
-template void Auto<Matscs>::build(Matscs *) const;
+template void Auto<Matscs>::build(Matscs *, double, double) const;
+
+template void Uniform<SEnD<2>>::build(SEnD<2> *, double, double) const;
+
+template void Auto<SEnD<2>>::build(SEnD<2> *, double, double) const;
 

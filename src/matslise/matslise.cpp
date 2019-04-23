@@ -21,16 +21,16 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
     if (a <= b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
-            if (sector->xmax > a) {
-                if (sector->xmin < a) // first
-                    y = sector->propagate(E, y, sector->xmin - a, theta, use_h);
+            if (sector->max > a) {
+                if (sector->min < a) // first
+                    y = sector->propagate(E, y, sector->min - a, theta, use_h);
 
-                if (sector->xmax >= b) { // last
-                    y = sector->propagate(E, y, b - sector->xmin, theta, use_h);
+                if (sector->max >= b) { // last
+                    y = sector->propagate(E, y, b - sector->min, theta, use_h);
                     break;
                 }
 
-                y = sector->propagate(E, y, sector->xmax - sector->xmin, theta, use_h);
+                y = sector->propagate(E, y, sector->max - sector->min, theta, use_h);
             }
         }
     } else {
@@ -38,14 +38,14 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
             theta += M_PI;
         for (int i = sectorCount - 1; i >= 0; --i) {
             Sector *sector = sectors[i];
-            if (sector->xmin < a) {
-                if (sector->xmax > a) // first
-                    y = sector->propagate(E, y, sector->xmin - a, theta, use_h);
+            if (sector->min < a) {
+                if (sector->max > a) // first
+                    y = sector->propagate(E, y, sector->min - a, theta, use_h);
                 else
-                    y = sector->propagate(E, y, sector->xmin - sector->xmax, theta, use_h);
+                    y = sector->propagate(E, y, sector->min - sector->max, theta, use_h);
 
-                if (sector->xmin <= b) { // last
-                    y = sector->propagate(E, y, b - sector->xmin, theta, use_h);
+                if (sector->min <= b) { // last
+                    y = sector->propagate(E, y, b - sector->min, theta, use_h);
                     break;
                 }
 
@@ -183,7 +183,7 @@ vector<Y<>> propagationSteps(const Matslise &ms, double E, const matslise::Y<> &
     vector<Y<>> ys(n + 1);
     ys[0] = left;
     int m = 0;
-    for (int i = 1; ms.sectors[i - 1]->xmin < ms.match; ++i) {
+    for (int i = 1; ms.sectors[i - 1]->min < ms.match; ++i) {
         ys[i] = ms.sectors[i - 1]->propagate(E, ys[i - 1], true);
         m = i;
     }
@@ -223,9 +223,9 @@ Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matsli
 
     int sector = 0;
     for (int i = 0; i < n; ++i) {
-        while (x[i] > sectors[sector]->xmax)
+        while (x[i] > sectors[sector]->max)
             ++sector;
-        ys[i] = sectors[sector]->propagate(E, steps[sector], x[i] - sectors[sector]->xmin);
+        ys[i] = sectors[sector]->propagate(E, steps[sector], x[i] - sectors[sector]->min);
     }
 
     return ys;
@@ -238,11 +238,11 @@ std::function<Y<>(double)> Matslise::eigenfunctionCalculator(double E, const Y<>
         int b = this->sectorCount;
         while (a + 1 < b) {
             int c = (a + b) / 2;
-            if (x < this->sectors[c]->xmin)
+            if (x < this->sectors[c]->min)
                 b = c;
             else
                 a = c;
         }
-        return this->sectors[a]->propagate(E, ys[a], x - this->sectors[a]->xmin);
+        return this->sectors[a]->propagate(E, ys[a], x - this->sectors[a]->min);
     };
 }

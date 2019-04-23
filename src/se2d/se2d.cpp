@@ -21,10 +21,11 @@ ArrayXd getGrid(double min, double max, int count) {
 }
 
 template<int n>
-SEBase<n>::SEBase(typename dim<n>::function V, const matslise::Rectangle<n> &domain, const Options<n> &options) :
+SEnD<n>::SEnD(typename dim<n>::function V, const matslise::Rectangle<n> &domain, const Options<n> &_options) :
         V(V), domain(domain),
-        sectorCount(options._sectorCount), N(options._N) {
-    sectors = new Sector<n> *[sectorCount];
+        sectorCount(_options._sectorCount), N(_options._N),
+        options(_options) {
+    sectors = new SEnD<n>::Sector *[sectorCount];
 
     for (int i = 0; i < n - 1; ++i) {
         grid[i] = lobatto::grid(getGrid(domain.getMin(i), domain.getMax(i), options._gridPoints));
@@ -32,7 +33,7 @@ SEBase<n>::SEBase(typename dim<n>::function V, const matslise::Rectangle<n> &dom
 
     double h = (domain.max - domain.min) / sectorCount;
     for (int i = 0; i < sectorCount; ++i)
-        sectors[i] = new Sector<n>(this, domain.min + i * h, domain.min + (i + 1) * h, options);
+        sectors[i] = new SEnD<n>::Sector(this, domain.min + i * h, domain.min + (i + 1) * h);
 
     M = new MatrixXd[sectorCount - 1];
     for (int i = 0; i < sectorCount - 1; ++i)
@@ -45,7 +46,7 @@ SEBase<n>::SEBase(typename dim<n>::function V, const matslise::Rectangle<n> &dom
 }
 
 template<int n>
-MatrixXd SEBase<n>::calculateM(int k) const {
+MatrixXd SEnD<n>::calculateM(int k) const {
     MatrixXd M(N, N);
 
     for (int i = 0; i < N; ++i)
@@ -59,7 +60,7 @@ MatrixXd SEBase<n>::calculateM(int k) const {
 
 
 template<int n>
-SEBase<n>::~SEBase() {
+SEnD<n>::~SEnD() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
     delete[] sectors;
@@ -67,7 +68,7 @@ SEBase<n>::~SEBase() {
 }
 
 template<int n>
-pair<vector<MatrixXd>, vector<MatrixXd>> SEBase<n>::calculateAllSteps(double E) const {
+pair<vector<MatrixXd>, vector<MatrixXd>> SEnD<n>::calculateAllSteps(double E) const {
     vector<MatrixXd> y(sectorCount - 1);
     vector<MatrixXd> dy(sectorCount - 1);
 
@@ -90,7 +91,7 @@ pair<vector<MatrixXd>, vector<MatrixXd>> SEBase<n>::calculateAllSteps(double E) 
 }
 
 template<int n>
-pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
+pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
     Y<Dynamic> y0 = Y<Dynamic>::Dirichlet(N);
     Y<Dynamic> yl = y0;
     for (int i = 0; i < match; ++i) {
@@ -116,7 +117,7 @@ pair<MatrixXd, MatrixXd> SEBase<n>::calculateErrorMatrix(double E) const {
 }
 
 template<int n>
-vector<pair<double, double>> *SEBase<n>::calculateErrors(double E) const {
+vector<pair<double, double>> *SEnD<n>::calculateErrors(double E) const {
     pair<MatrixXd, MatrixXd> error_matrix = calculateErrorMatrix(E);
     EigenSolver<MatrixXd> solver(N);
 
@@ -152,7 +153,7 @@ vector<pair<double, double>> *SEBase<n>::calculateErrors(double E) const {
 
 template<int n>
 vector<pair<double, double>> *
-SEBase<n>::sortedErrors(double E,
+SEnD<n>::sortedErrors(double E,
                         const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
     vector<pair<double, double>> *errors = calculateErrors(E);
 
@@ -162,7 +163,7 @@ SEBase<n>::sortedErrors(double E,
 }
 
 template<int n>
-double SEBase<n>::findEigenvalue(double E) const {
+double SEnD<n>::findEigenvalue(double E) const {
     double error, derror;
     int i = 0;
     do {
@@ -177,7 +178,7 @@ double SEBase<n>::findEigenvalue(double E) const {
 }
 
 template<int n>
-pair<double, double> SEBase<n>::calculateError(
+pair<double, double> SEnD<n>::calculateError(
         double E, const std::function<bool(std::pair<double, double>, std::pair<double, double>)> &sorter) const {
     vector<pair<double, double>> *errors = sortedErrors(E, sorter);
     pair<double, double> best = (*errors)[0];
@@ -186,7 +187,7 @@ pair<double, double> SEBase<n>::calculateError(
 }
 
 template
-class matslise::SEBase<2>;
+class matslise::SEnD<2>;
 
 template
-class matslise::SEBase<3>;
+class matslise::SEnD<3>;

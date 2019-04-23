@@ -2,8 +2,8 @@
 #include <set>
 #include <tuple>
 #include "../catch.hpp"
-#include <matslise/se2d.h>
-#include <matslise/util/lobatto.h>
+#include "../../src/se2d.h"
+#include "../../src/util/lobatto.h"
 #include "checkOrthonormality.h"
 
 
@@ -19,7 +19,7 @@ void compareEigenfunctions(
     int n = 50, m = 60;
     ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
     ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
-    std::vector<ArrayXXd> *fs = p.computeEigenfunction(E, x, y);
+    std::vector<ArrayXXd> *fs = p.computeEigenfunction(E, {x, y});
 
     REQUIRE(exact.size() == fs->size());
     for (ArrayXXd &f :*fs) {

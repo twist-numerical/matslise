@@ -11,7 +11,7 @@ namespace matslise {
     template<typename Problem>
     class SectorBuilder {
     public:
-        virtual void build(Problem *) const = 0;
+        virtual void build(Problem *, double min, double max) const = 0;
 
         virtual ~SectorBuilder() {};
     };
@@ -27,7 +27,7 @@ namespace matslise {
 
             }
 
-            virtual void build(Problem *) const;
+            virtual void build(Problem *, double min, double max) const;
         };
 
         template<typename Problem>
@@ -39,7 +39,7 @@ namespace matslise {
 
             }
 
-            virtual void build(Problem *) const;
+            virtual void build(Problem *, double min, double max) const;
 
         private:
             template<bool forward>
@@ -52,8 +52,8 @@ namespace matslise {
         public:
             Custom(std::function<typename Problem::Sector(Problem *)> builder) : builder(builder) {}
 
-            virtual void build(Problem *p) const {
-                builder(p);
+            virtual void build(Problem *p, double min, double max) const {
+                builder(p, min, max);
             }
         };
     }

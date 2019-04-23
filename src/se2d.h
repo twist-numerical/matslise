@@ -27,12 +27,6 @@ namespace matslise {
                 [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
                     return abs(a.first) < abs(b.first);
                 };
-
-        template<int n>
-        class Sector;
-
-        template<int n>
-        class EigenfunctionCalculator;
     }
 
     template<int n>
@@ -64,19 +58,21 @@ namespace matslise {
     };
 
     template<int n = 2>
-    class SEBase {
+    class SEnD {
     public:
+        class Sector;
+
         typename dim<n>::function V;
         MatrixXd *M;
         Rectangle<n> domain;
         int sectorCount;
-        SEnD_util::Sector<n> **sectors;
+        typename SEnD<n>::Sector **sectors;
         ArrayXd grid[n];
         int N;
         int match;
-
+        Options<n> options;
     public:
-        SEBase(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
+        SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
 
         std::pair<MatrixXd, MatrixXd> calculateErrorMatrix(double E) const;
 
@@ -94,39 +90,25 @@ namespace matslise {
 
         double findEigenvalue(double Eguess) const;
 
+
+        std::vector<typename dim<2>::array> *
+        computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[n]) const;
+
+        std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
 
-        virtual ~SEBase();
+        virtual ~SEnD();
 
     protected:
         Y<Dynamic> *computeEigenfunctionSteps(double E) const;
 
         MatrixXd calculateM(int k) const;
-    };
 
-    template<int n>
-    class SEnD : public SEBase<n> {
     public:
-        using SEBase<n>::SEBase;
-    };
-
-    template<>
-    class SEnD<2> : public SEBase<2> {
-    public:
-        using SEBase<2>::SEBase;
-
-        std::vector<typename dim<2>::array> *
-        computeEigenfunction(double E, const Eigen::ArrayXd &x, const Eigen::ArrayXd &y) const;
-
-        std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;
-    };
-
-    namespace SEnD_util {
-        template<int n = 2>
         class Sector {
         public:
-            SEBase<n> *se2d;
+            SEnD<n> *se2d;
             typename dim<n - 1>::SEsolver *matslise;
             Matscs *matscs;
             typename dim<n - 1>::array vbar;
@@ -135,35 +117,24 @@ namespace matslise {
             double *eigenvalues;
             typename dim<n - 1>::array *eigenfunctions;
 
-            Sector(SEBase<n> *se2d, double min, double max, const Options<n> &options);
-
-            matslise::Y<Eigen::Dynamic> propagate(double E, const matslise::Y<Eigen::Dynamic> &c, bool forward) const;
+            Sector(SEnD<n> *se2d, double min, double max);
 
             matslise::Y<Eigen::Dynamic>
+            propagate(double E, const matslise::Y<Eigen::Dynamic> &c, bool forward) const;
 
+            matslise::Y<Eigen::Dynamic>
             propagate(double E, const matslise::Y<Eigen::Dynamic> &c, double y, bool forward) const;
 
             typename dim<n - 1>::array computeEigenfunction(int index, const ArrayXd &x) const;
+
+            double calculateError() const;
 
             virtual ~Sector();
 
         private:
             Eigen::MatrixXd calculateDeltaV(double y) const;
         };
-
-
-        template<int n = 2>
-        class EigenfunctionCalculator : public Evaluator<double, double, double> {
-        public:
-            SEnD<n> *se2d;
-            double E;
-            std::vector<Y<Eigen::Dynamic, 1>> ys;
-
-            EigenfunctionCalculator(SEnD<n> *se2d, double E);
-
-            virtual double eval(double x, double y) const;
-        };
-    }
+    };
 }
 
 #endif //MATSLISE_SE2D_H
