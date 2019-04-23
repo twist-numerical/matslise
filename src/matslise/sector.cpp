@@ -12,20 +12,19 @@
 
 using namespace std;
 using namespace matslise;
-using namespace matslise::matslise_util;
 
-Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
+Matslise::Sector::Sector(Matslise *s, double xmin, double xmax) : s(s), xmin(xmin), xmax(xmax) {
     h = xmax - xmin;
     vs = legendre::getCoefficients(MATSLISE_N, s->V, xmin, xmax);
 
     calculateTCoeffs();
 }
 
-void Sector::calculateTCoeffs() {
+void Matslise::Sector::calculateTCoeffs() {
     calculate_tcoeff_matrix(h, vs, t_coeff, t_coeff_h);
 }
 
-T<> Sector::calculateT(double E, double delta, bool use_h) const {
+T<> Matslise::Sector::calculateT(double E, double delta, bool use_h) const {
     if (fabs(delta) <= EPS)
         return T<>();
     if (use_h && fabs(delta - h) <= EPS)
@@ -48,7 +47,7 @@ T<> Sector::calculateT(double E, double delta, bool use_h) const {
     return t;
 }
 
-T<> Sector::calculateT(double E, bool use_h) const {
+T<> Matslise::Sector::calculateT(double E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
     double *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA_h);
@@ -66,7 +65,7 @@ T<> Sector::calculateT(double E, bool use_h) const {
     return t;
 }
 
-double Sector::prufer(double E, double delta, const Y<> &y0, const Y<> &y1) const {
+double Matslise::Sector::prufer(double E, double delta, const Y<> &y0, const Y<> &y1) const {
     double theta0 = theta(y0);
 
     double theta1 = theta(y1);
@@ -91,19 +90,19 @@ double Sector::prufer(double E, double delta, const Y<> &y0, const Y<> &y1) cons
     return theta1 - theta0;
 }
 
-Y<> Sector::propagate(double E, const Y<> &y0, bool forward, bool use_h) const {
+Y<> Matslise::Sector::propagate(double E, const Y<> &y0, bool forward, bool use_h) const {
     const T<> &t = calculateT(E, use_h);
     return forward ? t * y0 : t / y0;
 }
 
-Y<> Sector::propagate(double E, const Y<> &y0, double delta, bool use_h) const {
+Y<> Matslise::Sector::propagate(double E, const Y<> &y0, double delta, bool use_h) const {
     if (delta >= 0)
         return calculateT(E, delta, use_h) * y0;
     else
         return calculateT(E, -delta, use_h) / y0;
 }
 
-Y<> Sector::propagate(double E, const Y<> &y0, double delta, double &theta, bool use_h) const {
+Y<> Matslise::Sector::propagate(double E, const Y<> &y0, double delta, double &theta, bool use_h) const {
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
@@ -129,10 +128,10 @@ Y<> Sector::propagate(double E, const Y<> &y0, double delta, double &theta, bool
     return y1;
 }
 
-double Sector::calculateError() const {
+double Matslise::Sector::calculateError() const {
     return (calculateT(vs[0], true).t - calculateT(vs[0], false).t).cwiseAbs().sum();
 }
 
-Sector::~Sector() {
+Matslise::Sector::~Sector() {
     delete[]vs;
 }

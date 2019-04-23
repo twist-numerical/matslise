@@ -14,7 +14,9 @@
 #include "Array2D.h"
 #include "util/eigen.h"
 #include "util/y.h"
+#include "util/SectorBuilder.h"
 #include "Evaluator.h"
+#include <memory>
 
 #define MATSLISE_HMAX_delta 15
 #define MATSLISE_ETA_delta 7
@@ -24,87 +26,29 @@
 using namespace Eigen;
 
 namespace matslise {
-    class Matslise;
-
-    namespace matslise_util {
-        class Sector;
-
-        class SectorBuilderUniform {
-        public:
-            int sectorCount;
-
-            SectorBuilderUniform(int sectorCount) : sectorCount(sectorCount) {
-
-            }
-
-            void build(Matslise *ms) const;
-        };
-
-        class SectorBuilderAuto {
-        public:
-            double tol;
-
-            SectorBuilderAuto(double tol) : tol(tol) {
-
-            }
-
-            void build(Matslise *ms) const;
-
-        private:
-            template<bool forward>
-            Sector *nextSector(Matslise *ms, double h, double left, double right) const;
-        };
-
-        class SectorBuilder {
-        private:
-            union {
-                SectorBuilderAuto aut;
-                SectorBuilderUniform uni;
-            };
-            enum {
-                AUTO, UNIFORM
-            } type;
-        public:
-            SectorBuilder(SectorBuilderAuto aut) {
-                this->aut = aut;
-                type = AUTO;
-            }
-
-            SectorBuilder(SectorBuilderUniform uni) {
-                this->uni = uni;
-                type = UNIFORM;
-            }
-
-            void build(Matslise *ms) const {
-                switch (type) {
-                    case UNIFORM:
-                        return uni.build(ms);
-                    case AUTO:
-                        return aut.build(ms);
-                }
-            }
-        };
-    }
-
     class Matslise {
     public:
+        class Sector;
+
         std::function<double(double)> V;
         double xmin, xmax;
         int sectorCount;
         double match;
-        matslise::matslise_util::Sector **sectors;
+        Matslise::Sector **sectors;
     public:
-        static matslise_util::SectorBuilder UNIFORM(int sectorCount) {
-            return matslise_util::SectorBuilder(matslise_util::SectorBuilderUniform(sectorCount));
+        static std::unique_ptr<matslise::SectorBuilder<Matslise>> UNIFORM(int sectorCount) {
+            return std::unique_ptr<matslise::SectorBuilder<Matslise>>(
+                    new matslise::SectorBuilder<Matslise>::Uniform(sectorCount));
         }
 
-        static matslise_util::SectorBuilder AUTO(double tolerance) {
-            return matslise_util::SectorBuilder(matslise_util::SectorBuilderAuto(tolerance));
+        static std::unique_ptr<matslise::SectorBuilder<Matslise>> AUTO(double tolerance) {
+            return std::unique_ptr<matslise::SectorBuilder<Matslise>>(
+                    new matslise::SectorBuilder<Matslise>::Auto(tolerance));
         }
 
         Matslise(std::function<double(double)> V, double xmin, double xmax,
-                 const matslise_util::SectorBuilder &sectorBuilder) : V(V), xmin(xmin), xmax(xmax) {
-            sectorBuilder.build(this);
+                 std::unique_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder) : V(V), xmin(xmin), xmax(xmax) {
+            sectorBuilder->build(this);
         }
 
         Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount)
@@ -139,35 +83,7 @@ namespace matslise {
                 double E, const matslise::Y<> &left, const matslise::Y<> &right) const;
 
         virtual ~Matslise();
-    };
 
-    class HalfRange {
-    public:
-        const Matslise *ms;
-        static const int AUTO = -1;
-        static const int ODD = 0;
-        static const int EVEN = 1;
-    public:
-        HalfRange(std::function<double(double)> V, double xmax,
-                  const matslise::matslise_util::SectorBuilder &sectorBuilder);
-
-        Array<matslise::Y<>, Dynamic, 1>
-        computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int even = AUTO) const;
-
-        std::vector<std::pair<int, double>> *
-        computeEigenvalues(double Emin, double Emax, const matslise::Y<> &side) const;
-
-        std::vector<std::pair<int, double>> *
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &side) const;
-
-        double computeEigenvalueError(double E, const matslise::Y<> &side, int even = AUTO) const;
-
-        std::function<Y<>(double)> eigenfunctionCalculator(double E, const matslise::Y<> &left, int even = AUTO) const;
-
-        virtual ~HalfRange();
-    };
-
-    namespace matslise_util {
         class Sector {
         public:
             Matslise *s;
@@ -197,6 +113,32 @@ namespace matslise {
 
             virtual ~Sector();
         };
+    };
+
+    class HalfRange {
+    public:
+        const Matslise *ms;
+        static const int AUTO = -1;
+        static const int ODD = 0;
+        static const int EVEN = 1;
+    public:
+        HalfRange(std::function<double(double)> V, double xmax,
+                  std::unique_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder);
+
+        Array<matslise::Y<>, Dynamic, 1>
+        computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int even = AUTO) const;
+
+        std::vector<std::pair<int, double>> *
+        computeEigenvalues(double Emin, double Emax, const matslise::Y<> &side) const;
+
+        std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &side) const;
+
+        double computeEigenvalueError(double E, const matslise::Y<> &side, int even = AUTO) const;
+
+        std::function<Y<>(double)> eigenfunctionCalculator(double E, const matslise::Y<> &left, int even = AUTO) const;
+
+        virtual ~HalfRange();
     };
 }
 

@@ -2,10 +2,11 @@ set(CMAKE_CXX_FLAGS "-O2 -Wall -fPIC")
 set(CMAKE_CXX_STANDARD 11)
 
 
-SET(MATSLISE_SRC util/calculateEta.cpp util/lobatto.cpp util/y.cpp
+SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp matslise/matslise_formulas.cpp
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
-        se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h util/y.cpp util/y.h util/eigen.h)
+        se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h
+        util/calculateEta.cpp util/lobatto.cpp util/y.cpp util/y.h util/eigen.h util/SectorBuilder.cpp)
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/main.cpp ${MATSLISE_SRC})
@@ -48,7 +49,7 @@ else ()
         install(TARGETS matslise LIBRARY DESTINATION lib)
     endif ()
     install(FILES matslise.h Array2D.h matscs.h se2d.h Evaluator.h schrodinger.h DESTINATION include/matslise/)
-    install(FILES util/lobatto.h util/y.h util/eigen.h DESTINATION include/matslise/util)
+    install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
 
 
 endif (DEFINED EMSCRIPTEN)
