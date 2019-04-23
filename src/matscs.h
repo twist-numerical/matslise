@@ -22,25 +22,38 @@ using namespace Eigen;
 
 
 namespace matslise {
-    namespace matscs_util {
-        class Sector;
-
-        class EigenfunctionCalculator;
-    }
-
     class Matscs {
     public:
+        class Sector;
+
         std::function<MatrixXd(double)> V;
         int n;
         double xmin, xmax;
         int sectorCount;
-        matslise::matscs_util::Sector **sectors;
+        Matscs::Sector **sectors;
+        double match;
     public:
-        Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount);
+        static std::unique_ptr<matslise::SectorBuilder<Matscs>> UNIFORM(int sectorCount) {
+            return std::unique_ptr<matslise::SectorBuilder<Matscs>>(
+                    new matslise::sectorbuilder::Uniform<Matscs>(sectorCount));
+        }
+
+        static std::unique_ptr<matslise::SectorBuilder<Matscs>> AUTO(double tolerance) {
+            return std::unique_ptr<matslise::SectorBuilder<Matscs>>(
+                    new matslise::sectorbuilder::Auto<Matscs>(tolerance));
+        }
+
+        Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax,
+               std::unique_ptr<matslise::SectorBuilder<Matscs>> sectorBuilder) : V(V), n(n), xmin(xmin), xmax(xmax) {
+            sectorBuilder->build(this);
+        }
+
+        Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount)
+                : Matscs(V, n, xmin, xmax, UNIFORM(sectorCount)) {};
 
         template<int r>
         matslise::Y<Eigen::Dynamic, r>
-        propagate(double E, const matslise::Y<Eigen::Dynamic, r> &y, double a, double b) const;
+        propagate(double E, const matslise::Y<Eigen::Dynamic, r> &y, double a, double b, bool use_h = true) const;
 
         MatrixXd propagatePsi(double E, const MatrixXd &psi, double a, double b) const;
 
@@ -49,10 +62,8 @@ namespace matslise {
         std::function<Y<Dynamic, 1>(double)> eigenfunctionCalculator(
                 double E, const matslise::Y<Eigen::Dynamic, 1> &left, const matslise::Y<Eigen::Dynamic, 1> &right);
 
-        virtual ~Matscs();
-    };
+        ~Matscs();
 
-    namespace matscs_util {
         class Sector {
         private:
             const Matscs *s;
@@ -67,32 +78,22 @@ namespace matslise {
 
             void calculateTCoeffs();
 
-            T<Eigen::Dynamic> calculateT(double E) const;
+            T<Eigen::Dynamic> calculateT(double E, bool use_h = true) const;
 
-            T<Eigen::Dynamic> calculateT(double E, double delta) const;
+            T<Eigen::Dynamic> calculateT(double E, double delta, bool use_h = true) const;
 
             template<int r = Eigen::Dynamic>
-            Y<Eigen::Dynamic, r> propagate(double E, const Y<Eigen::Dynamic, r> &y0, double delta) const;
+            Y<Eigen::Dynamic, r>
+            propagate(double E, const Y<Eigen::Dynamic, r> &y0, double delta, bool use_h = true) const;
 
             MatrixXd propagatePsi(double E, const MatrixXd &psi, double delta) const;
 
-            virtual ~Sector();
+            double calculateError() const;
+
+            ~Sector();
 
         };
-
-
-        class EigenfunctionCalculator : public Evaluator<Y<Eigen::Dynamic, 1>, double> {
-        public:
-            Matscs *ms;
-            double E;
-            std::vector<Y<Eigen::Dynamic, 1>> ys;
-
-            EigenfunctionCalculator(Matscs *ms, double E, const Y<Eigen::Dynamic, 1> &left,
-                                    const Y<Eigen::Dynamic, 1> &right);
-
-            virtual Y<Eigen::Dynamic, 1> eval(double x) const;
-        };
-    }
+    };
 }
 
 #endif

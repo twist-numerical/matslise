@@ -4,34 +4,50 @@
 
 #include "SectorBuilder.h"
 #include "../matslise.h"
+#include "../matscs.h"
 
 using namespace matslise;
+using namespace matslise::sectorbuilder;
 using namespace std;
 
+template<typename Problem>
+// a < b ?
+bool compareSectors(typename Problem::Sector *a, typename Problem::Sector *b);
+
 template<>
-void SectorBuilder<Matslise>::Uniform::build(Matslise *ms) const {
+bool compareSectors<Matslise>(Matslise::Sector *a, Matslise::Sector *b) {
+    return a->vs[0] < b->vs[0];
+}
+
+template<>
+bool compareSectors<Matscs>(Matscs::Sector *a, Matscs::Sector *b) {
+    return (a->vs[0].diagonal() - b->vs[0].diagonal()).sum() < 0;
+}
+
+template<typename Problem>
+void Uniform<Problem>::build(Problem *ms) const {
     ms->sectorCount = sectorCount;
-    ms->sectors = new Matslise::Sector *[sectorCount];
+    ms->sectors = new typename Problem::Sector *[sectorCount];
     double h = (ms->xmax - ms->xmin) / sectorCount;
 
     for (int i = 0; i < sectorCount; ++i) {
         double a = ms->xmin + i * h;
         double b = ms->xmax - (sectorCount - i - 1) * h;
-        ms->sectors[i] = new Matslise::Sector(ms, a, b);
+        ms->sectors[i] = new typename Problem::Sector(ms, a, b);
     }
 
     int matchIndex = 0;
     for (int i = 1; i < sectorCount - 1; ++i) {
-        if (ms->sectors[i]->vs[0] < ms->sectors[matchIndex]->vs[0])
+        if (compareSectors<Problem>(ms->sectors[i], ms->sectors[matchIndex]))
             matchIndex = i;
     }
     ms->match = ms->sectors[matchIndex]->xmax;
 }
 
-template<>
-void SectorBuilder<Matslise>::Auto::build(Matslise *ms) const {
-    vector < Matslise::Sector * > forward;
-    vector < Matslise::Sector * > backward;
+template<typename Problem>
+void Auto<Problem>::build(Problem *ms) const {
+    vector<typename Problem::Sector *> forward;
+    vector<typename Problem::Sector *> backward;
     double mid = (ms->xmax + ms->xmin) / 2;
     double h = mid - ms->xmin;
     forward.push_back(nextSector<true>(ms, h, ms->xmin, mid));
@@ -39,7 +55,7 @@ void SectorBuilder<Matslise>::Auto::build(Matslise *ms) const {
 
 
     while (forward.back()->xmax != backward.back()->xmin) {
-        if (forward.back()->vs[0] >= backward.back()->vs[0])
+        if (compareSectors<Problem>(forward.back(), backward.back()))
             forward.push_back(nextSector<true>(ms, forward.back()->xmax - forward.back()->xmin,
                                                forward.back()->xmax, backward.back()->xmin));
         else
@@ -49,9 +65,9 @@ void SectorBuilder<Matslise>::Auto::build(Matslise *ms) const {
 
     ms->match = forward.back()->xmax;
     ms->sectorCount = (int) (forward.size() + backward.size());
-    ms->sectors = new Matslise::Sector *[ms->sectorCount];
+    ms->sectors = new typename Problem::Sector *[ms->sectorCount];
     int i = 0;
-    for (Matslise::Sector *s : forward)
+    for (typename Problem::Sector *s : forward)
         ms->sectors[i++] = s;
     for (auto j = backward.rbegin(); j != backward.rend(); ++j)
         ms->sectors[i++] = *j;
@@ -63,9 +79,10 @@ void SectorBuilder<Matslise>::Auto::build(Matslise *ms) const {
     cout << "match: " << ms->match << "\n" << endl;*/
 }
 
-template<>
+template<typename Problem>
 template<bool forward>
-Matslise::Sector *SectorBuilder<Matslise>::Auto::nextSector(Matslise *ms, double h, double left, double right) const {
+typename Problem::Sector *
+Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) const {
     double xmin = forward ? left : right - h;
     double xmax = forward ? left + h : right;
     if (forward && xmax > right) {
@@ -74,7 +91,7 @@ Matslise::Sector *SectorBuilder<Matslise>::Auto::nextSector(Matslise *ms, double
         xmin = left;
     }
     h = xmax - xmin;
-    Matslise::Sector *s = nullptr;
+    typename Problem::Sector *s = nullptr;
     double error = 1;
     int steps = 0;
     do {
@@ -88,7 +105,7 @@ Matslise::Sector *SectorBuilder<Matslise>::Auto::nextSector(Matslise *ms, double
             }
             delete s;
         }
-        s = new Matslise::Sector(ms, xmin, xmax);
+        s = new typename Problem::Sector(ms, xmin, xmax);
         error = s->calculateError();
         // cout << "(h: " << h << ", error: " << error << ") ";
     } while (error > tol && steps < 5 && h > 1e-5);
@@ -106,7 +123,7 @@ Matslise::Sector *SectorBuilder<Matslise>::Auto::nextSector(Matslise *ms, double
                     xmin = left;
             }
             h = xmax - xmin;
-            Matslise::Sector *newSector = new Matslise::Sector(ms, xmin, xmax);
+            typename Problem::Sector *newSector = new typename Problem::Sector(ms, xmin, xmax);
             error = newSector->calculateError();
             // cout << "(h: " << h << ", error: " << error << ") ";
             if (error > tol) {
@@ -121,3 +138,12 @@ Matslise::Sector *SectorBuilder<Matslise>::Auto::nextSector(Matslise *ms, double
     // cout << "-> " << h << endl;
     return s;
 }
+
+template void Uniform<Matslise>::build(Matslise *) const;
+
+template void Auto<Matslise>::build(Matslise *) const;
+
+template void Uniform<Matscs>::build(Matscs *) const;
+
+template void Auto<Matscs>::build(Matscs *) const;
+

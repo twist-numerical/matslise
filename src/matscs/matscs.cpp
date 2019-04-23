@@ -5,39 +5,24 @@
 
 using namespace std;
 using namespace matslise;
-using namespace matslise::matscs_util;
-
-
-Matscs::Matscs(function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount) {
-    this->V = V;
-    this->n = n;
-    this->xmin = xmin;
-    this->xmax = xmax;
-    this->sectorCount = sectorCount;
-    sectors = new Sector *[sectorCount];
-    double h = (xmax - xmin) / sectorCount;
-    for (int i = 0; i < sectorCount; ++i)
-        sectors[i] = new Sector(this, xmin + i * h, xmin + (i + 1) * h);
-
-}
 
 template<int r>
 Y<Dynamic, r>
-Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b) const {
+Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool use_h) const {
     Y<Dynamic, r> y = _y;
     if (a < b) {
         for (int i = 0; i < sectorCount; ++i) {
             Sector *sector = sectors[i];
             if (sector->xmax > a) {
                 if (sector->xmin < a) // first
-                    y = sector->propagate(E, y, sector->xmin - a);
+                    y = sector->propagate(E, y, sector->xmin - a, use_h);
 
                 if (sector->xmax >= b) { // last
-                    y = sector->propagate(E, y, b - sector->xmin);
+                    y = sector->propagate(E, y, b - sector->xmin, use_h);
                     break;
                 }
 
-                y = sector->propagate(E, y, sector->xmax - sector->xmin);
+                y = sector->propagate(E, y, sector->xmax - sector->xmin, use_h);
             }
         }
     } else {
@@ -45,12 +30,12 @@ Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b) const {
             Sector *sector = sectors[i];
             if (sector->xmin < a) {
                 if (sector->xmax > a) // first
-                    y = sector->propagate(E, y, sector->xmin - a);
+                    y = sector->propagate(E, y, sector->xmin - a, use_h);
                 else
-                    y = sector->propagate(E, y, sector->xmin - sector->xmax);
+                    y = sector->propagate(E, y, sector->xmin - sector->xmax, use_h);
 
                 if (sector->xmin <= b) { // last
-                    y = sector->propagate(E, y, b - sector->xmin);
+                    y = sector->propagate(E, y, b - sector->xmin, use_h);
                     break;
                 }
 
@@ -98,10 +83,10 @@ MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b
 }
 
 template Y<-1, -1>
-Matscs::propagate<-1>(double E, const Y<-1, -1> &y, double a, double b) const;
+Matscs::propagate<-1>(double E, const Y<-1, -1> &y, double a, double b, bool use_h) const;
 
 template Y<-1, 1>
-Matscs::propagate<1>(double E, const Y<-1, 1> &y, double a, double b) const;
+Matscs::propagate<1>(double E, const Y<-1, 1> &y, double a, double b, bool use_h) const;
 
 Matscs::~Matscs() {
     for (int i = 0; i < sectorCount; ++i)

@@ -38,12 +38,12 @@ namespace matslise {
     public:
         static std::unique_ptr<matslise::SectorBuilder<Matslise>> UNIFORM(int sectorCount) {
             return std::unique_ptr<matslise::SectorBuilder<Matslise>>(
-                    new matslise::SectorBuilder<Matslise>::Uniform(sectorCount));
+                    new matslise::sectorbuilder::Uniform<Matslise>(sectorCount));
         }
 
         static std::unique_ptr<matslise::SectorBuilder<Matslise>> AUTO(double tolerance) {
             return std::unique_ptr<matslise::SectorBuilder<Matslise>>(
-                    new matslise::SectorBuilder<Matslise>::Auto(tolerance));
+                    new matslise::sectorbuilder::Auto<Matslise>(tolerance));
         }
 
         Matslise(std::function<double(double)> V, double xmin, double xmax,

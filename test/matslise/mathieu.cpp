@@ -2,8 +2,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include <matslise/matslise.h>
-#include <matslise/util/eigen.h>
+#include "../../src/matslise.h"
+#include "../../src/util/eigen.h"
 
 
 using namespace matslise;

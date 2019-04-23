@@ -12,9 +12,13 @@ namespace matslise {
     class SectorBuilder {
     public:
         virtual void build(Problem *) const = 0;
-        virtual ~SectorBuilder() {};
 
-    public:
+        virtual ~SectorBuilder() {};
+    };
+
+    namespace sectorbuilder {
+
+        template<typename Problem>
         class Uniform : public SectorBuilder<Problem> {
         public:
             int sectorCount;
@@ -26,6 +30,7 @@ namespace matslise {
             virtual void build(Problem *) const;
         };
 
+        template<typename Problem>
         class Auto : public SectorBuilder<Problem> {
         public:
             double tol;
@@ -41,6 +46,7 @@ namespace matslise {
             typename Problem::Sector *nextSector(Problem *ms, double h, double left, double right) const;
         };
 
+        template<typename Problem>
         class Custom : public SectorBuilder<Problem> {
             std::function<typename Problem::Sector(Problem *)> builder;
         public:
@@ -50,7 +56,7 @@ namespace matslise {
                 builder(p);
             }
         };
-    };
+    }
 }
 
 #endif //MATSLISE_SECTORBUILDER_H
