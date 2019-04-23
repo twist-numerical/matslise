@@ -63,14 +63,14 @@ PYBIND11_MODULE(pyslise, m) {
             return unpackY(e(x)).first;
         }, py::is_operator());
 
-    py::class_<SEnD_util::Sector<2>>(m, "PySE2dSector") // ?? std::unique_ptr<SEnD_util::Sector<2>,py::nodelete>
-        .def_property_readonly("eigenvalues", [](SEnD_util::Sector<2> &s) -> vector<double>* {
+    py::class_<SEnD<2>::Sector>(m, "PySE2dSector") // ?? std::unique_ptr<SEnD_util::Sector<2>,py::nodelete>
+        .def_property_readonly("eigenvalues", [](SEnD<2>::Sector &s) -> vector<double>* {
             auto l = new vector<double>(s.se2d->N);
             for(int i = 0; i < l->size(); ++i)
                 l->at(i) = s.eigenvalues[i];
             return l;
         })
-        .def_property_readonly("eigenfunctions", [](SEnD_util::Sector<2> &s) -> vector<ArrayXd>* {
+        .def_property_readonly("eigenfunctions", [](SEnD<2>::Sector &s) -> vector<ArrayXd>* {
             auto l = new vector<ArrayXd>(s.se2d->N);
             for(int i = 0; i < l->size(); ++i)
                 l->at(i) = s.eigenfunctions[i];
@@ -100,8 +100,8 @@ PYBIND11_MODULE(pyslise, m) {
                 l->at(i) = p.M[i];
             return l;
         })
-        .def_property_readonly("sectors", [](SEnD<2> &p) -> vector<SEnD_util::Sector<2>*>* {
-            auto l = new vector<SEnD_util::Sector<2>*>(p.sectorCount);
+        .def_property_readonly("sectors", [](SEnD<2> &p) -> vector<SEnD<2>::Sector*>* {
+            auto l = new vector<SEnD<2>::Sector*>(p.sectorCount);
             for(int i = 0; i < p.sectorCount; ++i)
                 l->at(i) = p.sectors[i];
             return l;
@@ -117,12 +117,14 @@ PYBIND11_MODULE(pyslise, m) {
         .def("calculateErrors", &SEnD<2>::sortedErrors,
             py::arg("E"), py::arg("sorter")=SEnD_util::NEWTON_RAPHSON_SORTER)
         .def("calculateErrorMatrix", &SEnD<2>::calculateErrorMatrix)
-        .def("computeEigenfunction", &SEnD<2>::computeEigenfunction)
+        .def("computeEigenfunction",
+            [](SEnD<2> &m, double E, const ArrayXd &x, const ArrayXd &y) {
+                return m.computeEigenfunction(E, {x, y});
+        })
         .def("findEigenvalue", &SEnD<2>::findEigenvalue)
-        .def("calculateAllSteps", &SEnD<2>::calculateAllSteps)
         .def_readonly_static("NEWTON_RAPHSON_SORTER", &SEnD_util::NEWTON_RAPHSON_SORTER)
         .def_readonly_static("ABS_SORTER", &SEnD_util::ABS_SORTER);
-
+/*
     py::class_<HalfRange>(m, "PysliseHalf")
         .def(py::init<function<double(double)>, double, int>())
         .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<pair<int, double>>* {
@@ -144,7 +146,7 @@ PYBIND11_MODULE(pyslise, m) {
             },
             "Compute eigenfunction (in the values xs) for a given eigenvalue. You can indicate if the eigenfunction should be even or odd.",
             py::arg("E"), py::arg("side"), py::arg("xs"), py::arg("even")=-1);
-
+*/
     py::class_<Matslise>(m, "Pyslise")
         .def(py::init([](function<double(double)> V, double xmin, double xmax, int steps, double tolerance) {
             if(steps != -1 && tolerance != -1)

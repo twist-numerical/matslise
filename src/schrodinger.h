@@ -9,15 +9,18 @@
 #include "se2d.h"
 
 using namespace Eigen;
-using namespace std;
 
 namespace matslise {
+    template<int n>
+    class SEnD;
 
     template<int n>
     struct Options {
         Options<n - 1> nestedOptions;
-        int _sectorCount = 17;
-        int _stepsPerSector = 4;
+        std::shared_ptr<matslise::SectorBuilder<matslise::SEnD<n>>> _builder
+                = std::shared_ptr<matslise::SectorBuilder<matslise::SEnD<n>>>(
+                        new matslise::sectorbuilder::Uniform<SEnD<n>>(17));
+        int _stepsPerSector = 1;
         int _N = 12;
         int _gridPoints = 52;
 
@@ -27,7 +30,12 @@ namespace matslise {
         }
 
         Options<n> &sectorCount(int count) {
-            _sectorCount = count;
+            _builder.reset(new matslise::sectorbuilder::Uniform<SEnD<n>>(count));
+            return *this;
+        }
+
+        Options<n> &tolerance(double tol) {
+            _builder.reset(new matslise::sectorbuilder::Auto<SEnD<n>>(tol));
             return *this;
         }
 
@@ -49,10 +57,15 @@ namespace matslise {
 
     template<>
     struct Options<1> {
-        int _sectorCount = 26;
+        std::shared_ptr<matslise::SectorBuilder<matslise::Matslise>> _builder = Matslise::UNIFORM(26);
 
         Options<1> &sectorCount(int count) {
-            _sectorCount = count;
+            _builder = Matslise::UNIFORM(count);
+            return *this;
+        }
+
+        Options<1> &tolerance(double tol) {
+            _builder = Matslise::AUTO(tol);
             return *this;
         }
     };
@@ -64,13 +77,13 @@ namespace matslise {
         double min, max;
 
         double getMin(int axis) const {
-            if(axis+1 == n)
+            if (axis + 1 == n)
                 return min;
             return sub.getMin(axis);
         }
 
         double getMax(int axis) const {
-            if(axis+1 == n)
+            if (axis + 1 == n)
                 return max;
             return sub.getMax(axis);
         }
@@ -83,13 +96,13 @@ namespace matslise {
 
         double getMin(int axis) const {
             assert(axis == 0);
-            (void)(axis); // UNUSED
+            (void) (axis); // UNUSED
             return min;
         }
 
         double getMax(int axis) const {
             assert(axis == 0);
-            (void)(axis); // UNUSED
+            (void) (axis); // UNUSED
             return max;
         }
     };

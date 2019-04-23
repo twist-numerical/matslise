@@ -15,20 +15,22 @@ Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     steps[sectorCount] = Y<Dynamic>::Dirichlet(N);
 
     MatrixXd normRight = MatrixXd::Zero(N, N);
-    for (int i = sectorCount - 1; i >= match; --i) {
+    int matchIndex;
+    for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
         Y<Dynamic> next = i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, false);
         normRight += cec_cce(next) - cec_cce(steps[i]);
+        matchIndex = i;
     }
-    Y<Dynamic> matchRight = steps[match];
+    Y<Dynamic> matchRight = steps[matchIndex];
 
     MatrixXd normLeft = MatrixXd::Zero(N, N);
-    for (int i = 0; i < match; ++i) {
+    for (int i = 0; i < matchIndex; ++i) {
         Y<Dynamic> next = sectors[i]->propagate(E, steps[i], true);
         steps[i + 1] = M[i] * next;
         normLeft += cec_cce(next) - cec_cce(steps[i]);
     }
-    Y<Dynamic> matchLeft = steps[match];
+    Y<Dynamic> matchLeft = steps[matchIndex];
 
     ColPivHouseholderQR<MatrixXd> left_solver(matchLeft.getY(0).transpose());
     ColPivHouseholderQR<MatrixXd> right_solver(matchRight.getY(0).transpose());
@@ -51,9 +53,9 @@ Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     scaling = scaling.unaryExpr([](double s) { return s < 0 ? 1 : 1. / sqrt(s); });
     left *= scaling.asDiagonal();
     right *= scaling.asDiagonal();
-    for (int i = 0; i <= match; ++i)
+    for (int i = 0; i <= matchIndex; ++i)
         elements[i] = steps[i] * left;
-    for (int i = sectorCount; i > match; --i)
+    for (int i = sectorCount; i > matchIndex; --i)
         elements[i] = steps[i] * right;
     delete[] steps;
 

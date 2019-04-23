@@ -45,7 +45,7 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
                 return 0;
             },
             {{0, M_PI}, 0, M_PI},
-            Options<2>().sectorCount(13).N(12).nested(Options<1>().sectorCount(13)));
+            Options<2>().sectorCount(13).stepsPerSector(4).N(12).nested(Options<1>().sectorCount(13)));
 
     set<double> eigenvalues;
     for (int i = 1; i < 6; ++i) {
@@ -55,7 +55,7 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
                 continue;
             eigenvalues.insert(E);
             for (int k = -1; k <= 1; ++k)
-                REQUIRE(Approx(p.findEigenvalue(E + k * 1e-2)).margin(1e-7) == E);
+                CHECK(Approx(p.findEigenvalue(E + k * 1e-2)).margin(1e-7) == E);
 
             vector<function<double(double, double)>> v;
             for (int k = 1; k * k < E; ++k) {

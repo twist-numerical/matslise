@@ -33,18 +33,18 @@ namespace matslise {
         Matscs::Sector **sectors;
         double match;
     public:
-        static std::unique_ptr<matslise::SectorBuilder<Matscs>> UNIFORM(int sectorCount) {
-            return std::unique_ptr<matslise::SectorBuilder<Matscs>>(
+        static std::shared_ptr<matslise::SectorBuilder<Matscs>> UNIFORM(int sectorCount) {
+            return std::shared_ptr<matslise::SectorBuilder<Matscs>>(
                     new matslise::sectorbuilder::Uniform<Matscs>(sectorCount));
         }
 
-        static std::unique_ptr<matslise::SectorBuilder<Matscs>> AUTO(double tolerance) {
-            return std::unique_ptr<matslise::SectorBuilder<Matscs>>(
+        static std::shared_ptr<matslise::SectorBuilder<Matscs>> AUTO(double tolerance) {
+            return std::shared_ptr<matslise::SectorBuilder<Matscs>>(
                     new matslise::sectorbuilder::Auto<Matscs>(tolerance));
         }
 
         Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax,
-               std::unique_ptr<matslise::SectorBuilder<Matscs>> sectorBuilder) : V(V), n(n), xmin(xmin), xmax(xmax) {
+               std::shared_ptr<matslise::SectorBuilder<Matscs>> sectorBuilder) : V(V), n(n), xmin(xmin), xmax(xmax) {
             sectorBuilder->build(this, xmin, xmax);
         }
 

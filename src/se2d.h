@@ -69,7 +69,7 @@ namespace matslise {
         typename SEnD<n>::Sector **sectors;
         ArrayXd grid[n];
         int N;
-        int match;
+        double match;
         Options<n> options;
     public:
         SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
@@ -79,8 +79,6 @@ namespace matslise {
         std::pair<double, double> calculateError(double E, const std::function<bool(
                 std::pair<double, double>,
                 std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
-
-        std::pair<std::vector<MatrixXd>, std::vector<MatrixXd>> calculateAllSteps(double E) const;
 
         std::vector<std::pair<double, double>> *calculateErrors(double E) const;
 

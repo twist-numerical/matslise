@@ -15,7 +15,7 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
                 return (x * x + y * y) + 1 / (2 * sqrt(5)) * x * (y * y - x * x / 3);
             },
             {{-6, 6}, -6, 6},
-            Options<2>().sectorCount(16).nested(Options<1>().sectorCount(16)));
+            Options<2>().sectorCount(16).stepsPerSector(4).nested(Options<1>().sectorCount(16)));
     pair<double, int> eigenvalues[] = {
             {0.998594690530479, 1},
             {1.99007660445524, 2},

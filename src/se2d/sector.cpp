@@ -19,8 +19,7 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax)
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
     vbar = lobatto::apply<1>(se2d->grid, vbar_fun);
-    matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
-                            se2d->options.nestedOptions._sectorCount);
+    matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
     eigenvalues = new double[se2d->N];
