@@ -15,7 +15,7 @@ Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     steps[sectorCount] = Y<Dynamic>::Dirichlet(N);
 
     MatrixXd normRight = MatrixXd::Zero(N, N);
-    int matchIndex;
+    int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
         Y<Dynamic> next = i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, false);

@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <set>
 #include <matslise/matscs.h>
 #include <matslise/se2d.h>
 
@@ -105,18 +106,18 @@ void testHenon() {
                 return (x * x + y * y) + 1 / (2 * sqrt(5)) * x * (y * y - x * x / 3);
             },
             {{-6, 6}, -6, 6},
-            Options<2>().stepsPerSector(4).sectorCount(16).nested(Options<1>().sectorCount(16)));
+            Options<2>().stepsPerSector(1).sectorCount(13).nested(Options<1>().sectorCount(16)));
 
     pair<double, int> eigenvalues[] = {
             {0.998594690530479, 1},
-            {1.99007660445524, 2},
-            {2.95624333869018, 1},
-            {2.98532593386986, 2},
-            {3.92596412795287, 2},
-            {3.98241882458866, 1},
-            {3.98575763690663, 1},
-            {4.87014557482289, 1},
-            {4.89864497284387, 2}};
+            {1.99007660445524,  2},
+            {2.95624333869018,  1},
+            {2.98532593386986,  2},
+            {3.92596412795287,  2},
+            {3.98241882458866,  1},
+            {3.98575763690663,  1},
+            {4.87014557482289,  1},
+            {4.89864497284387,  2}};
 
     ArrayXd x(3);
     x << -1, 0, 1;
@@ -132,6 +133,92 @@ void testHenon() {
         const vector<Array<double, -1, -1>> *f = p.computeEigenfunction(E, {x, x});
         cout << f->size() << " == " << multiplicity << endl;
         delete f;
+    }
+}
+
+
+void compareEigenfunctions(
+        const SEnD<2> &p, double E, const vector<function<double(double, double)>> &exact) {
+    int n = 50, m = 60;
+    ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
+    ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
+    std::vector<ArrayXXd> *fs = p.computeEigenfunction(E, {x, y});
+
+    cout << exact.size() << " == " << fs->size();
+    for (ArrayXXd &f :*fs) {
+        for (int i = 0; i < n; ++i)
+            for (int j = 0; j < m; ++j) {
+                bool valid = false;
+                for (const function<double(double, double)> &e : exact)
+                    if (abs(abs(e(x[i], y[j])) - abs(f(i, j))) < 1e-7)
+                        valid = true;
+                if (!valid) {
+                    cout << E << ": " << x[i] << ", " << y[j] << " : " << f(i, j) << endl;
+                }
+            }
+    }
+    delete fs;
+}
+
+void testZero() {
+    SEnD<2> p(
+            [](double x, double y) -> double {
+                return 0;
+            },
+            {{0, M_PI}, 0, M_PI},
+            Options<2>().sectorCount(13).stepsPerSector(4).N(12).nested(Options<1>().sectorCount(13)));
+
+    set<double> eigenvalues;
+    for (
+            int i = 1;
+            i < 6; ++i) {
+        for (
+                int j = 1;
+                j <=
+                i;
+                ++j) {
+            double E = i * i + j * j;
+            if (eigenvalues.
+                    find(E)
+                != eigenvalues.
+
+                    end()
+
+                    )
+                continue;
+            eigenvalues.
+                    insert(E);
+            for (
+                    int k = -1;
+                    k <= 1; ++k)
+                cout << p.findEigenvalue(E + k * 1e-2) << "==" << E << endl;
+
+            vector<function<double(double, double)>> v;
+            for (
+                    int k = 1;
+                    k * k < E;
+                    ++k) {
+                int l = (int) round(sqrt(E - k * k));
+                if (
+                        l * l
+                        == E -
+                           k * k
+                        ) {
+                    v.push_back([k, l](
+                            double x,
+                            double y
+                    ) -> double {
+                        return
+                                sin(x
+                                    * k) *
+                                sin(y
+                                    * l) / M_PI_2;
+                    });
+                }
+            }
+            compareEigenfunctions(p, E, v
+            );
+        }
     }
 }
 
@@ -204,7 +291,8 @@ int main() {
     // coffey();
     // testPrufer();
     // test2d();
-    testHenon();
+    //testHenon();
+    testZero();
     // test3d();
     // testBigE();
     // testMatscs();

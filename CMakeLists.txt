@@ -6,4 +6,4 @@ add_subdirectory(src)
 add_subdirectory(test)
 
 enable_testing ()
-add_test (NAME matslise_test COMMAND Test)
+add_test (NAME MatsliseTesting COMMAND matslise_test)

@@ -27,7 +27,7 @@ void compareEigenfunctions(
             for (int j = 0; j < m; ++j) {
                 bool valid = false;
                 for (const function<double(double, double)> &e : exact)
-                    if (abs(abs(e(x[i], y[j])) - abs(f(i, j))) < 1e-7)
+                    if (abs(abs(e(x[i], y[j])) - abs(f(i, j))) < 1e-5)
                         valid = true;
                 CHECKED_ELSE(valid) {
                     std::stringstream ss;

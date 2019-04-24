@@ -36,10 +36,11 @@ void Uniform<Problem>::build(Problem *ms, double min, double max) const {
     ms->sectors = new typename Problem::Sector *[sectorCount];
     double h = (max - min) / sectorCount;
 
+    double left = min;
     for (int i = 0; i < sectorCount; ++i) {
-        double a = min + i * h;
-        double b = max - (sectorCount - i - 1) * h;
-        ms->sectors[i] = new typename Problem::Sector(ms, a, b);
+        double right = i + 1 == sectorCount ? max : left + h;
+        ms->sectors[i] = new typename Problem::Sector(ms, left, right);
+        left = right;
     }
 
     int matchIndex = 0;
@@ -48,6 +49,9 @@ void Uniform<Problem>::build(Problem *ms, double min, double max) const {
             matchIndex = i;
     }
     ms->match = ms->sectors[matchIndex]->max;
+    if (matchIndex != 0 && abs(ms->match - (max + min) / 2) < 1e-7) {
+        ms->match = ms->sectors[matchIndex]->min;
+    }
 }
 
 template<typename Problem>
