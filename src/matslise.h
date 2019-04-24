@@ -123,7 +123,7 @@ namespace matslise {
         static const int EVEN = 1;
     public:
         HalfRange(std::function<double(double)> V, double xmax,
-                  std::unique_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder);
+                  std::shared_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder);
 
         Array<matslise::Y<>, Dynamic, 1>
         computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int even = AUTO) const;

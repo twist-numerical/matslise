@@ -85,8 +85,11 @@ void mathieu() {
 void test2d() {
     std::cout.precision(10);
     SEnD<2> se2d([](double x, double y) { return (1 + x * x) * (1 + y * y); }, {{-5.5, 5.5}, -5.5, 5.5},
-                 Options<2>().sectorCount(23).gridPoints(100).nested(Options<1>().sectorCount(26)).N(10));
-
+                 Options<2>().tolerance(1e-3).nested(Options<1>().sectorCount(26)).N(12));
+    cout << "sectorCount: " << se2d.sectorCount << endl;
+    cout << "match: " << se2d.match << endl;
+    for (int i = 0; i < se2d.sectorCount; ++i)
+        cout << "minmax: (" << se2d.sectors[i]->min << ", " << se2d.sectors[i]->max << "), vbar: " << se2d.sectors[i]->vbar.minCoeff() << endl;
     double E = se2d.findEigenvalue(8);
     cout << E << endl;
 
@@ -169,55 +172,25 @@ void testZero() {
             Options<2>().sectorCount(13).stepsPerSector(4).N(12).nested(Options<1>().sectorCount(13)));
 
     set<double> eigenvalues;
-    for (
-            int i = 1;
-            i < 6; ++i) {
-        for (
-                int j = 1;
-                j <=
-                i;
-                ++j) {
+    for (int i = 1; i < 6; ++i) {
+        for (int j = 1; j <= i; ++j) {
             double E = i * i + j * j;
-            if (eigenvalues.
-                    find(E)
-                != eigenvalues.
-
-                    end()
-
-                    )
+            if (eigenvalues.find(E) != eigenvalues.end())
                 continue;
-            eigenvalues.
-                    insert(E);
-            for (
-                    int k = -1;
-                    k <= 1; ++k)
+            eigenvalues.insert(E);
+            for (int k = -1; k <= 1; ++k)
                 cout << p.findEigenvalue(E + k * 1e-2) << "==" << E << endl;
 
             vector<function<double(double, double)>> v;
-            for (
-                    int k = 1;
-                    k * k < E;
-                    ++k) {
+            for (int k = 1; k * k < E; ++k) {
                 int l = (int) round(sqrt(E - k * k));
-                if (
-                        l * l
-                        == E -
-                           k * k
-                        ) {
-                    v.push_back([k, l](
-                            double x,
-                            double y
-                    ) -> double {
-                        return
-                                sin(x
-                                    * k) *
-                                sin(y
-                                    * l) / M_PI_2;
+                if (l * l == E - k * k) {
+                    v.push_back([k, l](double x, double y) -> double {
+                        return sin(x * k) * sin(y * l) / M_PI_2;
                     });
                 }
             }
-            compareEigenfunctions(p, E, v
-            );
+            compareEigenfunctions(p, E, v);
         }
     }
 }
@@ -290,9 +263,9 @@ void testHigh() {
 int main() {
     // coffey();
     // testPrufer();
-    // test2d();
+    test2d();
     //testHenon();
-    testZero();
+    //  testZero();
     // test3d();
     // testBigE();
     // testMatscs();

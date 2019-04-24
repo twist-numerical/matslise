@@ -143,6 +143,18 @@ class Eigenfunction extends Component {
     group.add(
       new THREE.ArrowHelper(new THREE.Vector3(0, 0, -1), origin, 1, 0x00ff00)
     );
+
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0xff0000
+    });
+    this.state.eigenfunction.sectorPoints.forEach(p => {
+      const geometry = new THREE.Geometry();
+      geometry.vertices.push(
+        new THREE.Vector3(xmin, 0, -p),
+        new THREE.Vector3(xmax, 0, -p)
+      );
+      group.add(new THREE.Line(geometry, lineMaterial));
+    });
     return group;
   }
 

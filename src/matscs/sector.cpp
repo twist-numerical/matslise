@@ -54,6 +54,7 @@ T<Dynamic> Matscs::Sector::calculateT(double E, double delta, bool use_h) const 
     delete[] eta;
 
     t.t = kroneckerProduct(Matrix2d::Identity(), D) * t.t * kroneckerProduct(Matrix2d::Identity(), D.transpose());
+    t.dt = kroneckerProduct(Matrix2d::Identity(), D) * t.dt * kroneckerProduct(Matrix2d::Identity(), D.transpose());
     return t;
 }
 
@@ -79,6 +80,7 @@ T<Dynamic> Matscs::Sector::calculateT(double E, bool use_h) const {
     delete[] eta;
 
     t.t = kroneckerProduct(Matrix2d::Identity(), D) * t.t * kroneckerProduct(Matrix2d::Identity(), D.transpose());
+    t.dt = kroneckerProduct(Matrix2d::Identity(), D) * t.dt * kroneckerProduct(Matrix2d::Identity(), D.transpose());
     return t;
 }
 
@@ -118,7 +120,10 @@ MatrixXd Matscs::Sector::propagatePsi(double E, const MatrixXd &psi, double delt
 
 double Matscs::Sector::calculateError() const {
     double E = vs[0].diagonal().minCoeff();
-    return (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().sum();
+    double error = (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().mean();
+    if (isnan(error))
+        return numeric_limits<double>::infinity();
+    return error;
 }
 
 Matscs::Sector::~Sector() {

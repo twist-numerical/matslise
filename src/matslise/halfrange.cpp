@@ -12,8 +12,8 @@ using namespace matslise;
 #define EPS (1e-12)
 
 HalfRange::HalfRange(function<double(double)> V, double xmax,
-                     std::unique_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder) {
-    ms = new Matslise(V, 0, xmax, std::move(sectorBuilder));
+                     std::shared_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder) {
+    ms = new Matslise(V, 0, xmax, sectorBuilder);
 }
 
 template<typename T>

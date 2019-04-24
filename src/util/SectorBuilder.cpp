@@ -65,7 +65,7 @@ void Auto<Problem>::build(Problem *ms, double min, double max) const {
 
 
     while (forward.back()->max != backward.back()->min) {
-        if (compareSectors<Problem>(forward.back(), backward.back()))
+        if (compareSectors<Problem>(backward.back(), forward.back()))
             forward.push_back(nextSector<true>(ms, forward.back()->max - forward.back()->min,
                                                forward.back()->max, backward.back()->min));
         else
@@ -107,7 +107,7 @@ Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) cons
     do {
         if (s != nullptr) {
             ++steps;
-            h *= pow(tol / error, 1. / 6);
+            h *= max(.5, pow(tol / error, 1. / 6));
             if (forward) {
                 xmax = xmin + h;
             } else {

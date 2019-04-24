@@ -27,7 +27,13 @@ const actions = {
     loadMatslise.then(({ SE2D }) => {
       const V = DF.parse(rawV, ["x", "y"]).toFunction("x", "y");
       const settings = { V, x, y };
-      const se2d = new SE2D(V, ...x, ...y, 27, 27);
+      const se2d = new SE2D(V, ...x, ...y, {
+        tolerance: 1e-5,
+        stepsPerSector: 3,
+        nested: {
+          tolerance: 1e-5
+        }
+      });
       updateState("init", {
         calculating: true,
         init: true
@@ -102,7 +108,7 @@ const actions = {
                     const diff = (current - prev) / hp;
                     const d = Math.hypot(
                       current + h * diff - v.first,
-                      .1*Math.atan(v.second - diff)
+                      0.1 * Math.atan(v.second - diff)
                     );
                     return { i, d };
                   })
@@ -161,7 +167,7 @@ const actions = {
 
       const zs = se2d.computeEigenfunction(E, x, y);
       updateState("eigenfunction", {
-        eigenfunction: { x, y, zs }
+        eigenfunction: { x, y, zs, sectorPoints: se2d.sectorPoints() }
       });
     });
   }

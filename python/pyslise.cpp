@@ -75,24 +75,47 @@ PYBIND11_MODULE(pyslise, m) {
             for(int i = 0; i < l->size(); ++i)
                 l->at(i) = s.eigenfunctions[i];
             return l;
-        });
+        })
+        .def_readonly("matslise", &SEnD<2>::Sector::matslise, py::return_value_policy::reference)
+        .def_readonly("matscs", &SEnD<2>::Sector::matscs, py::return_value_policy::reference)
+        .def_readonly("min", &SEnD<2>::Sector::min)
+        .def_readonly("max", &SEnD<2>::Sector::max);
 
     py::class_<SEnD<2>>(m, "PySE2d")
         .def(py::init([](function<double(double, double)> V,
                          double xmin, double xmax, double ymin, double ymax,
-                         int x_count, int y_count, int N, int in_sector_count, int grid_points){
-                return std::unique_ptr<SEnD<2>>(new SEnD<2>(V, {{xmin, xmax}, ymin, ymax},
-                        Options<2>()
-                                .sectorCount(y_count)
-                                .N(N)
-                                .stepsPerSector(in_sector_count)
-                                .gridPoints(grid_points)
-                                .nested(Options<1>().sectorCount(x_count))
-                        ));
+                         int x_count, double x_tol,
+                         int y_count, double y_tol,
+                         int N, int in_sector_count, int grid_points){
+                if(x_count != -1 && x_tol != -1)
+                    throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
+                if(x_count == -1 && x_tol == -1)
+                    throw invalid_argument("One of 'x_count' and 'x_tol' must be set.");
+                if(y_count != -1 && y_tol != -1)
+                    throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
+                if(y_count == -1 && y_tol == -1)
+                    throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
+                Options<1> o1;
+                if(x_count != -1)
+                    o1.sectorCount(x_count);
+                else
+                    o1.tolerance(x_tol);
+                Options<2> o2;
+                o2.N(N)
+                    .stepsPerSector(in_sector_count)
+                    .gridPoints(grid_points)
+                    .nested(o1);
+                if(y_count != -1)
+                    o2.sectorCount(y_count);
+                else
+                    o2.tolerance(y_tol);
+                return std::unique_ptr<SEnD<2>>(new SEnD<2>(V, {{xmin, xmax}, ymin, ymax}, o2));
             }), "Init SE2D",
             py::arg("V"),
             py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
-            py::arg("x_count")=17, py::arg("y_count")=17, py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=52)
+            py::arg("x_count")=-1, py::arg("x_tol")=-1,
+            py::arg("y_count")=-1, py::arg("y_tol")=-1,
+            py::arg("N")=12, py::arg("in_sector_count")=5, py::arg("grid_points")=52)
         .def_readonly("N", &SEnD<2>::N)
         .def_property_readonly("M", [](SEnD<2> &p) -> vector<MatrixXd>* {
             auto l = new vector<MatrixXd>(p.sectorCount-1);
@@ -158,6 +181,10 @@ PYBIND11_MODULE(pyslise, m) {
                                                 Matslise::UNIFORM(steps):
                                                 Matslise::AUTO(tolerance)));
         }), "Pyslise", py::arg("V"), py::arg("xmin"), py::arg("xmax"), py::arg("steps")=-1, py::arg("tolerance")=-1)
+        .def_readonly("sectorCount", &Matslise::sectorCount)
+        .def_readonly("match", &Matslise::match)
+        .def_readonly("min", &Matslise::xmin)
+        .def_readonly("max", &Matslise::xmax)
         .def("propagate",
             [](Matslise &m, double E, const Vector2d &y, double a, double b) ->
                 tuple<Vector2d, double> {
