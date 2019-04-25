@@ -1,8 +1,7 @@
 import React, { Component } from "react";
-import loadMatslise from "../lib/loadMatslise";
+import loadMatslise from "../../lib/loadMatslise";
 import * as THREE from "three";
 import OrbitControls from "orbit-controls-es6";
-import binarySearch from '../lib/binarySearch';
 
 const height = 3;
 
@@ -23,7 +22,13 @@ class Eigenfunctions extends Component {
 
       this.setState({
         loaded: true,
-        se2d: new SE2D(this.state.V, ...this.state.x, ...this.state.y, 32, 32)
+        se2d: new SE2D(this.state.V, ...this.state.x, ...this.state.y, {
+          sectorCount: 27,
+          stepsPerSector: 3,
+          nested: {
+            sectorCount: 29
+          }
+        })
       });
     });
   }
@@ -127,11 +132,7 @@ class Eigenfunctions extends Component {
     for (let i = 0; i <= yn; ++i) y.push(ymin + ((ymax - ymin) * i) / yn);
 
     [Es[this.props.match.params.index]].forEach(approxE => {
-      const E = binarySearch(
-        E => this.state.se2d.calculateError(E),
-        approxE - 0.01,
-        approxE + 0.01
-      );
+      const E = this.state.se2d.findEigenvalue(approxE);
       console.log(E);
       const z = this.computeEigenfunctions(E, x, y)[
         this.props.match.params.multiplicity
@@ -183,11 +184,13 @@ class Eigenfunctions extends Component {
   }
 
   injectThree(element) {
-    if (!this.renderer) {
-      this.buildScene();
-      this.animate();
+    if (element != null) {
+      if (!this.renderer) {
+        this.buildScene();
+        this.animate();
+      }
+      element.appendChild(this.renderer.domElement);
     }
-    element.appendChild(this.renderer.domElement);
   }
 }
 

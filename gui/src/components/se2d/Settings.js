@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import ParsedInput from "../ParsedInput";
+import ParsedInput from "../util/ParsedInput";
 import DF from "../../lib/Differentiable";
 
 const zero = DF.parse("0");

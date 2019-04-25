@@ -107,7 +107,7 @@ Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) cons
     do {
         if (s != nullptr) {
             ++steps;
-            h *= max(.5, pow(tol / error, 1. / 6));
+            h *= max(.01, pow(tol / error, 1. / 6));
             if (forward) {
                 xmax = xmin + h;
             } else {
@@ -118,7 +118,7 @@ Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) cons
         s = new typename Problem::Sector(ms, xmin, xmax);
         error = s->calculateError();
         // cout << "(h: " << h << ", error: " << error << ") ";
-    } while (error > tol && steps < 5 && h > 1e-5);
+    } while (error > tol && steps < 10 && h > 1e-5);
     if (steps == 0) {
         while (error < tol / 2 && steps < 10 && h != right - left) {
             ++steps;

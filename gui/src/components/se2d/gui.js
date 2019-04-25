@@ -2,10 +2,12 @@ import React, { Component } from "react";
 import Settings from "./Settings";
 import Eigenfunction from "./Eigenfunction";
 import interpolate from "../../lib/interpolate";
-import Graph from "../Graph";
+import Graph from "../util/Graph";
 import { ReferenceDot } from "recharts";
 import WorkerDelegator from "../../lib/WorkerDelegator";
 import { addUrlProps } from "react-url-query";
+
+console.log("se2d loading..")
 
 const urlPropsQueryConfig = {
   eigenfunction: {

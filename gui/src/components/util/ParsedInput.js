@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import DF from "../lib/Differentiable";
+import DF from "../../lib/Differentiable";
 
 const htmlEscape = (s = "") => {
   return s

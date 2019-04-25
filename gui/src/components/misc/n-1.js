@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import Graph from "./Graph";
-import loadMatslise from "../lib/loadMatslise";
+import Graph from "../util/Graph";
+import loadMatslise from "../../lib/loadMatslise";
 import { ReferenceDot, Label } from "recharts";
 
 let Matslise = null;
@@ -45,7 +45,9 @@ class Nm1 extends Component {
 
     const { x, f, steps } = this.state;
 
-    const matslise = new Matslise.Matslise(f, ...x, steps);
+    const matslise = new Matslise.Matslise(f, ...x, {
+      sectorCount: steps
+    });
     this.toDelete.push(matslise);
 
     const eigenvalues = matslise.eigenvaluesByIndex(0, 6, [0, 1], [0, 1]);

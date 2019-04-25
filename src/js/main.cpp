@@ -60,11 +60,14 @@ EMSCRIPTEN_BINDINGS(Matslise) {
 
     class_<Matslise>("Matslise")
             .constructor(optional_override(
-                    [](val f, double min, double max, val sectors) -> Matslise * {
-                        return new Matslise([f](double x) -> double { return f(x).as<double>(); }, min, max,
-                                            sectors["type"].as<string>() == "uniform"
-                                            ? Matslise::UNIFORM(sectors["count"].as<int>())
-                                            : Matslise::AUTO(sectors["tolerance"].as<double>()));
+                    [](val f, double min, double max, val options) -> Matslise * {
+                        std::shared_ptr<matslise::SectorBuilder<Matslise>> builder;
+                        if (options["sectorCount"] != val::undefined())
+                            builder = Matslise::UNIFORM(options["sectorCount"].as<int>());
+                        else if (options["tolerance"] != val::undefined())
+                            builder = Matslise::AUTO(options["tolerance"].as<double>());
+
+                        return new Matslise([f](double x) -> double { return f(x).as<double>(); }, min, max, builder);
                     }))
             .function("propagate", optional_override(
                     [](const Matslise &m, double E, const Vector2d &y, double a, double b) ->
@@ -111,11 +114,14 @@ EMSCRIPTEN_BINDINGS(Matslise) {
 
     class_<HalfRange>("HalfRange")
             .constructor(optional_override(
-                    [](val f, double max, val sectors) -> HalfRange * {
-                        return new HalfRange([f](double x) -> double { return f(x).as<double>(); }, max,
-                                             sectors["type"].as<string>() == "uniform"
-                                             ? Matslise::UNIFORM(sectors["count"].as<int>())
-                                             : Matslise::AUTO(sectors["tolerance"].as<double>()));
+                    [](val f, double max, val options) -> HalfRange * {
+                        std::shared_ptr<matslise::SectorBuilder<Matslise>> builder;
+                        if (options["sectorCount"] != val::undefined())
+                            builder = Matslise::UNIFORM(options["sectorCount"].as<int>());
+                        else if (options["tolerance"] != val::undefined())
+                            builder = Matslise::AUTO(options["tolerance"].as<double>());
+
+                        return new HalfRange([f](double x) -> double { return f(x).as<double>(); }, max, builder);
                     }))
             .function("eigenvalueError", optional_override(
                     [](const HalfRange &m, double E, const Vector2d &side, int even = -1) -> double {

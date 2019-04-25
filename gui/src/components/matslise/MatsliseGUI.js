@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import SettingsForm from "./SettingsForm";
-import Graph from "./Graph";
+import Graph from "../util/Graph";
 import { ReferenceLine } from "recharts";
-import loadMatslise from "../lib/loadMatslise";
+import loadMatslise from "../../lib/loadMatslise";
 import Color from "color";
 
 let Matslise = null;
@@ -19,8 +19,6 @@ class MatsliseGUI extends Component {
     symmetric: false,
     sectorPoints: [],
     sectors: {
-      type: "auto",
-      //count: 31
       tolerance: 1e-3
     }
   };

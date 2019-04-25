@@ -1,6 +1,6 @@
 import React, { Component } from "react";
-import ParsedInput from "./ParsedInput";
-import DF from "../lib/Differentiable";
+import ParsedInput from "../util/ParsedInput";
+import DF from "../../lib/Differentiable";
 import problems from "./problems";
 
 class SettingsForm extends Component {
@@ -16,7 +16,7 @@ class SettingsForm extends Component {
     symmetric: false,
     loadDialog: false,
     sectors: {
-      type: "auto",
+      key: "tolerance",
       tolerance: DF.parse("1e-3"),
       count: DF.parse("30")
     }
@@ -29,14 +29,6 @@ class SettingsForm extends Component {
   render() {
     window.DF = DF;
     const { symmetric, ymin, ymax, x } = this.state;
-    const sectorTypeValue = {
-      auto: "tolerance",
-      uniform: "count"
-    }[this.state.sectors.type];
-    const sectorTypeValueName = {
-      auto: "Tolerance",
-      uniform: "Count"
-    }[this.state.sectors.type];
 
     return (
       <form
@@ -220,21 +212,21 @@ class SettingsForm extends Component {
             </div>
             <select
               className="custom-select"
-              value={this.state.sectors.type}
+              value={this.state.sectors.key}
               onChange={e => {
                 this.setState(
                   {
                     sectors: {
                       ...this.state.sectors,
-                      type: e.target.value
+                      key: e.target.value
                     }
                   },
                   () => this.onSubmit()
                 );
               }}
             >
-              {["auto", "uniform"].map(t => (
-                <option value={t} key={t}>
+              {[["auto", "tolerance"], ["uniform", "count"]].map(([t, v]) => (
+                <option value={v} key={v}>
                   {t}
                 </option>
               ))}
@@ -242,7 +234,10 @@ class SettingsForm extends Component {
           </label>
           <label className="input-group col-6 mb-2">
             <div className="input-group-prepend">
-              <span className="input-group-text">{sectorTypeValueName}</span>
+              <span className="input-group-text">
+                {this.state.sectors.key.charAt(0).toUpperCase() +
+                  this.state.sectors.key.slice(1)}
+              </span>
             </div>
             <ParsedInput
               className="form-control"
@@ -250,11 +245,11 @@ class SettingsForm extends Component {
                 this.setState({
                   sectors: {
                     ...this.state.sectors,
-                    [sectorTypeValue]: val
+                    [this.state.sectors.key]: val
                   }
                 })
               }
-              parsed={this.state.sectors[sectorTypeValue]}
+              parsed={this.state.sectors[this.state.sectors.key]}
             />
           </label>
         </div>
@@ -301,14 +296,7 @@ class SettingsForm extends Component {
   }
 
   calculateData() {
-    const {
-      parsed,
-      x,
-      ymin,
-      ymax,
-      symmetric,
-      sectors: { type, tolerance, count }
-    } = this.state;
+    const { parsed, x, ymin, ymax, symmetric, sectors } = this.state;
     const f = parsed.toFunction("x");
     f.value = parsed.value;
     const x_val = x.map(v => v.toValue());
@@ -319,9 +307,9 @@ class SettingsForm extends Component {
       x: symmetric ? [-x_val[1], x_val[1]] : x_val,
       f: f,
       sectors: {
-        type,
-        tolerance: tolerance.toValue(),
-        count: count.toValue()
+        [{ tolerance: "tolerance", count: "sectorCount" }[
+          sectors.key
+        ]]: sectors[sectors.key].toValue()
       },
       symmetric
     };

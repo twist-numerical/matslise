@@ -31,7 +31,7 @@ const actions = {
         tolerance: 1e-5,
         stepsPerSector: 3,
         nested: {
-          tolerance: 1e-5
+          tolerance: 1e-8
         }
       });
       updateState("init", {

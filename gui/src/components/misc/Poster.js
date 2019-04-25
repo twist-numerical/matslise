@@ -1,8 +1,7 @@
 import React, { Component } from "react";
-import loadMatslise from "../lib/loadMatslise";
+import loadMatslise from "../../lib/loadMatslise";
 import * as THREE from "three";
 import OrbitControls from "orbit-controls-es6";
-import binarySearch from "../lib/binarySearch";
 
 const height = 3;
 
@@ -23,7 +22,13 @@ class Poster extends Component {
 
       this.setState({
         loaded: true,
-        se2d: new SE2D(this.state.V, ...this.state.x, ...this.state.y, 32, 32)
+        se2d: new SE2D(this.state.V, ...this.state.x, ...this.state.y, {
+          sectorCount: 33,
+          stepsPerSector: 3,
+          nested: {
+            sectorCount: 33
+          }
+        })
       });
     });
   }
@@ -125,11 +130,7 @@ class Poster extends Component {
     for (let i = 0; i <= yn; ++i) y.push(ymin + ((ymax - ymin) * i) / yn);
 
     [5.5].forEach(approxE => {
-      const E = binarySearch(
-        E => this.state.se2d.calculateError(E).first,
-        approxE - 0.1,
-        approxE + 0.1
-      );
+      const E = this.state.se2d.findEigenvalue(approxE);
       console.log(E);
       this.computeEigenfunctions(E, x, y).forEach(z => {
         group.add(this.buildGraph(x, y, z));
