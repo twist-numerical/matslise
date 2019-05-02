@@ -1,3 +1,6 @@
 [submodule "python/pybind11"]
 	path = python/pybind11
 	url = git@github.com:pybind/pybind11.git
+[submodule "src/python/pybind11"]
+	path = src/python/pybind11
+	url = git@github.com:pybind/pybind11.git

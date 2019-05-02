@@ -51,6 +51,10 @@ namespace matslise {
         Matscs(std::function<MatrixXd(double)> V, int n, double xmin, double xmax, int sectorCount)
                 : Matscs(V, n, xmin, xmax, UNIFORM(sectorCount)) {};
 
+        bool contains(double point) const {
+            return point <= xmax && point >= xmin;
+        }
+
         template<int r>
         matslise::Y<Eigen::Dynamic, r>
         propagate(double E, const matslise::Y<Eigen::Dynamic, r> &y, double a, double b, bool use_h = true) const;
@@ -68,23 +72,28 @@ namespace matslise {
         private:
             const Matscs *s;
         public:
-            MatrixXd *vs;
-            double min, max, h;
             Array2D<MatrixXd, MATSCS_ETA_delta, MATSCS_HMAX_delta> t_coeff;
             MatrixXd t_coeff_h[MATSCS_ETA_h];
             MatrixXd D;
+            MatrixXd *vs;
+            double min, max, h;
+            bool backward;
 
-            Sector(const Matscs *problem, double min, double max);
+            Sector(const Matscs *problem, double min, double max, bool backward = false);
 
             void calculateTCoeffs();
 
-            T<Eigen::Dynamic> calculateT(double E, bool use_h = true) const;
+            bool contains(double point) const {
+                return point <= max && point >= min;
+            }
 
-            T<Eigen::Dynamic> calculateT(double E, double delta, bool use_h = true) const;
+            T <Eigen::Dynamic> calculateT(double E, bool use_h = true) const;
+
+            T <Eigen::Dynamic> calculateT(double E, double delta, bool use_h = true) const;
 
             template<int r = Eigen::Dynamic>
-            Y<Eigen::Dynamic, r>
-            propagate(double E, const Y<Eigen::Dynamic, r> &y0, double delta, bool use_h = true) const;
+            Y <Eigen::Dynamic, r>
+            propagate(double E, const Y <Eigen::Dynamic, r> &y0, double a, double b, bool use_h = true) const;
 
             MatrixXd propagatePsi(double E, const MatrixXd &psi, double delta) const;
 

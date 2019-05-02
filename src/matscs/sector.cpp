@@ -9,14 +9,15 @@
 using namespace std;
 using namespace matslise;
 
-Matscs::Sector::Sector(const Matscs *s, double min, double max) : s(s), min(min), max(max) {
+Matscs::Sector::Sector(const Matscs *s, double min, double max, bool backward) : s(s), min(min), max(max),
+                                                                                 backward(backward) {
     h = max - min;
     vs = legendre::getCoefficients(MATSCS_N, s->V, min, max);
     SelfAdjointEigenSolver<MatrixXd> es(vs[0]);
     D = es.eigenvectors();
 
     for (int i = 0; i < MATSCS_N; ++i)
-        vs[i] = D.transpose() * vs[i] * D;
+        vs[i] = (backward ? -1 : 1) * D.transpose() * vs[i] * D;
 
     calculateTCoeffs();
 }
@@ -85,22 +86,55 @@ T<Dynamic> Matscs::Sector::calculateT(double E, bool use_h) const {
 }
 
 template<int r>
-Y<Dynamic, r> Matscs::Sector::propagate(double E, const Y<Dynamic, r> &y0, double delta, bool use_h) const {
+Y<Dynamic, r> propagate_delta(const Matscs::Sector *ms, double E, const Y<Dynamic, r> &y0, double delta, bool use_h) {
+    if (ms->backward)
+        delta *= -1;
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
+    if (delta > ms->h)
+        delta = ms->h;
 
-    T<Dynamic> t = calculateT(E, delta, use_h);
-    return forward ? t * y0 : t / y0;
+    const T<Dynamic> &t = ms->calculateT(E, delta, use_h);
+    Y<Dynamic, r> y = y0;
+    if (ms->backward)
+        y.reverse();
+    Y<Dynamic, r> y1 = forward ? t * y : t / y;
+    if (ms->backward)
+        y1.reverse();
+
+    return y1;
+}
+
+template<int r>
+Y<Dynamic, r> Matscs::Sector::propagate(double E, const Y<Dynamic, r> &y0, double a, double b, bool use_h) const {
+    Y<Dynamic, r> y = y0;
+    if (!((a >= max && b >= max) || (a <= min && b <= min))) {
+        if (!backward) { // forward
+            if (a > min)
+                y = propagate_delta(this, E, y, min - a, use_h);
+            if (b > min)
+                y = propagate_delta(this, E, y, b - min, use_h);
+        } else {
+            if (a < max)
+                y = propagate_delta(this, E, y, max - a, use_h);
+            if (b < max)
+                y = propagate_delta(this, E, y, b - max, use_h);
+        }
+    }
+    return y;
 }
 
 template Y<Dynamic, -1>
-Matscs::Sector::propagate<-1>(double E, const Y<Dynamic, -1> &y0, double delta, bool use_h) const;
+Matscs::Sector::propagate<-1>(double E, const Y<Dynamic, -1> &y0, double a, double b, bool use_h) const;
 
 template Y<Dynamic, 1>
-Matscs::Sector::propagate<1>(double E, const Y<Dynamic, 1> &y0, double delta, bool use_h) const;
+Matscs::Sector::propagate<1>(double E, const Y<Dynamic, 1> &y0, double a, double b, bool use_h) const;
+
 
 MatrixXd Matscs::Sector::propagatePsi(double E, const MatrixXd &psi, double delta) const {
+    if (backward)
+        delta *= -1;
     if (delta > 0) {
         T<Dynamic> T = calculateT(E, delta);
         return (T.getT(1, 1) + T.getT(1, 0) * psi).transpose()

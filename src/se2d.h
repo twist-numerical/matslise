@@ -115,7 +115,7 @@ namespace matslise {
             double *eigenvalues;
             typename dim<n - 1>::array *eigenfunctions;
 
-            Sector(SEnD<n> *se2d, double min, double max);
+            Sector(SEnD<n> *se2d, double min, double max, bool backward);
 
             matslise::Y<Eigen::Dynamic>
             propagate(double E, const matslise::Y<Eigen::Dynamic> &c, bool forward) const;

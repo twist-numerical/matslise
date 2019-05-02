@@ -2,8 +2,8 @@
 #define MATSLISE_CHECKORTHONORMALITY_H
 
 #include "../catch.hpp"
-#include <matslise/se2d.h>
-#include <matslise/util/lobatto.h>
+#include "../../src/se2d.h"
+#include "../../src/util/lobatto.h"
 
 using namespace std;
 using namespace Eigen;

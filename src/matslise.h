@@ -15,7 +15,6 @@
 #include "util/eigen.h"
 #include "util/y.h"
 #include "util/SectorBuilder.h"
-#include "Evaluator.h"
 #include <memory>
 
 #define MATSLISE_HMAX_delta 15
@@ -54,6 +53,10 @@ namespace matslise {
         Matslise(std::function<double(double)> V, double xmin, double xmax, int sectorCount)
                 : Matslise(V, xmin, xmax, UNIFORM(sectorCount)) {};
 
+        bool contains(double point) const {
+            return point <= xmax && point >= xmin;
+        }
+
         std::pair<matslise::Y<>, double>
         propagate(double E, const matslise::Y<> &y, double a, double b, bool use_h = true) const;
 
@@ -86,26 +89,29 @@ namespace matslise {
 
         class Sector {
         public:
-            Matslise *s;
-            double *vs;
-            double min, max, h;
             Array2D<Matrix2d, MATSLISE_ETA_delta, MATSLISE_HMAX_delta>
                     t_coeff;
             Matrix2d t_coeff_h[MATSLISE_ETA_h];
+            Matslise *s;
+            double *vs;
+            double min, max, h;
+            bool backward;
 
-            Sector(Matslise *problem, double min, double max);
+            Sector(Matslise *problem, double min, double max, bool backward);
 
             void calculateTCoeffs();
+
+            bool contains(double point) const {
+                return point <= max && point >= min;
+            }
 
             T<> calculateT(double E, bool use_h = true) const;
 
             T<> calculateT(double E, double delta, bool use_h = true) const;
 
-            Y<> propagate(double E, const Y<> &y0, bool forward, bool use_h = true) const;
+            matslise::Y<> propagate(double E, const matslise::Y<> &y, bool forward, bool use_h = true) const;
 
-            Y<> propagate(double E, const Y<> &y0, double delta, bool use_h = true) const;
-
-            Y<> propagate(double E, const Y<> &y0, double delta, double &theta, bool use_h = true) const;
+            Y<> propagate(double E, const Y<> &y0, double a, double b, double &theta, bool use_h = true) const;
 
             double prufer(double E, double delta, const Y<> &y0, const Y<> &y1) const;
 

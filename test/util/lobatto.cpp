@@ -2,8 +2,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include <matslise/matscs.h>
-#include <matslise/util/lobatto.h>
+#include "../../src/matscs.h"
+#include "../../src/util/lobatto.h"
 
 
 using namespace std;

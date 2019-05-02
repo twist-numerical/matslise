@@ -23,6 +23,11 @@ namespace matslise {
             return y;
         }
 
+        void reverse() {
+            getY(1) *= -1;
+            getdY(1) *= -1;
+        }
+
         Y(long N = n, long R = n) {
             if (R == -1)
                 R = N;

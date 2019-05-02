@@ -1,8 +1,9 @@
 #include <iostream>
 #include <cmath>
 #include <set>
-#include <matslise/matscs.h>
-#include <matslise/se2d.h>
+#include "../src/matslise.h"
+#include "../src/matscs.h"
+#include "../src/se2d.h"
 
 using namespace std;
 using namespace Eigen;
@@ -54,7 +55,7 @@ void mathieu() {
     Matslise mathieu([](double x) {
         return 2 * cos(2 * x);
         //return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
-    }, m, M, Matslise::AUTO(.00000001));
+    }, m, M, Matslise::UNIFORM(16));
     double h = M_PI / 16;
 
     matslise::Y<> y0({0, 1}, {0, 0});
@@ -89,7 +90,8 @@ void test2d() {
     cout << "sectorCount: " << se2d.sectorCount << endl;
     cout << "match: " << se2d.match << endl;
     for (int i = 0; i < se2d.sectorCount; ++i)
-        cout << "minmax: (" << se2d.sectors[i]->min << ", " << se2d.sectors[i]->max << "), vbar: " << se2d.sectors[i]->vbar.minCoeff() << endl;
+        cout << "minmax: (" << se2d.sectors[i]->min << ", " << se2d.sectors[i]->max << "), vbar: "
+             << se2d.sectors[i]->vbar.minCoeff() << endl;
     double E = se2d.findEigenvalue(8);
     cout << E << endl;
 
@@ -263,13 +265,13 @@ void testHigh() {
 int main() {
     // coffey();
     // testPrufer();
-    test2d();
-    //testHenon();
-    //  testZero();
+    // test2d();
+    // testHenon();
+    // testZero();
     // test3d();
     // testBigE();
     // testMatscs();
     // testEigenfunctionCalculator();
     // testHigh();
-    // mathieu();
+    mathieu();
 }

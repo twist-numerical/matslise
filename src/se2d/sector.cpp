@@ -12,7 +12,7 @@ using namespace Eigen;
 using namespace matslise::SEnD_util;
 
 template<>
-SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax)
+SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
     const Y<> y0 = Y<>({0, 1}, {0, 0});
 
@@ -35,13 +35,13 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax)
     }
 
     matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, ymin, ymax,
-                        se2d->options._stepsPerSector);
+                        se2d->options._stepsPerSector); // TODO
 
     delete index_eigv;
 }
 
 template<>
-SEnD<3>::Sector::Sector(SEnD<3> *se2d, double zmin, double zmax)
+SEnD<3>::Sector::Sector(SEnD<3> *se2d, double zmin, double zmax, bool backward)
         : se2d(se2d), min(zmin), max(zmax) {
     const double zbar = (zmax + zmin) / 2;
     function<double(double, double)> vbar_fun = [se2d, zbar](double x, double y) -> double {

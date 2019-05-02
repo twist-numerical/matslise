@@ -6,42 +6,33 @@
 using namespace std;
 using namespace matslise;
 
+int find_sector(const Matscs *ms, double point) {
+    int a = 0, b = ms->sectorCount, c;
+    while (!ms->sectors[c = a + (b - a) / 2]->contains(point)) {
+        if (c == a)
+            return -1;
+        if (point < ms->sectors[c]->min)
+            b = c;
+        else
+            a = c;
+    }
+    return c;
+}
+
 template<int r>
 Y<Dynamic, r>
 Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool use_h) const {
+    if (!contains(a) || !contains(b))
+        throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<Dynamic, r> y = _y;
-    if (a < b) {
-        for (int i = 0; i < sectorCount; ++i) {
-            Sector *sector = sectors[i];
-            if (sector->max > a) {
-                if (sector->min < a) // first
-                    y = sector->propagate(E, y, sector->min - a, use_h);
-
-                if (sector->max >= b) { // last
-                    y = sector->propagate(E, y, b - sector->min, use_h);
-                    break;
-                }
-
-                y = sector->propagate(E, y, sector->max - sector->min, use_h);
-            }
-        }
-    } else {
-        for (int i = sectorCount - 1; i >= 0; --i) {
-            Sector *sector = sectors[i];
-            if (sector->min < a) {
-                if (sector->max > a) // first
-                    y = sector->propagate(E, y, sector->min - a, use_h);
-                else
-                    y = sector->propagate(E, y, sector->min - sector->max, use_h);
-
-                if (sector->min <= b) { // last
-                    y = sector->propagate(E, y, b - sector->min, use_h);
-                    break;
-                }
-
-            }
-        }
-    }
+    int sectorIndex = find_sector(this, a);
+    int direction = a < b ? 1 : -1;
+    Sector *sector;
+    do {
+        sector = sectors[sectorIndex];
+        y = sector->propagate(E, y, a, b, use_h);
+        sectorIndex += direction;
+    } while (!sector->contains(b));
     return y;
 }
 

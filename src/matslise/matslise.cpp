@@ -15,43 +15,34 @@ using namespace matslise;
 using namespace std;
 using namespace Eigen;
 
+int find_sector(const Matslise *ms, double point) {
+    int a = 0, b = ms->sectorCount, c;
+    while (!ms->sectors[c = a + (b - a) / 2]->contains(point)) {
+        if (c == a)
+            return -1;
+        if (point < ms->sectors[c]->min)
+            b = c;
+        else
+            a = c;
+    }
+    return c;
+}
+
 pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double b, bool use_h) const {
+    if (!contains(a) || !contains(b))
+        throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<> y = _y;
     double theta = matslise::theta(y);
-    if (a <= b) {
-        for (int i = 0; i < sectorCount; ++i) {
-            Sector *sector = sectors[i];
-            if (sector->max > a) {
-                if (sector->min < a) // first
-                    y = sector->propagate(E, y, sector->min - a, theta, use_h);
-
-                if (sector->max >= b) { // last
-                    y = sector->propagate(E, y, b - sector->min, theta, use_h);
-                    break;
-                }
-
-                y = sector->propagate(E, y, sector->max - sector->min, theta, use_h);
-            }
-        }
-    } else {
-        if (theta == 0)
-            theta += M_PI;
-        for (int i = sectorCount - 1; i >= 0; --i) {
-            Sector *sector = sectors[i];
-            if (sector->min < a) {
-                if (sector->max > a) // first
-                    y = sector->propagate(E, y, sector->min - a, theta, use_h);
-                else
-                    y = sector->propagate(E, y, sector->min - sector->max, theta, use_h);
-
-                if (sector->min <= b) { // last
-                    y = sector->propagate(E, y, b - sector->min, theta, use_h);
-                    break;
-                }
-
-            }
-        }
-    }
+    if (a == xmax && theta == 0)
+        theta += M_PI;
+    int sectorIndex = find_sector(this, a);
+    int direction = a < b ? 1 : -1;
+    Sector *sector;
+    do {
+        sector = sectors[sectorIndex];
+        y = sector->propagate(E, y, a, b, theta, use_h);
+        sectorIndex += direction;
+    } while (!sector->contains(b));
     return {y, theta};
 }
 
@@ -191,7 +182,7 @@ vector<Y<>> propagationSteps(const Matslise &ms, double E, const matslise::Y<> &
     for (int i = n - 1; i > m; --i)
         ys[i] = ms.sectors[i]->propagate(E, ys[i + 1], false);
     Y<> yr = ms.sectors[m]->propagate(E, ys[m + 1], false);
-    double s = ys[m].y[0] / yr.y[0];
+    double s = (abs(yr.y[0]) < 1e-4) ? ys[m].y[1] / yr.y[1] : ys[m].y[0] / yr.y[0];
     double norm = ys[m].dy[0] * ys[m].y[1] - ys[m].dy[1] * ys[m].y[0];
     norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
     if (norm > 0) {
@@ -222,10 +213,16 @@ Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matsli
     Array<Y<>, Dynamic, 1> ys(n);
 
     int sector = 0;
+    double theta = 0;
     for (int i = 0; i < n; ++i) {
         while (x[i] > sectors[sector]->max)
             ++sector;
-        ys[i] = sectors[sector]->propagate(E, steps[sector], x[i] - sectors[sector]->min);
+        if (sectors[sector]->backward) {
+            ys[i] = sectors[sector]->propagate(E, steps[sector + 1], sectors[sector]->max, x[i], theta);
+        } else {
+            ys[i] = sectors[sector]->propagate(E, steps[sector], sectors[sector]->min, x[i], theta);
+        }
+
     }
 
     return ys;
@@ -243,6 +240,12 @@ std::function<Y<>(double)> Matslise::eigenfunctionCalculator(double E, const Y<>
             else
                 a = c;
         }
-        return this->sectors[a]->propagate(E, ys[a], x - this->sectors[a]->min);
+        const Matslise::Sector *sector = this->sectors[a];
+        double theta = 0;
+        if (sector->backward) {
+            return sector->propagate(E, ys[a + 1], sector->max, x, theta);
+        } else {
+            return sector->propagate(E, ys[a], sector->min, x, theta);
+        }
     };
 }

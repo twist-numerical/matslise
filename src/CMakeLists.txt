@@ -48,8 +48,8 @@ else ()
     else ()
         install(TARGETS matslise LIBRARY DESTINATION lib)
     endif ()
-    install(FILES matslise.h Array2D.h matscs.h se2d.h Evaluator.h schrodinger.h DESTINATION include/matslise/)
+    install(FILES matslise.h Array2D.h matscs.h se2d.h schrodinger.h DESTINATION include/matslise/)
     install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
 
-
+    add_subdirectory(python)
 endif (DEFINED EMSCRIPTEN)

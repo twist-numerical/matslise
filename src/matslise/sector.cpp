@@ -13,9 +13,14 @@
 using namespace std;
 using namespace matslise;
 
-Matslise::Sector::Sector(Matslise *s, double min, double max) : s(s), min(min), max(max) {
+Matslise::Sector::Sector(Matslise *s, double min, double max, bool backward)
+        : s(s), min(min), max(max), backward(backward) {
     h = max - min;
     vs = legendre::getCoefficients(MATSLISE_N, s->V, min, max);
+    if (backward) {
+        for (int i = 1; i < MATSLISE_N; i += 2)
+            vs[i] *= -1;
+    }
 
     calculateTCoeffs();
 }
@@ -90,42 +95,52 @@ double Matslise::Sector::prufer(double E, double delta, const Y<> &y0, const Y<>
     return theta1 - theta0;
 }
 
-Y<> Matslise::Sector::propagate(double E, const Y<> &y0, bool forward, bool use_h) const {
-    const T<> &t = calculateT(E, use_h);
-    return forward ? t * y0 : t / y0;
-}
-
-Y<> Matslise::Sector::propagate(double E, const Y<> &y0, double delta, bool use_h) const {
-    if (delta >= 0)
-        return calculateT(E, delta, use_h) * y0;
-    else
-        return calculateT(E, -delta, use_h) / y0;
-}
-
-Y<> Matslise::Sector::propagate(double E, const Y<> &y0, double delta, double &theta, bool use_h) const {
+Y<> propagate_delta(const Matslise::Sector *ms, double E, const Y<> &y0, double delta, double &theta, bool use_h) {
+    if (ms->backward)
+        delta *= -1;
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
+    if (delta > ms->h)
+        delta = ms->h;
 
-    const T<> &t = calculateT(E, delta, use_h);
-    Y<> y1 = forward ? t * y0 : t / y0;
+    const T<> &t = ms->calculateT(E, delta, use_h);
+    Y<> y = y0;
+    if (ms->backward)
+        y.reverse();
+    Y<> y1 = forward ? t * y : t / y;
+    if (ms->backward)
+        y1.reverse();
 
-    if (forward)
-        theta += prufer(E, delta, y0, y1);
+    if (forward != ms->backward)
+        theta += ms->prufer(E, delta, y0, y1);
     else
-        theta -= prufer(E, delta, y1, y0);
-
-    /*
-    if(forward)
-        cout << "(" << xmin << ")   " << xmin << " -> " << (xmin+delta) << endl;
-    else
-        cout << "(" << xmin << ")   " << (xmin+delta) << " -> " << xmin << endl;
-
-    cout << "| " << y0.y[0] << ", " << y0.dy[0] << " |    | " << y1.y[0] << ", " << y1.dy[0] << " |" << endl;
-    cout << "| " << y0.y[1] << ", " << y0.dy[1] << " | -> | " << y1.y[1] << ", " << y1.dy[1] << " |" << endl;
-    */
+        theta -= ms->prufer(E, delta, y1, y0);
 
     return y1;
+}
+
+Y<> Matslise::Sector::propagate(double E, const Y<> &y0, bool forward, bool use_h) const {
+    double theta = 0;
+    return propagate_delta(this, E, y0, forward ? h : -h, theta, use_h);
+}
+
+Y<> Matslise::Sector::propagate(double E, const Y<> &y0, double a, double b, double &theta, bool use_h) const {
+    Y<> y = y0;
+    if (!((a >= max && b >= max) || (a <= min && b <= min))) {
+        if (!backward) { // forward
+            if (a > min)
+                y = propagate_delta(this, E, y, min - a, theta, use_h);
+            if (b > min)
+                y = propagate_delta(this, E, y, b - min, theta, use_h);
+        } else {
+            if (a < max)
+                y = propagate_delta(this, E, y, max - a, theta, use_h);
+            if (b < max)
+                y = propagate_delta(this, E, y, b - max, theta, use_h);
+        }
+    }
+    return y;
 }
 
 double Matslise::Sector::calculateError() const {

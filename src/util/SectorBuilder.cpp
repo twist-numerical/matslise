@@ -36,22 +36,26 @@ void Uniform<Problem>::build(Problem *ms, double min, double max) const {
     ms->sectors = new typename Problem::Sector *[sectorCount];
     double h = (max - min) / sectorCount;
 
-    double left = min;
-    for (int i = 0; i < sectorCount; ++i) {
-        double right = i + 1 == sectorCount ? max : left + h;
-        ms->sectors[i] = new typename Problem::Sector(ms, left, right);
-        left = right;
+    if (sectorCount == 1) {
+        ms->sectors[0] = new typename Problem::Sector(ms, min, max, false);
+        return;
     }
 
-    int matchIndex = 0;
-    for (int i = 1; i < sectorCount - 1; ++i) {
-        if (compareSectors<Problem>(ms->sectors[i], ms->sectors[matchIndex]))
-            matchIndex = i;
+    ms->sectors[0] = new typename Problem::Sector(ms, min, min + h, false);
+    ms->sectors[sectorCount - 1] = new typename Problem::Sector(ms, min + (sectorCount - 1) * h, max, true);
+    int i = 0, j = sectorCount - 1;
+    while (i + 1 != j) {
+        if (compareSectors<Problem>(ms->sectors[j], ms->sectors[i])) {
+            ++i;
+            ms->sectors[i] = new typename Problem::Sector(ms, min + i * h, min + (i + 1) * h, false);
+        } else {
+            --j;
+            ms->sectors[j] = new typename Problem::Sector(ms, min + j * h, min + (j + 1) * h, true);
+        }
     }
+    int matchIndex = i;
+
     ms->match = ms->sectors[matchIndex]->max;
-    if (matchIndex != 0 && abs(ms->match - (max + min) / 2) < 1e-7) {
-        ms->match = ms->sectors[matchIndex]->min;
-    }
 }
 
 template<typename Problem>
@@ -81,12 +85,12 @@ void Auto<Problem>::build(Problem *ms, double min, double max) const {
         ms->sectors[i++] = s;
     for (auto j = backward.rbegin(); j != backward.rend(); ++j)
         ms->sectors[i++] = *j;
-/*
 
-    for (int i = 0; i < ms->sectorCount; ++i)
-        cout << "h: " << (ms->sectors[i]->xmax - ms->sectors[i]->xmin) << " (" << ms->sectors[i]->xmin << ", "
-             << ms->sectors[i]->xmax << ") error: " << ms->sectors[i]->calculateError() << endl;
-    cout << "match: " << ms->match << "\n" << endl;*/
+
+    /*  for (int i = 0; i < ms->sectorCount; ++i)
+          cout << "h: " << (ms->sectors[i]->xmax - ms->sectors[i]->xmin) << " (" << ms->sectors[i]->xmin << ", "
+               << ms->sectors[i]->xmax << ") error: " << ms->sectors[i]->calculateError() << endl;
+      cout << "match: " << ms->match << "\n" << endl;*/
 }
 
 template<typename Problem>
@@ -115,7 +119,7 @@ Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) cons
             }
             delete s;
         }
-        s = new typename Problem::Sector(ms, xmin, xmax);
+        s = new typename Problem::Sector(ms, xmin, xmax, !forward);
         error = s->calculateError();
         // cout << "(h: " << h << ", error: " << error << ") ";
     } while (error > tol && steps < 10 && h > 1e-5);
@@ -133,7 +137,7 @@ Auto<Problem>::nextSector(Problem *ms, double h, double left, double right) cons
                     xmin = left;
             }
             h = xmax - xmin;
-            typename Problem::Sector *newSector = new typename Problem::Sector(ms, xmin, xmax);
+            typename Problem::Sector *newSector = new typename Problem::Sector(ms, xmin, xmax, !forward);
             error = newSector->calculateError();
             // cout << "(h: " << h << ", error: " << error << ") ";
             if (error > tol) {
