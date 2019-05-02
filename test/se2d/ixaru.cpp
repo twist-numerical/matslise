@@ -66,7 +66,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options<2>().tolerance(1e-5).stepsPerSector(3).N(12).nested(Options<1>().tolerance(1e-7)));
+            Options<2>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options<1>().tolerance(1e-7)));
     pair<double, int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},

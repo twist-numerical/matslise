@@ -27,7 +27,7 @@ void checkOrthonormality(const SEnD<2> &p, const doubleIterator &begin, const do
 
     for (auto i = eigenfunctions.begin(); i != eigenfunctions.end(); ++i)
         for (auto j = eigenfunctions.begin(); j != eigenfunctions.end(); ++j) {
-            CHECKED_ELSE(Approx(lobatto::multi_quadrature<2>(xy, *i * *j)).margin(1e-2) == (i == j ? 1 : 0)) {
+            CHECKED_ELSE(Approx(lobatto::multi_quadrature<2>(xy, *i * *j)).margin(1e-1) == (i == j ? 1 : 0)) {
                 auto l = begin;
                 for (auto k = eigenfunctions.begin(); k != eigenfunctions.end(); ++k) {
                     if (k == i)
