@@ -95,7 +95,7 @@ namespace matslise {
             Y <Eigen::Dynamic, r>
             propagate(double E, const Y <Eigen::Dynamic, r> &y0, double a, double b, bool use_h = true) const;
 
-            MatrixXd propagatePsi(double E, const MatrixXd &psi, double delta) const;
+            MatrixXd propagatePsi(double E, const MatrixXd &psi, double a, double b) const;
 
             double calculateError() const;
 

@@ -182,8 +182,9 @@ vector<Y<>> propagationSteps(const Matslise &ms, double E, const matslise::Y<> &
     for (int i = n - 1; i > m; --i)
         ys[i] = ms.sectors[i]->propagate(E, ys[i + 1], false);
     Y<> yr = ms.sectors[m]->propagate(E, ys[m + 1], false);
-    double s = (abs(yr.y[0]) < 1e-4) ? ys[m].y[1] / yr.y[1] : ys[m].y[0] / yr.y[0];
-    double norm = ys[m].dy[0] * ys[m].y[1] - ys[m].dy[1] * ys[m].y[0];
+    Y<> &yl = ys[m];
+    double s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
+    double norm = yl.dy[0] * yl.y[1] - yl.dy[1] * yl.y[0];
     norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
     if (norm > 0) {
         norm = sqrt(norm);

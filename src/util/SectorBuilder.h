@@ -48,9 +48,9 @@ namespace matslise {
 
         template<typename Problem>
         class Custom : public SectorBuilder<Problem> {
-            std::function<typename Problem::Sector(Problem *)> builder;
+            std::function<void(Problem *, double, double)> builder;
         public:
-            Custom(std::function<typename Problem::Sector(Problem *)> builder) : builder(builder) {}
+            Custom(std::function<void(Problem *, double, double)> builder) : builder(builder) {}
 
             virtual void build(Problem *p, double min, double max) const {
                 builder(p, min, max);

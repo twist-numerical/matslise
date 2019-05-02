@@ -23,7 +23,7 @@ template<int r>
 Y<Dynamic, r>
 Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool use_h) const {
     if (!contains(a) || !contains(b))
-        throw runtime_error("Matslise::propagate(): a and b should be in the interval");
+        throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Dynamic, r> y = _y;
     int sectorIndex = find_sector(this, a);
     int direction = a < b ? 1 : -1;
@@ -38,38 +38,15 @@ Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool us
 
 MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b) const {
     MatrixXd psi = _psi;
-    if (a < b) {
-        for (int i = 0; i < sectorCount; ++i) {
-            Sector *sector = sectors[i];
-            if (sector->max > a) {
-                if (sector->min < a) // first
-                    psi = sector->propagatePsi(E, psi, sector->min - a);
 
-                if (sector->max >= b) { // last
-                    psi = sector->propagatePsi(E, psi, b - sector->min);
-                    break;
-                }
-
-                psi = sector->propagatePsi(E, psi, sector->max - sector->min);
-            }
-        }
-    } else {
-        for (int i = sectorCount - 1; i >= 0; --i) {
-            Sector *sector = sectors[i];
-            if (sector->min < a) {
-                if (sector->max > a) // first
-                    psi = sector->propagatePsi(E, psi, sector->min - a);
-                else
-                    psi = sector->propagatePsi(E, psi, sector->min - sector->max);
-
-                if (sector->min <= b) { // last
-                    psi = sector->propagatePsi(E, psi, b - sector->min);
-                    break;
-                }
-
-            }
-        }
-    }
+    int sectorIndex = find_sector(this, a);
+    int direction = a < b ? 1 : -1;
+    Sector *sector;
+    do {
+        sector = sectors[sectorIndex];
+        psi = sector->propagatePsi(E, psi, a, b);
+        sectorIndex += direction;
+    } while (!sector->contains(b));
     return psi;
 }
 

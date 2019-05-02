@@ -10,6 +10,7 @@ using namespace matslise;
 using namespace std;
 using namespace Eigen;
 using namespace matslise::SEnD_util;
+using namespace matslise::sectorbuilder;
 
 template<>
 SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
@@ -34,8 +35,23 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
             eigenfunctions[i][j] = func[j].y[0];
     }
 
-    matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, ymin, ymax,
-                        se2d->options._stepsPerSector); // TODO
+    matscs = new Matscs(
+            [this](double y) -> MatrixXd { return this->calculateDeltaV(y); },
+            se2d->N, ymin, ymax,
+            std::shared_ptr<SectorBuilder<Matscs>>(
+                    new Custom<Matscs>([this, backward](Matscs *p, double min, double max) {
+                        int n = this->se2d->options._stepsPerSector;
+                        double h = (max - min) / n;
+                        p->sectorCount = n;
+                        p->sectors = new Matscs::Sector *[n];
+                        double left = min;
+                        for (int i = 0; i < n; ++i) {
+                            double right = max - (n - i - 1) * h;
+                            p->sectors[i] = new Matscs::Sector(p, left, right, backward);
+                            left = right;
+                        }
+                        p->match = p->sectors[n - 1]->min;
+                    })));
 
     delete index_eigv;
 }

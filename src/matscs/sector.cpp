@@ -17,7 +17,7 @@ Matscs::Sector::Sector(const Matscs *s, double min, double max, bool backward) :
     D = es.eigenvectors();
 
     for (int i = 0; i < MATSCS_N; ++i)
-        vs[i] = (backward ? -1 : 1) * D.transpose() * vs[i] * D;
+        vs[i] = (backward && i % 2 == 1 ? -1 : 1) * D.transpose() * vs[i] * D;
 
     calculateTCoeffs();
 }
@@ -132,24 +132,49 @@ template Y<Dynamic, 1>
 Matscs::Sector::propagate<1>(double E, const Y<Dynamic, 1> &y0, double a, double b, bool use_h) const;
 
 
-MatrixXd Matscs::Sector::propagatePsi(double E, const MatrixXd &psi, double delta) const {
-    if (backward)
+MatrixXd propagatePsi_delta(const Matscs::Sector *sector, double E, const MatrixXd &psi, double delta) {
+    if (sector->backward)
         delta *= -1;
+    bool forward = delta >= 0;
+    if (!forward)
+        delta = -delta;
+    if (delta > sector->h)
+        delta = sector->h;
+
+    // TODO: verify
+    double extra = sector->backward ? -1 : 1;
     if (delta > 0) {
-        T<Dynamic> T = calculateT(E, delta);
-        return (T.getT(1, 1) + T.getT(1, 0) * psi).transpose()
+        T<Dynamic> T = sector->calculateT(E, delta);
+        return extra * (T.getT(1, 1) + extra * T.getT(1, 0) * psi).transpose()
                 .colPivHouseholderQr()
-                .solve((T.getT(0, 1) + T.getT(0, 0) * psi).transpose())
+                .solve((T.getT(0, 1) + extra * T.getT(0, 0) * psi).transpose())
                 .transpose();
     } else if (delta < 0) {
-        T<Dynamic> T = calculateT(E, -delta);
-        return (T.getT(0, 0) - T.getT(1, 0) * psi).transpose()
+        T<Dynamic> T = sector->calculateT(E, -delta);
+        return extra * (T.getT(1, 1) - extra * psi * T.getT(0, 1))
                 .colPivHouseholderQr()
-                .solve((-T.getT(0, 1) + T.getT(1, 1) * psi).transpose())
-                .transpose();
+                .solve((extra * psi * T.getT(0, 0) - T.getT(1, 0)));
     } else {
         return psi;
     }
+}
+
+MatrixXd Matscs::Sector::propagatePsi(double E, const MatrixXd &_psi, double a, double b) const {
+    MatrixXd psi = _psi;
+    if (!((a >= max && b >= max) || (a <= min && b <= min))) {
+        if (!backward) { // forward
+            if (a > min)
+                psi = propagatePsi_delta(this, E, psi, min - a);
+            if (b > min)
+                psi = propagatePsi_delta(this, E, psi, b - min);
+        } else {
+            if (a < max)
+                psi = propagatePsi_delta(this, E, psi, max - a);
+            if (b < max)
+                psi = propagatePsi_delta(this, E, psi, b - max);
+        }
+    }
+    return psi;
 }
 
 double Matscs::Sector::calculateError() const {
