@@ -8,25 +8,13 @@
 #include "../matslise.h"
 #include "matslise_formulas.h"
 #include "../util/theta.h"
+#include "../util/find_sector.h"
 
 #define EPS (1.e-12)
 
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
-
-int find_sector(const Matslise *ms, double point) {
-    int a = 0, b = ms->sectorCount, c;
-    while (!ms->sectors[c = a + (b - a) / 2]->contains(point)) {
-        if (c == a)
-            return -1;
-        if (point < ms->sectors[c]->min)
-            b = c;
-        else
-            a = c;
-    }
-    return c;
-}
 
 pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double b, bool use_h) const {
     if (!contains(a) || !contains(b))
@@ -35,7 +23,7 @@ pair<Y<>, double> Matslise::propagate(double E, const Y<> &_y, double a, double 
     double theta = matslise::theta(y);
     if (a == xmax && theta == 0)
         theta += M_PI;
-    int sectorIndex = find_sector(this, a);
+    int sectorIndex = find_sector<Matslise>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
     do {

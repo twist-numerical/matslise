@@ -18,7 +18,7 @@ Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
         Y<Dynamic> next = i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1];
-        steps[i] = sectors[i]->propagate(E, next, false);
+        steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
         normRight += cec_cce(next) - cec_cce(steps[i]);
         matchIndex = i;
     }
@@ -26,7 +26,7 @@ Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
 
     MatrixXd normLeft = MatrixXd::Zero(N, N);
     for (int i = 0; i < matchIndex; ++i) {
-        Y<Dynamic> next = sectors[i]->propagate(E, steps[i], true);
+        Y<Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
         steps[i + 1] = M[i] * next;
         normLeft += cec_cce(next) - cec_cce(steps[i]);
     }
@@ -102,7 +102,8 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
                 B.col(j) = sectors[sector]->computeEigenfunction(j, x);
 
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
-                MatrixXd prod = B * sectors[sector]->propagate(E, steps[sector], y[nextY], true).getY(0);
+                MatrixXd prod = B * sectors[sector]->propagate(
+                        E, steps[sector], sectors[sector]->min, y[nextY], true).getY(0);
                 for (int i = 0; i < cols; ++i)
                     result->at(i).col(nextY) = prod.col(i);
                 ++nextY;

@@ -130,6 +130,15 @@ PYBIND11_MODULE(pyslise, m) {
                      return m.computeEigenfunction(E, {x, y});
                  })
             .def("findEigenvalue", &SEnD<2>::findEigenvalue)
+            .def("propagate",
+                 [](const SEnD<2> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
+                         pair<MatrixXd, MatrixXd> {
+                     Y<Dynamic> y0(m.N);
+                     y0.getY(0) = y;
+                     y0.getY(1) = dy;
+                     return unpackY(m.propagate(E, y0, a, b)).first;
+                 },
+                 py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
             .def_readonly_static("NEWTON_RAPHSON_SORTER", &SEnD_util::NEWTON_RAPHSON_SORTER)
             .def_readonly_static("ABS_SORTER", &SEnD_util::ABS_SORTER);
 /*
@@ -245,15 +254,17 @@ PYBIND11_MODULE(pyslise, m) {
             .def_readonly("max", &Matscs::Sector::max)
             .def_readonly("backward", &Matscs::Sector::backward);
     py::class_<Matscs>(m, "Pyscs")
-            .def(py::init([](function<MatrixXd(double)> V, int N, double xmin, double xmax, int steps, double tolerance) {
-                     if (steps != -1 && tolerance != -1)
-                         throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
-                     if (steps == -1 && tolerance == -1)
-                         throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
-                     return new Matscs(
-                             V, N, xmin, xmax,
-                             steps != -1 ? Matscs::UNIFORM(steps) : Matscs::AUTO(tolerance));
-                 }), "Pyslise", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"), py::arg("steps") = -1,
+            .def(py::init(
+                    [](function<MatrixXd(double)> V, int N, double xmin, double xmax, int steps, double tolerance) {
+                        if (steps != -1 && tolerance != -1)
+                            throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
+                        if (steps == -1 && tolerance == -1)
+                            throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
+                        return new Matscs(
+                                V, N, xmin, xmax,
+                                steps != -1 ? Matscs::UNIFORM(steps) : Matscs::AUTO(tolerance));
+                    }), "Pyslise", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"),
+                 py::arg("steps") = -1,
                  py::arg("tolerance") = -1)
             .def_readonly("sectorCount", &Matscs::sectorCount)
             .def_readonly("match", &Matscs::match)

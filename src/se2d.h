@@ -86,8 +86,9 @@ namespace matslise {
                 std::pair<double, double>,
                 std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
 
-        double findEigenvalue(double Eguess) const;
+        Y<Dynamic> propagate(double E, const Y<Dynamic> &y0, double a, double b, bool use_h = true) const;
 
+        double findEigenvalue(double Eguess) const;
 
         std::vector<typename dim<2>::array> *
         computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[n]) const;
@@ -95,6 +96,9 @@ namespace matslise {
         std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
+        bool contains(double point) const {
+            return point <= domain.max && point >= domain.min;
+        }
 
         virtual ~SEnD();
 
@@ -117,11 +121,12 @@ namespace matslise {
 
             Sector(SEnD<n> *se2d, double min, double max, bool backward);
 
-            matslise::Y<Eigen::Dynamic>
-            propagate(double E, const matslise::Y<Eigen::Dynamic> &c, bool forward) const;
+            Y<Eigen::Dynamic> propagate(double E, const Y<Eigen::Dynamic> &y0, double a, double b,
+                                        bool use_h = true) const;
 
-            matslise::Y<Eigen::Dynamic>
-            propagate(double E, const matslise::Y<Eigen::Dynamic> &c, double y, bool forward) const;
+            bool contains(double point) const {
+                return point <= max && point >= min;
+            }
 
             typename dim<n - 1>::array computeEigenfunction(int index, const ArrayXd &x) const;
 

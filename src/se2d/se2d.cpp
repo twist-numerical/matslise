@@ -6,6 +6,7 @@
 #include <map>
 #include "../se2d.h"
 #include "../util/lobatto.h"
+#include "../util/find_sector.h"
 
 using namespace Eigen;
 using namespace matslise;
@@ -61,12 +62,13 @@ pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
     Y<Dynamic> y0 = Y<Dynamic>::Dirichlet(N);
     Y<Dynamic> yl = y0;
     for (int i = 0; sectors[i]->max <= match; ++i) {
-        yl = M[i] * sectors[i]->propagate(E, yl, true);
+        yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
         //yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
-    Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(E, y0, false);
+    Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(
+            E, y0, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
-        yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, false);
+        yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
         //yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
 
@@ -80,6 +82,26 @@ pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
             left_solver.solve((yl.getdY(1) - Ul * yl.getdY(0)).transpose()).transpose()
             - right_solver.solve((yr.getdY(1) - Ur * yr.getdY(0)).transpose()).transpose()
     );
+}
+
+template<int n>
+Y<Dynamic> SEnD<n>::propagate(double E, const Y<Dynamic> &y0, double a, double b, bool use_h) const {
+    if (!contains(a) || !contains(b))
+        throw runtime_error("Matscs::propagate(): a and b should be in the interval");
+    Y<Dynamic> y = y0;
+    int sectorIndex = find_sector<SEnD<n>>(this, a);
+    int direction = a < b ? 1 : -1;
+    Sector *sector;
+    do {
+        sector = sectors[sectorIndex];
+        if (direction == -1 && sectorIndex < sectorCount - 1)
+            y = (MatrixXd) (M[sectorIndex].transpose()) * y;
+        y = sector->propagate(E, y, a, b, use_h);
+        if (direction == 1)
+            y = M[sectorIndex] * y;
+        sectorIndex += direction;
+    } while (!sector->contains(b));
+    return y;
 }
 
 template<int n>

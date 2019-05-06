@@ -1,23 +1,11 @@
 #include <functional>
 #include "../matscs.h"
+#include "../util/find_sector.h"
 
 #define EPS (1.e-12)
 
 using namespace std;
 using namespace matslise;
-
-int find_sector(const Matscs *ms, double point) {
-    int a = 0, b = ms->sectorCount, c;
-    while (!ms->sectors[c = a + (b - a) / 2]->contains(point)) {
-        if (c == a)
-            return -1;
-        if (point < ms->sectors[c]->min)
-            b = c;
-        else
-            a = c;
-    }
-    return c;
-}
 
 template<int r>
 Y<Dynamic, r>
@@ -25,7 +13,7 @@ Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool us
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Dynamic, r> y = _y;
-    int sectorIndex = find_sector(this, a);
+    int sectorIndex = find_sector<Matscs>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
     do {
@@ -39,7 +27,7 @@ Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool us
 MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b) const {
     MatrixXd psi = _psi;
 
-    int sectorIndex = find_sector(this, a);
+    int sectorIndex = find_sector<Matscs>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
     do {

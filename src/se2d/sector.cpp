@@ -103,13 +103,11 @@ SEnD<n>::Sector::~Sector() {
 }
 
 template<int n>
-Y<Dynamic> SEnD<n>::Sector::propagate(double E, const Y<Dynamic> &c, bool forward) const {
-    return propagate(E, c, forward ? max : min, forward);
-}
-
-template<int n>
-Y<Dynamic> SEnD<n>::Sector::propagate(double E, const Y<Dynamic> &c, double y, bool forward) const {
-    return matscs->propagate(E, c, forward ? min : max, y);
+Y<Eigen::Dynamic>
+SEnD<n>::Sector::propagate(double E, const Y<Eigen::Dynamic> &y0, double a, double b, bool use_h) const {
+    a = a < min ? min : a > max ? max : a;
+    b = b < min ? min : b > max ? max : b;
+    return matscs->propagate(E, y0, a, b, use_h);
 }
 
 template<int n>
