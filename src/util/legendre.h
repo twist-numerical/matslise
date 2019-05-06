@@ -216,7 +216,7 @@ namespace legendre {
 
         return coeffs;
     }
-};
+}
 
 
 #endif //SCHRODINGER_LEGENDRE_H

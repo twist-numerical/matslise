@@ -107,12 +107,12 @@ Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &left,
         }
     }
     return computeEigenvalues(Emin, Emax, Imin, Imax, left, right);
-};
+}
 
 vector<pair<int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, const Y<> &left, const Y<> &right) const {
     return computeEigenvalues(Emin, Emax, 0, INT_MAX, left, right);
-};
+}
 
 double Matslise::computeEigenvalueError(double E, const Y<> &left, const Y<> &right) const {
     return fabs(E - newtonIteration(this, E, left, right, 1e-9, false).second);

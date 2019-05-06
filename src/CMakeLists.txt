@@ -1,4 +1,4 @@
-set(CMAKE_CXX_FLAGS "-O2 -Wall -fPIC")
+set(CMAKE_CXX_FLAGS "-O2 -ansi -Wall -Wextra -Wpedantic -Wconversion -fPIC -pedantic-errors")
 set(CMAKE_CXX_STANDARD 11)
 
 
@@ -18,6 +18,8 @@ if (DEFINED EMSCRIPTEN)
             LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2 -s TOTAL_MEMORY=128mb -s BINARYEN_TRAP_MODE='clamp'")
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
+    add_subdirectory(python/pybind11)
+    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} python/pyslise.cpp)
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")
     # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsave-optimization-record")
     add_library(matslise SHARED ${MATSLISE_SRC})
@@ -30,6 +32,8 @@ else ()
         set(BLA_DEFINITIONS USE_MKL)
         target_compile_definitions(matslise PUBLIC ${BLA_DEFINITIONS})
         target_include_directories(matslise PUBLIC ${BLA_INCLUDE_DIR})
+        target_compile_definitions(pyslise PUBLIC ${BLA_DEFINITIONS})
+        target_include_directories(pyslise PUBLIC ${BLA_INCLUDE_DIR})
 
         set(THREADS_PREFER_PTHREAD_FLAG ON)
         find_package(Threads REQUIRED)
@@ -38,18 +42,20 @@ else ()
                 Threads::Threads
                 ${CMAKE_DL_LIBS}
                 ${BLAS_LIBRARIES})
+        target_link_libraries(pyslise PUBLIC
+                m
+                Threads::Threads
+                ${CMAKE_DL_LIBS}
+                ${BLAS_LIBRARIES})
         add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
     endif ()
 
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+    install(TARGETS matslise LIBRARY DESTINATION lib)
     target_link_libraries(matslise PUBLIC Eigen3::Eigen)
-    if (WIN32)
-        install(TARGETS matslise RUNTIME DESTINATION lib)
-    else ()
-        install(TARGETS matslise LIBRARY DESTINATION lib)
-    endif ()
+    target_link_libraries(pyslise PRIVATE Eigen3::Eigen)
+
     install(FILES matslise.h Array2D.h matscs.h se2d.h schrodinger.h DESTINATION include/matslise/)
     install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
 
-    add_subdirectory(python)
 endif (DEFINED EMSCRIPTEN)

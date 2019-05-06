@@ -124,7 +124,7 @@ mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd
     delete odd;
     return values;
 
-};
+}
 
 double HalfRange::computeEigenvalueError(double E, const matslise::Y<> &side, int _even) const {
     return ms->computeEigenvalueError(E, getY0(isEven(this, E, side, _even)), side);
@@ -135,7 +135,7 @@ HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &side) const 
     return mergeEigenvalues(
             ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<>({1, 0}, {0, 0}), side),
             ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<>({0, 1}, {0, 0}), side));
-};
+}
 
 vector<pair<int, double>> *
 HalfRange::computeEigenvalues(double Emin, double Emax, const Y<> &side) const {

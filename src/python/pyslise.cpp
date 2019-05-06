@@ -40,11 +40,11 @@ Y<> packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
 
 pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> unpackY(const Y<Dynamic> &y) {
     return make_pair(make_pair(y.getY(0), y.getY(1)), make_pair(y.getdY(0), y.getdY(1)));
-};
+}
 
 pair<pair<double, double>, pair<double, double>> unpackY(const Y<> &y) {
     return make_pair(make_pair(y.y[0], y.y[1]), make_pair(y.dy[0], y.dy[1]));
-};
+}
 
 // @formatter:off
 PYBIND11_MODULE(pyslise, m) {

@@ -60,7 +60,7 @@ Y<Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     delete[] steps;
 
     return elements;
-};
+}
 
 template<>
 std::vector<typename dim<2>::array> *
@@ -68,12 +68,12 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
     const Eigen::ArrayXd &x = xs[0];
     const Eigen::ArrayXd &y = xs[1];
     long nx = x.size();
-    for (int i = 1; i < nx; ++i)
+    for (long i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("SE2D::computeEigenfunction(): x has to be sorted");
 
     long ny = y.size();
-    for (int i = 1; i < ny; ++i)
+    for (long i = 1; i < ny; ++i)
         if (y[i - 1] > y[i])
             throw runtime_error("SE2D::computeEigenfunction(): y has to be sorted");
 
@@ -88,7 +88,7 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
         for (int i = 0; i < cols; ++i)
             result->push_back(ArrayXXd::Zero(nx, ny));
 
-        int nextY = 0;
+        long nextY = 0;
         int sector = 0;
         while (nextY < ny) {
             while (sector < sectorCount && y[nextY] > sectors[sector]->max) {
