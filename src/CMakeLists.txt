@@ -1,6 +1,10 @@
-set(CMAKE_CXX_FLAGS "-O2 -ansi -Wall -Wextra -Wpedantic -Wconversion -fPIC -pedantic-errors")
 set(CMAKE_CXX_STANDARD 11)
 
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -ansi -Wall -Wextra -Wpedantic -Wconversion -fPIC -pedantic-errors")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /DNOMINMAX /D_USE_MATH_DEFINES")
+endif()
 
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp matslise/matslise_formulas.cpp
@@ -19,9 +23,7 @@ if (DEFINED EMSCRIPTEN)
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
     add_subdirectory(python/pybind11)
-    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} python/pyslise.cpp)
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-var-tracking-assignments")
-    # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsave-optimization-record")
+    pybind11_add_module(pyslise SHARED ${MATSLISE_SRC} python/pyslise.cpp)
     add_library(matslise SHARED ${MATSLISE_SRC})
 
     list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -51,7 +53,6 @@ else ()
     endif ()
 
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-    install(TARGETS matslise LIBRARY DESTINATION lib)
     target_link_libraries(matslise PUBLIC Eigen3::Eigen)
     target_link_libraries(pyslise PRIVATE Eigen3::Eigen)
 

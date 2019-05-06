@@ -82,28 +82,28 @@ namespace matslise {
             return *this;
         }
 
-        template<int count>
-        Y<n, count> operator*(const Matrix<double, cols, count> &M) const {
-            Y<n, count> result(getN(), M.cols());
-            result.y = y * M;
-            result.dy = dy * M;
-            return result;
-        }
-
-        template<int rows>
-        friend Y<rows, cols> operator*(const Matrix<double, rows, n> &M, const Y<n, cols> &y) {
-            Y<rows, cols> result;
-            result.y = kroneckerProduct(Matrix2d::Identity(), M) * y.y;
-            result.dy = kroneckerProduct(Matrix2d::Identity(), M) * y.dy;
-            return result;
-        }
-
         Y<n, cols> &operator*=(const Matrix<double, cols, cols> &M) {
             y *= M;
             dy *= M;
             return *this;
         }
     };
+
+	template<int n, int cols, int count>
+	Y<n, count> operator*(const Y<n, cols> &y, const Matrix<double, cols, count>& M) {
+		Y<n, count> result(y.getN(), M.cols());
+		result.y = y.y * M;
+		result.dy = y.dy * M;
+		return result;
+	}
+
+	template<int n, int cols, int rows>
+	Y<rows, cols> operator*(const Matrix<double, rows, n>& M, const Y<n, cols>& y) {
+		Y<rows, cols> result;
+		result.y = kroneckerProduct(Matrix2d::Identity(), M) * y.y;
+		result.dy = kroneckerProduct(Matrix2d::Identity(), M) * y.dy;
+		return result;
+	}
 
     template<int n = 1, int n2 = (n == Eigen::Dynamic ? n : 2 * n)>
     class T {

@@ -1,5 +1,3 @@
-#define _USE_MATH_DEFINES
-
 #include <cmath>
 #include <array>
 #include "matslise_formulas.h"
