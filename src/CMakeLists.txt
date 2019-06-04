@@ -24,8 +24,9 @@ if (DEFINED EMSCRIPTEN)
             LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O2 -s TOTAL_MEMORY=128mb -s BINARYEN_TRAP_MODE='clamp'")
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
+    set(targets matslise pyslise)
     add_subdirectory(python/pybind11)
-    pybind11_add_module(pyslise SHARED ${MATSLISE_SRC} python/pyslise.cpp)
+    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} python/pyslise.cpp)
     add_library(matslise SHARED ${MATSLISE_SRC})
 
     list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -34,23 +35,18 @@ else ()
         set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
         set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
         set(BLA_DEFINITIONS USE_MKL)
-        target_compile_definitions(matslise PUBLIC ${BLA_DEFINITIONS})
-        target_include_directories(matslise PUBLIC ${BLA_INCLUDE_DIR})
-        target_compile_definitions(pyslise PUBLIC ${BLA_DEFINITIONS})
-        target_include_directories(pyslise PUBLIC ${BLA_INCLUDE_DIR})
+        foreach (target ${targets})
+            target_compile_definitions(${target} PUBLIC ${BLA_DEFINITIONS})
+            target_include_directories(${target} PUBLIC ${BLA_INCLUDE_DIR})
 
-        set(THREADS_PREFER_PTHREAD_FLAG ON)
-        find_package(Threads REQUIRED)
-        target_link_libraries(matslise PUBLIC
-                m
-                Threads::Threads
-                ${CMAKE_DL_LIBS}
-                ${BLAS_LIBRARIES})
-        target_link_libraries(pyslise PUBLIC
-                m
-                Threads::Threads
-                ${CMAKE_DL_LIBS}
-                ${BLAS_LIBRARIES})
+            set(THREADS_PREFER_PTHREAD_FLAG ON)
+            find_package(Threads REQUIRED)
+            target_link_libraries(${target} PUBLIC
+                    m
+                    Threads::Threads
+                    ${CMAKE_DL_LIBS}
+                    ${BLAS_LIBRARIES})
+        endforeach ()
         add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
     endif ()
 
