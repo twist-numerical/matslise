@@ -129,7 +129,8 @@ PYBIND11_MODULE(pyslise, m) {
                  [](SEnD<2> &m, double E, const ArrayXd &x, const ArrayXd &y) {
                      return m.computeEigenfunction(E, {x, y});
                  })
-            .def("findEigenvalue", &SEnD<2>::findEigenvalue)
+            .def("findEigenvalue", &SEnD<2>::findEigenvalue, py::arg("start"), py::arg("tolerance") = 1e-9,
+                 py::arg("maxIterations") = 30, py::arg("minTolerance") = 1e-5)
             .def("propagate",
                  [](const SEnD<2> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
                          pair<MatrixXd, MatrixXd> {

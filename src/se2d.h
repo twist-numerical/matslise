@@ -88,7 +88,8 @@ namespace matslise {
 
         Y<Dynamic> propagate(double E, const Y<Dynamic> &y0, double a, double b, bool use_h = true) const;
 
-        double findEigenvalue(double Eguess) const;
+        double findEigenvalue(double Eguess, double tolerance = 1e-9, int maxIterations = 30,
+                              double minTolerance = 1e-5) const;
 
         std::vector<typename dim<2>::array> *
         computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[n]) const;

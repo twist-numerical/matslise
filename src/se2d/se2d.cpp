@@ -151,16 +151,16 @@ SEnD<n>::sortedErrors(double E,
 }
 
 template<int n>
-double SEnD<n>::findEigenvalue(double E) const {
+double SEnD<n>::findEigenvalue(double E, double tolerance, int maxIterations, double minTolerance) const {
     double error, derror;
     int i = 0;
     do {
         tie(error, derror) = calculateError(E, NEWTON_RAPHSON_SORTER);
         E -= error / derror;
         ++i;
-    } while (i < 30 && abs(error) > 1e-9);
+    } while (i < maxIterations && abs(error) > tolerance);
 
-    if (abs(error) > 1e-5)
+    if (abs(error) > minTolerance)
         return NAN;
     return E;
 }

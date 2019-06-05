@@ -1,1 +1,1 @@
-from pyslise.pyslise import *
+from .pyslise import *

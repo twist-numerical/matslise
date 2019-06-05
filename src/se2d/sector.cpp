@@ -23,6 +23,9 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
     matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
+    if (index_eigv->size() != se2d->N) {
+        throw std::runtime_error("SE2D: not enough basis-functions found on a sector");
+    }
     eigenvalues = new double[se2d->N];
     eigenfunctions = new ArrayXd[se2d->N];
     //eigenfunctionsScaling = new double[se2d->N];
