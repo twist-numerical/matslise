@@ -87,23 +87,33 @@ namespace matslise {
             dy *= M;
             return *this;
         }
+
+        bool operator==(const Y &rhs) const {
+            return y == rhs.y && dy == rhs.dy;
+        }
+
+        bool operator!=(const Y &rhs) const {
+            return !(rhs == *this);
+        }
+
+
     };
 
-	template<int n, int cols, int count>
-	Y<n, count> operator*(const Y<n, cols> &y, const Matrix<double, cols, count>& M) {
-		Y<n, count> result(y.getN(), M.cols());
-		result.y = y.y * M;
-		result.dy = y.dy * M;
-		return result;
-	}
+    template<int n, int cols, int count>
+    Y<n, count> operator*(const Y<n, cols> &y, const Matrix<double, cols, count> &M) {
+        Y<n, count> result(y.getN(), M.cols());
+        result.y = y.y * M;
+        result.dy = y.dy * M;
+        return result;
+    }
 
-	template<int n, int cols, int rows>
-	Y<rows, cols> operator*(const Matrix<double, rows, n>& M, const Y<n, cols>& y) {
-		Y<rows, cols> result;
-		result.y = kroneckerProduct(Matrix2d::Identity(), M) * y.y;
-		result.dy = kroneckerProduct(Matrix2d::Identity(), M) * y.dy;
-		return result;
-	}
+    template<int n, int cols, int rows>
+    Y<rows, cols> operator*(const Matrix<double, rows, n> &M, const Y<n, cols> &y) {
+        Y<rows, cols> result;
+        result.y = kroneckerProduct(Matrix2d::Identity(), M) * y.y;
+        result.dy = kroneckerProduct(Matrix2d::Identity(), M) * y.dy;
+        return result;
+    }
 
     template<int n = 1, int n2 = (n == Eigen::Dynamic ? n : 2 * n)>
     class T {

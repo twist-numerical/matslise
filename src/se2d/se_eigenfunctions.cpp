@@ -105,7 +105,7 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
                 MatrixXd prod = B * sectors[sector]->propagate(
                         E, steps[sector], sectors[sector]->min, y[nextY], true).getY(0);
                 for (int i = 0; i < cols; ++i)
-                    result->at(i).col(nextY) = prod.col(i);
+                    result->at(static_cast<unsigned>(i)).col(nextY) = prod.col(i);
                 ++nextY;
             }
         }

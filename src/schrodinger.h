@@ -58,6 +58,12 @@ namespace matslise {
     template<>
     struct Options<1> {
         std::shared_ptr<matslise::SectorBuilder<matslise::Matslise>> _builder = Matslise::UNIFORM(26);
+        bool _symmetric = false;
+
+        Options<1> &symmetric(bool symmetric) {
+            _symmetric = symmetric;
+            return *this;
+        }
 
         Options<1> &sectorCount(int count) {
             _builder = Matslise::UNIFORM(count);

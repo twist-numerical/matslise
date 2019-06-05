@@ -7,7 +7,9 @@ using namespace std;
 
 template<>
 vector<double> *SEnD<2>::computeEigenvaluesByIndex(int Imin, int Imax) const {
+    // TODO
+    (void) Imin;
+    (void) Imax;
     auto values = new vector<double>();
-
     return values;
 }

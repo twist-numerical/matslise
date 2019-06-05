@@ -31,7 +31,7 @@ void removeDoubles(vector<T> &x) {
 
 inline bool isEven(const HalfRange *hr, double E, const matslise::Y<> &side, int even) {
     if (even == HalfRange::AUTO) {
-        double error0 = get<0>(hr->ms->calculateError(E, Y<>({0, 1}, {0, 0}), side));
+        double error0 = get<0>(hr->ms->calculateError(E, Y<>({1, 0}, {0, 0}), side));
         double error1 = get<0>(hr->ms->calculateError(E, Y<>({0, 1}, {0, 0}), side));
         return abs(error0) < abs(error1);
     }
@@ -43,7 +43,7 @@ inline Y<> getY0(bool even) {
 }
 
 Array<Y<>, Dynamic, 1>
-HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int _even) const {
+HalfRange::computeEigenfunction(double E, const Y<> &side, const ArrayXd &x, int _even) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -82,7 +82,8 @@ HalfRange::computeEigenfunction(double E, const matslise::Y<> &side, const Array
 }
 
 
-std::function<Y<>(double)> HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) const {
+std::function<Y<>(double)>
+HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) const {
     bool even = isEven(this, E, side, _even);
     function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, getY0(even), side));
     return [calculator, even](double x) -> Y<> {
@@ -126,19 +127,22 @@ mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd
 
 }
 
-double HalfRange::computeEigenvalueError(double E, const matslise::Y<> &side, int _even) const {
+double
+HalfRange::computeEigenvalueError(double E, const Y<> &side, int _even) const {
     return ms->computeEigenvalueError(E, getY0(isEven(this, E, side, _even)), side);
 }
 
 vector<pair<int, double>> *
-HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &side) const {
+HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &side, const Y<> &right) const {
+    checkSymmetry(side, right);
     return mergeEigenvalues(
             ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<>({1, 0}, {0, 0}), side),
             ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<>({0, 1}, {0, 0}), side));
 }
 
 vector<pair<int, double>> *
-HalfRange::computeEigenvalues(double Emin, double Emax, const Y<> &side) const {
+HalfRange::computeEigenvalues(double Emin, double Emax, const Y<> &side, const Y<> &right) const {
+    checkSymmetry(side, right);
     return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<>({1, 0}, {0, 0}), side),
                             ms->computeEigenvalues(Emin, Emax, Y<>({0, 1}, {0, 0}), side));
 }

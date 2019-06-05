@@ -40,7 +40,7 @@ namespace matslise {
     struct dim<1> {
         typedef std::function<double(double)> function;
         typedef ArrayXd array;
-        typedef Matslise SEsolver;
+        typedef AbstractMatslise SEsolver;
     };
 
     template<>

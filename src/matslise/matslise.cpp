@@ -66,6 +66,52 @@ newtonIteration(const Matslise *ms, double E, const Y<> &left, const Y<> &right,
 }
 
 vector<pair<int, double>> *
+computeEigenvaluesHelper(const Matslise *ms, double Emin, double Emax, int Imin, int Imax, const Y<> &left,
+                         const Y<> &right) {
+    if (Imin < 0)
+        throw runtime_error("Matslise::computeEigenvalues(): Imin has to be at least 0");
+    if (Imin > Imax)
+        throw runtime_error("Matslise::computeEigenvalues(): Imax can't be less then Imin");
+    vector<pair<int, double>> *eigenvalues = new vector<pair<int, double>>();
+    queue<tuple<double, double, double, double, int>> toCheck;
+
+    toCheck.push(make_tuple(Emin, get<2>(ms->calculateError(Emin, left, right)) / M_PI,
+                            Emax, get<2>(ms->calculateError(Emax, left, right)) / M_PI,
+                            0));
+
+    double a, ta, b, tb, c, tc;
+    int ia, ib, depth;
+    while (!toCheck.empty()) {
+        tie(a, ta, b, tb, depth) = toCheck.front();
+        toCheck.pop();
+        ia = (int) ceil(ta);
+        ib = (int) ceil(tb);
+        if (ta >= tb || ia == ib || ib <= Imin || Imax <= ia)
+            continue;
+        if (ia + 1 == ib)
+            ++depth;
+
+        c = (a + b) / 2;
+        if (tb - ta < 0.05 || depth > 20)
+            eigenvalues->push_back(newtonIteration(ms, c, left, right, 1e-9, true));
+        else {
+            tc = get<2>(ms->calculateError(c, left, right)) / M_PI;
+            if (isnan(tc)) {
+                cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
+            } else {
+                toCheck.push(make_tuple(a, ta, c, tc, depth));
+                toCheck.push(make_tuple(c, tc, b, tb, depth));
+            }
+        }
+    }
+
+    sort(eigenvalues->begin(), eigenvalues->end());
+
+    return eigenvalues;
+}
+
+
+vector<pair<int, double>> *
 Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &left,
                                     const Y<> &right) const {
     double Emin = -1;
@@ -94,61 +140,16 @@ Matslise::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &left,
             }
         }
     }
-    return computeEigenvalues(Emin, Emax, Imin, Imax, left, right);
+    return computeEigenvaluesHelper(this, Emin, Emax, Imin, Imax, left, right);
 }
 
 vector<pair<int, double>> *
 Matslise::computeEigenvalues(double Emin, double Emax, const Y<> &left, const Y<> &right) const {
-    return computeEigenvalues(Emin, Emax, 0, INT_MAX, left, right);
+    return computeEigenvaluesHelper(this, Emin, Emax, 0, INT_MAX, left, right);
 }
 
 double Matslise::computeEigenvalueError(double E, const Y<> &left, const Y<> &right) const {
     return fabs(E - newtonIteration(this, E, left, right, 1e-9, false).second);
-}
-
-vector<pair<int, double>> *
-Matslise::computeEigenvalues(double Emin, double Emax, int Imin, int Imax, const Y<> &left,
-                             const Y<> &right) const {
-    if (Imin < 0)
-        throw runtime_error("Matslise::computeEigenvalues(): Imin has to be at least 0");
-    if (Imin > Imax)
-        throw runtime_error("Matslise::computeEigenvalues(): Imax can't be less then Imin");
-    vector<pair<int, double>> *eigenvalues = new vector<pair<int, double>>();
-    queue<tuple<double, double, double, double, int>> toCheck;
-
-    toCheck.push(make_tuple(Emin, get<2>(calculateError(Emin, left, right)) / M_PI,
-                            Emax, get<2>(calculateError(Emax, left, right)) / M_PI,
-                            0));
-
-    double a, ta, b, tb, c, tc;
-    int ia, ib, depth;
-    while (!toCheck.empty()) {
-        tie(a, ta, b, tb, depth) = toCheck.front();
-        toCheck.pop();
-        ia = (int) ceil(ta);
-        ib = (int) ceil(tb);
-        if (ta >= tb || ia == ib || ib <= Imin || Imax <= ia)
-            continue;
-        if (ia + 1 == ib)
-            ++depth;
-
-        c = (a + b) / 2;
-        if (tb - ta < 0.05 || depth > 20)
-            eigenvalues->push_back(newtonIteration(this, c, left, right, 1e-9, true));
-        else {
-            tc = get<2>(calculateError(c, left, right)) / M_PI;
-            if (isnan(tc)) {
-                cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
-            } else {
-                toCheck.push(make_tuple(a, ta, c, tc, depth));
-                toCheck.push(make_tuple(c, tc, b, tb, depth));
-            }
-        }
-    }
-
-    sort(eigenvalues->begin(), eigenvalues->end());
-
-    return eigenvalues;
 }
 
 Matslise::~Matslise() {
@@ -158,16 +159,16 @@ Matslise::~Matslise() {
 }
 
 vector<Y<>> propagationSteps(const Matslise &ms, double E, const matslise::Y<> &left, const matslise::Y<> &right) {
-    int n = ms.sectorCount;
+    unsigned int n = static_cast<unsigned int>(ms.sectorCount);
     vector<Y<>> ys(n + 1);
     ys[0] = left;
-    int m = 0;
-    for (int i = 1; ms.sectors[i - 1]->min < ms.match; ++i) {
+    unsigned int m = 0;
+    for (unsigned int i = 1; ms.sectors[i - 1]->min < ms.match; ++i) {
         ys[i] = ms.sectors[i - 1]->propagate(E, ys[i - 1], true);
         m = i;
     }
     ys[n] = right;
-    for (int i = n - 1; i > m; --i)
+    for (unsigned int i = n - 1; i > m; --i)
         ys[i] = ms.sectors[i]->propagate(E, ys[i + 1], false);
     Y<> yr = ms.sectors[m]->propagate(E, ys[m + 1], false);
     Y<> &yl = ys[m];
@@ -180,7 +181,7 @@ vector<Y<>> propagationSteps(const Matslise &ms, double E, const matslise::Y<> &
         cerr << "There are problems with the normalization." << endl;
         norm = 1;
     }
-    int i = 0;
+    unsigned int i = 0;
     for (; i <= m; ++i)
         ys[i] *= 1. / norm;
     for (; i <= n; ++i)
@@ -201,7 +202,7 @@ Matslise::computeEigenfunction(double E, const matslise::Y<> &left, const matsli
     vector<Y<>> steps = propagationSteps(*this, E, left, right);
     Array<Y<>, Dynamic, 1> ys(n);
 
-    int sector = 0;
+    unsigned int sector = 0;
     double theta = 0;
     for (int i = 0; i < n; ++i) {
         while (x[i] > sectors[sector]->max)
@@ -232,9 +233,9 @@ std::function<Y<>(double)> Matslise::eigenfunctionCalculator(double E, const Y<>
         const Matslise::Sector *sector = this->sectors[a];
         double theta = 0;
         if (sector->backward) {
-            return sector->propagate(E, ys[a + 1], sector->max, x, theta);
+            return sector->propagate(E, ys[static_cast<unsigned long>(a + 1)], sector->max, x, theta);
         } else {
-            return sector->propagate(E, ys[a], sector->min, x, theta);
+            return sector->propagate(E, ys[static_cast<unsigned long>(a)], sector->min, x, theta);
         }
     };
 }

@@ -20,17 +20,21 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
     vbar = lobatto::apply<1>(se2d->grid, vbar_fun);
-    matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
+    if (se2d->options.nestedOptions._symmetric)
+        matslise = new HalfRange(vbar_fun, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
+    else
+        matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
+                                se2d->options.nestedOptions._builder);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
-    if (index_eigv->size() != se2d->N) {
+    if (static_cast<int>(index_eigv->size()) != se2d->N) {
         throw std::runtime_error("SE2D: not enough basis-functions found on a sector");
     }
     eigenvalues = new double[se2d->N];
     eigenfunctions = new ArrayXd[se2d->N];
     //eigenfunctionsScaling = new double[se2d->N];
     for (int i = 0; i < se2d->N; ++i) {
-        double E = (*index_eigv)[i].second;
+        double E = (*index_eigv)[static_cast<unsigned long>(i)].second;
         eigenvalues[i] = E;
         Array<Y<>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid[0]);
         eigenfunctions[i] = ArrayXd(func.size());
@@ -62,6 +66,8 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
 template<>
 SEnD<3>::Sector::Sector(SEnD<3> *se2d, double zmin, double zmax, bool backward)
         : se2d(se2d), min(zmin), max(zmax) {
+    // TODO
+    (void) backward;
     const double zbar = (zmax + zmin) / 2;
     function<double(double, double)> vbar_fun = [se2d, zbar](double x, double y) -> double {
         return se2d->V(x, y, zbar);
@@ -74,7 +80,7 @@ SEnD<3>::Sector::Sector(SEnD<3> *se2d, double zmin, double zmax, bool backward)
     eigenfunctions = new ArrayXXd[se2d->N];
     //eigenfunctionsScaling = new double[se2d->N];
     for (int i = 0; i < se2d->N;) {
-        double E = (*index_eigv)[i];
+        double E = (*index_eigv)[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
         std::vector<typename dim<2>::array> *funcs = matslise->computeEigenfunction(E, {se2d->grid[0], se2d->grid[1]});
         for (auto func : *funcs) {

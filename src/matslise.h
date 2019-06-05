@@ -25,7 +25,54 @@
 using namespace Eigen;
 
 namespace matslise {
-    class Matslise {
+    class AbstractMatslise {
+    public:
+        virtual std::vector<std::pair<int, double>> *
+        computeEigenvalues(double Emin, double Emax, const matslise::Y<> &left,
+                           const matslise::Y<> &right) const = 0;
+
+        virtual std::vector<std::pair<int, double>> *
+        computeEigenvalues(double Emin, double Emax, const matslise::Y<> &left) const {
+            return computeEigenvalues(Emin, Emax, left, left);
+        }
+
+        virtual double
+        computeEigenvalueError(double E, const matslise::Y<> &left, const matslise::Y<> &right) const = 0;
+
+        virtual double computeEigenvalueError(double E, const matslise::Y<> &left) const {
+            return computeEigenvalueError(E, left, left);
+        };
+
+        virtual std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &left,
+                                  const matslise::Y<> &right) const = 0;
+
+        virtual std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &left) const {
+            return computeEigenvaluesByIndex(Imin, Imax, left, left);
+        };
+
+
+        virtual Eigen::Array<matslise::Y<>, Eigen::Dynamic, 1>
+        computeEigenfunction(double E, const matslise::Y<> &left, const matslise::Y<> &right,
+                             const Eigen::ArrayXd &x) const = 0;
+
+        virtual Eigen::Array<matslise::Y<>, Eigen::Dynamic, 1>
+        computeEigenfunction(double E, const matslise::Y<> &left, const Eigen::ArrayXd &x) const {
+            return computeEigenfunction(E, left, left, x);
+        }
+
+        virtual std::function<Y<>(double)> eigenfunctionCalculator(
+                double E, const matslise::Y<> &left, const matslise::Y<> &right) const = 0;
+
+        virtual std::function<Y<>(double)> eigenfunctionCalculator(double E, const matslise::Y<> &left) const {
+            return eigenfunctionCalculator(E, left, left);
+        };
+
+        virtual ~AbstractMatslise() {}
+    };
+
+    class Matslise : public AbstractMatslise {
     public:
         class Sector;
 
@@ -60,33 +107,30 @@ namespace matslise {
         std::pair<matslise::Y<>, double>
         propagate(double E, const matslise::Y<> &y, double a, double b, bool use_h = true) const;
 
-        Eigen::Array<matslise::Y<>, Eigen::Dynamic, 1>
-        computeEigenfunction(double E, const matslise::Y<> &left, const matslise::Y<> &right,
-                             const Eigen::ArrayXd &x) const;
-
         std::tuple<double, double, double>
         calculateError(double E, const matslise::Y<> &left, const matslise::Y<> &right, bool use_h = true) const;
 
+    public: // Override
         std::vector<std::pair<int, double>> *
         computeEigenvalues(double Emin, double Emax, const matslise::Y<> &left,
-                           const matslise::Y<> &right) const;
-
-        double computeEigenvalueError(double E, const matslise::Y<> &left, const matslise::Y<> &right) const;
+                           const matslise::Y<> &right) const override;
 
         std::vector<std::pair<int, double>> *
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &left,
-                                  const matslise::Y<> &right) const;
+                                  const matslise::Y<> &right) const override;
 
-        std::vector<std::pair<int, double>> *
-        computeEigenvalues(double Emin, double Emax, int Imin, int Imax,
-                           const matslise::Y<> &left,
-                           const matslise::Y<> &right) const;
+        double computeEigenvalueError(double E, const matslise::Y<> &left, const matslise::Y<> &right) const override;
 
-        std::function<Y<>(double)> eigenfunctionCalculator(
-                double E, const matslise::Y<> &left, const matslise::Y<> &right) const;
+        Eigen::Array<matslise::Y<>, Eigen::Dynamic, 1>
+        computeEigenfunction(double E, const matslise::Y<> &left, const matslise::Y<> &right,
+                             const Eigen::ArrayXd &x) const override;
+
+        std::function<Y<>(double)>
+        eigenfunctionCalculator(double E, const matslise::Y<> &left, const matslise::Y<> &right) const override;
 
         virtual ~Matslise();
 
+    public:
         class Sector {
         public:
             Array2D<Matrix2d, MATSLISE_ETA_delta, MATSLISE_HMAX_delta>
@@ -121,7 +165,13 @@ namespace matslise {
         };
     };
 
-    class HalfRange {
+    class HalfRange : public AbstractMatslise {
+    public:
+        static void checkSymmetry(const matslise::Y<> &left, const matslise::Y<> &right) {
+            if (left != right)
+                throw std::runtime_error("Halfrange::checkSymmetry(), left and right sides have to be identical");
+        }
+
     public:
         const Matslise *ms;
         static const int AUTO = -1;
@@ -131,18 +181,51 @@ namespace matslise {
         HalfRange(std::function<double(double)> V, double xmax,
                   std::shared_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder);
 
+        using AbstractMatslise::computeEigenvalues;
+
+        std::vector<std::pair<int, double>> *
+        computeEigenvalues(double Emin, double Emax, const matslise::Y<> &left,
+                           const matslise::Y<> &right) const override;
+
+        using AbstractMatslise::computeEigenvaluesByIndex;
+
+        std::vector<std::pair<int, double>> *
+        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &left,
+                                  const matslise::Y<> &right) const override;
+
+
+        using AbstractMatslise::computeEigenvalueError;
+
+        double
+        computeEigenvalueError(double E, const matslise::Y<> &side, int even) const;
+
+        double computeEigenvalueError(double E, const matslise::Y<> &left, const matslise::Y<> &right) const override {
+            checkSymmetry(left, right);
+            return computeEigenvalueError(E, left, AUTO);
+        }
+
+        using AbstractMatslise::computeEigenfunction;
+
         Array<matslise::Y<>, Dynamic, 1>
-        computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int even = AUTO) const;
+        computeEigenfunction(double E, const matslise::Y<> &left, const matslise::Y<> &right,
+                             const ArrayXd &x) const override {
+            checkSymmetry(left, right);
+            return computeEigenfunction(E, left, x, AUTO);
+        }
 
-        std::vector<std::pair<int, double>> *
-        computeEigenvalues(double Emin, double Emax, const matslise::Y<> &side) const;
+        Array<matslise::Y<>, Dynamic, 1>
+        computeEigenfunction(double E, const matslise::Y<> &side, const ArrayXd &x, int even) const;
 
-        std::vector<std::pair<int, double>> *
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<> &side) const;
+        using AbstractMatslise::eigenfunctionCalculator;
 
-        double computeEigenvalueError(double E, const matslise::Y<> &side, int even = AUTO) const;
+        std::function<Y<>(double)>
+        eigenfunctionCalculator(double E, const matslise::Y<> &left, const matslise::Y<> &right) const override {
+            checkSymmetry(left, right);
+            return eigenfunctionCalculator(E, left, AUTO);
+        }
 
-        std::function<Y<>(double)> eigenfunctionCalculator(double E, const matslise::Y<> &left, int even = AUTO) const;
+        std::function<Y<>(double)>
+        eigenfunctionCalculator(double E, const matslise::Y<> &side, int even) const;
 
         virtual ~HalfRange();
     };
