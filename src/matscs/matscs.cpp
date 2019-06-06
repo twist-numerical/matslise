@@ -1,19 +1,21 @@
 #include <functional>
-#include "../matscs.h"
+#include "../matslise.h"
 #include "../util/find_sector.h"
 
 #define EPS (1.e-12)
 
 using namespace std;
 using namespace matslise;
+using namespace Eigen;
 
+template<typename Scalar>
 template<int r>
-Y<Dynamic, r>
-Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool use_h) const {
+Y<Scalar, Dynamic, r>
+Matscs<Scalar>::propagate(Scalar E, const Y<Scalar, Dynamic, r> &_y, Scalar a, Scalar b, bool use_h) const {
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
-    Y<Dynamic, r> y = _y;
-    int sectorIndex = find_sector<Matscs>(this, a);
+    Y<Scalar, Dynamic, r> y = _y;
+    int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
     do {
@@ -24,10 +26,12 @@ Matscs::propagate(double E, const Y<Dynamic, r> &_y, double a, double b, bool us
     return y;
 }
 
-MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b) const {
-    MatrixXd psi = _psi;
+template<typename Scalar>
+Matrix<Scalar, Dynamic, Dynamic> Matscs<Scalar>::propagatePsi(
+        Scalar E, const Matrix<Scalar, Dynamic, Dynamic> &_psi, Scalar a, Scalar b) const {
+    Matrix<Scalar, Dynamic, Dynamic> psi = _psi;
 
-    int sectorIndex = find_sector<Matscs>(this, a);
+    int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
     do {
@@ -38,21 +42,23 @@ MatrixXd Matscs::propagatePsi(double E, const MatrixXd &_psi, double a, double b
     return psi;
 }
 
-template Y<-1, -1>
-Matscs::propagate<-1>(double E, const Y<-1, -1> &y, double a, double b, bool use_h) const;
+template Y<double, -1, -1>
+Matscs<double>::propagate<-1>(double E, const Y<double, -1, -1> &y, double a, double b, bool use_h) const;
 
-template Y<-1, 1>
-Matscs::propagate<1>(double E, const Y<-1, 1> &y, double a, double b, bool use_h) const;
+template Y<double, -1, 1>
+Matscs<double>::propagate<1>(double E, const Y<double, -1, 1> &y, double a, double b, bool use_h) const;
 
-Matscs::~Matscs() {
+template<typename Scalar>
+Matscs<Scalar>::~Matscs() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
     delete[] sectors;
 }
 
-vector<Y<Dynamic>> *Matscs::computeEigenfunction(double E, vector<double> &x) const {
+template<typename Scalar>
+vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::computeEigenfunction(Scalar E, vector<Scalar> &x) const {
     sort(x.begin(), x.end());
-    vector<Y<Dynamic>> *ys = new vector<Y<Dynamic>>();
+    vector<Y<Scalar, Dynamic>> *ys = new vector<Y<Scalar, Dynamic>>();
 
     auto iterator = x.begin();
 
@@ -60,7 +66,7 @@ vector<Y<Dynamic>> *Matscs::computeEigenfunction(double E, vector<double> &x) co
         iterator = x.erase(iterator);
 
     Sector *sector;
-    Y<Dynamic> y(n);
+    Y<Scalar, Dynamic> y(n);
     for (int i = 0; iterator != x.end(); ++iterator) {
         while ((sector = sectors[i])->max < *iterator) {
             y = sector->calculateT(E) * y;
@@ -78,3 +84,5 @@ vector<Y<Dynamic>> *Matscs::computeEigenfunction(double E, vector<double> &x) co
 
     return ys;
 }
+
+#include "../util/instantiate.h"

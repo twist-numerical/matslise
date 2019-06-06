@@ -2,8 +2,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
+#include "../../src/matslise.h"
 #include "checkOrthonormality.h"
-#include "../../src/se2d.h"
 
 
 using namespace matslise;

@@ -1,4 +1,4 @@
-#include "../se2d.h"
+#include "../matslise.h"
 
 using namespace Eigen;
 using namespace matslise;

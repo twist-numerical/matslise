@@ -2,7 +2,7 @@
 #define MATSLISE_CHECKORTHONORMALITY_H
 
 #include "../catch.hpp"
-#include "../../src/se2d.h"
+#include "../../src/matslise.h"
 #include "../../src/util/lobatto.h"
 
 using namespace std;

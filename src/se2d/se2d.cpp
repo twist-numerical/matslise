@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include <map>
-#include "../se2d.h"
+#include "../matslise.h"
 #include "../util/lobatto.h"
 #include "../util/find_sector.h"
 
@@ -59,13 +59,13 @@ SEnD<n>::~SEnD() {
 
 template<int n>
 pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
-    Y<Dynamic> y0 = Y<Dynamic>::Dirichlet(N);
-    Y<Dynamic> yl = y0;
+    Y<double, Dynamic> y0 = Y<double, Dynamic>::Dirichlet(N);
+    Y<double, Dynamic> yl = y0;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
         //yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
-    Y<Dynamic> yr = sectors[sectorCount - 1]->propagate(
+    Y<double, Dynamic> yr = sectors[sectorCount - 1]->propagate(
             E, y0, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXd) (M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
@@ -85,10 +85,10 @@ pair<MatrixXd, MatrixXd> SEnD<n>::calculateErrorMatrix(double E) const {
 }
 
 template<int n>
-Y<Dynamic> SEnD<n>::propagate(double E, const Y<Dynamic> &y0, double a, double b, bool use_h) const {
+Y<double, Dynamic> SEnD<n>::propagate(double E, const Y<double, Dynamic> &y0, double a, double b, bool use_h) const {
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
-    Y<Dynamic> y = y0;
+    Y<double, Dynamic> y = y0;
     int sectorIndex = find_sector<SEnD<n>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;

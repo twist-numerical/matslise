@@ -2,7 +2,7 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/matscs.h"
+#include "../../src/matslise.h"
 
 
 using namespace matslise;
@@ -26,9 +26,9 @@ MatrixXd f(double x) {
 }
 
 TEST_CASE("Test propagatePsi", "[matscs][propagatePsi]") {
-    Matscs scs(&f, 2, 0, 20, 64);
+    Matscs<double> scs(&f, 2, 0, 20, 64);
     double Es[] = {-64, -36, -30.25, -20.25, -16};
-    double mid = 20./64*2;
+    double mid = 20. / 64 * 2;
     for (double E : Es) {
         MatrixXd left = scs.propagatePsi(E, MatrixXd::Zero(2, 2), 0, mid);
         MatrixXd right = scs.propagatePsi(E, MatrixXd::Zero(2, 2), 20, mid);

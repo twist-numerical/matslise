@@ -2,7 +2,7 @@
 #include <set>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/se2d.h"
+#include "../../src/matslise.h"
 #include "../../src/util/lobatto.h"
 #include "checkOrthonormality.h"
 

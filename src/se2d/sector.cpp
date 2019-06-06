@@ -3,7 +3,7 @@
 //
 
 #include <iostream>
-#include "../se2d.h"
+#include "../matslise.h"
 #include "../util/lobatto.h"
 
 using namespace matslise;
@@ -15,16 +15,16 @@ using namespace matslise::sectorbuilder;
 template<>
 SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
-    const Y<> y0 = Y<>({0, 1}, {0, 0});
+    const Y<double> y0 = Y<double>({0, 1}, {0, 0});
 
     const double ybar = (ymax + ymin) / 2;
     function<double(double)> vbar_fun = [se2d, ybar](double x) -> double { return se2d->V(x, ybar); };
     vbar = lobatto::apply<1>(se2d->grid, vbar_fun);
     if (se2d->options.nestedOptions._symmetric)
-        matslise = new HalfRange(vbar_fun, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
+        matslise = new HalfRange<double>(vbar_fun, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
     else
-        matslise = new Matslise(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
-                                se2d->options.nestedOptions._builder);
+        matslise = new Matslise<double>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
+                                        se2d->options.nestedOptions._builder);
 
     vector<pair<int, double>> *index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
     if (static_cast<int>(index_eigv->size()) != se2d->N) {
@@ -36,25 +36,25 @@ SEnD<2>::Sector::Sector(SEnD<2> *se2d, double ymin, double ymax, bool backward)
     for (int i = 0; i < se2d->N; ++i) {
         double E = (*index_eigv)[static_cast<unsigned long>(i)].second;
         eigenvalues[i] = E;
-        Array<Y<>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid[0]);
+        Array<Y<double>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid[0]);
         eigenfunctions[i] = ArrayXd(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
     }
 
-    matscs = new Matscs(
+    matscs = new Matscs<double>(
             [this](double y) -> MatrixXd { return this->calculateDeltaV(y); },
             se2d->N, ymin, ymax,
-            std::shared_ptr<SectorBuilder<Matscs>>(
-                    new Custom<Matscs>([this, backward](Matscs *p, double min, double max) {
+            std::shared_ptr<SectorBuilder<Matscs<double>>>(
+                    new Custom<Matscs<double>>([this, backward](Matscs<double> *p, double min, double max) {
                         int n = this->se2d->options._stepsPerSector;
                         double h = (max - min) / n;
                         p->sectorCount = n;
-                        p->sectors = new Matscs::Sector *[n];
+                        p->sectors = new Matscs<double>::Sector *[n];
                         double left = min;
                         for (int i = 0; i < n; ++i) {
                             double right = max - (n - i - 1) * h;
-                            p->sectors[i] = new Matscs::Sector(p, left, right, backward);
+                            p->sectors[i] = new Matscs<double>::Sector(p, left, right, backward);
                             left = right;
                         }
                         p->match = p->sectors[n - 1]->min;
@@ -97,8 +97,8 @@ SEnD<3>::Sector::Sector(SEnD<3> *se2d, double zmin, double zmax, bool backward)
 
     delete index_eigv;
 
-    matscs = new Matscs([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, zmin, zmax,
-                        se2d->options._stepsPerSector);
+    matscs = new Matscs<double>([this](double y) -> MatrixXd { return this->calculateDeltaV(y); }, se2d->N, zmin, zmax,
+                                se2d->options._stepsPerSector);
 
 }
 
@@ -112,8 +112,8 @@ SEnD<n>::Sector::~Sector() {
 }
 
 template<int n>
-Y<Eigen::Dynamic>
-SEnD<n>::Sector::propagate(double E, const Y<Eigen::Dynamic> &y0, double a, double b, bool use_h) const {
+Y<double, Eigen::Dynamic>
+SEnD<n>::Sector::propagate(double E, const Y<double, Eigen::Dynamic> &y0, double a, double b, bool use_h) const {
     a = a < min ? min : a > max ? max : a;
     b = b < min ? min : b > max ? max : b;
     return matscs->propagate(E, y0, a, b, use_h);
@@ -160,10 +160,10 @@ MatrixXd SEnD<n>::Sector::calculateDeltaV(double z) const {
 
 template<>
 ArrayXd SEnD<2>::Sector::computeEigenfunction(int index, const ArrayXd &x) const {
-    const Y<> y0 = Y<>({0, 1}, {0, 0});
+    const Y<double> y0 = Y<double>({0, 1}, {0, 0});
     long size = x.size();
 
-    Array<matslise::Y<>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
+    Array<matslise::Y<double>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
     ArrayXd result(size);
     for (int i = 0; i < size; ++i)
         result(i) = raw(i).y[0];

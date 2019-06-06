@@ -5,11 +5,6 @@
 #ifndef MATSLISE_SCHRODINGER_H
 #define MATSLISE_SCHRODINGER_H
 
-#include "matslise.h"
-#include "se2d.h"
-
-using namespace Eigen;
-
 namespace matslise {
     template<int n>
     class SEnD;
@@ -57,7 +52,7 @@ namespace matslise {
 
     template<>
     struct Options<1> {
-        std::shared_ptr<matslise::SectorBuilder<matslise::Matslise>> _builder = Matslise::UNIFORM(26);
+        std::shared_ptr<matslise::SectorBuilder<matslise::Matslise<double>>> _builder = Matslise<double>::UNIFORM(26);
         bool _symmetric = false;
 
         Options<1> &symmetric(bool symmetric) {
@@ -66,12 +61,12 @@ namespace matslise {
         }
 
         Options<1> &sectorCount(int count) {
-            _builder = Matslise::UNIFORM(count);
+            _builder = Matslise<double>::UNIFORM(count);
             return *this;
         }
 
         Options<1> &tolerance(double tol) {
-            _builder = Matslise::AUTO(tol);
+            _builder = Matslise<double>::AUTO(tol);
             return *this;
         }
     };

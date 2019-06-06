@@ -1,4 +1,5 @@
 #include <functional>
+#include "../matslise.h"
 #include "matscs_formulas.h"
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"
@@ -8,85 +9,95 @@
 
 using namespace std;
 using namespace matslise;
+using namespace Eigen;
 
-Matscs::Sector::Sector(const Matscs *s, double min, double max, bool backward) : s(s), min(min), max(max),
-                                                                                 backward(backward) {
+template<typename Scalar>
+Matscs<Scalar>::Sector::Sector(const Matscs *s, Scalar min, Scalar max, bool backward)
+        : s(s), min(min), max(max), backward(backward) {
     h = max - min;
     vs = legendre::getCoefficients(MATSCS_N, s->V, min, max);
-    SelfAdjointEigenSolver<MatrixXd> es(vs[0]);
-    D = es.eigenvectors();
+    SelfAdjointEigenSolver<Matrix<Scalar, Dynamic, Dynamic>> es(vs[0]);
+    diagonalize = es.eigenvectors();
 
     for (int i = 0; i < MATSCS_N; ++i)
-        vs[i] = (backward && i % 2 == 1 ? -1 : 1) * D.transpose() * vs[i] * D;
+        vs[i] = (backward && i % 2 == 1 ? -1 : 1) * diagonalize.transpose() * vs[i] * diagonalize;
 
     calculateTCoeffs();
 }
 
-void Matscs::Sector::calculateTCoeffs() {
+template<typename Scalar>
+void Matscs<Scalar>::Sector::calculateTCoeffs() {
     calculate_tcoeff_matrix(s->n, h, vs, t_coeff, t_coeff_h);
 }
 
+template<typename Scalar>
+T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bool use_h) const {
+    Matrix<Scalar, Dynamic, Dynamic> zero = Matrix<Scalar, Dynamic, Dynamic>::Zero(s->n, s->n);
+    Matrix<Scalar, Dynamic, Dynamic> one = Matrix<Scalar, Dynamic, Dynamic>::Identity(s->n, s->n);
 
-T<Dynamic> Matscs::Sector::calculateT(double E, double delta, bool use_h) const {
-    MatrixXd zero = MatrixXd::Zero(s->n, s->n);
-    MatrixXd one = MatrixXd::Identity(s->n, s->n);
-
-    if (fabs(delta) <= EPS) {
-        return T<Dynamic>(s->n);
+    if (fmath<Scalar>::abs(delta) <= EPS) {
+        return T<Scalar, Dynamic>(s->n);
     }
-    if (use_h && abs(delta - h) <= EPS)
+    if (use_h && fmath<Scalar>::abs(delta - h) <= EPS)
         return calculateT(E);
 
-    VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(s->n, E)) * delta;
-    MatrixXd *eta = calculateEta(VEd * delta, s->n, MATSCS_ETA_delta);
-    T<Dynamic> t(s->n);
+    Matrix<Scalar, Dynamic, 1> VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(s->n, E)) * delta;
+    Matrix<Scalar, Dynamic, Dynamic> *eta = calculateEta<Scalar>(VEd * delta, s->n, MATSCS_ETA_delta);
+    T<Scalar, Dynamic> t(s->n);
     t.t << zero, zero, eta[1] * VEd.asDiagonal(), zero;
     t.dt << zero, zero, -delta * eta[1] - (delta * delta / 2) * eta[2] * VEd.asDiagonal(), zero;
 
     for (int i = 0; i < MATSCS_ETA_delta; ++i) {
-        MatrixXd hor = horner(t_coeff[i], delta, MATSCS_HMAX_delta);
-        t.t += hor * kroneckerProduct(Matrix2d::Identity(), eta[i]);
+        Matrix<Scalar, Dynamic, Dynamic> hor = horner<Matrix<Scalar, Dynamic, Dynamic>>(t_coeff.row(i), delta, MATSCS_HMAX_delta);
+        t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i]);
 
         if (i + 1 < MATSCS_ETA_delta)
-            t.dt += hor * kroneckerProduct(Matrix2d::Identity(), eta[i + 1] * (-delta * delta / 2.));
+            t.dt += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i + 1] * (-delta * delta / 2.));
     }
 
 
     delete[] eta;
 
-    t.t = kroneckerProduct(Matrix2d::Identity(), D) * t.t * kroneckerProduct(Matrix2d::Identity(), D.transpose());
-    t.dt = kroneckerProduct(Matrix2d::Identity(), D) * t.dt * kroneckerProduct(Matrix2d::Identity(), D.transpose());
+    t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.t *
+          kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
+    t.dt = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.dt *
+           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
     return t;
 }
 
-T<Dynamic> Matscs::Sector::calculateT(double E, bool use_h) const {
+template<typename Scalar>
+T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
     int N = s->n;
-    MatrixXd zero = MatrixXd::Zero(N, N);
-    MatrixXd one = MatrixXd::Identity(N, N);
+    Matrix<Scalar, Dynamic, Dynamic> zero = Matrix<Scalar, Dynamic, Dynamic>::Zero(N, N);
+    Matrix<Scalar, Dynamic, Dynamic> one = Matrix<Scalar, Dynamic, Dynamic>::Identity(N, N);
 
-    VectorXd VEd = (vs[0].diagonal() - VectorXd::Constant(N, E)) * h;
-    MatrixXd *eta = calculateEta(VEd * h, N, MATSCS_ETA_h);
-    T<Dynamic> t(N);
+    Matrix<Scalar, Dynamic, 1> VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(N, E)) * h;
+    Matrix<Scalar, Dynamic, Dynamic> *eta = calculateEta<Scalar>(VEd * h, N, MATSCS_ETA_h);
+    T<Scalar, Dynamic> t(N);
     t.t << zero, zero, eta[1] * VEd.asDiagonal(), zero;
     t.dt << zero, zero, -h * eta[1] - (h * h / 2) * eta[2] * VEd.asDiagonal(), zero;
 
     for (int i = 0; i < MATSCS_ETA_h; ++i) {
-        t.t += t_coeff_h[i] * kroneckerProduct(Matrix2d::Identity(), eta[i]);
+        t.t += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i]);
 
         if (i + 1 < MATSCS_ETA_h)
-            t.dt += t_coeff_h[i] * kroneckerProduct(Matrix2d::Identity(), eta[i + 1] * (-h * h / 2));
+            t.dt += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i + 1] * (-h * h / 2));
     }
     delete[] eta;
 
-    t.t = kroneckerProduct(Matrix2d::Identity(), D) * t.t * kroneckerProduct(Matrix2d::Identity(), D.transpose());
-    t.dt = kroneckerProduct(Matrix2d::Identity(), D) * t.dt * kroneckerProduct(Matrix2d::Identity(), D.transpose());
+    t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.t *
+          kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
+    t.dt = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.dt *
+           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
     return t;
 }
 
-template<int r>
-Y<Dynamic, r> propagate_delta(const Matscs::Sector *ms, double E, const Y<Dynamic, r> &y0, double delta, bool use_h) {
+template<typename Scalar, int r>
+Y<Scalar, Dynamic, r>
+propagate_delta(const typename Matscs<Scalar>::Sector *ms, Scalar E, const Y<Scalar, Dynamic, r> &y0, Scalar delta,
+                bool use_h) {
     if (ms->backward)
         delta *= -1;
     bool forward = delta >= 0;
@@ -95,20 +106,22 @@ Y<Dynamic, r> propagate_delta(const Matscs::Sector *ms, double E, const Y<Dynami
     if (delta > ms->h)
         delta = ms->h;
 
-    const T<Dynamic> &t = ms->calculateT(E, delta, use_h);
-    Y<Dynamic, r> y = y0;
+    const T<Scalar, Dynamic> &t = ms->calculateT(E, delta, use_h);
+    Y<Scalar, Dynamic, r> y = y0;
     if (ms->backward)
         y.reverse();
-    Y<Dynamic, r> y1 = forward ? t * y : t / y;
+    Y<Scalar, Dynamic, r> y1 = forward ? t * y : t / y;
     if (ms->backward)
         y1.reverse();
 
     return y1;
 }
 
+template<typename Scalar>
 template<int r>
-Y<Dynamic, r> Matscs::Sector::propagate(double E, const Y<Dynamic, r> &y0, double a, double b, bool use_h) const {
-    Y<Dynamic, r> y = y0;
+Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate(
+        Scalar E, const Y<Scalar, Dynamic, r> &y0, Scalar a, Scalar b, bool use_h) const {
+    Y<Scalar, Dynamic, r> y = y0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
             if (a > min)
@@ -125,14 +138,18 @@ Y<Dynamic, r> Matscs::Sector::propagate(double E, const Y<Dynamic, r> &y0, doubl
     return y;
 }
 
-template Y<Dynamic, -1>
-Matscs::Sector::propagate<-1>(double E, const Y<Dynamic, -1> &y0, double a, double b, bool use_h) const;
 
-template Y<Dynamic, 1>
-Matscs::Sector::propagate<1>(double E, const Y<Dynamic, 1> &y0, double a, double b, bool use_h) const;
+template Y<double, Dynamic, -1>
+Matscs<double>::Sector::propagate<-1>(double E, const Y<double, Dynamic, -1> &y0, double a, double b, bool use_h) const;
+
+template Y<double, Dynamic, 1>
+Matscs<double>::Sector::propagate<1>(double E, const Y<double, Dynamic, 1> &y0, double a, double b, bool use_h) const;
 
 
-MatrixXd propagatePsi_delta(const Matscs::Sector *sector, double E, const MatrixXd &psi, double delta) {
+template<typename Scalar>
+Matrix<Scalar, Dynamic, Dynamic>
+propagatePsi_delta(const typename Matscs<Scalar>::Sector *sector, Scalar E, const Matrix<Scalar, Dynamic, Dynamic> &psi,
+                   Scalar delta) {
     if (sector->backward)
         delta *= -1;
     bool forward = delta >= 0;
@@ -142,15 +159,15 @@ MatrixXd propagatePsi_delta(const Matscs::Sector *sector, double E, const Matrix
         delta = sector->h;
 
     // TODO: verify
-    double extra = sector->backward ? -1 : 1;
+    Scalar extra = sector->backward ? -1 : 1;
     if (delta > 0) {
-        T<Dynamic> T = sector->calculateT(E, delta);
+        T<Scalar, Dynamic> T = sector->calculateT(E, delta);
         return extra * (T.getT(1, 1) + extra * T.getT(1, 0) * psi).transpose()
                 .colPivHouseholderQr()
                 .solve((T.getT(0, 1) + extra * T.getT(0, 0) * psi).transpose())
                 .transpose();
     } else if (delta < 0) {
-        T<Dynamic> T = sector->calculateT(E, -delta);
+        T<Scalar, Dynamic> T = sector->calculateT(E, -delta);
         return extra * (T.getT(1, 1) - extra * psi * T.getT(0, 1))
                 .colPivHouseholderQr()
                 .solve((extra * psi * T.getT(0, 0) - T.getT(1, 0)));
@@ -159,8 +176,10 @@ MatrixXd propagatePsi_delta(const Matscs::Sector *sector, double E, const Matrix
     }
 }
 
-MatrixXd Matscs::Sector::propagatePsi(double E, const MatrixXd &_psi, double a, double b) const {
-    MatrixXd psi = _psi;
+template<typename Scalar>
+Matrix<Scalar, Dynamic, Dynamic>
+Matscs<Scalar>::Sector::propagatePsi(Scalar E, const Matrix<Scalar, Dynamic, Dynamic> &_psi, Scalar a, Scalar b) const {
+    Matrix<Scalar, Dynamic, Dynamic> psi = _psi;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
             if (a > min)
@@ -177,14 +196,18 @@ MatrixXd Matscs::Sector::propagatePsi(double E, const MatrixXd &_psi, double a, 
     return psi;
 }
 
-double Matscs::Sector::calculateError() const {
-    double E = vs[0].diagonal().minCoeff();
-    double error = (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().mean();
-    if (isnan(error))
-        return numeric_limits<double>::infinity();
+template<typename Scalar>
+Scalar Matscs<Scalar>::Sector::calculateError() const {
+    Scalar E = vs[0].diagonal().minCoeff();
+    Scalar error = (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().mean();
+    if (fmath<Scalar>::isnan(error))
+        return numeric_limits<Scalar>::infinity();
     return error;
 }
 
-Matscs::Sector::~Sector() {
+template<typename Scalar>
+Matscs<Scalar>::Sector::~Sector() {
     delete[]vs;
 }
+
+#include "../util/instantiate.h"

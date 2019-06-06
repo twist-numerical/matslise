@@ -2,7 +2,7 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/matscs.h"
+#include "../../src/matslise.h"
 #include "../../src/util/lobatto.h"
 
 
@@ -31,7 +31,7 @@ TEST_CASE("sin(x)", "[util][lobatto]") {
             testFunction(
                     [](double x) { return sin(x); },
                     [](double x) { return -cos(x); },
-                    a, b, max((int) b - a, 10));
+                    a, b, max(static_cast<int>(b - a), 10));
         }
     }
 }

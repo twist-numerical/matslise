@@ -9,24 +9,24 @@ using namespace matslise;
 using namespace std;
 using namespace Eigen;
 
-void test_eigenfunctions(const Matslise &ms, const Y<> &y0, const Y<> &y1, vector<pair<int, double>> *eigenvalues) {
-
-
-    ArrayXd xs(100);
+template<typename Scalar>
+void test_eigenfunctions(const Matslise<Scalar> &ms, const Y<Scalar> &y0, const Y<Scalar> &y1,
+                         vector<pair<int, Scalar>> *eigenvalues) {
+    Array<Scalar, Dynamic, 1> xs(100);
     int scalePoint = 39;
     for (int j = 0; j < xs.size(); ++j)
-        xs[j] = ms.xmin + (j + .5) / xs.size() * (ms.xmax - ms.xmin);
+        xs[j] = ms.xmin + static_cast<Scalar>(j + .5) / static_cast<Scalar>(xs.size()) * (ms.xmax - ms.xmin);
 
-    for (pair<int, double> p : *eigenvalues) {
+    for (pair<int, Scalar> p : *eigenvalues) {
         int i;
-        double E;
+        Scalar E;
         tie(i, E) = p;
-        std::function<Y<>(double)> f = ms.eigenfunctionCalculator(E, y0, y1);
-        Array<Y<>, Dynamic, 1> ys = ms.computeEigenfunction(E, y0, y1, xs);
+        std::function<Y<Scalar>(Scalar)> f = ms.eigenfunctionCalculator(E, y0, y1);
+        Array<Y<Scalar>, Dynamic, 1> ys = ms.computeEigenfunction(E, y0, y1, xs);
 
-        double scale = ys[scalePoint].y[0] / f(xs[scalePoint]).y[0];
+        Scalar scale = ys[scalePoint].y[0] / f(xs[scalePoint]).y[0];
         for (int j = 0; j < xs.size(); ++j) {
-            Y<> fx = f(xs[j]);
+            Y<Scalar> fx = f(xs[j]);
             REQUIRE(Approx(fx.y[0] * scale).margin(1e-7) == ys[j].y[0]);
             REQUIRE(Approx(fx.y[1] * scale).margin(1e-7) == ys[j].y[1]);
         }
@@ -35,37 +35,74 @@ void test_eigenfunctions(const Matslise &ms, const Y<> &y0, const Y<> &y1, vecto
 
 TEST_CASE("coffey_evans", "[matslise][coffey_evans]") {
     const double B = 20;
-    Matslise ms([B](double x) -> double {
+    Matslise<double> ms([B](double x) -> double {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
     }, 0, M_PI_2, 31);
 
-    Y<> y0({0, 1}, {0, 0});
-    Y<> y1({1, 0}, {0, 0});
+    Y<double> y0({0, 1}, {0, 0});
+    Y<double> y1({1, 0}, {0, 0});
     vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }
 
 TEST_CASE("high potential", "[matslise][high]") {
-    Matslise ms([](double x) -> double {
+    Matslise<double> ms([](double x) -> double {
         return (1 - cos(2 * M_PI * x)) / 2 * 1000;
     }, 0, 1, 31);
 
-    Y<> y0({1, 0}, {0, 0});
-    Y<> y1({0, -1}, {0, 0});
+    Y<double> y0({1, 0}, {0, 0});
+    Y<double> y1({0, -1}, {0, 0});
     vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }
 
 TEST_CASE("high potential (auto)", "[matslise][high]") {
-    Matslise ms([](double x) -> double {
+    Matslise<double> ms([](double x) -> double {
         return (1 - cos(2 * M_PI * x)) / 2 * 1000;
-    }, 0, 1, Matslise::AUTO(1e-6));
+    }, 0, 1, Matslise<double>::AUTO(1e-6));
 
-    Y<> y0({1, 0}, {0, 0});
-    Y<> y1({0, -1}, {0, 0});
+    Y<double> y0({1, 0}, {0, 0});
+    Y<double> y1({0, -1}, {0, 0});
     vector<pair<int, double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}
+
+TEST_CASE("coffey_evans (long)", "[matslise][coffey_evans][long]") {
+    const long double B = 20;
+    Matslise<long double> ms([B](long double x) -> long double {
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, 0, M_PI_2, 31);
+
+    Y<long double> y0({0, 1}, {0, 0});
+    Y<long double> y1({1, 0}, {0, 0});
+    vector<pair<int, long double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}
+
+TEST_CASE("high potential (long)", "[matslise][high][long]") {
+    Matslise<long double> ms([](long double x) -> long double {
+        return (1 - cos(2 * M_PI * x)) / 2 * 1000;
+    }, 0, 1, 31);
+
+    Y<long double> y0({1, 0}, {0, 0});
+    Y<long double> y1({0, -1}, {0, 0});
+    vector<pair<int, long double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}
+
+TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
+    Matslise<long double> ms([](double x) -> double {
+        return (1 - cos(2 * M_PI * x)) / 2 * 1000;
+    }, 0, 1, Matslise<long double>::AUTO(1e-6));
+
+    Y<long double> y0({1, 0}, {0, 0});
+    Y<long double> y1({0, -1}, {0, 0});
+    vector<pair<int, long double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }

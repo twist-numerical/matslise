@@ -1,7 +1,7 @@
 set(CMAKE_CXX_STANDARD 11)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -ansi -Wall -Wextra -Wpedantic -Wconversion -fPIC -pedantic-errors")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -ansi -Wall -Wextra -Wpedantic -Wconversion -fPIC")
     message("-- added GCC/Clang flags")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /DNOMINMAX /D_USE_MATH_DEFINES")
@@ -9,10 +9,10 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 endif ()
 
 SET(MATSLISE_SRC
-        matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp matslise/matslise_formulas.cpp
-        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
+        matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
+        matscs/matscs.cpp matscs/sector.cpp
         se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h
-        util/calculateEta.cpp util/lobatto.cpp util/y.cpp util/y.h util/eigen.h util/SectorBuilder.cpp)
+        util/lobatto.cpp util/fmath.cpp)
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/main.cpp ${MATSLISE_SRC})

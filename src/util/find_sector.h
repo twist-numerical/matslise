@@ -6,8 +6,8 @@
 #define MATSLISE_FIND_SECTOR_H
 
 namespace matslise {
-    template<typename Slise>
-    int find_sector(const Slise *ms, double point) {
+    template<typename Problem>
+    int find_sector(const Problem *ms, typename Problem::Scalar point) {
         int a = 0, b = ms->sectorCount, c;
         while (!ms->sectors[c = a + (b - a) / 2]->contains(point)) {
             if (c == a)

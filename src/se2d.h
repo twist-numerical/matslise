@@ -5,11 +5,6 @@
 #ifndef MATSLISE_SE2D_H
 #define MATSLISE_SE2D_H
 
-
-#include <functional>
-#include <vector>
-#include "matslise.h"
-#include "matscs.h"
 #include "schrodinger.h"
 
 namespace matslise {
@@ -39,42 +34,44 @@ namespace matslise {
     template<>
     struct dim<1> {
         typedef std::function<double(double)> function;
-        typedef ArrayXd array;
-        typedef AbstractMatslise SEsolver;
+        typedef Eigen::ArrayXd array;
+        typedef AbstractMatslise<double> SEsolver;
     };
 
     template<>
     struct dim<2> {
         typedef std::function<double(double, double)> function;
-        typedef ArrayXXd array;
+        typedef Eigen::ArrayXXd array;
         typedef SEnD<2> SEsolver;
     };
 
     template<>
     struct dim<3> {
         typedef std::function<double(double, double, double)> function;
-        typedef Tensor<double, 3> array;
+        typedef Eigen::Tensor<double, 3> array;
         typedef SEnD<3> SEsolver;
     };
 
     template<int n = 2>
     class SEnD {
     public:
+        typedef double Scalar;
+
         class Sector;
 
         typename dim<n>::function V;
-        MatrixXd *M;
+        Eigen::MatrixXd *M;
         Rectangle<n> domain;
         int sectorCount;
         typename SEnD<n>::Sector **sectors;
-        ArrayXd grid[n];
+        Eigen::ArrayXd grid[n];
         int N;
         double match;
         Options<n> options;
     public:
         SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
 
-        std::pair<MatrixXd, MatrixXd> calculateErrorMatrix(double E) const;
+        std::pair<Eigen::MatrixXd, Eigen::MatrixXd> calculateErrorMatrix(double E) const;
 
         std::pair<double, double> calculateError(double E, const std::function<bool(
                 std::pair<double, double>,
@@ -86,7 +83,8 @@ namespace matslise {
                 std::pair<double, double>,
                 std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
 
-        Y<Dynamic> propagate(double E, const Y<Dynamic> &y0, double a, double b, bool use_h = true) const;
+        Y<double, Eigen::Dynamic>
+        propagate(double E, const Y<double, Eigen::Dynamic> &y0, double a, double b, bool use_h = true) const;
 
         double findEigenvalue(double Eguess, double tolerance = 1e-9, int maxIterations = 30,
                               double minTolerance = 1e-5) const;
@@ -104,16 +102,16 @@ namespace matslise {
         virtual ~SEnD();
 
     protected:
-        Y<Dynamic> *computeEigenfunctionSteps(double E) const;
+        Y<double, Eigen::Dynamic> *computeEigenfunctionSteps(double E) const;
 
-        MatrixXd calculateM(int k) const;
+        Eigen::MatrixXd calculateM(int k) const;
 
     public:
         class Sector {
         public:
             SEnD<n> *se2d;
             typename dim<n - 1>::SEsolver *matslise;
-            Matscs *matscs;
+            matslise::Matscs<double> *matscs;
             typename dim<n - 1>::array vbar;
             double min, max;
 
@@ -122,14 +120,14 @@ namespace matslise {
 
             Sector(SEnD<n> *se2d, double min, double max, bool backward);
 
-            Y<Eigen::Dynamic> propagate(double E, const Y<Eigen::Dynamic> &y0, double a, double b,
-                                        bool use_h = true) const;
+            Y<double, Eigen::Dynamic> propagate(double E, const Y<double, Eigen::Dynamic> &y0, double a, double b,
+                                                bool use_h = true) const;
 
             bool contains(double point) const {
                 return point <= max && point >= min;
             }
 
-            typename dim<n - 1>::array computeEigenfunction(int index, const ArrayXd &x) const;
+            typename dim<n - 1>::array computeEigenfunction(int index, const Eigen::ArrayXd &x) const;
 
             double calculateError() const;
 

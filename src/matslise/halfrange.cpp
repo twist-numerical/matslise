@@ -4,16 +4,19 @@
 
 #include <iostream>
 #include "../matslise.h"
+#include "../util/fmath.h"
 #include <memory>
 
 using namespace std;
 using namespace matslise;
+using namespace Eigen;
 
 #define EPS (1e-12)
 
-HalfRange::HalfRange(function<double(double)> V, double xmax,
-                     std::shared_ptr<matslise::SectorBuilder<Matslise>> sectorBuilder) {
-    ms = new Matslise(V, 0, xmax, sectorBuilder);
+template<typename Scaler>
+HalfRange<Scaler>::HalfRange(function<Scaler(Scaler)> V, Scaler xmax,
+                             std::shared_ptr<matslise::SectorBuilder<Matslise<Scaler>>> sectorBuilder) {
+    ms = new Matslise<Scaler>(V, 0, xmax, sectorBuilder);
 }
 
 template<typename T>
@@ -29,21 +32,26 @@ void removeDoubles(vector<T> &x) {
 }
 
 
-inline bool isEven(const HalfRange *hr, double E, const matslise::Y<> &side, int even) {
-    if (even == HalfRange::AUTO) {
-        double error0 = get<0>(hr->ms->calculateError(E, Y<>({1, 0}, {0, 0}), side));
-        double error1 = get<0>(hr->ms->calculateError(E, Y<>({0, 1}, {0, 0}), side));
-        return abs(error0) < abs(error1);
+template<typename Scalar>
+inline bool isEven(const HalfRange<Scalar> *hr, Scalar E, const Y<Scalar> &side, int even) {
+    if (even == HalfRange<Scalar>::AUTO) {
+        Scalar error0 = get<0>(hr->ms->calculateError(E, Y<Scalar>({1, 0}, {0, 0}), side));
+        Scalar error1 = get<0>(hr->ms->calculateError(E, Y<Scalar>({0, 1}, {0, 0}), side));
+        return fmath<Scalar>::abs(error0) < fmath<Scalar>::abs(error1);
     }
     return bool(even);
 }
 
-inline Y<> getY0(bool even) {
-    return Y<>({even ? 1 : 0, even ? 0 : 1}, {0, 0});
+template<typename Scalar>
+inline Y<Scalar> getY0(bool even) {
+    return Y<Scalar>({even ? 1 : 0, even ? 0 : 1}, {0, 0});
 }
 
-Array<Y<>, Dynamic, 1>
-HalfRange::computeEigenfunction(double E, const Y<> &side, const ArrayXd &x, int _even) const {
+template<typename Scalar>
+Array<Y<Scalar>, Dynamic, 1>
+HalfRange<Scalar>::computeEigenfunction(Scalar E, const Y<Scalar> &side,
+                                        const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
+                                        int _even) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -54,8 +62,8 @@ HalfRange::computeEigenfunction(double E, const Y<> &side, const ArrayXd &x, int
         if (x[i] < 0)
             negatives = i + 1;
 
-    ArrayXd xNeg(negatives);
-    ArrayXd xPos(n - negatives);
+    Array<Scalar, Dynamic, 1> xNeg(negatives);
+    Array<Scalar, Dynamic, 1> xPos(n - negatives);
 
     for (long i = 0; i < negatives; ++i)
         xNeg[i] = -x[negatives - 1 - i];
@@ -65,8 +73,8 @@ HalfRange::computeEigenfunction(double E, const Y<> &side, const ArrayXd &x, int
 
 
     bool even = isEven(this, E, side, _even);
-    Y<> y = getY0(even);
-    Array<Y<>, Dynamic, 1> yNeg, yPos, ys(n);
+    Y<Scalar> y = getY0<Scalar>(even);
+    Array<Y<Scalar>, Dynamic, 1> yNeg, yPos, ys(n);
     yNeg = ms->computeEigenfunction(E, y, side, xNeg);
     yPos = ms->computeEigenfunction(E, y, side, xPos);
 
@@ -82,12 +90,13 @@ HalfRange::computeEigenfunction(double E, const Y<> &side, const ArrayXd &x, int
 }
 
 
-std::function<Y<>(double)>
-HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) const {
+template<typename Scalar>
+std::function<Y<Scalar>(Scalar)>
+HalfRange<Scalar>::eigenfunctionCalculator(Scalar E, const Y<Scalar> &side, int _even) const {
     bool even = isEven(this, E, side, _even);
-    function<Y<>(double)> calculator(ms->eigenfunctionCalculator(E, getY0(even), side));
-    return [calculator, even](double x) -> Y<> {
-        Y<> c = calculator(x < 0 ? -x : x);
+    function<Y<Scalar>(Scalar)> calculator(ms->eigenfunctionCalculator(E, getY0<Scalar>(even), side));
+    return [calculator, even](Scalar x) -> Y<Scalar> {
+        Y<Scalar> c = calculator(x < 0 ? -x : x);
         c *= M_SQRT1_2;
         if (x < 0 && !even)
             c *= -1;
@@ -95,15 +104,16 @@ HalfRange::eigenfunctionCalculator(double E, const Y<> &side, int _even) const {
     };
 }
 
-vector<pair<int, double>> *
-mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd) {
-    vector<pair<int, double>> *values = new vector<pair<int, double>>();
+template<typename Scalar>
+vector<pair<int, Scalar>> *
+mergeEigenvalues(vector<pair<int, Scalar>> *even, vector<pair<int, Scalar>> *odd) {
+    vector<pair<int, Scalar>> *values = new vector<pair<int, Scalar>>();
 
 
-    for (pair<int, double> &iE : *even)
+    for (pair<int, Scalar> &iE : *even)
         iE.first *= 2;
 
-    for (pair<int, double> &iE : *odd)
+    for (pair<int, Scalar> &iE : *odd)
         iE.first = 2 * iE.first + 1;
 
     auto a = even->begin();
@@ -127,26 +137,31 @@ mergeEigenvalues(vector<pair<int, double>> *even, vector<pair<int, double>> *odd
 
 }
 
-double
-HalfRange::computeEigenvalueError(double E, const Y<> &side, int _even) const {
-    return ms->computeEigenvalueError(E, getY0(isEven(this, E, side, _even)), side);
+template<typename Scalar>
+Scalar HalfRange<Scalar>::computeEigenvalueError(Scalar E, const Y<Scalar> &side, int _even) const {
+    return ms->computeEigenvalueError(E, getY0<Scalar>(isEven(this, E, side, _even)), side);
 }
 
-vector<pair<int, double>> *
-HalfRange::computeEigenvaluesByIndex(int Imin, int Imax, const Y<> &side, const Y<> &right) const {
+template<typename Scalar>
+vector<pair<int, Scalar>> *
+HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side, const Y<Scalar> &right) const {
     checkSymmetry(side, right);
     return mergeEigenvalues(
-            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<>({1, 0}, {0, 0}), side),
-            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<>({0, 1}, {0, 0}), side));
+            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>({1, 0}, {0, 0}), side),
+            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>({0, 1}, {0, 0}), side));
 }
 
-vector<pair<int, double>> *
-HalfRange::computeEigenvalues(double Emin, double Emax, const Y<> &side, const Y<> &right) const {
+template<typename Scalar>
+vector<pair<int, Scalar>> *
+HalfRange<Scalar>::computeEigenvalues(Scalar Emin, Scalar Emax, const Y<Scalar> &side, const Y<Scalar> &right) const {
     checkSymmetry(side, right);
-    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<>({1, 0}, {0, 0}), side),
-                            ms->computeEigenvalues(Emin, Emax, Y<>({0, 1}, {0, 0}), side));
+    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<Scalar>({1, 0}, {0, 0}), side),
+                            ms->computeEigenvalues(Emin, Emax, Y<Scalar>({0, 1}, {0, 0}), side));
 }
 
-HalfRange::~HalfRange() {
+template<typename Scalar>
+HalfRange<Scalar>::~HalfRange() {
     delete ms;
 }
+
+#include "../util/instantiate.h"
