@@ -35,10 +35,10 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bo
     Matrix<Scalar, Dynamic, Dynamic> zero = Matrix<Scalar, Dynamic, Dynamic>::Zero(s->n, s->n);
     Matrix<Scalar, Dynamic, Dynamic> one = Matrix<Scalar, Dynamic, Dynamic>::Identity(s->n, s->n);
 
-    if (fmath<Scalar>::abs(delta) <= EPS) {
+    if (abs(delta) <= EPS) {
         return T<Scalar, Dynamic>(s->n);
     }
-    if (use_h && fmath<Scalar>::abs(delta - h) <= EPS)
+    if (use_h && abs(delta - h) <= EPS)
         return calculateT(E);
 
     Matrix<Scalar, Dynamic, 1> VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(s->n, E)) * delta;
@@ -200,7 +200,7 @@ template<typename Scalar>
 Scalar Matscs<Scalar>::Sector::calculateError() const {
     Scalar E = vs[0].diagonal().minCoeff();
     Scalar error = (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().mean();
-    if (fmath<Scalar>::isnan(error))
+    if (isnan(error))
         return numeric_limits<Scalar>::infinity();
     return error;
 }

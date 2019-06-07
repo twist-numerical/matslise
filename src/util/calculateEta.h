@@ -2,7 +2,6 @@
 #define SCHRODINGER_CALCULATE_ETA_H
 
 #include "eigen.h"
-#include "fmath.h"
 
 
 using namespace Eigen;
@@ -10,7 +9,7 @@ using namespace Eigen;
 template<typename Scalar>
 Scalar *calculateEta(Scalar Z, int etaCount) {
     Scalar *eta;
-    if (fmath<Scalar>::abs(Z) < 0.5) {
+    if (abs(Z) < 0.5) {
         static Scalar eta9[] = {1.527349308567059e-009, 0.36365459727787e-10, 0.00395276736172e-10,
                                 0.00002635178241e-10, 0.00000012199899e-10, 0.00000000042069e-10,
                                 0.00000000000113e-10, 0};
@@ -36,13 +35,13 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
             if (Z > 500) {
                 std::cerr << ("Z > 500") << std::endl;
             }
-            Scalar sZ = fmath<Scalar>::sqrt(Z);
-            eta[0] = fmath<Scalar>::cosh(sZ);
-            eta[1] = fmath<Scalar>::sinh(sZ) / sZ;
+            Scalar sZ = sqrt(Z);
+            eta[0] = cosh(sZ);
+            eta[1] = sinh(sZ) / sZ;
         } else {
-            Scalar sZ = fmath<Scalar>::sqrt(-Z);
-            eta[0] = fmath<Scalar>::cos(sZ);
-            eta[1] = fmath<Scalar>::sin(sZ) / sZ;
+            Scalar sZ = sqrt(-Z);
+            eta[0] = cos(sZ);
+            eta[1] = sin(sZ) / sZ;
         }
 
         for (int i = 2; i < etaCount; ++i) {

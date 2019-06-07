@@ -3,6 +3,9 @@
 #include <tuple>
 #include "../catch.hpp"
 #include "../../src/matslise.h"
+#include <boost/multiprecision/float128.hpp>
+
+using namespace boost::multiprecision;
 
 
 using namespace matslise;
@@ -103,6 +106,43 @@ TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
     Y<long double> y0({1, 0}, {0, 0});
     Y<long double> y1({0, -1}, {0, 0});
     vector<pair<int, long double>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}
+
+TEST_CASE("coffey_evans (float128)", "[matslise][coffey_evans][float128]") {
+    const float128 B = 20;
+    Matslise<float128> ms([B](float128 x) -> float128 {
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, 0, M_PI_2, 31);
+
+    Y<float128> y0({0, 1}, {0, 0});
+    Y<float128> y1({1, 0}, {0, 0});
+    vector<pair<int, float128>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}
+
+TEST_CASE("high potential (float128)", "[matslise][high][float128]") {
+    Matslise<float128> ms([](float128 x) -> float128 {
+        return (1 - cos(2 * M_PI * x)) / 2 * 1000;
+    }, 0, 1, 31);
+
+    Y<float128> y0({1, 0}, {0, 0});
+    Y<float128> y1({0, -1}, {0, 0});
+    vector<pair<int, float128>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    delete eigenvalues;
+}
+
+TEST_CASE("high potential (auto) (float128)", "[matslise][high][long]") {
+    Matslise<float128> ms([](float128 x) -> float128 {
+        return (1 - cos(2 * M_PI * x)) / 2 * 1000;
+    }, 0, 1, Matslise<float128>::AUTO(1e-6));
+
+    Y<float128> y0({1, 0}, {0, 0});
+    Y<float128> y1({0, -1}, {0, 0});
+    vector<pair<int, float128>> *eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }

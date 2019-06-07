@@ -9,7 +9,7 @@
 #include "../matslise.h"
 #include "../matscs.h"
 #include "../se2d.h"
-#include "fmath.h"
+#include "constants.h"
 #include <stdexcept>
 
 template<typename Problem>
@@ -111,7 +111,7 @@ typename Problem::Sector *matslise::sectorbuilder::Auto<Problem>::nextSector(
     do {
         if (s != nullptr) {
             ++steps;
-            h *= std::max((typename Problem::Scalar) .01, fmath<typename Problem::Scalar>::pow(tol / error, 1. / 6));
+            h *= std::max((typename Problem::Scalar) .01, pow(tol / error, ((typename Problem::Scalar) 1) / 6));
             if (forward) {
                 xmax = xmin + h;
             } else {
@@ -126,7 +126,7 @@ typename Problem::Sector *matslise::sectorbuilder::Auto<Problem>::nextSector(
     if (steps == 0) {
         while (error < tol / 2 && steps < 10 && h != right - left) {
             ++steps;
-            h *= fmath<typename Problem::Scalar>::pow(tol / error, 1. / 12);
+            h *= pow(tol / error, 1. / 12);
             if (forward) {
                 xmax = xmin + h;
                 if (xmax > right)

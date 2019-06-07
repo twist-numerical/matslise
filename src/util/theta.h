@@ -2,13 +2,13 @@
 #define MATSLISE_THETA_H
 
 #include "../matslise.h"
-#include "fmath.h"
+#include "constants.h"
 
 template<typename Scalar>
 inline Scalar atan_safe(Scalar y, Scalar x) {
     if (x == 0)
-        return y == 0 ? 0 : fmath<Scalar>::PI / 2;
-    return fmath<Scalar>::atan(y / x);
+        return y == 0 ? 0 : constants<Scalar>::pi() / 2;
+    return atan(y / x);
 }
 
 namespace matslise {

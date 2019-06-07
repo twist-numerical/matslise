@@ -5,7 +5,7 @@
 #include "../util/calculateEta.h"
 #include "../util/horner.h"
 #include "../util/theta.h"
-#include "../util/fmath.h"
+#include "../util/constants.h"
 
 #define EPS (1.e-12)
 
@@ -32,9 +32,9 @@ void Matslise<Scalar>::Sector::calculateTCoeffs() {
 
 template<typename Scalar>
 T<Scalar> Matslise<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bool use_h) const {
-    if (fmath<Scalar>::abs(delta) <= EPS)
+    if (abs(delta) <= EPS)
         return T<Scalar>();
-    if (use_h && fmath<Scalar>::abs(delta - h) <= EPS)
+    if (use_h && abs(delta - h) <= EPS)
         return calculateT(E);
 
     Scalar *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA_delta);
@@ -80,9 +80,9 @@ Scalar Matslise<Scalar>::Sector::prufer(Scalar E, Scalar delta, const Y<Scalar> 
     Scalar theta1 = theta(y1);
     Scalar ff = E - vs[0];
     if (ff > 0) {
-        Scalar f = fmath<Scalar>::sqrt(ff);
+        Scalar f = sqrt(ff);
         Scalar C = atan_safe(y0.y[0] * f, y0.y[1]) / f;
-        theta0 -= fmath<Scalar>::round(((C + delta) * f - theta1) / M_PI) * M_PI;
+        theta0 -= round(((C + delta) * f - theta1) / M_PI) * M_PI;
     } else {
         Scalar s0 = y0.y[0] * y0.y[1];
         Scalar s1 = y1.y[0] * y1.y[1];

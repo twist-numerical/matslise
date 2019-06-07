@@ -8,7 +8,7 @@
 #include "../matslise.h"
 #include "matslise_formulas.h"
 #include "../util/theta.h"
-#include "../util/fmath.h"
+#include "../util/constants.h"
 #include "../util/find_sector.h"
 
 #define EPS (1.e-12)
@@ -63,9 +63,9 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
             cerr << "Newton-iteration did not converge for E=" << (double) E << endl;
             break;
         }
-    } while (fmath<Scalar>::abs(adjust) > tol);
+    } while (abs(adjust) > tol);
 
-    int index = fmath<Scalar>::round(theta / M_PI);
+    int index = (int) round(theta / M_PI);
     if (index < 0)
         index = 0;
     return make_pair(index, E);
@@ -91,8 +91,8 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
     while (!toCheck.empty()) {
         tie(a, ta, b, tb, depth) = toCheck.front();
         toCheck.pop();
-        ia = fmath<Scalar>::ceil(ta);
-        ib = fmath<Scalar>::ceil(tb);
+        ia = (int) ceil(ta);
+        ib = (int) ceil(tb);
         if (ta >= tb || ia == ib || ib <= Imin || Imax <= ia)
             continue;
         if (ia + 1 == ib)
@@ -103,7 +103,7 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
             eigenvalues->push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
         else {
             tc = get<2>(ms->calculateError(c, left, right)) / M_PI;
-            if (fmath<Scalar>::isnan(tc)) {
+            if (isnan(tc)) {
                 cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
             } else {
                 toCheck.push(make_tuple(a, ta, c, tc, depth));
@@ -125,7 +125,7 @@ Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> 
     Scalar Emax = 1;
     while (true) {
         Scalar t = get<2>(calculateError(Emax, left, right)) / M_PI;
-        int i = fmath<Scalar>::floor(t);
+        int i = (int) floor(t);
         if (i >= Imax)
             break;
         else {
@@ -137,7 +137,7 @@ Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> 
     if (Emin == -1) {
         while (true) {
             Scalar t = get<2>(calculateError(Emin, left, right)) / M_PI;
-            int i = fmath<Scalar>::ceil(t);
+            int i = (int) ceil(t);
             if (i <= Imin)
                 break;
             else {
@@ -158,7 +158,7 @@ Matslise<Scalar>::computeEigenvalues(Scalar Emin, Scalar Emax, const Y<Scalar> &
 
 template<typename Scalar>
 Scalar Matslise<Scalar>::computeEigenvalueError(Scalar E, const Y<Scalar> &left, const Y<Scalar> &right) const {
-    return fmath<Scalar>::abs(E - newtonIteration<Scalar>(this, E, left, right, 1e-9, false).second);
+    return abs(E - newtonIteration<Scalar>(this, E, left, right, 1e-9, false).second);
 }
 
 template<typename Scalar>
@@ -184,12 +184,11 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
         ys[i] = ms.sectors[i]->propagate(E, ys[i + 1], false);
     Y<Scalar> yr = ms.sectors[m]->propagate(E, ys[m + 1], false);
     Y<Scalar> &yl = ys[m];
-    Scalar s = (fmath<Scalar>::abs(yr.y[0]) + fmath<Scalar>::abs(yl.y[0]) >
-                fmath<Scalar>::abs(yr.y[1]) + fmath<Scalar>::abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
+    Scalar s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
     Scalar norm = yl.dy[0] * yl.y[1] - yl.dy[1] * yl.y[0];
     norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
     if (norm > 0) {
-        norm = fmath<Scalar>::sqrt(norm);
+        norm = sqrt(norm);
     } else {
         cerr << "There are problems with the normalization." << endl;
         norm = 1;

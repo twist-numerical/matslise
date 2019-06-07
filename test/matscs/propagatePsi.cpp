@@ -24,7 +24,7 @@ MatrixXd f(double x) {
     r << v0 + v1, v0 - v1, v0 - v1, v0 + v1;
     return r;
 }
-
+/*
 TEST_CASE("Test propagatePsi", "[matscs][propagatePsi]") {
     Matscs<double> scs(&f, 2, 0, 20, 64);
     double Es[] = {-64, -36, -30.25, -20.25, -16};
@@ -36,3 +36,4 @@ TEST_CASE("Test propagatePsi", "[matscs][propagatePsi]") {
     }
 }
 
+*/

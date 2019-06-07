@@ -4,7 +4,7 @@
 
 #include <iostream>
 #include "../matslise.h"
-#include "../util/fmath.h"
+#include "../util/constants.h"
 #include <memory>
 
 using namespace std;
@@ -37,7 +37,7 @@ inline bool isEven(const HalfRange<Scalar> *hr, Scalar E, const Y<Scalar> &side,
     if (even == HalfRange<Scalar>::AUTO) {
         Scalar error0 = get<0>(hr->ms->calculateError(E, Y<Scalar>({1, 0}, {0, 0}), side));
         Scalar error1 = get<0>(hr->ms->calculateError(E, Y<Scalar>({0, 1}, {0, 0}), side));
-        return fmath<Scalar>::abs(error0) < fmath<Scalar>::abs(error1);
+        return abs(error0) < abs(error1);
     }
     return bool(even);
 }

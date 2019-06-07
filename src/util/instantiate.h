@@ -11,6 +11,15 @@ template class matslise::HalfRange<Scalar>; \
 template class matslise::Matscs<Scalar>;
 
 INSTANTIATE_MATSLISE(double)
+
 INSTANTIATE_MATSLISE(long double)
+
+#ifdef BOOST
+
+#include <boost/multiprecision/float128.hpp>
+
+INSTANTIATE_MATSLISE(boost::multiprecision::float128)
+
+#endif
 
 #endif //MATSLISE_INSTANTIATE_H

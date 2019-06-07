@@ -1,4 +1,5 @@
 set(CMAKE_CXX_STANDARD 11)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -ansi -Wall -Wextra -Wpedantic -Wconversion -fPIC")
@@ -12,7 +13,7 @@ SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp
         se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h
-        util/lobatto.cpp util/fmath.cpp)
+        util/lobatto.cpp)
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/main.cpp ${MATSLISE_SRC})
@@ -25,11 +26,23 @@ if (DEFINED EMSCRIPTEN)
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
     set(targets matslise pyslise)
+    set(libraries Eigen3::Eigen)
     add_subdirectory(python/pybind11)
     pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} python/pyslise.cpp)
     add_library(matslise SHARED ${MATSLISE_SRC})
 
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+    find_package(Boost)
+    if (Boost_FOUND)
+        add_definitions(-DBOOST)
+        include_directories(${Boost_INCLUDE_DIRS})
+
+
+        find_package(Quadmath)
+        if (Quadmath_FOUND)
+            list(APPEND libraries Quadmath::quadmath)
+        endif ()
+    endif ()
+
     find_package(MKL)
     if (MKL_FOUND)
         set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
@@ -51,8 +64,8 @@ else ()
     endif ()
 
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
-    target_link_libraries(matslise PUBLIC Eigen3::Eigen)
-    target_link_libraries(pyslise PRIVATE Eigen3::Eigen)
+    target_link_libraries(matslise PUBLIC ${libraries})
+    target_link_libraries(pyslise PRIVATE ${libraries})
 
     install(FILES matslise.h Array2D.h matscs.h se2d.h schrodinger.h DESTINATION include/matslise/)
     install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
