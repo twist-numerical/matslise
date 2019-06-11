@@ -9,132 +9,106 @@
 
 namespace matslise {
     namespace SEnD_util {
-        const std::function<bool(std::pair<double, double>, std::pair<double, double>)>
-                NEWTON_RAPHSON_SORTER =
-                [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
-                    if (abs(a.first) > 100 || abs(b.first) > 100)
-                        return abs(a.first) < abs(b.first);
-                    return abs(a.first / a.second) < abs(b.first / b.second);
-                };
+        template<typename Scalar>
+        bool NEWTON_RAPHSON_SORTER(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
+            if (abs(a.first) > 100 || abs(b.first) > 100)
+                return abs(a.first) < abs(b.first);
+            return abs(a.first / a.second) < abs(b.first / b.second);
+        }
 
-        const std::function<bool(std::pair<double, double>, std::pair<double, double>)>
-                ABS_SORTER =
-                [](const std::pair<double, double> &a, const std::pair<double, double> &b) {
-                    return abs(a.first) < abs(b.first);
-                };
+        template<typename Scalar>
+        bool ABS_SORTER(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
+            return abs(a.first) < abs(b.first);
+        }
     }
 
-    template<int n>
-    class SEnD;
-
-    template<int n>
-    struct dim {
-    };
-
-    template<>
-    struct dim<1> {
-        typedef std::function<double(double)> function;
-        typedef Eigen::ArrayXd array;
-        typedef AbstractMatslise<double> SEsolver;
-    };
-
-    template<>
-    struct dim<2> {
-        typedef std::function<double(double, double)> function;
-        typedef Eigen::ArrayXXd array;
-        typedef SEnD<2> SEsolver;
-    };
-
-    template<>
-    struct dim<3> {
-        typedef std::function<double(double, double, double)> function;
-        typedef Eigen::Tensor<double, 3> array;
-        typedef SEnD<3> SEsolver;
-    };
-
-    template<int n = 2>
-    class SEnD {
+    template<typename _Scalar>
+    class SE2D {
     public:
-        typedef double Scalar;
+        typedef _Scalar Scalar;
+        typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
+        typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
+        typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
 
         class Sector;
 
-        typename dim<n>::function V;
-        Eigen::MatrixXd *M;
-        Rectangle<n> domain;
+        std::function<Scalar(Scalar, Scalar)> V;
+        MatrixXs *M;
+        Rectangle<2, Scalar> domain;
         int sectorCount;
-        typename SEnD<n>::Sector **sectors;
-        Eigen::ArrayXd grid[n];
+        SE2D<Scalar>::Sector **sectors;
+        ArrayXs grid;
         int N;
-        double match;
-        Options<n> options;
+        Scalar match;
+        Options2<Scalar> options;
     public:
-        SEnD(typename dim<n>::function V, const Rectangle<n> &domain, const Options<n> &options);
+        SE2D(const std::function<Scalar(Scalar, Scalar)> &V, const Rectangle<2, Scalar> &domain,
+             const Options2<Scalar> &options);
 
-        std::pair<Eigen::MatrixXd, Eigen::MatrixXd> calculateErrorMatrix(double E) const;
+        std::pair<MatrixXs, MatrixXs> calculateErrorMatrix(Scalar E) const;
 
-        std::pair<double, double> calculateError(double E, const std::function<bool(
-                std::pair<double, double>,
-                std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
+        std::pair<Scalar, Scalar> calculateError(Scalar E, const std::function<bool(
+                std::pair<Scalar, Scalar>,
+                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
 
-        std::vector<std::pair<double, double>> *calculateErrors(double E) const;
+        std::vector<std::pair<Scalar, Scalar>> *calculateErrors(Scalar E) const;
 
-        std::vector<std::pair<double, double>> *sortedErrors(double E, const std::function<bool(
-                std::pair<double, double>,
-                std::pair<double, double>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER) const;
+        std::vector<std::pair<Scalar, Scalar>> *sortedErrors(Scalar E, const std::function<bool(
+                std::pair<Scalar, Scalar>,
+                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
 
-        Y<double, Eigen::Dynamic>
-        propagate(double E, const Y<double, Eigen::Dynamic> &y0, double a, double b, bool use_h = true) const;
+        Y<Scalar, Eigen::Dynamic>
+        propagate(Scalar E, const Y<Scalar, Eigen::Dynamic> &y0, Scalar a, Scalar b, bool use_h = true) const;
 
-        double findEigenvalue(double Eguess, double tolerance = 1e-9, int maxIterations = 30,
-                              double minTolerance = 1e-5) const;
+        Scalar findEigenvalue(Scalar Eguess, Scalar tolerance = 1e-9, int maxIterations = 30,
+                              Scalar minTolerance = 1e-5) const;
 
-        std::vector<typename dim<2>::array> *
-        computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[n]) const;
+        std::vector<ArrayXXs> *
+        computeEigenfunction(Scalar E, const ArrayXs &x, const ArrayXs &y) const;
 
-        std::vector<double> *computeEigenvaluesByIndex(int Imin, int Imax) const;
+        std::vector<Scalar> *computeEigenvaluesByIndex(int Imin, int Imax) const;
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
-        bool contains(double point) const {
+        bool contains(Scalar point) const {
             return point <= domain.max && point >= domain.min;
         }
 
-        virtual ~SEnD();
+        virtual ~SE2D();
 
     protected:
-        Y<double, Eigen::Dynamic> *computeEigenfunctionSteps(double E) const;
+        Y<Scalar, Eigen::Dynamic> *computeEigenfunctionSteps(Scalar E) const;
 
-        Eigen::MatrixXd calculateM(int k) const;
+        MatrixXs calculateM(int k) const;
 
     public:
         class Sector {
         public:
-            SEnD<n> *se2d;
-            typename dim<n - 1>::SEsolver *matslise;
-            matslise::Matscs<double> *matscs;
-            typename dim<n - 1>::array vbar;
-            double min, max;
+            SE2D<Scalar> *se2d;
+            AbstractMatslise<Scalar> *matslise;
+            matslise::Matscs<Scalar> *matscs;
+            ArrayXs vbar;
+            Scalar min, max;
 
-            double *eigenvalues;
-            typename dim<n - 1>::array *eigenfunctions;
+            Scalar *eigenvalues;
+            ArrayXs *eigenfunctions;
 
-            Sector(SEnD<n> *se2d, double min, double max, bool backward);
+            Sector(SE2D<Scalar> *se2d, Scalar min, Scalar max, bool backward);
 
-            Y<double, Eigen::Dynamic> propagate(double E, const Y<double, Eigen::Dynamic> &y0, double a, double b,
+            Y<Scalar, Eigen::Dynamic> propagate(Scalar E, const Y<Scalar, Eigen::Dynamic> &y0, Scalar a, Scalar b,
                                                 bool use_h = true) const;
 
-            bool contains(double point) const {
+            bool contains(Scalar point) const {
                 return point <= max && point >= min;
             }
 
-            typename dim<n - 1>::array computeEigenfunction(int index, const Eigen::ArrayXd &x) const;
+            ArrayXs computeEigenfunction(int index, const ArrayXs &x) const;
 
-            double calculateError() const;
+            Scalar calculateError() const;
 
             virtual ~Sector();
 
         private:
-            Eigen::MatrixXd calculateDeltaV(double y) const;
+            MatrixXs calculateDeltaV(Scalar y) const;
         };
     };
 }

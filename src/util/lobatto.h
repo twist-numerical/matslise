@@ -3,38 +3,49 @@
 
 #include "eigen.h"
 
-using namespace Eigen;
 
 namespace lobatto {
-    ArrayXd grid(const ArrayXd &x);
+    template<typename Scalar>
+    Eigen::Array<Scalar, Eigen::Dynamic, 1> grid(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) {
+        long n = x.size();
+        Eigen::Array<Scalar, Eigen::Dynamic, 1> fine(3 * n - 2);
+        Scalar sqrt5 = sqrt(static_cast<Scalar>(5));
+        for (long i = 0; i < n - 1; ++i) {
+            Scalar a = x[i], b = x[i + 1];
+            Scalar m = (a + b) / 2, h = (b - a) / 2;
+            fine[3 * i] = a;
+            fine[3 * i + 1] = m - h / sqrt5;
+            fine[3 * i + 2] = m + h / sqrt5;
+        }
+        fine[3 * (n - 1)] = x[n - 1];
 
-    double quadrature(const ArrayXd &x, const ArrayXd &f);
+        return fine;
+    }
 
+    template<typename Scalar>
+    Scalar quadrature(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &f) {
+        long n = x.size();
+        Scalar result = 0;
 
-    template<int n>
-    class Dim {
-    };
+        for (int i = 0; i < n - 1; i += 3)
+            result += (x[i + 3] - x[i]) / 2 * ((f[i] + f[i + 3]) / 6 + (f[i + 1] + f[i + 2]) * 5 / 6);
 
-    template<>
-    class Dim<1> {
-    public:
-        typedef ArrayXd grid;
-        typedef std::function<double(double)> function;
-    };
+        return result;
+    }
 
-    template<>
-    class Dim<2> {
-    public:
-        typedef ArrayXXd grid;
-        typedef std::function<double(double, double)> function;
-    };
+    template<typename Scalar>
+    Scalar quadrature(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &y,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> &f) {
+        long n = x.size();
+        Eigen::Array<Scalar, Eigen::Dynamic, 1> result = Eigen::Array<Scalar, Eigen::Dynamic, 1>::Zero(n);
 
+        for (int i = 0; i < n - 1; i += 3)
+            result += (x[i + 3] - x[i]) / 2 * ((f.col(i) + f.col(i + 3)) / 6 + (f.col(i + 1) + f.col(i + 2)) * 5 / 6);
 
-    template<int n>
-    typename Dim<n>::grid apply(const ArrayXd grid[n], const typename Dim<n>::function &f);
-
-    template<int n>
-    double multi_quadrature(const ArrayXd x[n], const typename Dim<n>::grid &f);
+        return lobatto::quadrature<Scalar>(y, result);
+    }
 }
 
 #endif

@@ -2,14 +2,15 @@
 
 using namespace Eigen;
 using namespace matslise;
-using namespace matslise::SEnD_util;
 using namespace std;
 
-template<>
-vector<double> *SEnD<2>::computeEigenvaluesByIndex(int Imin, int Imax) const {
+template<typename Scalar>
+vector<Scalar> *SE2D<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax) const {
     // TODO
     (void) Imin;
     (void) Imax;
-    auto values = new vector<double>();
+    auto values = new vector<Scalar>();
     return values;
 }
+
+#include "../util/instantiate.h"

@@ -16,7 +16,7 @@
 #define MATSCS_N 9
 
 namespace matslise {
-    template<typename _Scalar>
+    template<typename _Scalar=double>
     class Matscs {
     public:
         typedef _Scalar Scalar;

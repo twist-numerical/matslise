@@ -3,9 +3,6 @@
 #include <tuple>
 #include "../catch.hpp"
 #include "../../src/matslise.h"
-#include <boost/multiprecision/float128.hpp>
-
-using namespace boost::multiprecision;
 
 
 using namespace matslise;
@@ -110,6 +107,11 @@ TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
     delete eigenvalues;
 }
 
+#ifdef BOOST
+#include <boost/multiprecision/float128.hpp>
+
+using boost::multiprecision::float128;
+
 TEST_CASE("coffey_evans (float128)", "[matslise][coffey_evans][float128]") {
     const float128 B = 20;
     Matslise<float128> ms([B](float128 x) -> float128 {
@@ -146,3 +148,4 @@ TEST_CASE("high potential (auto) (float128)", "[matslise][high][long]") {
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }
+#endif

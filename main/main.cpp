@@ -5,6 +5,11 @@
 #include "../src/matscs.h"
 #include "../src/se2d.h"
 
+
+#include <boost/multiprecision/float128.hpp>
+
+using boost::multiprecision::float128;
+
 using namespace std;
 using namespace Eigen;
 using namespace matslise;
@@ -13,7 +18,7 @@ void coffey() {
     double M = M_PI_2;
     double B = 20;
 
-    matslise::Matslise coffey([B](double x) {
+    matslise::Matslise<> coffey([B](double x) {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
     }, -M, M, 128);
 
@@ -52,10 +57,10 @@ void coffey() {
 void mathieu() {
     double m = 0, M = M_PI;
 
-    Matslise mathieu([](double x) {
+    Matslise<> mathieu([](double x) {
         return 2 * cos(2 * x);
         //return -2 * 30 * cos(2 * x) + 30 * 30 * sin(2 * x) * sin(2 * x);
-    }, m, M, Matslise::UNIFORM(16));
+    }, m, M, Matslise<>::UNIFORM(16));
     double h = M_PI / 16;
 
     matslise::Y<> y0({0, 1}, {0, 0});
@@ -211,16 +216,16 @@ void test3d() {
 }*/
 
 void testMatscs() {
-    Matscs ms([](double x) {
+    Matscs<> ms([](double x) {
         return (MatrixXd(1, 1) << x * x).finished();
     }, 1, -5, 5, 32);
     MatrixXd zero = MatrixXd::Zero(1, 1);
     MatrixXd one = MatrixXd::Identity(1, 1);
     double E = 3;
-    cout << ms.propagate(E, Y<Dynamic>::Dirichlet(1), -5, 5).y(0, 0) << endl;
+    cout << ms.propagate(E, Y<double, Dynamic>::Dirichlet(1), -5, 5).y(0, 0) << endl;
 
     cout << "\n\nMATSLISE" << endl;
-    Matslise ml([](double x) { return x * x; }, -5, 5, 32);
+    Matslise<> ml([](double x) { return x * x; }, -5, 5, 32);
     cout << get<0>(ml.propagate(E, Y<>({0, 1}, {0, 0}), -5, 5)).y(0, 0) << endl;
 }
 
@@ -228,7 +233,7 @@ void testEigenfunctionCalculator() {
     double M = M_PI_2;
     double B = 20;
 
-    matslise::Matslise coffey([B](double x) {
+    Matslise<> coffey([B](double x) {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
     }, -M, M, 128);
 
@@ -239,27 +244,35 @@ void testEigenfunctionCalculator() {
     cout << E << endl;
     delete eigs;
 
-    std::function<Y<>(double)> ef = coffey.eigenfunctionCalculator(E, y0, y0);
+    function<Y<>(double)> ef = coffey.eigenfunctionCalculator(E, y0, y0);
     cout << ef(0) << endl;
 }
 
 void testPrufer() {
     //Matslise ms([](double x) { return 0.0; }, 0., 3.14, 60);
 
-    Matslise ms([](double x) {
+    Matslise<> ms([](double x) {
         return 2 * 5 * cos(2 * x);
     }, -M_PI_2, M_PI_2, 18);
-    matslise::Y<> y0({0, 1});
+    Y<> y0({0, 1});
     cout << get<1>(ms.propagate(1, y0, -M_PI_2, -1)) << endl;
     // cout << get<0>(ms.propagate(16, y0, .1, 1.6)) << endl;
 }
 
 void testHigh() {
 
-    Matslise ms([](double x) -> double {
+    Matslise<> ms([](double x) -> double {
         return (1 - cos(2 * M_PI * x)) / 2 * 1000;
-    }, 0, 1, Matslise::AUTO(1e-6));
+    }, 0, 1, Matslise<>::AUTO(1e-6));
     cout << ms.computeEigenvaluesByIndex(0, 10, Y<>::Dirichlet(), Y<>::Dirichlet()) << endl;
+}
+
+void testQuartic() {
+    float128 a = -1q;
+    float128 c = 0.001q;
+    SEnD<2>([a, c](double x, double y) -> double  {
+        return x*x+y*y+c*(x*x*x*x+2*a*x*x*y*y+y*y*y*y);
+    }, {-7,7});
 }
 
 int main() {

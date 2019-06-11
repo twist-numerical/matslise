@@ -7,50 +7,50 @@ using namespace std;
 
 #define cec_cce(y) ((y).getdY(0).transpose()*(y).getY(1) - (y).getY(0).transpose()*(y).getdY(1))
 
-template<int n>
-Y<double, Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
-    Y<double, Dynamic> *steps = new Y<double, Dynamic>[sectorCount + 1];
+template<typename Scalar>
+Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(Scalar E) const {
+    Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
-    steps[0] = Y<double, Dynamic>::Dirichlet(N);
-    steps[sectorCount] = Y<double, Dynamic>::Dirichlet(N);
+    steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
+    steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
 
-    MatrixXd normRight = MatrixXd::Zero(N, N);
+    MatrixXs normRight = MatrixXs::Zero(N, N);
     int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
-        Y<double, Dynamic> next = i < sectorCount - 1 ? (MatrixXd) (M[i].transpose()) * steps[i + 1] : steps[i + 1];
+        Y<Scalar, Dynamic> next = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
         normRight += cec_cce(next) - cec_cce(steps[i]);
         matchIndex = i;
     }
-    Y<double, Dynamic> matchRight = steps[matchIndex];
+    Y<Scalar, Dynamic> matchRight = steps[matchIndex];
 
-    MatrixXd normLeft = MatrixXd::Zero(N, N);
+    MatrixXs normLeft = MatrixXs::Zero(N, N);
     for (int i = 0; i < matchIndex; ++i) {
-        Y<double, Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
+        Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
         steps[i + 1] = M[i] * next;
         normLeft += cec_cce(next) - cec_cce(steps[i]);
     }
-    Y<double, Dynamic> matchLeft = steps[matchIndex];
+    Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
 
-    ColPivHouseholderQR<MatrixXd> left_solver(matchLeft.getY(0).transpose());
-    ColPivHouseholderQR<MatrixXd> right_solver(matchRight.getY(0).transpose());
-    MatrixXd Ul = left_solver.solve(matchLeft.getY(1).transpose()).transpose();
-    MatrixXd Ur = right_solver.solve(matchRight.getY(1).transpose()).transpose();
+    ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
+    ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
+    MatrixXs Ul = left_solver.solve(matchLeft.getY(1).transpose()).transpose();
+    MatrixXs Ur = right_solver.solve(matchRight.getY(1).transpose()).transpose();
 
-    FullPivLU<MatrixXd> lu(Ul - Ur);
+    FullPivLU<MatrixXs> lu(Ul - Ur);
     lu.setThreshold(1e-4);
     if (lu.dimensionOfKernel() == 0) {
         delete[] steps;
         return nullptr;
     }
-    MatrixXd kernel = lu.kernel();
+    MatrixXs kernel = lu.kernel();
 
-    Y<double, Dynamic> *elements = new Y<double, Dynamic>[sectorCount + 1];
-    MatrixXd left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
-    MatrixXd right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-    VectorXd scaling = (left.transpose() * normLeft * left
+    Y<Scalar, Dynamic> *elements = new Y<Scalar, Dynamic>[sectorCount + 1];
+    MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
+    MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
+    MatrixXs scaling = (left.transpose() * normLeft * left
                         + right.transpose() * normRight * right).diagonal();
-    scaling = scaling.unaryExpr([](double s) { return s < 0 ? 1 : 1. / sqrt(s); });
+    scaling = scaling.unaryExpr([](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); });
     left *= scaling.asDiagonal();
     right *= scaling.asDiagonal();
     for (int i = 0; i <= matchIndex; ++i)
@@ -62,11 +62,9 @@ Y<double, Dynamic> *SEnD<n>::computeEigenfunctionSteps(double E) const {
     return elements;
 }
 
-template<>
-std::vector<typename dim<2>::array> *
-SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
-    const Eigen::ArrayXd &x = xs[0];
-    const Eigen::ArrayXd &y = xs[1];
+template<typename Scalar>
+std::vector<typename SE2D<Scalar>::ArrayXXs> *
+SE2D<Scalar>::computeEigenfunction(Scalar E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
     long nx = x.size();
     for (long i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])
@@ -81,12 +79,12 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
         throw runtime_error("SE2D::computeEigenfunction(): y is out of range");
 
 
-    auto result = new vector<ArrayXXd>;
-    Y<double, Dynamic> *steps = computeEigenfunctionSteps(E);
+    auto result = new vector<ArrayXXs>;
+    Y<Scalar, Dynamic> *steps = computeEigenfunctionSteps(E);
     if (steps != nullptr) {
         int cols = (int) steps[0].getY(0).cols();
         for (int i = 0; i < cols; ++i)
-            result->push_back(ArrayXXd::Zero(nx, ny));
+            result->push_back(ArrayXXs::Zero(nx, ny));
 
         long nextY = 0;
         int sector = 0;
@@ -97,12 +95,12 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
                     throw runtime_error("SE2D::computeEigenfunction(): y is out of range");
             }
 
-            MatrixXd B(nx, N);
+            MatrixXs B(nx, N);
             for (int j = 0; j < N; ++j)
                 B.col(j) = sectors[sector]->computeEigenfunction(j, x);
 
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
-                MatrixXd prod = B * sectors[sector]->propagate(
+                MatrixXs prod = B * sectors[sector]->propagate(
                         E, steps[sector], sectors[sector]->min, y[nextY], true).getY(0);
                 for (int i = 0; i < cols; ++i)
                     result->at(static_cast<unsigned>(i)).col(nextY) = prod.col(i);
@@ -115,3 +113,5 @@ SEnD<2>::computeEigenfunction(double E, const Eigen::ArrayXd (&xs)[2]) const {
 
     return result;
 }
+
+#include "../util/instantiate.h"

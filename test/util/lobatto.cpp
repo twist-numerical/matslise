@@ -20,8 +20,8 @@ void testFunction(function<double(double)> f, function<double(double)> integral,
         for (int i = 0; i < N; ++i)
             grid[i] = a + (b - a) * i / (N - 1);
         ArrayXd lg = lobatto::grid(grid);
-        ArrayXd eval = lobatto::apply<1>(&lg, f);
-        CHECK(Approx(lobatto::multi_quadrature<1>(&lg, eval)).margin(1e-10) == (integral(b) - integral(a)));
+        ArrayXd eval = lg.unaryExpr(f);
+        CHECK(Approx(lobatto::quadrature<double>(lg, eval)).margin(1e-10) == (integral(b) - integral(a)));
     }
 }
 

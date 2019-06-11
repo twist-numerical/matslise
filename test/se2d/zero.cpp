@@ -15,11 +15,11 @@ using namespace Eigen;
 using namespace Catch::Matchers;
 
 void compareEigenfunctions(
-        const SEnD<2> &p, double E, const vector<function<double(double, double)>> &exact) {
+        const SE2D<> &p, double E, const vector<function<double(double, double)>> &exact) {
     int n = 50, m = 60;
     ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
     ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
-    std::vector<ArrayXXd> *fs = p.computeEigenfunction(E, {x, y});
+    std::vector<ArrayXXd> *fs = p.computeEigenfunction(E, x, y);
 
     REQUIRE(exact.size() == fs->size());
     for (ArrayXXd &f :*fs) {
@@ -40,12 +40,12 @@ void compareEigenfunctions(
 }
 
 TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
-    SEnD<2> p(
+    SE2D<> p(
             [](double x, double y) -> double {
                 return 0;
             },
             {{0, M_PI}, 0, M_PI},
-            Options<2>().sectorCount(13).stepsPerSector(4).N(12).nested(Options<1>().sectorCount(13)));
+            Options2<>().sectorCount(13).stepsPerSector(4).N(12).nested(Options1<>().sectorCount(13)));
 
     set<double> eigenvalues;
     for (int i = 1; i < 6; ++i) {

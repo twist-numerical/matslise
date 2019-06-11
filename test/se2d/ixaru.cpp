@@ -11,12 +11,12 @@ using namespace std;
 using namespace Eigen;
 
 TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
-    SEnD<2> p2(
+    SE2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options<2>().sectorCount(23).stepsPerSector(4).N(10).nested(Options<1>().sectorCount(26)));
+            Options2<>().sectorCount(23).stepsPerSector(4).N(10).nested(Options1<>().sectorCount(26)));
     pair<double, int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
@@ -53,7 +53,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
             CHECK(Approx(Em).margin(1e-7) == E);
         }
 
-        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, {x, x});
+        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
         CHECK(f->size() == multiplicity);
         delete f;
     }
@@ -61,12 +61,12 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
 }
 
 TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
-    SEnD<2> p2(
+    SE2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options<2>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options<1>().tolerance(1e-7)));
+            Options2<>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options1<>().tolerance(1e-7)));
     pair<double, int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
@@ -103,7 +103,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
             CHECK(Approx(Em).margin(1e-7) == E);
         }
 
-        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, {x, x});
+        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
         CHECK(f->size() == multiplicity);
         delete f;
     }

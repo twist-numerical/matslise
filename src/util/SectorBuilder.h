@@ -20,9 +20,9 @@ inline bool matslise::sectorbuilder::compareSectors(typename Problem::Sector *a,
     } else if (std::is_same<Problem, matslise::Matscs<typename Problem::Scalar>>::value) {
         return (((typename Matscs<typename Problem::Scalar>::Sector *) a)->vs[0].diagonal() -
                 ((typename Matscs<typename Problem::Scalar>::Sector *) b)->vs[0].diagonal()).sum() < 0;
-    } else if (std::is_same<Problem, matslise::SEnD<2>>::value) {
-        return ((SEnD<2>::Sector *) a)->vbar.minCoeff() <
-               ((SEnD<2>::Sector *) b)->vbar.minCoeff();
+    } else if (std::is_same<Problem, matslise::SE2D<typename Problem::Scalar>>::value) {
+        return ((typename SE2D<typename Problem::Scalar>::Sector *) a)->vbar.minCoeff() <
+               ((typename SE2D<typename Problem::Scalar>::Sector *) b)->vbar.minCoeff();
     }
     throw std::invalid_argument("Not supported");
 }

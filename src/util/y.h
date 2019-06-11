@@ -9,7 +9,7 @@
 #include <iostream>
 
 namespace matslise {
-    template<typename Scalar, int n = 1, int cols = n, int n2 = (n == Eigen::Dynamic ? n : 2 * n)>
+    template<typename Scalar=double, int n = 1, int cols = n, int n2 = (n == Eigen::Dynamic ? n : 2 * n)>
     class Y {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
