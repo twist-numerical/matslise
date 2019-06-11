@@ -93,13 +93,13 @@ namespace matslise {
                 return point <= max && point >= min;
             }
 
-            T <Scalar, Eigen::Dynamic> calculateT(Scalar E, bool use_h = true) const;
+            T<Scalar, Eigen::Dynamic> calculateT(Scalar E, bool use_h = true) const;
 
-            T <Scalar, Eigen::Dynamic> calculateT(Scalar E, Scalar delta, bool use_h = true) const;
+            T<Scalar, Eigen::Dynamic> calculateT(Scalar E, Scalar delta, bool use_h = true) const;
 
             template<int r = Eigen::Dynamic>
-            Y <Scalar, Eigen::Dynamic, r>
-            propagate(Scalar E, const Y <Scalar, Eigen::Dynamic, r> &y0, Scalar a, Scalar b, bool use_h = true) const;
+            Y<Scalar, Eigen::Dynamic, r>
+            propagate(Scalar E, const Y<Scalar, Eigen::Dynamic, r> &y0, Scalar a, Scalar b, bool use_h = true) const;
 
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
             propagatePsi(Scalar E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi, Scalar a,
