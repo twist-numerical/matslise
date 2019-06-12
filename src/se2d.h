@@ -9,14 +9,14 @@
 
 namespace matslise {
     namespace SEnD_util {
-        template<typename Scalar>
+        template<typename Scalar=double>
         bool NEWTON_RAPHSON_SORTER(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
             if (abs(a.first) > 100 || abs(b.first) > 100)
                 return abs(a.first) < abs(b.first);
             return abs(a.first / a.second) < abs(b.first / b.second);
         }
 
-        template<typename Scalar>
+        template<typename Scalar=double>
         bool ABS_SORTER(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
             return abs(a.first) < abs(b.first);
         }
