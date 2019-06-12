@@ -37,17 +37,19 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &de
     if (use_h && abs(delta - h) <= EPS)
         return calculateT(E);
 
-    Scalar *eta = calculateEta((vs[0] - E) * delta * delta, MATSLISE_ETA_delta);
+    const Scalar dd = delta * delta;
+    const Scalar vsE = vs[0] - E;
+    Scalar *eta = calculateEta(vsE * dd, MATSLISE_ETA_delta);
     T<Scalar> t(1);
-    t.t << 0, 0, (vs[0] - E) * delta * eta[1], 0;
-    t.dt << 0, 0, -delta * eta[1] + -(vs[0] - E) * delta * delta * delta * eta[2] / 2, 0;
+    t.t << 0, 0, vsE * delta * eta[1], 0;
+    t.dt << 0, 0, -delta * eta[1] - vsE * dd * delta * eta[2] / 2, 0;
 
     for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
         Matrix<Scalar, 2, 2> hor = horner<Matrix<Scalar, 2, 2>>(t_coeff.row(i), delta, MATSLISE_HMAX_delta);
         t.t += hor * eta[i];
 
         if (i + 1 < MATSLISE_ETA_delta)
-            t.dt += hor * (-delta * delta * eta[i + 1] / 2);
+            t.dt += hor * (-dd * eta[i + 1] / 2);
     }
 
     delete[] eta;
