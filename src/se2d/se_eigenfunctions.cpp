@@ -8,7 +8,7 @@ using namespace std;
 #define cec_cce(y) ((y).getdY(0).transpose()*(y).getY(1) - (y).getY(0).transpose()*(y).getdY(1))
 
 template<typename Scalar>
-Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(Scalar E) const {
+Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
     Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
     steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
@@ -64,7 +64,8 @@ Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(Scalar E) const {
 
 template<typename Scalar>
 std::vector<typename SE2D<Scalar>::ArrayXXs> *
-SE2D<Scalar>::computeEigenfunction(Scalar E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
+SE2D<Scalar>::computeEigenfunction(
+        const Scalar &E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
     long nx = x.size();
     for (long i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])

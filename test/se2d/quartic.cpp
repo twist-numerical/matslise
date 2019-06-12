@@ -11,17 +11,19 @@ using namespace std;
 using namespace Eigen;
 
 template<typename Scalar>
-void testQuartic(Scalar a, Scalar c, Scalar alpha, const vector<Scalar> &eigenvalues, int sectorCount = 23,
-                 Scalar tolerance = static_cast<Scalar>(0.0001)) {
+void testQuartic(
+        const Scalar &a, const Scalar &c, const Scalar &alpha, const vector<Scalar> &eigenvalues, int sectorCount = 23,
+        const Scalar &tolerance = static_cast<Scalar>(0.0001), const Scalar &error = static_cast<Scalar>(1e-8)) {
     SE2D<Scalar> p(
-            [a, c](Scalar x, Scalar y) -> Scalar {
+            [a, c](const Scalar &x, const Scalar &y) -> Scalar {
                 return x * x + y * y + c * (x * x * x * x + 2 * a * x * x * y * y + y * y * y * y);
             },
             {{-alpha, alpha}, -alpha, alpha},
             Options2<Scalar>().sectorCount(sectorCount).nested(
                     Options1<Scalar>().tolerance(tolerance).symmetric(true)));
     for (const Scalar &E : eigenvalues) {
-        CHECK(Approx(E).margin(1e-8) == p.findEigenvalue(E));
+        CHECK(Approx(E).margin(error) == p.findEigenvalue(E+100*error));
+        CHECK(Approx(E).margin(error) == p.findEigenvalue(E-100*error));
     }
 }
 
@@ -81,6 +83,7 @@ TEST_CASE("Eigenfunctions quartic: c=3", "[se2d][eigenvalues][quartic]") {
 }
 
 #ifdef BOOST
+
 #include <boost/multiprecision/float128.hpp>
 
 using boost::multiprecision::float128;
@@ -90,16 +93,20 @@ TEST_CASE("Eigenfunctions quartic: c=-3 (float128)", "[se2d][eigenvalues][quarti
             -1, 1e-3, 7.5,
             {2.0009985054698104735q, 4.0029925416713028329q, 6.0029940290428079650q, 6.0069702421328217062q,
              6.0089687360251750823q, 8.0056893858679641592q, 8.0162095893107613409q, 10.006398993925805298q,
-             10.008948049206928896q, 10.014940522380068574q});
-    testQuartic<float128>(
+             10.008948049206928896q, 10.014940522380068574q},
+            15, 0.001, 1e-14);
+  /*  testQuartic<float128>(
             0, 1e-3, 7.5,
             {2.0014973853463713991q, 4.0044884408419148160q, 6.0074794963374582330q, 6.0104605654612931866q,
              8.0134516209568366035q, 8.0194012847307019984q, 10.019423745576214974q, 10.022392340226245415q,
-             10.031298258747896515q, 12.028364464845623786q});
+             10.031298258747896515q, 12.028364464845623786q},
+            23, 0.0001, 1e-18);
     testQuartic<float128>(
             1, 1e-3, 7.5,
             {2.0019955220947085337q, 4.0059806337201560486q, 6.0119494490457070830q, 6.0139360981896530736q,
              8.0198961283737167314q, 8.0238606392924854844q, 10.029814877549869265q, 10.035748547202912722q,
-             10.037726447540990997q, 12.041699947383956422q});
+             10.037726447540990997q, 12.041699947383956422q},
+            17, 0.01, 1e-18);*/
 }
+
 #endif

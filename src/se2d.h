@@ -32,7 +32,7 @@ namespace matslise {
 
         class Sector;
 
-        std::function<Scalar(Scalar, Scalar)> V;
+        std::function<Scalar(const Scalar &, const Scalar &)> V;
         MatrixXs *M;
         Rectangle<2, Scalar> domain;
         int sectorCount;
@@ -42,41 +42,43 @@ namespace matslise {
         Scalar match;
         Options2<Scalar> options;
     public:
-        SE2D(const std::function<Scalar(Scalar, Scalar)> &V, const Rectangle<2, Scalar> &domain,
+        SE2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
              const Options2<Scalar> &options);
 
-        std::pair<MatrixXs, MatrixXs> calculateErrorMatrix(Scalar E) const;
+        std::pair<MatrixXs, MatrixXs> calculateErrorMatrix(const Scalar &E) const;
 
-        std::pair<Scalar, Scalar> calculateError(Scalar E, const std::function<bool(
+        std::pair<Scalar, Scalar> calculateError(const Scalar &E, const std::function<bool(
                 std::pair<Scalar, Scalar>,
                 std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
 
-        std::vector<std::pair<Scalar, Scalar>> *calculateErrors(Scalar E) const;
+        std::vector<std::pair<Scalar, Scalar>> *calculateErrors(const Scalar &E) const;
 
-        std::vector<std::pair<Scalar, Scalar>> *sortedErrors(Scalar E, const std::function<bool(
-                std::pair<Scalar, Scalar>,
-                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
+        std::vector<std::pair<Scalar, Scalar>> *sortedErrors(
+                const Scalar &E,
+                const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter
+                = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
 
         Y<Scalar, Eigen::Dynamic>
-        propagate(Scalar E, const Y<Scalar, Eigen::Dynamic> &y0, Scalar a, Scalar b, bool use_h = true) const;
+        propagate(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
+                  bool use_h = true) const;
 
-        Scalar findEigenvalue(Scalar Eguess, Scalar tolerance = 1e-9, int maxIterations = 30,
-                              Scalar minTolerance = 1e-5) const;
+        Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
+                              const Scalar &minTolerance = 1e-5) const;
 
         std::vector<ArrayXXs> *
-        computeEigenfunction(Scalar E, const ArrayXs &x, const ArrayXs &y) const;
+        computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
 
         std::vector<Scalar> *computeEigenvaluesByIndex(int Imin, int Imax) const;
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
-        bool contains(Scalar point) const {
+        bool contains(const Scalar &point) const {
             return point <= domain.max && point >= domain.min;
         }
 
         virtual ~SE2D();
 
     protected:
-        Y<Scalar, Eigen::Dynamic> *computeEigenfunctionSteps(Scalar E) const;
+        Y<Scalar, Eigen::Dynamic> *computeEigenfunctionSteps(const Scalar &E) const;
 
         MatrixXs calculateM(int k) const;
 
@@ -92,12 +94,13 @@ namespace matslise {
             Scalar *eigenvalues;
             ArrayXs *eigenfunctions;
 
-            Sector(SE2D<Scalar> *se2d, Scalar min, Scalar max, bool backward);
+            Sector(SE2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
 
-            Y<Scalar, Eigen::Dynamic> propagate(Scalar E, const Y<Scalar, Eigen::Dynamic> &y0, Scalar a, Scalar b,
-                                                bool use_h = true) const;
+            Y<Scalar, Eigen::Dynamic> propagate(
+                    const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
+                    bool use_h = true) const;
 
-            bool contains(Scalar point) const {
+            bool contains(const Scalar &point) const {
                 return point <= max && point >= min;
             }
 
@@ -108,7 +111,7 @@ namespace matslise {
             virtual ~Sector();
 
         private:
-            MatrixXs calculateDeltaV(Scalar y) const;
+            MatrixXs calculateDeltaV(const Scalar &y) const;
         };
     };
 }

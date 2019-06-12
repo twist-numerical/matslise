@@ -26,18 +26,19 @@ namespace matslise {
     class AbstractMatslise {
     public:
         virtual std::vector<std::pair<int, Scalar>> *
-        computeEigenvalues(Scalar Emin, Scalar Emax, const matslise::Y<Scalar> &left,
+        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const = 0;
 
         virtual std::vector<std::pair<int, Scalar>> *
-        computeEigenvalues(Scalar Emin, Scalar Emax, const matslise::Y<Scalar> &left) const {
+        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left) const {
             return computeEigenvalues(Emin, Emax, left, left);
         }
 
         virtual Scalar
-        computeEigenvalueError(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const = 0;
+        computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
+                               const matslise::Y<Scalar> &right) const = 0;
 
-        virtual Scalar computeEigenvalueError(Scalar E, const matslise::Y<Scalar> &left) const {
+        virtual Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left) const {
             return computeEigenvalueError(E, left, left);
         };
 
@@ -52,18 +53,20 @@ namespace matslise {
 
 
         virtual Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
-                             const Eigen::Array<Scalar,Eigen::Dynamic, 1> &x) const = 0;
+        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const = 0;
 
         virtual Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(Scalar E, const matslise::Y<Scalar> &left, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const {
+        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
+                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const {
             return computeEigenfunction(E, left, left, x);
         }
 
         virtual std::function<Y<Scalar>(Scalar)> eigenfunctionCalculator(
-                Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const = 0;
+                const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const = 0;
 
-        virtual std::function<Y<Scalar>(Scalar)> eigenfunctionCalculator(Scalar E, const matslise::Y<Scalar> &left) const {
+        virtual std::function<Y<Scalar>(Scalar)> eigenfunctionCalculator(
+                const Scalar &E, const matslise::Y<Scalar> &left) const {
             return eigenfunctionCalculator(E, left, left);
         };
 
@@ -74,6 +77,7 @@ namespace matslise {
     class Matslise : public AbstractMatslise<_Scalar> {
     public:
         typedef _Scalar Scalar;
+
         class Sector;
 
         std::function<Scalar(Scalar)> V;
@@ -87,46 +91,51 @@ namespace matslise {
                     new matslise::sectorbuilder::Uniform<Matslise<Scalar>>(sectorCount));
         }
 
-        static std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> AUTO(Scalar tolerance) {
+        static std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> AUTO(const Scalar &tolerance) {
             return std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>>(
                     new matslise::sectorbuilder::Auto<Matslise<Scalar>>(tolerance));
         }
 
-        Matslise(std::function<Scalar(Scalar)> V, Scalar xmin, Scalar xmax,
-                 std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder) : V(V), xmin(xmin), xmax(xmax) {
+        Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
+                 std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder) : V(V), xmin(xmin),
+                                                                                             xmax(xmax) {
             sectorBuilder->build(this, xmin, xmax);
         }
 
-        Matslise(std::function<Scalar(Scalar)> V, Scalar xmin, Scalar xmax, int sectorCount)
+        Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax, int sectorCount)
                 : Matslise(V, xmin, xmax, UNIFORM(sectorCount)) {};
 
-        bool contains(Scalar point) const {
+        bool contains(const Scalar &point) const {
             return point <= xmax && point >= xmin;
         }
 
         std::pair<matslise::Y<Scalar>, Scalar>
-        propagate(Scalar E, const matslise::Y<Scalar> &y, Scalar a, Scalar b, bool use_h = true) const;
+        propagate(const Scalar &E, const matslise::Y<Scalar> &y, const Scalar &a, const Scalar &b,
+                  bool use_h = true) const;
 
         std::tuple<Scalar, Scalar, Scalar>
-        calculateError(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right, bool use_h = true) const;
+        calculateError(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+                       bool use_h = true) const;
 
     public: // Override
         std::vector<std::pair<int, Scalar>> *
-        computeEigenvalues(Scalar Emin, Scalar Emax, const matslise::Y<Scalar> &left,
+        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const override;
 
         std::vector<std::pair<int, Scalar>> *
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                                   const matslise::Y<Scalar> &right) const override;
 
-        Scalar computeEigenvalueError(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const override;
+        Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
+                                      const matslise::Y<Scalar> &right) const override;
 
         Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
                              const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override;
 
         std::function<Y<Scalar>(Scalar)>
-        eigenfunctionCalculator(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const override;
+        eigenfunctionCalculator(const Scalar &E, const matslise::Y<Scalar> &left,
+                                const matslise::Y<Scalar> &right) const override;
 
         virtual ~Matslise();
 
@@ -141,24 +150,26 @@ namespace matslise {
             Scalar min, max, h;
             bool backward;
 
-            Sector(Matslise *problem, Scalar min, Scalar max, bool backward);
+            Sector(Matslise *problem, const Scalar &min, const Scalar &max, bool backward);
 
             void calculateTCoeffs();
 
-            bool contains(Scalar point) const {
+            bool contains(const Scalar &point) const {
                 return point <= max && point >= min;
             }
 
-            T<Scalar> calculateT(Scalar E, bool use_h = true) const;
+            T<Scalar> calculateT(const Scalar &E, bool use_h = true) const;
 
-            T<Scalar> calculateT(Scalar E, Scalar delta, bool use_h = true) const;
-
-            matslise::Y<Scalar> propagate(Scalar E, const matslise::Y<Scalar> &y, bool forward, bool use_h = true) const;
+            T<Scalar> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
             matslise::Y<Scalar>
-            propagate(Scalar E, const Y<Scalar> &y0, Scalar a, Scalar b, Scalar &theta, bool use_h = true) const;
+            propagate(const Scalar &E, const matslise::Y<Scalar> &y, bool forward, bool use_h = true) const;
 
-            Scalar prufer(Scalar E, Scalar delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const;
+            matslise::Y<Scalar>
+            propagate(const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, Scalar &theta,
+                      bool use_h = true) const;
+
+            Scalar prufer(const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const;
 
             Scalar calculateError() const;
 
@@ -181,13 +192,13 @@ namespace matslise {
         static const int ODD = 0;
         static const int EVEN = 1;
     public:
-        HalfRange(std::function<Scalar(Scalar)> V, Scalar xmax,
+        HalfRange(std::function<Scalar(Scalar)> V, const Scalar &xmax,
                   std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder);
 
         using AbstractMatslise<Scalar>::computeEigenvalues;
 
         std::vector<std::pair<int, Scalar>> *
-        computeEigenvalues(Scalar Emin, Scalar Emax, const matslise::Y<Scalar> &left,
+        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const override;
 
         using AbstractMatslise<Scalar>::computeEigenvaluesByIndex;
@@ -199,9 +210,10 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::computeEigenvalueError;
 
-        Scalar computeEigenvalueError(Scalar E, const matslise::Y<Scalar> &side, int even) const;
+        Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &side, int even) const;
 
-        Scalar computeEigenvalueError(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const override {
+        Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
+                                      const matslise::Y<Scalar> &right) const override {
             checkSymmetry(left, right);
             return computeEigenvalueError(E, left, AUTO);
         }
@@ -209,26 +221,28 @@ namespace matslise {
         using AbstractMatslise<Scalar>::computeEigenfunction;
 
         Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
                              const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
             checkSymmetry(left, right);
             return computeEigenfunction(E, left, x, AUTO);
         }
 
         Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(Scalar E, const matslise::Y<Scalar> &side, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
+        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
+                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
                              int even) const;
 
         using AbstractMatslise<Scalar>::eigenfunctionCalculator;
 
         std::function<Y<Scalar>(Scalar)>
-        eigenfunctionCalculator(Scalar E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const override {
+        eigenfunctionCalculator(const Scalar &E, const matslise::Y<Scalar> &left,
+                                const matslise::Y<Scalar> &right) const override {
             checkSymmetry(left, right);
             return eigenfunctionCalculator(E, left, AUTO);
         }
 
         std::function<Y<Scalar>(Scalar)>
-        eigenfunctionCalculator(Scalar E, const matslise::Y<Scalar> &side, int even) const;
+        eigenfunctionCalculator(const Scalar &E, const matslise::Y<Scalar> &side, int even) const;
 
         virtual ~HalfRange();
     };

@@ -13,7 +13,7 @@ using namespace matslise::SEnD_util;
 using namespace matslise::sectorbuilder;
 
 template<typename Scalar>
-SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, Scalar ymin, Scalar ymax, bool backward)
+SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
     const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
 
@@ -74,11 +74,11 @@ SE2D<Scalar>::Sector::~Sector() {
 
 template<typename Scalar>
 Y<Scalar, Eigen::Dynamic>
-SE2D<Scalar>::Sector::propagate(Scalar E, const Y<Scalar, Eigen::Dynamic> &y0, Scalar a, Scalar b,
-                                bool use_h) const {
-    a = a < min ? min : a > max ? max : a;
-    b = b < min ? min : b > max ? max : b;
-    return matscs->propagate(E, y0, a, b, use_h);
+SE2D<Scalar>::Sector::propagate(
+        const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
+    return matscs->propagate(E, y0,
+                             a < min ? min : a > max ? max : a,
+                             b < min ? min : b > max ? max : b, use_h);
 }
 
 template<typename Scalar>
@@ -90,7 +90,7 @@ Scalar SE2D<Scalar>::Sector::calculateError() const {
 }
 
 template<typename Scalar>
-typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::Sector::calculateDeltaV(Scalar y) const {
+typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::Sector::calculateDeltaV(const Scalar &y) const {
     MatrixXs dV(se2d->N, se2d->N);
 
     ArrayXs vDiff = se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->V(x, y); }) - vbar;

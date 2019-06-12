@@ -35,40 +35,40 @@ namespace matslise {
                     new matslise::sectorbuilder::Uniform<Matscs<Scalar>>(sectorCount));
         }
 
-        static std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> AUTO(Scalar tolerance) {
+        static std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> AUTO(const Scalar &tolerance) {
             return std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>>(
                     new matslise::sectorbuilder::Auto<Matscs<Scalar>>(tolerance));
         }
 
-        Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V, int n, Scalar xmin,
-               Scalar xmax,
-               std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> sectorBuilder) : V(V), n(n), xmin(xmin),
-                                                                                         xmax(xmax) {
+        Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
+               int n, const Scalar &xmin, const Scalar &xmax,
+               std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> sectorBuilder) :
+                V(V), n(n), xmin(xmin), xmax(xmax) {
             sectorBuilder->build(this, xmin, xmax);
         }
 
-        Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V, int n, Scalar xmin,
-               Scalar xmax,
-               int sectorCount)
+        Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
+               int n, const Scalar &xmin, const Scalar &xmax, int sectorCount)
                 : Matscs(V, n, xmin, xmax, UNIFORM(sectorCount)) {};
 
-        bool contains(Scalar point) const {
+        bool contains(const Scalar &point) const {
             return point <= xmax && point >= xmin;
         }
 
         template<int r>
         matslise::Y<Scalar, Eigen::Dynamic, r>
-        propagate(Scalar E, const matslise::Y<Scalar, Eigen::Dynamic, r> &y, Scalar a, Scalar b,
+        propagate(const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, r> &y, const Scalar &a, const Scalar &b,
                   bool use_h = true) const;
 
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
-        propagatePsi(Scalar E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi, Scalar a,
-                     Scalar b) const;
+        propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
+                     const Scalar &a, const Scalar &b) const;
 
-        std::vector<matslise::Y<Scalar, Eigen::Dynamic>> *computeEigenfunction(Scalar E, std::vector<Scalar> &x) const;
+        std::vector<matslise::Y<Scalar, Eigen::Dynamic>> *
+        computeEigenfunction(const Scalar &E, std::vector<Scalar> &x) const;
 
         std::function<Y<Scalar, Eigen::Dynamic, 1>(Scalar)> eigenfunctionCalculator(
-                Scalar E, const matslise::Y<Scalar, Eigen::Dynamic, 1> &left,
+                const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, 1> &left,
                 const matslise::Y<Scalar, Eigen::Dynamic, 1> &right);
 
         ~Matscs();
@@ -85,7 +85,7 @@ namespace matslise {
             Scalar min, max, h;
             bool backward;
 
-            Sector(const Matscs *problem, Scalar min, Scalar max, bool backward = false);
+            Sector(const Matscs *problem, const Scalar &min, const Scalar &max, bool backward = false);
 
             void calculateTCoeffs();
 
@@ -93,17 +93,18 @@ namespace matslise {
                 return point <= max && point >= min;
             }
 
-            T<Scalar, Eigen::Dynamic> calculateT(Scalar E, bool use_h = true) const;
+            T <Scalar, Eigen::Dynamic> calculateT(const Scalar &E, bool use_h = true) const;
 
-            T<Scalar, Eigen::Dynamic> calculateT(Scalar E, Scalar delta, bool use_h = true) const;
+            T <Scalar, Eigen::Dynamic> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
             template<int r = Eigen::Dynamic>
-            Y<Scalar, Eigen::Dynamic, r>
-            propagate(Scalar E, const Y<Scalar, Eigen::Dynamic, r> &y0, Scalar a, Scalar b, bool use_h = true) const;
+            Y <Scalar, Eigen::Dynamic, r>
+            propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
+                      bool use_h = true) const;
 
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
-            propagatePsi(Scalar E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi, Scalar a,
-                         Scalar b) const;
+            propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
+                         const Scalar &a, const Scalar &b) const;
 
             Scalar calculateError() const;
 
@@ -112,7 +113,5 @@ namespace matslise {
         };
     };
 }
-
-#include "util/SectorBuilder.h"
 
 #endif

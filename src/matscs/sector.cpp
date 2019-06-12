@@ -12,7 +12,7 @@ using namespace matslise;
 using namespace Eigen;
 
 template<typename Scalar>
-Matscs<Scalar>::Sector::Sector(const Matscs *s, Scalar min, Scalar max, bool backward)
+Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar &max, bool backward)
         : s(s), min(min), max(max), backward(backward) {
     h = max - min;
     vs = legendre::getCoefficients(MATSCS_N, s->V, min, max);
@@ -31,7 +31,7 @@ void Matscs<Scalar>::Sector::calculateTCoeffs() {
 }
 
 template<typename Scalar>
-T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bool use_h) const {
+T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &delta, bool use_h) const {
     Matrix<Scalar, Dynamic, Dynamic> zero = Matrix<Scalar, Dynamic, Dynamic>::Zero(s->n, s->n);
     Matrix<Scalar, Dynamic, Dynamic> one = Matrix<Scalar, Dynamic, Dynamic>::Identity(s->n, s->n);
 
@@ -48,7 +48,8 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bo
     t.dt << zero, zero, -delta * eta[1] - (delta * delta / 2) * eta[2] * VEd.asDiagonal(), zero;
 
     for (int i = 0; i < MATSCS_ETA_delta; ++i) {
-        Matrix<Scalar, Dynamic, Dynamic> hor = horner<Matrix<Scalar, Dynamic, Dynamic>>(t_coeff.row(i), delta, MATSCS_HMAX_delta);
+        Matrix<Scalar, Dynamic, Dynamic> hor = horner<Matrix<Scalar, Dynamic, Dynamic>>(t_coeff.row(i), delta,
+                                                                                        MATSCS_HMAX_delta);
         t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i]);
 
         if (i + 1 < MATSCS_ETA_delta)
@@ -66,7 +67,7 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bo
 }
 
 template<typename Scalar>
-T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, bool use_h) const {
+T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
     int N = s->n;
@@ -96,8 +97,9 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(Scalar E, bool use_h) cons
 
 template<typename Scalar, int r>
 Y<Scalar, Dynamic, r>
-propagate_delta(const typename Matscs<Scalar>::Sector *ms, Scalar E, const Y<Scalar, Dynamic, r> &y0, Scalar delta,
-                bool use_h) {
+propagate_delta(const typename Matscs<Scalar>::Sector *ms, const Scalar &E, const Y<Scalar, Dynamic, r> &y0,
+                const Scalar &_delta, bool use_h) {
+    Scalar delta = _delta;
     if (ms->backward)
         delta *= -1;
     bool forward = delta >= 0;
@@ -120,7 +122,7 @@ propagate_delta(const typename Matscs<Scalar>::Sector *ms, Scalar E, const Y<Sca
 template<typename Scalar>
 template<int r>
 Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate(
-        Scalar E, const Y<Scalar, Dynamic, r> &y0, Scalar a, Scalar b, bool use_h) const {
+        const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar, Dynamic, r> y = y0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
@@ -137,13 +139,6 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate(
     }
     return y;
 }
-
-
-template Y<double, Dynamic, -1>
-Matscs<double>::Sector::propagate<-1>(double E, const Y<double, Dynamic, -1> &y0, double a, double b, bool use_h) const;
-
-template Y<double, Dynamic, 1>
-Matscs<double>::Sector::propagate<1>(double E, const Y<double, Dynamic, 1> &y0, double a, double b, bool use_h) const;
 
 
 template<typename Scalar>
@@ -178,7 +173,8 @@ propagatePsi_delta(const typename Matscs<Scalar>::Sector *sector, Scalar E, cons
 
 template<typename Scalar>
 Matrix<Scalar, Dynamic, Dynamic>
-Matscs<Scalar>::Sector::propagatePsi(Scalar E, const Matrix<Scalar, Dynamic, Dynamic> &_psi, Scalar a, Scalar b) const {
+Matscs<Scalar>::Sector::propagatePsi(
+        const Scalar &E, const Matrix<Scalar, Dynamic, Dynamic> &_psi, const Scalar &a, const Scalar &b) const {
     Matrix<Scalar, Dynamic, Dynamic> psi = _psi;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
@@ -209,5 +205,14 @@ template<typename Scalar>
 Matscs<Scalar>::Sector::~Sector() {
     delete[]vs;
 }
+
+#define INSTANTIATE_PROPAGATE(Scalar, r)\
+template Y<Scalar, Dynamic, r>\
+Matscs<Scalar>::Sector::propagate<r>(\
+    const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
+
+#define INSTANTIATE_MORE(Scalar)\
+INSTANTIATE_PROPAGATE(Scalar, 1)\
+INSTANTIATE_PROPAGATE(Scalar, -1)
 
 #include "../util/instantiate.h"

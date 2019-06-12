@@ -15,7 +15,7 @@ using namespace std;
 
 
 template<typename Scalar>
-Array<Scalar, Dynamic, 1> getGrid(Scalar min, Scalar max, int count) {
+Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int count) {
     Array<Scalar, Dynamic, 1> points(count);
     for (int i = 0; i < count; ++i)
         points[i] = min + (max - min) * i / (count - 1);
@@ -23,7 +23,7 @@ Array<Scalar, Dynamic, 1> getGrid(Scalar min, Scalar max, int count) {
 }
 
 template<typename Scalar>
-SE2D<Scalar>::SE2D(const function<Scalar(Scalar, Scalar)> &V, const Rectangle<2, Scalar> &domain,
+SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
                    const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {
@@ -41,7 +41,8 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::calculateM(int k) const {
 
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            M(i, j) = lobatto::quadrature<Scalar>(grid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
+            M(i, j) = lobatto::quadrature<Scalar>(grid,
+                                                  sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
 
     return M;
 }
@@ -56,7 +57,7 @@ SE2D<Scalar>::~SE2D() {
 
 template<typename Scalar>
 pair<typename SE2D<Scalar>::MatrixXs, typename SE2D<Scalar>::MatrixXs>
-SE2D<Scalar>::calculateErrorMatrix(Scalar E) const {
+SE2D<Scalar>::calculateErrorMatrix(const Scalar &E) const {
     Y<Scalar, Dynamic> y0 = Y<Scalar, Dynamic>::Dirichlet(N);
     Y<Scalar, Dynamic> yl = y0;
     for (int i = 0; sectors[i]->max <= match; ++i) {
@@ -84,7 +85,8 @@ SE2D<Scalar>::calculateErrorMatrix(Scalar E) const {
 
 template<typename Scalar>
 Y<Scalar, Dynamic>
-SE2D<Scalar>::propagate(Scalar E, const Y<Scalar, Dynamic> &y0, Scalar a, Scalar b, bool use_h) const {
+SE2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b,
+                        bool use_h) const {
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic> y = y0;
@@ -104,7 +106,7 @@ SE2D<Scalar>::propagate(Scalar E, const Y<Scalar, Dynamic> &y0, Scalar a, Scalar
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> *SE2D<Scalar>::calculateErrors(Scalar E) const {
+vector<pair<Scalar, Scalar>> *SE2D<Scalar>::calculateErrors(const Scalar &E) const {
     pair<MatrixXs, MatrixXs> error_matrix = calculateErrorMatrix(E);
     EigenSolver<MatrixXs> solver(N);
 
@@ -140,9 +142,9 @@ vector<pair<Scalar, Scalar>> *SE2D<Scalar>::calculateErrors(Scalar E) const {
 
 template<typename Scalar>
 vector<pair<Scalar, Scalar>> *
-SE2D<Scalar>::sortedErrors(Scalar E,
-                           const std::function<bool(std::pair<Scalar, Scalar>,
-                                                    std::pair<Scalar, Scalar>)> &sorter) const {
+SE2D<Scalar>::sortedErrors(
+        const Scalar &E,
+        const std::function<bool(pair<Scalar, Scalar>, pair<Scalar, Scalar>)> &sorter) const {
     vector<pair<Scalar, Scalar>> *errors = calculateErrors(E);
 
     sort(errors->begin(), errors->end(), sorter);
@@ -151,7 +153,9 @@ SE2D<Scalar>::sortedErrors(Scalar E,
 }
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::findEigenvalue(Scalar E, Scalar tolerance, int maxIterations, Scalar minTolerance) const {
+Scalar SE2D<Scalar>::findEigenvalue(
+        const Scalar &_E, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) const {
+    Scalar E = _E;
     Scalar error, derror;
     int i = 0;
     do {
@@ -167,7 +171,8 @@ Scalar SE2D<Scalar>::findEigenvalue(Scalar E, Scalar tolerance, int maxIteration
 
 template<typename Scalar>
 pair<Scalar, Scalar> SE2D<Scalar>::calculateError(
-        Scalar E, const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter) const {
+        const Scalar &E,
+        const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter) const {
     vector<pair<Scalar, Scalar>> *errors = sortedErrors(E, sorter);
     pair<Scalar, Scalar> best = (*errors)[0];
     delete errors;

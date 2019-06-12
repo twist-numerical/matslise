@@ -13,7 +13,7 @@ using namespace std;
 using namespace matslise;
 
 template<typename Scalar>
-Matslise<Scalar>::Sector::Sector(Matslise<Scalar> *s, Scalar min, Scalar max, bool backward)
+Matslise<Scalar>::Sector::Sector(Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
         : s(s), min(min), max(max), backward(backward) {
     h = max - min;
     vs = legendre::getCoefficients(MATSLISE_N, s->V, min, max);
@@ -31,7 +31,7 @@ void Matslise<Scalar>::Sector::calculateTCoeffs() {
 }
 
 template<typename Scalar>
-T<Scalar> Matslise<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bool use_h) const {
+T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &delta, bool use_h) const {
     if (abs(delta) <= EPS)
         return T<Scalar>();
     if (use_h && abs(delta - h) <= EPS)
@@ -55,7 +55,7 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(Scalar E, Scalar delta, bool use_
 }
 
 template<typename Scalar>
-T<Scalar> Matslise<Scalar>::Sector::calculateT(Scalar E, bool use_h) const {
+T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
     Scalar *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA_h);
@@ -74,7 +74,8 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(Scalar E, bool use_h) const {
 }
 
 template<typename Scalar>
-Scalar Matslise<Scalar>::Sector::prufer(Scalar E, Scalar delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const {
+Scalar Matslise<Scalar>::Sector::prufer(
+        const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const {
     Scalar theta0 = theta(y0);
 
     Scalar theta1 = theta(y1);
@@ -127,14 +128,14 @@ Y<Scalar> propagate_delta(const typename Matslise<Scalar>::Sector *ms, Scalar E,
 }
 
 template<typename Scalar>
-Y<Scalar> Matslise<Scalar>::Sector::propagate(Scalar E, const Y<Scalar> &y0, bool forward, bool use_h) const {
+Y<Scalar> Matslise<Scalar>::Sector::propagate(const Scalar &E, const Y<Scalar> &y0, bool forward, bool use_h) const {
     Scalar theta = 0;
     return propagate_delta(this, E, y0, forward ? h : -h, theta, use_h);
 }
 
 template<typename Scalar>
-Y<Scalar> Matslise<Scalar>::Sector::propagate(Scalar E, const Y<Scalar> &y0,
-                                              Scalar a, Scalar b, Scalar &theta, bool use_h) const {
+Y<Scalar> Matslise<Scalar>::Sector::propagate(
+        const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, Scalar &theta, bool use_h) const {
     Y<Scalar> y = y0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
