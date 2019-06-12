@@ -13,6 +13,7 @@ if (NOT (DEFINED EMSCRIPTEN))
 
         find_package(Quadmath)
         if (Quadmath_FOUND)
+            add_definitions(-DMATSLISE_float128)
             list(APPEND libraries Quadmath::quadmath)
         endif ()
     endif ()

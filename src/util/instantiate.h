@@ -20,7 +20,7 @@ INSTANTIATE_MATSLISE(double)
 
 INSTANTIATE_MATSLISE(long double)
 
-#ifdef BOOST
+#ifdef MATSLISE_float128
 
 #include <boost/multiprecision/float128.hpp>
 

@@ -86,7 +86,7 @@ return data;
 }
 
 
-#ifdef BOOST
+#ifdef MATSLISE_float128
 #include <boost/multiprecision/float128.hpp>
 
 template<>

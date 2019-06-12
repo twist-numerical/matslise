@@ -107,7 +107,7 @@ TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
     delete eigenvalues;
 }
 
-#ifdef BOOST
+#ifdef MATSLISE_FLOAT128
 #include <boost/multiprecision/float128.hpp>
 
 using boost::multiprecision::float128;
