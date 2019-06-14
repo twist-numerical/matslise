@@ -72,7 +72,7 @@ else ()
     message("-- python: ${PYTHON_EXECUTABLE}")
     configure_file(pyslise/setup.py setup.py)
     add_custom_target(buildWheel
-            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" $<TARGET_FILE_NAME:pyslise>
+            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" "$<TARGET_FILE_NAME:pyslise>" "--move" "${CMAKE_SOURCE_DIR}/wheels"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(buildWheel pyslise)
 
