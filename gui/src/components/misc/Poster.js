@@ -3,8 +3,6 @@ import loadMatslise from "../../lib/loadMatslise";
 import * as THREE from "three";
 import OrbitControls from "orbit-controls-es6";
 
-const height = 3;
-
 class Poster extends Component {
   state = {
     loaded: false,
@@ -23,10 +21,10 @@ class Poster extends Component {
       this.setState({
         loaded: true,
         se2d: new SE2D(this.state.V, ...this.state.x, ...this.state.y, {
-          sectorCount: 33,
+          sectorCount: 31,
           stepsPerSector: 3,
           nested: {
-            sectorCount: 33
+            sectorCount: 31
           }
         })
       });
@@ -72,15 +70,14 @@ class Poster extends Component {
   }
 
   buildGraph(x, y, z) {
-    const scale =
-      height / Math.max(...z.map(r => Math.max(...r.map(Math.abs))));
+    const scale = 3;
     z = z.map(r => r.map(v => v * scale));
 
     const group = new THREE.Group();
     const materialSettings = {
-      color: 0x26b6ff,
+      color: 0x1e64c8,
       side: THREE.DoubleSide,
-      reflectivity: 1
+      flatShading: true
     };
     let splits = [];
     for (let i = 0; i <= 17; ++i) splits.push(i / 17);
@@ -93,8 +90,8 @@ class Poster extends Component {
         i % 2
           ? {}
           : {
-              opacity: 0.3,
-              transparent: true
+              opacity: 1,
+              color: 0x2d8ca8
             };
       group.add(
         new THREE.Mesh(
@@ -122,14 +119,14 @@ class Poster extends Component {
     const {
       x: [xmin, xmax],
       y: [ymin, ymax]
-    } = { x: [-5, 5], y: [-5, 5] };
+    } = { x: [-4.5, 4.5], y: [-4.5, 4.5] };
 
     const x = [];
     for (let i = 0; i <= xn; ++i) x.push(xmin + ((xmax - xmin) * i) / xn);
     const y = [];
     for (let i = 0; i <= yn; ++i) y.push(ymin + ((ymax - ymin) * i) / yn);
 
-    [5.5].forEach(approxE => {
+    [19.594].forEach(approxE => {
       const E = this.state.se2d.findEigenvalue(approxE);
       console.log(E);
       this.computeEigenfunctions(E, x, y).forEach(z => {
@@ -156,7 +153,7 @@ class Poster extends Component {
 
     this.scene.add(this.buildObjects());
 
-    this.scene.add(new THREE.AmbientLight(0x404040));
+    this.scene.add(new THREE.AmbientLight(0x404040,3));
     [[0, 20, 20], [0, -50, 50]].forEach(([x, y, z]) => {
       const light = new THREE.PointLight(0x808080, 1, 0);
       light.position.x = x;
