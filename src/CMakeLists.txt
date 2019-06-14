@@ -1,4 +1,5 @@
 set(CMAKE_CXX_STANDARD 11)
+set(PYSLISE_VERSION 0.0.1)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -67,6 +68,13 @@ else ()
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise PUBLIC ${libraries})
     target_link_libraries(pyslise PRIVATE ${libraries})
+
+    message("-- python: ${PYTHON_EXECUTABLE}")
+    configure_file(pyslise/setup.py setup.py)
+    add_custom_target(buildWheel
+            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" $<TARGET_FILE_NAME:pyslise>
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    add_dependencies(buildWheel pyslise)
 
     install(FILES matslise.h Array2D.h matscs.h se2d.h schrodinger.h DESTINATION include/matslise/)
     install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
