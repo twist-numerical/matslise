@@ -1,6 +1,5 @@
 import sys
-import setuptools
-from setuptools.dist import Distribution
+from setuptools import setup, find_packages, Extension, Distribution
 
 assert '--library' in sys.argv, "--library option has to be set"
 index = sys.argv.index('--library')
@@ -20,11 +19,11 @@ long_description = """
 
 
 class BinaryDistribution(Distribution):
-    def is_pure(self):
-        return False
+    def has_ext_modules(foo):
+        return True
 
 
-setuptools.setup(
+setup(
     name="pyslise",
     version="${PYSLISE_VERSION}",
     author="Toon Baeyens",
@@ -32,13 +31,11 @@ setuptools.setup(
     description="Python bindings for the C++ version of Matslise",
     long_description=long_description,
     url="https://github.ugent.be/tobaeyen/matslise-cpp",
-    packages=[''],
-    package_data={
-        '': [library]
-    },
+    packages=find_packages(),
+    package_data={'': [library]},
     include_package_data=True,
-    distclass=BinaryDistribution,
-    classifiers=[]
+    classifiers=[],
+    distclass=BinaryDistribution
 )
 
 if move:
@@ -48,5 +45,5 @@ if move:
 
     for w in glob('dist/*.whl'):
         to = os.path.join(move, w[5:])
-#        shutil.move(w, to)
+        shutil.move(w, to)
         print("Moved wheel '%s' to '%s'" % (w, to))

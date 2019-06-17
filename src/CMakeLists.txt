@@ -28,8 +28,8 @@ if (DEFINED EMSCRIPTEN)
 else ()
     set(targets matslise pyslise)
     set(libraries Eigen3::Eigen)
-    add_subdirectory(python/pybind11)
-    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} python/pyslise.cpp)
+    add_subdirectory(pyslise/pybind11)
+    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} pyslise/pyslise.cpp)
     add_library(matslise SHARED ${MATSLISE_SRC})
 
     find_package(Boost)
@@ -71,8 +71,9 @@ else ()
 
     message("-- python: ${PYTHON_EXECUTABLE}")
     configure_file(pyslise/setup.py setup.py)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/wheels" WHEEL_COPY_TO)
     add_custom_target(buildWheel
-            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" "$<TARGET_FILE_NAME:pyslise>" "--move" "${CMAKE_SOURCE_DIR}/wheels"
+            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" "$<TARGET_FILE_NAME:pyslise>" "--move" "${WHEEL_COPY_TO}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(buildWheel pyslise)
 
