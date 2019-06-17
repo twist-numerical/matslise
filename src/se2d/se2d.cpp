@@ -23,7 +23,7 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 }
 
 template<typename Scalar>
-SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
+SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V, const matslise::Rectangle<2, Scalar> &domain,
                    const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {

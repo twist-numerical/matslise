@@ -6,7 +6,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" ST
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -ansi -Wall -Wextra -Wconversion -fPIC")
     message("-- added GCC/Clang flags")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /DNOMINMAX /D_USE_MATH_DEFINES")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /DNOMINMAX /D_USE_MATH_DEFINES /w /bigobj")
     message("-- added MSVC flags")
 endif ()
 
