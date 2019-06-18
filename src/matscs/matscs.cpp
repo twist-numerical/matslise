@@ -63,7 +63,7 @@ vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::computeEigenfunction(const Scalar &E
     Sector *sector;
     Y<Scalar, Dynamic> y(n);
     for (int i = 0; iterator != x.end(); ++iterator) {
-        while ((sector = sectors[i])->max < *iterator) {
+        while (*iterator > (sector = sectors[i])->max) {
             y = sector->calculateT(E) * y;
             ++i;
             if (i >= sectorCount)

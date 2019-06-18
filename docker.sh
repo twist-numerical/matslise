@@ -1,0 +1,1 @@
+docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux2010_x86_64 /opt/matslise/docker_build.sh

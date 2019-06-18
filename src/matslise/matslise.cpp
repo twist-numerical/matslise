@@ -176,7 +176,7 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     vector<Y<Scalar>> ys(n + 1);
     ys[0] = left;
     unsigned int m = 0;
-    for (unsigned int i = 1; ms.sectors[i - 1]->min < ms.match; ++i) {
+    for (unsigned int i = 1; ms.match > ms.sectors[i - 1]->min; ++i) {
         ys[i] = ms.sectors[i - 1]->propagate(E, ys[i - 1], true);
         m = i;
     }

@@ -1,3 +1,3 @@
-[submodule "src/pyslise/pybind11"]
-	path = src/pyslise/pybind11
+[submodule "cmake/pybind11"]
+	path = cmake/pybind11
 	url = git@github.com:pybind/pybind11.git

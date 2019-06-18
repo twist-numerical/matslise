@@ -1,5 +1,8 @@
 import sys
-from setuptools import setup, find_packages, Extension, Distribution
+from setuptools import setup, find_packages, Extension
+from setuptools.command.build_ext import build_ext
+import os
+import shutil
 
 assert '--library' in sys.argv, "--library option has to be set"
 index = sys.argv.index('--library')
@@ -18,9 +21,23 @@ long_description = """
 """
 
 
-class BinaryDistribution(Distribution):
-    def has_ext_modules(foo):
-        return True
+class CMakeExtension(Extension):
+    def __init__(self, name):
+        Extension.__init__(self, name, sources=[])
+
+
+class CMakeBuild(build_ext):
+    def run(self):
+        for ext in self.extensions:
+            self.build_extension(ext)
+
+    def build_extension(self, ext):
+        path = self.get_ext_fullpath(ext.name)
+        try:
+            os.makedirs(os.path.dirname(path))
+        except:
+            pass
+        shutil.copy(library, path)
 
 
 setup(
@@ -31,19 +48,24 @@ setup(
     description="Python bindings for the C++ version of Matslise",
     long_description=long_description,
     url="https://github.ugent.be/tobaeyen/matslise-cpp",
-    packages=find_packages(),
-    package_data={'': [library]},
-    include_package_data=True,
-    classifiers=[],
-    distclass=BinaryDistribution
+    ext_modules=[CMakeExtension('pyslise')],
+    cmdclass=dict(build_ext=CMakeBuild),
+    zip_safe=False,
 )
 
 if move:
     from glob import glob
-    import shutil
-    import os
+    import sys
+    import subprocess
 
     for w in glob('dist/*.whl'):
+        plat = '${AUDITWHEEL_repair_plat}'
+        if plat != '':
+            try:
+                subprocess.call(["auditwheel", "repair", w, '--plat', plat, '-w', move])
+            except:
+                pass
+
         to = os.path.join(move, w[5:])
         shutil.move(w, to)
         print("Moved wheel '%s' to '%s'" % (w, to))

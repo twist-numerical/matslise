@@ -18,7 +18,11 @@ INSTANTIATE_MORE(Scalar)
 
 INSTANTIATE_MATSLISE(double)
 
+#ifdef MATSLISE_long_double
+
 INSTANTIATE_MATSLISE(long double)
+
+#endif
 
 #ifdef MATSLISE_float128
 
