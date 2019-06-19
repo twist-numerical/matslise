@@ -81,6 +81,12 @@ else ()
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(buildWheel pyslise)
 
+    add_custom_target(pyslise_install
+            COMMAND ${PYTHON_EXECUTABLE} "-m" "pip" "uninstall" "pyslise"
+            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "install" "--library" "$<TARGET_FILE_NAME:pyslise>"
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    add_dependencies(pyslise_install pyslise)
+
     install(FILES matslise.h Array2D.h matscs.h se2d.h schrodinger.h DESTINATION include/matslise/)
     install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
 

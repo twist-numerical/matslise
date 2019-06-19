@@ -144,36 +144,46 @@ PYBIND11_MODULE(pyslise, m) {
                  py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
             .def_static("NEWTON_RAPHSON_SORTER", &SEnD_util::NEWTON_RAPHSON_SORTER<>)
             .def_static("ABS_SORTER", &SEnD_util::ABS_SORTER<>);
-/*
-    py::class_<HalfRange>(m, "PysliseHalf")
-        .def(py::init<function<double(double)>, double, int>())
-        .def("computeEigenvalues", [](HalfRange &m, double Emin, double Emax, const Vector2d &side) -> vector<pair<int, double>>* {
-            return m.computeEigenvalues(Emin, Emax, make_y(side));
-        })
-        .def("computeEigenvaluesByIndex", [](HalfRange &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>>* {
-            return m.computeEigenvaluesByIndex(Imin, Imax, make_y(side));
-        })
-        .def("computeEigenfunction", [](HalfRange &m, double E, const Vector2d &side, const ArrayXd &xs, int even)
-            -> tuple<ArrayXd, ArrayXd> {
-                auto ysY = m.computeEigenfunction(E, make_y(side), xs, even);
-                ArrayXd ys(ysY.size());
-                ArrayXd dys(ysY.size());
-                for(int i = 0; i < ysY.size(); ++i) {
-                    ys[i] = ysY[i].y[0];
-                    dys[i] = ysY[i].y[1];
-                }
-                return make_tuple(ys, dys);
-            },
-            "Compute eigenfunction (in the values xs) for a given eigenvalue. You can indicate if the eigenfunction should be even or odd.",
-            py::arg("E"), py::arg("side"), py::arg("xs"), py::arg("even")=-1);
-*/
 
-    py::class_<Matslise<>::Sector>(m, "PysliseSector")
+    py::class_<HalfRange<>>(m, "PySliseHalf")
+            .def(py::init([](function<double(double)> V, double xmax, int steps, double tolerance) {
+                if (steps != -1 && tolerance != -1)
+                    throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
+                if (steps == -1 && tolerance == -1)
+                    throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
+                return new HalfRange<>(V, xmax,
+                                       steps != -1 ? Matslise<>::UNIFORM(steps) : Matslise<>::AUTO(tolerance));
+            }), "PySlise", py::arg("V"), py::arg("xmax"), py::arg("steps") = -1, py::arg("tolerance") = -1)
+            .def("computeEigenvalues", [](HalfRange<double> &m, double Emin, double Emax,
+                                          const Vector2d &side) -> vector<pair<int, double>> * {
+                return m.computeEigenvalues(Emin, Emax, make_y(side));
+            })
+            .def("computeEigenvaluesByIndex",
+                 [](HalfRange<double> &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>> * {
+                     return m.computeEigenvaluesByIndex(Imin, Imax, make_y(side));
+                 })
+            .def("computeEigenfunction",
+                 [](HalfRange<double> &m, double E, const Vector2d &side, const ArrayXd &xs, int even)
+                         -> tuple<ArrayXd, ArrayXd> {
+                     auto ysY = m.computeEigenfunction(E, make_y(side), xs, even);
+                     ArrayXd ys(ysY.size());
+                     ArrayXd dys(ysY.size());
+                     for (int i = 0; i < ysY.size(); ++i) {
+                         ys[i] = ysY[i].y[0];
+                         dys[i] = ysY[i].y[1];
+                     }
+                     return make_tuple(ys, dys);
+                 },
+                 "Compute eigenfunction (in the values xs) for a given eigenvalue. You can indicate if the eigenfunction should be even or odd.",
+                 py::arg("E"), py::arg("side"), py::arg("xs"), py::arg("even") = -1);
+
+
+    py::class_<Matslise<>::Sector>(m, "PySliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
             .def_readonly("max", &Matslise<>::Sector::max)
             .def_readonly("backward", &Matslise<>::Sector::backward);
 
-    py::class_<Matslise<>>(m, "Pyslise")
+    py::class_<Matslise<>>(m, "PySlise")
             .def(py::init([](function<double(double)> V, double xmin, double xmax, int steps, double tolerance) {
                      if (steps != -1 && tolerance != -1)
                          throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
@@ -182,7 +192,7 @@ PYBIND11_MODULE(pyslise, m) {
                      return new Matslise<>(
                              V, xmin, xmax,
                              steps != -1 ? Matslise<>::UNIFORM(steps) : Matslise<>::AUTO(tolerance));
-                 }), "Pyslise", py::arg("V"), py::arg("xmin"), py::arg("xmax"), py::arg("steps") = -1,
+                 }), "PySlise", py::arg("V"), py::arg("xmin"), py::arg("xmax"), py::arg("steps") = -1,
                  py::arg("tolerance") = -1)
             .def_readonly("sectorCount", &Matslise<>::sectorCount)
             .def_readonly("match", &Matslise<>::match)
@@ -252,11 +262,11 @@ PYBIND11_MODULE(pyslise, m) {
                  py::arg("E"), py::arg("left"), py::arg("right"));
 
 
-    py::class_<Matscs<>::Sector>(m, "PyscsSector")
+    py::class_<Matscs<>::Sector>(m, "PyScsSector")
             .def_readonly("min", &Matscs<>::Sector::min)
             .def_readonly("max", &Matscs<>::Sector::max)
             .def_readonly("backward", &Matscs<>::Sector::backward);
-    py::class_<Matscs<>>(m, "Pyscs")
+    py::class_<Matscs<>>(m, "PyScs")
             .def(py::init(
                     [](function<MatrixXd(double)> V, int N, double xmin, double xmax, int steps, double tolerance) {
                         if (steps != -1 && tolerance != -1)
@@ -266,7 +276,7 @@ PYBIND11_MODULE(pyslise, m) {
                         return new Matscs<>(
                                 V, N, xmin, xmax,
                                 steps != -1 ? Matscs<>::UNIFORM(steps) : Matscs<>::AUTO(tolerance));
-                    }), "Pyslise", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"),
+                    }), "PyScs", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"),
                  py::arg("steps") = -1,
                  py::arg("tolerance") = -1)
             .def_readonly("sectorCount", &Matscs<>::sectorCount)

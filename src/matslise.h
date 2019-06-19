@@ -177,7 +177,7 @@ namespace matslise {
         };
     };
 
-    template<typename _Scalar>
+    template<typename _Scalar = double>
     class HalfRange : public AbstractMatslise<_Scalar> {
         typedef _Scalar Scalar;
     public:

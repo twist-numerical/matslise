@@ -1,0 +1,8 @@
+#####
+ Usage examples
+#####
+
+
+.. toctree::
+
+   pyslise
