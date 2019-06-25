@@ -231,6 +231,12 @@ PYBIND11_MODULE(pyslise, m) {
                      return m.computeEigenvaluesByIndex(Imin, Imax, make_y(left), make_y(right));
                  },
                  py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("right"))
+            .def("computeEigenvalueError",
+                 [](Matslise<> &m, double E, const Vector2d &left, const Vector2d &right)
+                         -> double {
+                     return m.computeEigenvalueError(E, make_y(left), make_y(right));
+                 },
+                 py::arg("E"), py::arg("left"), py::arg("right"))
             .def("computeEigenfunction",
                  [](Matslise<> &m, double E, const Vector2d &left, const Vector2d &right, const ArrayXd &xs)
                          -> tuple<ArrayXd, ArrayXd> {
@@ -250,7 +256,7 @@ PYBIND11_MODULE(pyslise, m) {
                      return m.calculateError(E, make_y(left), make_y(right));
                  },
                  py::arg("E"), py::arg("left"), py::arg("right"))
-            .def("eigenfunctionCalculator",
+            .def("eigenfunction",
                  [](Matslise<> &m, double E, const Vector2d &left,
                     const Vector2d &right) -> std::function<pair<double, double>(double)> {
                      std::function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, make_y(left), make_y(right));
