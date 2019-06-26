@@ -1,10 +1,6 @@
 PySE2d
 =======
 
-.. autoclass:: pyslise.PySlise
+.. autoclass:: pyslise.PySE2d
    :members:
    :undoc-members:
-
-.. autoclass:: pyslise.PySliseHalf
-  :members:
-  :undoc-members:

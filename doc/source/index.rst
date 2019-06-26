@@ -2,7 +2,7 @@
 Welcome to PySlise's documentation!
 ###################################
 
-PySlise is a C++ package to solve Schrödinger equations. In general the time-independent Schrödinger equation is given by:
+PySlise is a Python package (written in C++) to solve Schrödinger equations. In general the time-independent Schrödinger equation is given by:
 
 .. math::
   -\nabla^2 \varphi({\bf x}) + V({\bf x}) \varphi({\bf x}) = E \varphi({\bf x})

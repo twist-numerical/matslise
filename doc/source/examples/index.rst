@@ -1,8 +1,8 @@
-#####
- Usage examples
-#####
+Usage examples
+##############
 
 
 .. toctree::
 
-   pyslise
+  pyslise
+  pyse2d

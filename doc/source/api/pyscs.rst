@@ -1,10 +1,6 @@
 PyScs
 =======
 
-.. autoclass:: pyslise.PySlise
+.. autoclass:: pyslise.PyScs
    :members:
    :undoc-members:
-
-.. autoclass:: pyslise.PySliseHalf
-  :members:
-  :undoc-members:
