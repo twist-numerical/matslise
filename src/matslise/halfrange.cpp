@@ -78,13 +78,14 @@ HalfRange<Scalar>::computeEigenfunction(const Scalar &E, const Y<Scalar> &side,
     yNeg = ms->computeEigenfunction(E, y, side, xNeg);
     yPos = ms->computeEigenfunction(E, y, side, xPos);
 
+    static const Scalar SQRT1_2 = sqrt(Scalar(.5));
     for (long i = 0; i < negatives; ++i) {
-        ys[negatives - 1 - i] = yNeg[i] * M_SQRT1_2;
-        if (even)
-            ys[negatives - 1 - i] *= -1;
+        Scalar f = (even ? 1 : -1) * SQRT1_2;
+        ys[negatives - 1 - i].y = f * DiagonalMatrix<Scalar, 2>(1, -1) * yNeg[i].y;
+        ys[negatives - 1 - i].dy = f * DiagonalMatrix<Scalar, 2>(1, -1) * yNeg[i].dy;
     }
     for (long i = negatives; i < n; ++i)
-        ys[i] = yPos[i - negatives] * M_SQRT1_2;
+        ys[i] = yPos[i - negatives] * SQRT1_2;
 
     return ys;
 }
