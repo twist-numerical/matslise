@@ -63,7 +63,7 @@ Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) con
 }
 
 template<typename Scalar>
-std::vector<typename SE2D<Scalar>::ArrayXXs> *
+std::vector<typename SE2D<Scalar>::ArrayXXs>
 SE2D<Scalar>::computeEigenfunction(
         const Scalar &E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
     long nx = x.size();
@@ -80,12 +80,12 @@ SE2D<Scalar>::computeEigenfunction(
         throw runtime_error("SE2D::computeEigenfunction(): y is out of range");
 
 
-    auto result = new vector<ArrayXXs>;
+    vector<ArrayXXs> result;
     Y<Scalar, Dynamic> *steps = computeEigenfunctionSteps(E);
     if (steps != nullptr) {
         int cols = (int) steps[0].getY(0).cols();
         for (int i = 0; i < cols; ++i)
-            result->push_back(ArrayXXs::Zero(nx, ny));
+            result.push_back(ArrayXXs::Zero(nx, ny));
 
         long nextY = 0;
         int sector = 0;
@@ -104,7 +104,7 @@ SE2D<Scalar>::computeEigenfunction(
                 MatrixXs prod = B * sectors[sector]->propagate(
                         E, steps[sector], sectors[sector]->min, y[nextY], true).getY(0);
                 for (int i = 0; i < cols; ++i)
-                    result->at(static_cast<unsigned>(i)).col(nextY) = prod.col(i);
+                    result[static_cast<unsigned>(i)].col(nextY) = prod.col(i);
                 ++nextY;
             }
         }

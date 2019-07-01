@@ -51,9 +51,9 @@ namespace matslise {
                 std::pair<Scalar, Scalar>,
                 std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
 
-        std::vector<std::pair<Scalar, Scalar>> *calculateErrors(const Scalar &E) const;
+        std::vector<std::pair<Scalar, Scalar>> calculateErrors(const Scalar &E) const;
 
-        std::vector<std::pair<Scalar, Scalar>> *sortedErrors(
+        std::vector<std::pair<Scalar, Scalar>> sortedErrors(
                 const Scalar &E,
                 const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter
                 = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
@@ -65,10 +65,12 @@ namespace matslise {
         Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
                               const Scalar &minTolerance = 1e-5) const;
 
-        std::vector<ArrayXXs> *
+        std::vector<Scalar> findEigenvalues(const Scalar &Emin, const Scalar &Emax) const;
+
+        std::vector<ArrayXXs>
         computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
 
-        std::vector<Scalar> *computeEigenvaluesByIndex(int Imin, int Imax) const;
+        std::vector<Scalar> computeEigenvaluesByIndex(int Imin, int Imax) const;
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
         bool contains(const Scalar &point) const {

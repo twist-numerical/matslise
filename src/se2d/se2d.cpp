@@ -10,7 +10,6 @@
 
 using namespace Eigen;
 using namespace matslise;
-using namespace matslise::SEnD_util;
 using namespace std;
 
 
@@ -23,7 +22,8 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 }
 
 template<typename Scalar>
-SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V, const matslise::Rectangle<2, Scalar> &domain,
+SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
+                   const matslise::Rectangle<2, Scalar> &domain,
                    const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {
@@ -106,7 +106,7 @@ SE2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Sca
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> *SE2D<Scalar>::calculateErrors(const Scalar &E) const {
+vector<pair<Scalar, Scalar>> SE2D<Scalar>::calculateErrors(const Scalar &E) const {
     pair<MatrixXs, MatrixXs> error_matrix = calculateErrorMatrix(E);
     EigenSolver<MatrixXs> solver(N);
 
@@ -126,57 +126,35 @@ vector<pair<Scalar, Scalar>> *SE2D<Scalar>::calculateErrors(const Scalar &E) con
     MatrixXs left = solver.eigenvectors().transpose().real();
 
 
-    auto errors = new vector<pair<Scalar, Scalar>>();
+    vector<pair<Scalar, Scalar>> errors;
     for (auto leftI = leftMap.begin(), rightI = rightMap.begin();
          leftI != leftMap.end() && rightI != rightMap.end();
          ++leftI, ++rightI) {
         int &li = leftI->second;
         int &ri = rightI->second;
-        errors->push_back({eigenvaluesLeft[li],
-                           (left.row(li) * error_matrix.second * right.col(ri) /
-                            (left.row(li) * right.col(ri)))[0]});
+        errors.push_back({eigenvaluesLeft[li],
+                          (left.row(li) * error_matrix.second * right.col(ri) /
+                           (left.row(li) * right.col(ri)))[0]});
     }
 
     return errors;
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> *
-SE2D<Scalar>::sortedErrors(
+vector<pair<Scalar, Scalar>> SE2D<Scalar>::sortedErrors(
         const Scalar &E,
         const std::function<bool(pair<Scalar, Scalar>, pair<Scalar, Scalar>)> &sorter) const {
-    vector<pair<Scalar, Scalar>> *errors = calculateErrors(E);
-
-    sort(errors->begin(), errors->end(), sorter);
-
+    vector<pair<Scalar, Scalar>> errors = calculateErrors(E);
+    sort(errors.begin(), errors.end(), sorter);
     return errors;
-}
-
-template<typename Scalar>
-Scalar SE2D<Scalar>::findEigenvalue(
-        const Scalar &_E, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) const {
-    Scalar E = _E;
-    Scalar error, derror;
-    int i = 0;
-    do {
-        tie(error, derror) = calculateError(E, &NEWTON_RAPHSON_SORTER<Scalar>);
-        E -= error / derror;
-        ++i;
-    } while (i < maxIterations && abs(error) > tolerance);
-
-    if (abs(error) > minTolerance)
-        return NAN;
-    return E;
 }
 
 template<typename Scalar>
 pair<Scalar, Scalar> SE2D<Scalar>::calculateError(
         const Scalar &E,
         const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter) const {
-    vector<pair<Scalar, Scalar>> *errors = sortedErrors(E, sorter);
-    pair<Scalar, Scalar> best = (*errors)[0];
-    delete errors;
-    return best;
+    vector<pair<Scalar, Scalar>> errors = calculateErrors(E);
+    return *min_element(errors.begin(), errors.end(), sorter);
 }
 
 #include "../util/instantiate.h"
