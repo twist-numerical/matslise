@@ -35,14 +35,11 @@ Scalar mean(I start, I end) {
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax) const {
-    int startDepth = 3;
+vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
+    Scalar length = (Emax - Emin) / initialSteps;
+
     int depth = 8;
     Scalar linear = 0.001;
-
-    Scalar length = Emax - Emin;
-    for (int i = 0; i < startDepth; ++i)
-        length *= .5;
 
     set<Scalar> todo;
     for (Scalar a = Emin + length / 2; a < Emax - length / 4; a += length) {
@@ -70,19 +67,22 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
                 from = to;
             }
         }
-        length *= .5;
+        length /= 2;
     }
 
     vector<Scalar> values;
     for (const Scalar &guess : todo) {
         const Scalar E = findEigenvalue(guess);
         if (!isnan(E)) {
+            unsigned long valueCount = values.size();
             for (const auto &error : calculateErrors(E)) {
                 const Scalar d = error.first / error.second;
                 if (error.first < 1 && abs(d) < linear) {
                     values.push_back(E - d);
                 }
             }
+            if (valueCount != values.size())
+                sort(values.begin() + (long) valueCount, values.end());
         }
     }
 

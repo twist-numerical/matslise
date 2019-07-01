@@ -133,7 +133,8 @@ PYBIND11_MODULE(pyslise, m) {
                  })
             .def("findEigenvalue", &SE2D<>::findEigenvalue, py::arg("start"), py::arg("tolerance") = 1e-9,
                  py::arg("maxIterations") = 30, py::arg("minTolerance") = 1e-5)
-            .def("findEigenvalues", &SE2D<>::findEigenvalues)
+            .def("findEigenvalues", &SE2D<>::findEigenvalues, py::arg("minE"), py::arg("maxE"),
+                 py::arg("initialSteps") = 16)
             .def("propagate",
                  [](const SE2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
                          pair<MatrixXd, MatrixXd> {

@@ -65,7 +65,9 @@ namespace matslise {
         Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
                               const Scalar &minTolerance = 1e-5) const;
 
-        std::vector<Scalar> findEigenvalues(const Scalar &Emin, const Scalar &Emax) const;
+        std::vector<Scalar> findEigenvalues(
+                const Scalar &Emin, const Scalar &Emax,
+                const int &initialSteps = 16) const;
 
         std::vector<ArrayXXs>
         computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
