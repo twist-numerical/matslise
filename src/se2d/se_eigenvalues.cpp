@@ -35,58 +35,73 @@ Scalar mean(I start, I end) {
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
-    Scalar length = (Emax - Emin) / initialSteps;
+inline bool set_contains(const set<Scalar> &values, const Scalar &guess, const Scalar &length) {
+    auto it = values.lower_bound(guess - length);
+    return it != values.end() && *it <= guess + length;
+}
 
-    int depth = 8;
-    Scalar linear = 0.001;
+template<typename Scalar>
+vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initalSteps) const {
+    typedef pair<Scalar, Scalar> Interval;
 
-    set<Scalar> todo;
+    const Scalar linear = 0.001;
+    const Scalar minLength = 0.001;
+
+    function<bool(Interval, Interval)> comp = [](Interval a, Interval b) -> bool {
+        return a.first > b.first;
+    };
+
+    vector<Interval> intervals;
+    Scalar length = (Emax - Emin) / initalSteps;
     for (Scalar a = Emin + length / 2; a < Emax - length / 4; a += length) {
-        todo.insert(a);
+        intervals.push_back({length / 2, a});
+        push_heap(intervals.begin(), intervals.end(), comp);
     }
 
-    for (int i = 0; i < depth; ++i) {
-        set<Scalar> next;
-        for (const Scalar &E : todo) {
-            for (const auto &error : calculateErrors(E)) {
+    set<Scalar> eigenvalues;
+    Scalar guess;
+    //int countCalls = 0;
+    //int countFind = 0;
+    while (!intervals.empty()) {
+        //cout << "size: " << intervals.size() << endl;
+        tie(length, guess) = intervals.front();
+        pop_heap(intervals.begin(), intervals.end(), comp);
+        intervals.pop_back();
+
+        if (!set_contains(eigenvalues, guess, length)) {
+            //cout << "interval: [" << guess - length << "; " << guess << "; " << guess + length << "]" << endl;
+            //++countCalls;
+            for (const pair<Scalar, Scalar> &error : calculateErrors(guess)) {
                 Scalar d = error.first / error.second;
-                if (abs(d) < length) {
-                    next.insert(E - d);
+                if (abs(d) < minLength) {
+                    //++countFind;
+                    Scalar E = findEigenvalue(guess - d);
+                    if (!isnan(E) && !set_contains(eigenvalues, E, minLength))
+                        eigenvalues.insert(E);
+                } else if (abs(d) < 2 * length) {
+                    intervals.push_back({min(abs(d), .5 * length), guess - d});
+                    push_heap(intervals.begin(), intervals.end(), comp);
                 }
             }
         }
-
-        todo.clear();
-        auto from = next.begin();
-        for (Scalar v = Emin; from != next.end(); v += length) {
-            auto to = from;
-            while (to != next.end() && *to < v) ++to;
-            if (from != to) {
-                todo.insert(mean<Scalar>(from, to));
-                from = to;
-            }
-        }
-        length /= 2;
     }
 
-    vector<Scalar> values;
-    for (const Scalar &guess : todo) {
-        const Scalar E = findEigenvalue(guess);
-        if (!isnan(E)) {
-            unsigned long valueCount = values.size();
-            for (const auto &error : calculateErrors(E)) {
-                const Scalar d = error.first / error.second;
-                if (error.first < 1 && abs(d) < linear) {
-                    values.push_back(E - d);
-                }
+    vector<Scalar> result;
+    for (const Scalar &E : eigenvalues) {
+        unsigned long valueCount = result.size();
+        //++countCalls;
+        for (const auto &error : calculateErrors(E)) {
+            const Scalar d = error.first / error.second;
+            if (error.first < 1 && abs(d) < linear) {
+                result.push_back(E - d);
             }
-            if (valueCount != values.size())
-                sort(values.begin() + (long) valueCount, values.end());
         }
+        if (valueCount != result.size())
+            sort(result.begin() + (long) valueCount, result.end());
     }
-
-    return values;
+    //cout << "calculateError: " << countCalls << endl;
+    //cout << "findEigenvalue: " << countFind << endl;
+    return result;
 }
 
 template<typename Scalar>
