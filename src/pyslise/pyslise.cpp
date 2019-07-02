@@ -59,6 +59,8 @@ PYBIND11_MODULE(pyslise, m) {
                     l->at(i) = s.eigenfunctions[i];
                 return l;
             })
+            .def_readonly("vbar", &SE2D<>::Sector::vbar)
+            .def("calculateDeltaV", &SE2D<>::Sector::calculateDeltaV)
             .def_readonly("matslise", &SE2D<>::Sector::matslise, py::return_value_policy::reference)
             .def_readonly("matscs", &SE2D<>::Sector::matscs, py::return_value_policy::reference)
             .def_readonly("min", &SE2D<>::Sector::min)
@@ -69,15 +71,26 @@ PYBIND11_MODULE(pyslise, m) {
                              double xmin, double xmax, double ymin, double ymax,
                              int x_count, double x_tol,
                              int y_count, double y_tol,
+                             double tol,
                              int N, int in_sector_count, int grid_points) {
-                     if (x_count != -1 && x_tol != -1)
+                     if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
-                     if (x_count == -1 && x_tol == -1)
-                         throw invalid_argument("One of 'x_count' and 'x_tol' must be set.");
-                     if (y_count != -1 && y_tol != -1)
+                     }
+                     if (x_count == -1 && x_tol == -1) {
+                         if (tol != -1)
+                             x_tol = tol;
+                         else
+                             throw invalid_argument("One of 'x_count' and 'x_tol' must be set.");
+                     }
+                     if (y_count != -1 && y_tol != -1) {
                          throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
-                     if (y_count == -1 && y_tol == -1)
-                         throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
+                     }
+                     if (y_count == -1 && y_tol == -1) {
+                         if (tol != -1)
+                             y_tol = tol;
+                         else
+                             throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
+                     }
                      Options1<> o1;
                      if (x_count != -1)
                          o1.sectorCount(x_count);
@@ -96,41 +109,30 @@ PYBIND11_MODULE(pyslise, m) {
                  }), "Init SE2D",
                  py::arg("V"),
                  py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
-                 py::arg("x_count") = -1, py::arg("x_tol") = -1,
-                 py::arg("y_count") = -1, py::arg("y_tol") = -1,
+                 py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
+                 py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
+                 py::arg("tolerance") = -1,
                  py::arg("N") = 12, py::arg("in_sector_count") = 5, py::arg("grid_points") = 52)
-            .def_readonly("N", &SE2D<>::N)
-            .def_property_readonly("M", [](SE2D<> &p) -> vector<MatrixXd> * {
+            .def_readonly("N", &SE2D<>::N, "The number of basis functions used on each sector")
+            .def_property_readonly("__M", [](SE2D<> &p) -> vector<MatrixXd> * {
                 auto l = new vector<MatrixXd>(p.sectorCount - 1);
                 for (int i = 0; i < p.sectorCount - 1; ++i)
                     l->at(i) = p.M[i];
                 return l;
             })
-            .def_property_readonly("sectors", [](SE2D<> &p) -> vector<SE2D<>::Sector *> * {
+            .def_property_readonly("__sectors", [](SE2D<> &p) -> vector<SE2D<>::Sector *> * {
                 auto l = new vector<SE2D<>::Sector *>(p.sectorCount);
                 for (int i = 0; i < p.sectorCount; ++i)
                     l->at(i) = p.sectors[i];
-                return l;
-            })
-            .def_property_readonly("grid", [](SE2D<> &p) -> vector<ArrayXd> * {
-                auto l = new vector<ArrayXd>(2);
-                for (unsigned int i = 0; i < l->size(); ++i)
-                    l->at(i) = p.grid[i];
                 return l;
             })
             .def("calculateError", &SE2D<>::calculateError,
                  py::arg("E"),
                  py::arg("sorter") = static_cast<function<bool(pair<double, double>, pair<double, double>)>>(
                          &SEnD_util::NEWTON_RAPHSON_SORTER<double>))
-            .def("calculateErrors", &SE2D<>::sortedErrors,
-                 py::arg("E"),
-                 py::arg("sorter") = static_cast<function<bool(pair<double, double>, pair<double, double>)>>(
-                         &SEnD_util::NEWTON_RAPHSON_SORTER<double>))
+            .def("calculateErrors", &SE2D<>::calculateErrors, py::arg("E"))
             .def("calculateErrorMatrix", &SE2D<>::calculateErrorMatrix)
-            .def("computeEigenfunction",
-                 [](SE2D<> &m, double E, const ArrayXd &x, const ArrayXd &y) {
-                     return m.computeEigenfunction(E, x, y);
-                 })
+            .def("computeEigenfunction", &SE2D<>::computeEigenfunction)
             .def("findEigenvalue", &SE2D<>::findEigenvalue, py::arg("start"), py::arg("tolerance") = 1e-9,
                  py::arg("maxIterations") = 30, py::arg("minTolerance") = 1e-5)
             .def("findEigenvalues", &SE2D<>::findEigenvalues, py::arg("minE"), py::arg("maxE"),
@@ -143,9 +145,7 @@ PYBIND11_MODULE(pyslise, m) {
                      y0.getY(1) = dy;
                      return unpackY(m.propagate(E, y0, a, b)).first;
                  },
-                 py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
-            .def_static("NEWTON_RAPHSON_SORTER", &SEnD_util::NEWTON_RAPHSON_SORTER<>)
-            .def_static("ABS_SORTER", &SEnD_util::ABS_SORTER<>);
+                 py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"));
 
     py::class_<HalfRange<>>(m, "PySliseHalf")
             .def(py::init([](function<double(double)> V, double xmax, int steps, double tolerance) {
@@ -196,11 +196,11 @@ PYBIND11_MODULE(pyslise, m) {
                              steps != -1 ? Matslise<>::UNIFORM(steps) : Matslise<>::AUTO(tolerance));
                  }), "PySlise", py::arg("V"), py::arg("xmin"), py::arg("xmax"), py::arg("steps") = -1,
                  py::arg("tolerance") = -1)
-            .def_readonly("sectorCount", &Matslise<>::sectorCount)
-            .def_readonly("match", &Matslise<>::match)
+            .def_readonly("__sectorCount", &Matslise<>::sectorCount)
+            .def_readonly("__match", &Matslise<>::match)
             .def_readonly("min", &Matslise<>::xmin)
             .def_readonly("max", &Matslise<>::xmax)
-            .def("sector", [](Matslise<> &p, int i) -> Matslise<>::Sector * {
+            .def("__sector", [](Matslise<> &p, int i) -> Matslise<>::Sector * {
                 return p.sectors[i];
             }, py::return_value_policy::reference)
             .def("propagate",
@@ -287,8 +287,8 @@ PYBIND11_MODULE(pyslise, m) {
                     }), "PyScs", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"),
                  py::arg("steps") = -1,
                  py::arg("tolerance") = -1)
-            .def_readonly("sectorCount", &Matscs<>::sectorCount)
-            .def_readonly("match", &Matscs<>::match)
+            .def_readonly("__sectorCount", &Matscs<>::sectorCount)
+            .def_readonly("__match", &Matscs<>::match)
             .def_readonly("min", &Matscs<>::xmin)
             .def_readonly("max", &Matscs<>::xmax)
             .def("propagate",
@@ -297,7 +297,7 @@ PYBIND11_MODULE(pyslise, m) {
                      return unpackY(m.propagate(E, packY(y), a, b));
                  })
             .def("propagatePsi", &Matscs<>::propagatePsi)
-            .def("sector", [](Matscs<> &p, int i) -> Matscs<>::Sector * {
+            .def("__sector", [](Matscs<> &p, int i) -> Matscs<>::Sector * {
                 return p.sectors[i];
             }, py::return_value_policy::reference);
 }

@@ -114,7 +114,7 @@ namespace matslise {
 
             virtual ~Sector();
 
-        private:
+        public:
             MatrixXs calculateDeltaV(const Scalar &y) const;
         };
     };
