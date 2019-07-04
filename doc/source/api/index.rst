@@ -1,6 +1,5 @@
-#####
- Reference manual
-#####
+Reference manual
+================
 
 An overview of all the available classes
 

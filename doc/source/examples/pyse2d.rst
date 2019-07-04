@@ -1,5 +1,5 @@
 Using PySE2d
-#############
+============
 
 Ixaru's problem
 ***************
@@ -29,9 +29,16 @@ To find the closest eigenvalue in the neighborhood of ``5`` one can use:
   problem.findEigenvalue(5)
   # 5.52674387
 
-``pyslise`` is able to find the closest eigenvalue to a certain guess because the implemented algorithm is able to calculate an error-matrix that expresses of that given guess is an eigenvalue. In turn, this matrix can be used to improve that initial guess. Until a sufficiently accurate estimate is found.
+``pyslise`` is able to find the closest eigenvalue to a certain guess
+because the implemented algorithm is able to calculate an error-matrix
+that expresses of that given guess is an eigenvalue. In turn, this matrix
+can be used to improve that initial guess. Until a sufficiently accurate
+estimate is found.
 
-There is method implemented to find all eigenvalues of the two-dimensional Schrödinger equation in a certain interval. But, as of yet, this method isn't perfect. It is based on a few heuristics to 'guess' that all eigenvalues are found. This heuristic is implemented in ``.findEigenvalues(Emin, Emax)``:
+There is method implemented to find all eigenvalues of the two-dimensional
+Schrödinger equation in a certain interval. But, as of yet, this method isn't
+perfect. It is based on a few heuristics to 'guess' that all eigenvalues are
+found. This heuristic is implemented in ``.findEigenvalues(Emin, Emax)``:
 
 .. code :: python
 

@@ -1,5 +1,5 @@
 Using PySlise
-#############
+=============
 
 Mathieu problem
 ***************
@@ -10,9 +10,11 @@ Find eigenfunctions :math:`\varphi` and eigenvalue :math:`E` for which
 .. math::
   \frac{d}{dx}\varphi(x) + (E-2\cos(2x))\varphi(x) = 0
 
-on :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]`. The boundary conditions are: :math:`\varphi(-\frac{\pi}{2}) = \varphi(\frac{\pi}{2}) = 0`.
+on :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]`. The boundary conditions are:
+:math:`\varphi(-\frac{\pi}{2}) = \varphi(\frac{\pi}{2}) = 0`.
 
-This can be transformed to a Schrödinger equation with :math:`V(x) = 2\cos(2x)`. Solving this equation with PySlise is fairly easy:
+This can be transformed to a Schrödinger equation with
+:math:`V(x) = 2\cos(2x)`. Solving this equation with PySlise is fairly easy:
 
 .. code:: python
 
@@ -27,9 +29,12 @@ This can be transformed to a Schrödinger equation with :math:`V(x) = 2\cos(2x)`
       0, 10, left, right)
 
 
-The variable ``eigenvalues`` contains a list of tuples. Each tuples has as the first element the index of the eigenvalue and as second argument the eigenvalue itself. This example is a minimal example of how to use PySlise.
+The variable ``eigenvalues`` contains a list of tuples. Each tuples has as
+the first element the index of the eigenvalue and as second argument the
+eigenvalue itself. This example is a minimal example of how to use PySlise.
 
-One could go further and ask for an estimation of the error for each eigenvalue. This data can be formatted in a nice table:
+One could go further and ask for an estimation of the error for each
+eigenvalue. This data can be formatted in a nice table:
 
 .. code:: python
 
@@ -53,11 +58,13 @@ index  eigenvalue   error
     9   100.00505 1.7e-08
 ===== =========== =======
 
-Depending on the version of PySlise or Python, or difference in hardware, your results may differ slightly.
+Depending on the version of PySlise or Python, or difference in hardware,
+your results may differ slightly.
 
 Eigenfunctions
 ^^^^^^^^^^^^^^
-With matplotlib it is straightforward to make a plot of the eigenvalues. The syntax is similar to MATLAB's.
+With matplotlib it is straightforward to make a plot of the eigenvalues.
+The syntax is similar to MATLAB's.
 
 .. code:: python
 
@@ -94,9 +101,13 @@ The Coffey Evans problem is given by the potential:
 .. math::
   V(x) = -2\beta\cos(2 x)+\beta^2\sin(2 x)^2
 
-and the domain :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]` with Dirichlet zero boundary conditions.
+and the domain :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]` with
+Dirichlet zero boundary conditions.
 
-It is well known as a hard problem, because there are triplets of close eigenvalues. On the other hand, the problem is symmetric and a few optimizations can be made. PySlise implements this as ``PySliseHalf``, indicating only half of the domain will be used, because of the symmetry.
+It is well known as a hard problem, because there are triplets of
+close eigenvalues. On the other hand, the problem is symmetric and
+a few optimizations can be made. PySlise implements this as ``PySliseHalf``,
+indicating only half of the domain will be used, because of the symmetry.
 
 .. code:: python
 
@@ -126,7 +137,8 @@ Index Eigenvalue
     9 339.370666
 ===== ==========
 
-Adapting the code for plotting, the first triplet of close eigenvalues can be visualized. For completeness, also the potential itself is plotted.
+Adapting the code for plotting, the first triplet of close eigenvalues
+can be visualized. For completeness, also the potential itself is plotted.
 
 .. code:: python
 
