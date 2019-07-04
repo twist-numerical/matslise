@@ -65,7 +65,7 @@ if move:
                 subprocess.call(["auditwheel", "repair", w, '--plat', plat, '-w', move])
             except:
                 pass
-
-        to = os.path.join(move, w[5:])
-        shutil.move(w, to)
-        print("Moved wheel '%s' to '%s'" % (w, to))
+        else:
+            to = os.path.join(move, w[5:])
+            shutil.move(w, to)
+            print("Moved wheel '%s' to '%s'" % (w, to))
