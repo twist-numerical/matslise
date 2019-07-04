@@ -77,13 +77,13 @@ else ()
     configure_file(pyslise/setup.py setup.py)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/wheelhouse" WHEEL_COPY_TO)
     add_custom_target(buildWheel
-            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" "$<TARGET_FILE_NAME:pyslise>" "--move" "${WHEEL_COPY_TO}"
+            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" "$<TARGET_FILE:pyslise>" "--move" "${WHEEL_COPY_TO}"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(buildWheel pyslise)
 
     add_custom_target(pyslise_install
             COMMAND ${PYTHON_EXECUTABLE} "-m" "pip" "uninstall" "pyslise"
-            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "install" "--library" "$<TARGET_FILE_NAME:pyslise>"
+            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "install" "--library" "$<TARGET_FILE:pyslise>"
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(pyslise_install pyslise)
 
