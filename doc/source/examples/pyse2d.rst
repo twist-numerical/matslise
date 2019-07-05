@@ -20,13 +20,13 @@ Using ``pyslise`` this problem can be easily worked on:
   def V(x, y):
       return (1 + x**2) * (1 + y**2)
 
-  problem = PySE2d(V, -5.5,5.5, -5.5,5.5, x_tol=1e-6, y_count=25)
+  problem = PySE2d(V, -5.5,5.5, -5.5,5.5, x_tolerance=1e-6, y_count=25)
 
 To find the closest eigenvalue in the neighborhood of ``5`` one can use:
 
 .. code:: python
 
-  problem.findEigenvalue(5)
+  problem.eigenvalue(5)
   # 5.52674387
 
 ``pyslise`` is able to find the closest eigenvalue to a certain guess
@@ -38,11 +38,11 @@ estimate is found.
 There is method implemented to find all eigenvalues of the two-dimensional
 Schrödinger equation in a certain interval. But, as of yet, this method isn't
 perfect. It is based on a few heuristics to 'guess' that all eigenvalues are
-found. This heuristic is implemented in ``.findEigenvalues(Emin, Emax)``:
+found. This heuristic is implemented in ``.eigenvalues(Emin, Emax)``:
 
 .. code :: python
 
-  problem.findEigenvalues(0,13)
+  problem.eigenvalues(0,13)
 
 .. code ::
 
