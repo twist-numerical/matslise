@@ -8,7 +8,7 @@ The Mathieu problem is given as:
 Find eigenfunctions :math:`\varphi` and eigenvalue :math:`E` for which
 
 .. math::
-  \frac{d}{dx}\varphi(x) + (E-2\cos(2x))\varphi(x) = 0
+  \frac{d^2}{dx^2}\varphi(x) + (E-2\cos(2x))\varphi(x) = 0
 
 on :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]`. The boundary conditions are:
 :math:`\varphi(-\frac{\pi}{2}) = \varphi(\frac{\pi}{2}) = 0`.
