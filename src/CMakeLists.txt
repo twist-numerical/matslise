@@ -28,7 +28,8 @@ if (DEFINED EMSCRIPTEN)
 else ()
     set(targets matslise pyslise)
     set(libraries Eigen3::Eigen)
-    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} pyslise/pyslise.cpp)
+    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
+            pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyse2d.cpp)
     add_library(matslise SHARED ${MATSLISE_SRC})
 
     OPTION(LONG_DOUBLE "Option description" ON)
