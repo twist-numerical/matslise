@@ -53,9 +53,8 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
             CHECK(Approx(Em).margin(1e-7) == E);
         }
 
-        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
-        CHECK(f->size() == multiplicity);
-        delete f;
+        const vector<Array<double, -1, -1>> f = p2.computeEigenfunction(E, x, x);
+        CHECK(f.size() == multiplicity);
     }
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
@@ -103,9 +102,8 @@ TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
             CHECK(Approx(Em).margin(1e-7) == E);
         }
 
-        const vector<Array<double, -1, -1>> *f = p2.computeEigenfunction(E, x, x);
-        CHECK(f->size() == multiplicity);
-        delete f;
+        const vector<Array<double, -1, -1>> f = p2.computeEigenfunction(E, x, x);
+        CHECK(f.size() == multiplicity);
     }
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }

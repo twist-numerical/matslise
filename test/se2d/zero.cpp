@@ -19,10 +19,10 @@ void compareEigenfunctions(
     int n = 50, m = 60;
     ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
     ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
-    std::vector<ArrayXXd> *fs = p.computeEigenfunction(E, x, y);
+    const std::vector<ArrayXXd> fs = p.computeEigenfunction(E, x, y);
 
-    REQUIRE(exact.size() == fs->size());
-    for (ArrayXXd &f :*fs) {
+    REQUIRE(exact.size() == fs.size());
+    for (const ArrayXXd &f :fs) {
         for (int i = 0; i < n; ++i)
             for (int j = 0; j < m; ++j) {
                 bool valid = false;
@@ -36,7 +36,6 @@ void compareEigenfunctions(
                 }
             }
     }
-    delete fs;
 }
 
 TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {

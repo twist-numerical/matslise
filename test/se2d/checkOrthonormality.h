@@ -17,10 +17,9 @@ void checkOrthonormality(const SE2D<Scalar> &p, const doubleIterator &begin, con
 
     vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctions;
     for (auto i = begin; i != end; ++i) {
-        vector<Array<Scalar, Dynamic, Dynamic>> *fs = p.computeEigenfunction(*i, x, y);
-        for (const Array<Scalar, Dynamic, Dynamic> &f : *fs)
+        vector<Array<Scalar, Dynamic, Dynamic>> fs = p.computeEigenfunction(*i, x, y);
+        for (const Array<Scalar, Dynamic, Dynamic> &f : fs)
             eigenfunctions.push_back(f);
-        delete fs;
     }
 
     for (auto i = eigenfunctions.begin(); i != eigenfunctions.end(); ++i)

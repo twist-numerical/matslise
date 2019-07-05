@@ -39,9 +39,8 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
         REQUIRE(abs(error.first) < 1e-3);
         REQUIRE(Approx(p2->findEigenvalue(E)).margin(1e-7) == E);
 
-        const vector<Array<double, -1, -1>> *f = p2->computeEigenfunction(E, x, x);
-        REQUIRE(f->size() == multiplicity);
-        delete f;
+        const vector<Array<double, -1, -1>> f = p2->computeEigenfunction(E, x, x);
+        REQUIRE(f.size() == multiplicity);
     }
     delete p2;
 }
