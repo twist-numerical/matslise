@@ -1,7 +1,3 @@
-//
-// Created by toon on 5/16/18.
-//
-
 #ifndef SCHRODINGER_MATSCS_H
 #define SCHRODINGER_MATSCS_H
 

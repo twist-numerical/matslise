@@ -1,7 +1,3 @@
-//
-// Created by toon on 5/6/19.
-//
-
 #ifndef MATSLISE_FIND_SECTOR_H
 #define MATSLISE_FIND_SECTOR_H
 

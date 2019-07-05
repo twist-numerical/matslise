@@ -1,7 +1,3 @@
-//
-// Created by toon on 6/6/19.
-//
-
 #ifndef MATSLISE_INSTANTIATE_H
 #define MATSLISE_INSTANTIATE_H
 

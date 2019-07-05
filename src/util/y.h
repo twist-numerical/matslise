@@ -1,7 +1,3 @@
-//
-// Created by toon on 4/9/19.
-//
-
 #ifndef MATSLISE_Y_H
 #define MATSLISE_Y_H
 

@@ -1,7 +1,3 @@
-//
-// Created by toon on 12/7/18.
-//
-
 #ifndef MATSLISE_SCHRODINGER_H
 #define MATSLISE_SCHRODINGER_H
 

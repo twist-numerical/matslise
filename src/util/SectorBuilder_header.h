@@ -1,7 +1,3 @@
-//
-// Created by toon on 4/23/19.
-//
-
 #ifndef MATSLISE_SECTORBUILDER_HEADER_H
 #define MATSLISE_SECTORBUILDER_HEADER_H
 

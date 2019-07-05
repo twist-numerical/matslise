@@ -1,7 +1,3 @@
-//
-// Created by toon on 4/9/19.
-//
-
 #ifndef MATSLISE_EIGEN_H
 #define MATSLISE_EIGEN_H
 

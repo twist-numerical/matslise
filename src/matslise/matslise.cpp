@@ -1,7 +1,3 @@
-//
-// Created by toon on 5/16/18.
-//
-
 #include <array>
 #include <vector>
 #include <queue>

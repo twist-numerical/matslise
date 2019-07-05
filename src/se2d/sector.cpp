@@ -1,7 +1,3 @@
-//
-// Created by toon on 6/13/18.
-//
-
 #include <iostream>
 #include "../matslise.h"
 #include "../util/lobatto.h"
