@@ -29,7 +29,7 @@ This can be transformed to a Schrödinger equation with
       0, 10, left, right)
 
 
-The variable ``eigenvalues`` contains a list of tuples. Each tuples has as
+The variable ``eigenvalues`` contains a list of tuples. Each tuple has as
 the first element the index of the eigenvalue and as second argument the
 eigenvalue itself. This example is a minimal example of how to use PySlise.
 
@@ -63,7 +63,7 @@ your results may differ slightly.
 
 Eigenfunctions
 ^^^^^^^^^^^^^^
-With matplotlib it is straightforward to make a plot of the eigenvalues.
+With matplotlib it is straightforward to make a plot of the eigenfunctions.
 The syntax is similar to MATLAB's.
 
 .. code:: python
@@ -104,10 +104,10 @@ The Coffey Evans problem is given by the potential:
 and the domain :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]` with
 Dirichlet zero boundary conditions.
 
-It is well known as a hard problem, because there are triplets of
+For rising :math:`\beta`, it is a well known hard problem, because there are triplets of
 close eigenvalues. On the other hand, the problem is symmetric and
 a few optimizations can be made. PySlise implements this as ``PySliseHalf``,
-indicating only half of the domain will be used, because of the symmetry.
+indicating half range reduction is applied, because of the symmetry.
 
 .. code:: python
 

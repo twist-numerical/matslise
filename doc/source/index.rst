@@ -10,10 +10,7 @@ PySlise is a Python package (written in C++) to solve Schrödinger equations. In
 This package implements a constant perturbation (CP) method to efficiently solve the one-dimensional Schrödinger equation:
 
 .. math::
-  -\frac{d}{dx}\varphi(x) + V(x) \varphi(x) = E \varphi(x)
-
-Because this CP-method is the crux of this package, the class for the one-dimensional case caries the same name: `PySlise <api/pyslise.html>`__.
-
+  -\frac{d^2}{dx^2}\varphi(x) + V(x) \varphi(x) = E \varphi(x)
 
 
 .. toctree::
