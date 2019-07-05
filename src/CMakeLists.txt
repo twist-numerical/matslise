@@ -77,13 +77,18 @@ else ()
     configure_file(pyslise/setup.py setup.py)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/wheelhouse" WHEEL_COPY_TO)
     add_custom_target(buildWheel
-            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "bdist_wheel" "--library" "$<TARGET_FILE:pyslise>" "--move" "${WHEEL_COPY_TO}"
+            COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>" PYSLISE_MOVE="${WHEEL_COPY_TO}"
+                ${PYTHON_EXECUTABLE} setup.py bdist_wheel
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(buildWheel pyslise)
 
     add_custom_target(pyslise_install
-            COMMAND ${PYTHON_EXECUTABLE} "-m" "pip" "uninstall" "pyslise"
-            COMMAND ${PYTHON_EXECUTABLE} "setup.py" "install" "--library" "$<TARGET_FILE:pyslise>"
+            COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
+                ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR}
+                ${PYTHON_EXECUTABLE} -m pip uninstall --verbose pyslise -y
+            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_BINARY_DIR}/dist
+                ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(pyslise_install pyslise)
 

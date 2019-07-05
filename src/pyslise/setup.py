@@ -1,20 +1,15 @@
-import sys
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 import os
 import shutil
 
-assert '--library' in sys.argv, "--library option has to be set"
-index = sys.argv.index('--library')
-sys.argv.pop(index)
-library = sys.argv.pop(index)
+assert 'PYSLISE_LIBRARY' in os.environ, "pyslise_library environment variable has to be set"
+library = os.environ['PYSLISE_LIBRARY']
 print("Using: '%s'" % library)
 
 move = None
-if '--move' in sys.argv:
-    index = sys.argv.index('--move')
-    sys.argv.pop(index)
-    move = sys.argv.pop(index)
+if 'PYSLISE_MOVE' in os.environ:
+    move = os.environ['PYSLISE_MOVE']
 
 long_description = """
     Pyslise
@@ -51,11 +46,11 @@ setup(
     ext_modules=[CMakeExtension('pyslise')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
+    install_requires=['numpy']
 )
 
 if move:
     from glob import glob
-    import sys
     import subprocess
 
     for w in glob('dist/*.whl'):
