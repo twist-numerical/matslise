@@ -1,5 +1,5 @@
 PySE2d
-=======
+======
 
 .. autoclass:: pyslise.PySE2d
    :members:
