@@ -1,5 +1,5 @@
 set(CMAKE_CXX_STANDARD 11)
-set(PYSLISE_VERSION 0.0.2)
+set(PYSLISE_VERSION 0.0.3)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -76,6 +76,7 @@ else ()
     message("-- python: ${PYTHON_EXECUTABLE}")
     message("-- auditwheel: ${AUDITWHEEL_repair_plat}")
     configure_file(pyslise/setup.py setup.py)
+    configure_file(pyslise/description.md description.md)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/wheelhouse" WHEEL_COPY_TO)
     add_custom_target(buildWheel
             COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>" PYSLISE_MOVE="${WHEEL_COPY_TO}"

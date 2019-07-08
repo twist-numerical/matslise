@@ -11,9 +11,8 @@ move = None
 if 'PYSLISE_MOVE' in os.environ:
     move = os.environ['PYSLISE_MOVE']
 
-long_description = """
-    Pyslise
-"""
+with open('description.md', encoding='utf-8') as f:
+    long_description = f.read()
 
 
 class CMakeExtension(Extension):
@@ -42,6 +41,7 @@ setup(
     author_email="toon.baeyens@ugent.be",
     description="Python bindings for the C++ version of Matslise",
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url="https://github.ugent.be/tobaeyen/matslise-cpp",
     ext_modules=[CMakeExtension('pyslise')],
     cmdclass=dict(build_ext=CMakeBuild),
