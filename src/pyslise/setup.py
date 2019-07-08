@@ -11,8 +11,8 @@ move = None
 if 'PYSLISE_MOVE' in os.environ:
     move = os.environ['PYSLISE_MOVE']
 
-with open('description.md', encoding='utf-8') as f:
-    long_description = f.read()
+with open('description.md', 'rb') as f:
+    long_description = f.read().decode('UTF-8')
 
 
 class CMakeExtension(Extension):
