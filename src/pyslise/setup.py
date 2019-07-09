@@ -42,7 +42,7 @@ setup(
     description="Python bindings for the C++ version of Matslise",
     long_description=long_description,
     long_description_content_type='text/markdown',
-    url="https://github.ugent.be/tobaeyen/matslise-cpp",
+    url="https://matslise.ugent.be/",
     ext_modules=[CMakeExtension('pyslise')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
