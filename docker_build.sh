@@ -21,5 +21,5 @@ for py in ${pythons[@]}; do
         -DPYTHON_EXECUTABLE=/opt/python/${py}/bin/python \
         -DAUDITWHEEL_repair_plat=manylinux2010_x86_64
 
-    /opt/python/cp37-cp37m/bin/cmake --build . --target buildWheel -- -j 6
+    /opt/python/cp37-cp37m/bin/cmake --build . --target buildWheel --config Release -- -j 6
 done
