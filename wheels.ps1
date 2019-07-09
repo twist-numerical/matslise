@@ -2,8 +2,7 @@
 
 $pythons = (py --list-paths)
 
-ForEach ($line in $($pythons -split "`r`n"))
-{
+ForEach ($line in $($pythons -split "`r`n")) {
 	if($line -match "\S") {
 		$version, $pythonPath = $($Line -split "`t")
 		$version = $version -replace " -",""
@@ -18,11 +17,13 @@ ForEach ($line in $($pythons -split "`r`n"))
 
 		md -Force $buildDir
 		cd $buildDir
-		iex ("cmake .. "+
+		iex ("cmake "+
 			"-DLONG_DOUBLE=OFF "+
 			"-DPYTHON_EXECUTABLE=$($pythonPath) "+
-			"-DCMAKE_BUILD_TYPE=Release ")
-		cmake --build . --target buildWheel
+			"-DCMAKE_BUILD_TYPE=Release " +
+			"-DCMAKE_SYSTEM_VERSION=7 " +
+			"..")
+		cmake --build . --target buildWheel --config Release
 		cd ..
-	}
+}
 }
