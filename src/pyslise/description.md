@@ -6,7 +6,7 @@ The code (and name) is based on Matslise [1]. This is a feature-rich matlab libr
 
 To solve the two dimensional problem an algorithm is developed on the basis of a method proposed by Ixaru [2].
 
-This implementation is developed in C++ with a focus on efficiency. This code is precompiled for 64 bit windows and linux and packaged in wheels.
+This implementation is developed in C++ with a focus on efficiency. This code is precompiled and packaged in wheels for 64 bit Linux, Windows, and Mac.
 
 
 ## Documentation

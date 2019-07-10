@@ -17,8 +17,8 @@ Find eigenfunctions :math:`\varphi` and eigenvalue :math:`E` for which
 .. math::
   \frac{d^2}{dx^2}\varphi(x) + (E-2\cos(2x))\varphi(x) = 0
 
-on :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]`. The boundary conditions are:
-:math:`\varphi(-\frac{\pi}{2}) = \varphi(\frac{\pi}{2}) = 0`.
+on :math:`[0, \pi]`. The boundary conditions are:
+:math:`\varphi(0) = \varphi(\pi) = 0`.
 
 This can be transformed to a Schrödinger equation with
 :math:`V(x) = 2\cos(2x)`. Solving this equation with PySlise is fairly easy:
