@@ -1,6 +1,6 @@
 for f in $(pyenv versions --bare); do
 	python=$(pyenv prefix $f)/bin/python;
-	echo $python
+	$python -m pip install wheel;
 	mkdir "cmake-build-mac-$f";
 	cd "cmake-build-mac-$f";
 	cmake -DLONG_DOUBLE=OFF -DPYTHON_EXECUTABLE=$python \
