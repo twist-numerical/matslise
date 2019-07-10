@@ -1,0 +1,10 @@
+for f in $(pyenv versions --bare); do
+	python=$(pyenv prefix $f)/bin/python;
+	echo $python
+	mkdir "cmake-build-mac-$f";
+	cd "cmake-build-mac-$f";
+	cmake -DLONG_DOUBLE=OFF -DPYTHON_EXECUTABLE=$python \
+		-DCMAKE_BUILD_TYPE=Release ..
+	cmake --build . --target buildWheel --config Release -- -j 4
+	cd ..
+	done;
