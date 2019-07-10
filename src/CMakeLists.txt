@@ -32,22 +32,25 @@ else ()
             pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyse2d.cpp)
     add_library(matslise SHARED ${MATSLISE_SRC})
 
-    OPTION(LONG_DOUBLE "Option description" ON)
+    OPTION(LONG_DOUBLE "Option description" OFF)
     IF (LONG_DOUBLE)
         ADD_DEFINITIONS(-DMATSLISE_long_double)
     ENDIF (LONG_DOUBLE)
-    find_package(Boost)
-    if (Boost_FOUND)
-        add_definitions(-DBOOST)
-        include_directories(${Boost_INCLUDE_DIRS})
 
+    OPTION(QUADMATH "Option description" OFF)
+    IF (QUADMATH)
+        find_package(Boost REQUIRED)
+        if (Boost_FOUND)
+            add_definitions(-DBOOST)
+            include_directories(${Boost_INCLUDE_DIRS})
 
-        find_package(Quadmath)
-        if (Quadmath_FOUND)
-            add_definitions(-DMATSLISE_float128)
-            list(APPEND libraries Quadmath::quadmath)
+            find_package(Quadmath)
+            if (Quadmath_FOUND)
+                add_definitions(-DMATSLISE_float128)
+                list(APPEND libraries Quadmath::quadmath)
+            endif ()
         endif ()
-    endif ()
+    ENDIF (QUADMATH)
 
     find_package(MKL)
     if (MKL_FOUND)
@@ -78,19 +81,19 @@ else ()
     configure_file(pyslise/setup.py setup.py)
     configure_file(pyslise/description.md description.md)
     file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/wheelhouse" WHEEL_COPY_TO)
-    add_custom_target(buildWheel
+    add_custom_target(build_wheel
             COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>" PYSLISE_MOVE="${WHEEL_COPY_TO}"
-                ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+            ${PYTHON_EXECUTABLE} setup.py bdist_wheel
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    add_dependencies(buildWheel pyslise)
+    add_dependencies(build_wheel pyslise)
 
     add_custom_target(pyslise_install
             COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+            ${PYTHON_EXECUTABLE} setup.py bdist_wheel
             COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR}
-                ${PYTHON_EXECUTABLE} -m pip uninstall --verbose pyslise -y
+            ${PYTHON_EXECUTABLE} -m pip uninstall --verbose pyslise -y
             COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_BINARY_DIR}/dist
-                ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
+            ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(pyslise_install pyslise)
 

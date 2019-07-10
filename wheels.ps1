@@ -23,7 +23,7 @@ ForEach ($line in $($pythons -split "`r`n")) {
 			"-DCMAKE_BUILD_TYPE=Release " +
 			"-DCMAKE_SYSTEM_VERSION=7 " +
 			"..")
-		cmake --build . --target buildWheel --config Release
+		cmake --build . --target build_wheel --config Release
 		cd ..
 }
 }

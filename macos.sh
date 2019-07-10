@@ -5,6 +5,6 @@ for f in $(pyenv versions --bare); do
 	cd "cmake-build-mac-$f";
 	cmake -DLONG_DOUBLE=OFF -DPYTHON_EXECUTABLE=$python \
 		-DCMAKE_BUILD_TYPE=Release ..
-	cmake --build . --target buildWheel --config Release -- -j 4
+	cmake --build . --target build_wheel --config Release -- -j 4
 	cd ..
 	done;

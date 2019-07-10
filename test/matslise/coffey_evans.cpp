@@ -70,6 +70,7 @@ TEST_CASE("high potential (auto)", "[matslise][high]") {
     delete eigenvalues;
 }
 
+#ifdef MATSLISE_long_double
 TEST_CASE("coffey_evans (long)", "[matslise][coffey_evans][long]") {
     const long double B = 20;
     Matslise<long double> ms([B](long double x) -> long double {
@@ -106,6 +107,7 @@ TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
     test_eigenfunctions(ms, y0, y1, eigenvalues);
     delete eigenvalues;
 }
+#endif
 
 #ifdef MATSLISE_FLOAT128
 #include <boost/multiprecision/float128.hpp>
