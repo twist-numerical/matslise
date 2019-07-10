@@ -22,28 +22,51 @@ pip install pyslise
 Full documentation can be found on 
 [matslise.ugent.be](https://matslise.ugent.be/). This document contains some examples of how to use this library.
 
-On the same page an interactive version is available.
+## Building from source
 
-## Examples
+### Obtaining the source
+To obtain the source one could simply:
+git clone --recursive ...
 
-One dimensional problems can be tackled with:
-```python
-from pyslise import PySlise
-from math import pi, cos
+The --recursive flag is needed to also add pybind to the project.
 
-problem = PySlise(lambda x: 2*cos(2*x), 0, pi, tolerance=1e-5)
-problem.eigenvaluesByIndex(0, 10, (0, 1), (0, 1))
+### Dependencies
+When building from source you will always need a compiler and CMake. On Windows this means Visual Studio.
+
+Other than those Matslise has only one required dependency: [Eigen](http://eigen.tuxfamily.org). A recent version satisfies.
+
+If you have a package manager (apt/brew/pacman/...) Eigen can be installed via those tools. If that doesn't work installing eigen [from source](https://bitbucket.org/eigen/eigen/src/default/INSTALL) is very easy. Make sure you follow the steps for CMake.
+
+### Building
 ```
+mkdir build_dir
+cd build_dir
+cmake ..
+```
+The next thing to do is pick a target. What do you want to build?
 
-Also two dimensional problems are possible:
-```python
-from pyslise import PySE2d
+- *matlise_test* will build and run all tests
+  ```
+  cmake --build . --target matslise_test
+  ./test/matslise_test
+  ```
+- *pyslise_install* will install pyslise within the default python. To change to an other python you can configure cmake with the flag `-DPYTHON_EXECUTABLE=path/to/python`. Note that pip has to be installed for that python.
+  ```
+  cmake --build . --target pyslise_install
+  ```
+- *build_wheel* will generate a wheel that can easily be installed on other systems. This wheel will be saved in the directory wheelhouse. Besides pip the configured python also needs the wheel package.
 
-def V(x, y):
-    return (1 + x**2) * (1 + y**2)
+When configuring CMake (`cmake ..`), it is possible to add some configuration options:
+- `-DPYTHON_EXECUTABLE=path/to/python` enables you to build for other python installs on your system.
+- `-DEigen3_DIR=path/to/eigen3/cmake` if a suitable eigen is not found automatically, one can be specified.
+- `-DLONG_DOUBLE=OFF` when `OFF` is changed to `ON` matslise will also be compiled for the type `long double`.
+- `-DQUADMATH=OFF` when `OFF` is changed to `ON` matslise will also be compiled for a quadruple precision type. For this to work Boost is needed.
 
-problem = PySE2d(V, -5.5,5.5, -5.5,5.5, tolerance=1e-5)
-problem.eigenvalues(0,13)
+For example: running the tests, also with the other floating point types:
+```
+cmake .. -DQUADMATH=ON -DLONG_DOUBLE=ON
+cmake --build . --target matslise_test
+./test/matslise_test
 ```
 
 ## Bibliography
