@@ -27,6 +27,24 @@ if (NOT (DEFINED EMSCRIPTEN))
         endif ()
     ENDIF (QUADMATH)
 
+    find_package(MKL)
+    if (MKL_FOUND)
+        set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
+        set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
+        set(BLA_DEFINITIONS USE_MKL)
+        target_compile_definitions(matslise_test PUBLIC ${BLA_DEFINITIONS})
+        target_include_directories(matslise_test PUBLIC ${BLA_INCLUDE_DIR})
+
+        set(THREADS_PREFER_PTHREAD_FLAG ON)
+        find_package(Threads REQUIRED)
+        target_link_libraries(matslise_test PUBLIC
+                m
+                Threads::Threads
+                ${CMAKE_DL_LIBS}
+                ${BLAS_LIBRARIES})
+        add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
+    endif ()
+
     add_executable(matslise_test EXCLUDE_FROM_ALL
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp
@@ -35,4 +53,12 @@ if (NOT (DEFINED EMSCRIPTEN))
             util/lobatto.cpp
             main.cpp)
     target_link_libraries(matslise_test ${libraries})
+
+
+    configure_file(benchmark.py benchmark.py)
+    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/benchmark.txt" benchmark_results)
+    add_custom_target(benchmark_tests
+            COMMAND ${CMAKE_COMMAND} -E env MATSLISE_TEST_EXECUTABLE="$<TARGET_FILE:matslise_test>" MATSLISE_BENCHMARK_RESULTS="${benchmark_results}" ${PYTHON_EXECUTABLE} benchmark.py
+            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+    add_dependencies(matslise_test pyslise)
 endif ()
