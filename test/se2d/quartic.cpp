@@ -13,7 +13,7 @@ using namespace Eigen;
 template<typename Scalar>
 void testQuartic(
         const Scalar &a, const Scalar &c, const Scalar &alpha, const vector<Scalar> &eigenvalues, int sectorCount = 23,
-        const Scalar &tolerance = static_cast<Scalar>(0.0001), const Scalar &error = static_cast<Scalar>(1e-8)) {
+        const Scalar &tolerance = static_cast<Scalar>(1e-5), const Scalar &error = static_cast<Scalar>(1e-8)) {
     SE2D<Scalar> p(
             [a, c](const Scalar &x, const Scalar &y) -> Scalar {
                 return x * x + y * y + c * (x * x * x * x + 2 * a * x * x * y * y + y * y * y * y);
