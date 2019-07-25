@@ -50,3 +50,4 @@ if 'MATSLISE_BENCHMARK_RESULTS' in os.environ:
     print("benchmark saved to: '%s'" % result_file)
     with open(result_file, 'a') as f:
         f.write(results)
+        f.write('\n')

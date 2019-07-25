@@ -12,6 +12,15 @@ if (NOT (DEFINED EMSCRIPTEN))
         ADD_DEFINITIONS(-DMATSLISE_long_double)
     ENDIF (LONG_DOUBLE)
 
+
+    add_executable(matslise_test EXCLUDE_FROM_ALL
+            matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
+            matslise/hr_mathieu.cpp
+            matscs/propagatePsi.cpp
+            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
+            util/lobatto.cpp
+            main.cpp)
+
     OPTION(QUADMATH "Option description" OFF)
     IF (QUADMATH)
         find_package(Boost REQUIRED)
@@ -45,14 +54,7 @@ if (NOT (DEFINED EMSCRIPTEN))
         add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
     endif ()
 
-    add_executable(matslise_test EXCLUDE_FROM_ALL
-            matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
-            matslise/hr_mathieu.cpp
-            matscs/propagatePsi.cpp
-            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
-            util/lobatto.cpp
-            main.cpp)
-    target_link_libraries(matslise_test ${libraries})
+    target_link_libraries(matslise_test PRIVATE ${libraries})
 
 
     configure_file(benchmark.py benchmark.py)
