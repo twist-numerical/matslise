@@ -63,7 +63,7 @@ namespace matslise {
         }
 
         friend std::ostream &operator<<(std::ostream &os, const Y<Scalar, n, cols> &m) {
-            return os << "(" << m.y[0] << "," << m.y[1] << ")" << "(" << m.dy[0] << "," << m.dy[1] << ")";
+            return os << "(" << m.getY(0) << "," << m.getY(1) << ")" << "(" << m.getdY(0) << "," << m.getdY(1) << ")";
         }
 
         Y<Scalar, n, cols> operator*(const Scalar &f) const {
