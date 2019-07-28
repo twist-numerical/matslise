@@ -58,12 +58,14 @@ SE2D<Scalar>::calculateErrorMatrix(const Scalar &E) const {
     Y<Scalar, Dynamic> yl = y0;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
+        yl *= ((MatrixXs) yl.getY(0).partialPivLu().matrixLU().template triangularView<Upper>()).inverse();
         //yl *= (yl.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
             E, y0, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
+        yr *= ((MatrixXs) yr.getY(0).partialPivLu().matrixLU().template triangularView<Upper>()).inverse();
         //yr *= (yr.getY(0).colwise().norm()).cwiseInverse().asDiagonal();
     }
 
@@ -94,6 +96,7 @@ SE2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Sca
         if (direction == -1 && sectorIndex < sectorCount - 1)
             y = (MatrixXs)(M[sectorIndex].transpose()) * y;
         y = sector->propagate(E, y, a, b, use_h);
+        y *= ((MatrixXs) y.getY(0).partialPivLu().matrixLU().template triangularView<Upper>()).inverse();
         if (direction == 1)
             y = M[sectorIndex] * y;
         sectorIndex += direction;
