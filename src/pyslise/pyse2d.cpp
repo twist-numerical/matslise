@@ -121,14 +121,14 @@ It is not a good idea to make the number of initial values large. This will incr
                     l->at(i) = p.M[i];
                 return l;
             })
-            .def_property_readonly("__sectors", [](SE2D<> &p) -> vector<SE2D<>::Sector *> * {
-                auto l = new vector<SE2D<>::Sector *>(static_cast<vector<SE2D<>::Sector *>::size_type>(p.sectorCount));
+            .def_property_readonly("__sectors", [](SE2D<> &p) -> std::vector<SE2D<>::Sector *> {
+                vector<SE2D<>::Sector *> l(p.sectorCount);
                 for (int i = 0; i < p.sectorCount; ++i)
-                    l->at(i) = p.sectors[i];
+                    l[i] = p.sectors[i];
                 return l;
             });
 
-    py::class_<SE2D<>::Sector>(m, "PySE2dSector") // ?? std::unique_ptr<SEnD_util::Sector<2>,py::nodelete>
+    py::class_<SE2D<>::Sector, std::unique_ptr<SE2D<>::Sector, py::nodelete>>(m, "PySE2dSector")
             .def_property_readonly("eigenvalues", [](SE2D<>::Sector &s) -> vector<double> * {
                 auto l = new vector<double>(s.se2d->N);
                 for (unsigned int i = 0; i < l->size(); ++i)
