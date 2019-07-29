@@ -21,11 +21,11 @@ namespace matslise {
     template<typename Scalar>
     class AbstractMatslise {
     public:
-        virtual std::vector<std::pair<int, Scalar>> *
+        virtual std::vector<std::pair<int, Scalar>>
         computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const = 0;
 
-        virtual std::vector<std::pair<int, Scalar>> *
+        virtual std::vector<std::pair<int, Scalar>>
         computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left) const {
             return computeEigenvalues(Emin, Emax, left, left);
         }
@@ -38,11 +38,11 @@ namespace matslise {
             return computeEigenvalueError(E, left, left);
         };
 
-        virtual std::vector<std::pair<int, Scalar>> *
+        virtual std::vector<std::pair<int, Scalar>>
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                                   const matslise::Y<Scalar> &right) const = 0;
 
-        virtual std::vector<std::pair<int, Scalar>> *
+        virtual std::vector<std::pair<int, Scalar>>
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left) const {
             return computeEigenvaluesByIndex(Imin, Imax, left, left);
         };
@@ -114,11 +114,11 @@ namespace matslise {
                        bool use_h = true) const;
 
     public: // Override
-        std::vector<std::pair<int, Scalar>> *
+        std::vector<std::pair<int, Scalar>>
         computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const override;
 
-        std::vector<std::pair<int, Scalar>> *
+        std::vector<std::pair<int, Scalar>>
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                                   const matslise::Y<Scalar> &right) const override;
 
@@ -193,13 +193,13 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::computeEigenvalues;
 
-        std::vector<std::pair<int, Scalar>> *
+        std::vector<std::pair<int, Scalar>>
         computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const override;
 
         using AbstractMatslise<Scalar>::computeEigenvaluesByIndex;
 
-        std::vector<std::pair<int, Scalar>> *
+        std::vector<std::pair<int, Scalar>>
         computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                                   const matslise::Y<Scalar> &right) const override;
 

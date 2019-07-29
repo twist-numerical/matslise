@@ -59,7 +59,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                  py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
             .def("eigenvalues",
                  [](Matslise<> &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right)
-                         -> vector<pair<int, double>> * {
+                         -> vector<pair<int, double>> {
                      return m.computeEigenvalues(Emin, Emax, make_y(left), make_y(right));
                  }, R""""(\
 Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions have to be specified.
@@ -72,7 +72,7 @@ Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions h
                  py::arg("Emin"), py::arg("Emax"), py::arg("left"), py::arg("right"))
             .def("eigenvaluesByIndex",
                  [](Matslise<> &m, int Imin, int Imax, const Vector2d &left, const Vector2d &right)
-                         -> vector<pair<int, double>> * {
+                         -> vector<pair<int, double>> {
                      return m.computeEigenvaluesByIndex(Imin, Imax, make_y(left), make_y(right));
                  }, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
@@ -168,7 +168,7 @@ Note: only one of steps and tolerance have to be set.
 :param int tolerance: automatically choose steps with at least the given accuracy.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("steps") = -1, py::arg("tolerance") = -1)
             .def("eigenvalues", [](HalfRange<double> &m, double Emin, double Emax,
-                                   const Vector2d &side) -> vector<pair<int, double>> * {
+                                   const Vector2d &side) -> vector<pair<int, double>> {
                 return m.computeEigenvalues(Emin, Emax, make_y(side));
             }, R""""(\
 Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions have to be specified.
@@ -179,7 +179,7 @@ Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions h
 :returns: a list of tuples. Each tuples contains the index and the eigenvalue with that index.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("side"))
             .def("eigenvaluesByIndex",
-                 [](HalfRange<> &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>> * {
+                 [](HalfRange<> &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>> {
                      return m.computeEigenvaluesByIndex(Imin, Imax, make_y(side));
                  }, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.

@@ -68,14 +68,14 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
 }
 
 template<typename Scalar>
-vector<pair<int, Scalar>> *
+vector<pair<int, Scalar>>
 computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, int Imin, int Imax,
                          const Y<Scalar> &left, const Y<Scalar> &right) {
     if (Imin < 0)
         throw runtime_error("Matslise::computeEigenvalues(): Imin has to be at least 0");
     if (Imin > Imax)
         throw runtime_error("Matslise::computeEigenvalues(): Imax can't be less then Imin");
-    vector<pair<int, Scalar>> *eigenvalues = new vector<pair<int, Scalar>>();
+    vector<pair<int, Scalar>> eigenvalues;
     queue<tuple<Scalar, Scalar, Scalar, Scalar, int>> toCheck;
 
     toCheck.push(make_tuple(Emin, get<2>(ms->calculateError(Emin, left, right)) / constants<Scalar>::pi(),
@@ -96,7 +96,7 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
 
         c = (a + b) / 2;
         if (tb - ta < 0.05 || depth > 20)
-            eigenvalues->push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
+            eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
         else {
             tc = get<2>(ms->calculateError(c, left, right)) / constants<Scalar>::pi();
             if (isnan(tc)) {
@@ -108,14 +108,14 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         }
     }
 
-    sort(eigenvalues->begin(), eigenvalues->end());
+    sort(eigenvalues.begin(), eigenvalues.end());
 
     return eigenvalues;
 }
 
 
 template<typename Scalar>
-vector<pair<int, Scalar>> *
+vector<pair<int, Scalar>>
 Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &left, const Y<Scalar> &right) const {
     Scalar Emin = -1;
     Scalar Emax = 1;
@@ -147,7 +147,7 @@ Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> 
 }
 
 template<typename Scalar>
-vector<pair<int, Scalar>> *
+vector<pair<int, Scalar>>
 Matslise<Scalar>::computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &left,
                                      const Y<Scalar> &right) const {
     return computeEigenvaluesHelper(this, Emin, Emax, 0, INT_MAX, left, right);

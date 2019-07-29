@@ -102,36 +102,23 @@ HalfRange<Scalar>::eigenfunctionCalculator(const Scalar &E, const Y<Scalar> &sid
 }
 
 template<typename Scalar>
-vector<pair<int, Scalar>> *
-mergeEigenvalues(vector<pair<int, Scalar>> *even, vector<pair<int, Scalar>> *odd) {
-    vector<pair<int, Scalar>> *values = new vector<pair<int, Scalar>>();
+vector<pair<int, Scalar>>
+mergeEigenvalues(const vector<pair<int, Scalar>> &even, const vector<pair<int, Scalar>> &odd) {
+    vector<pair<int, Scalar>> values;
 
-
-    for (pair<int, Scalar> &iE : *even)
-        iE.first *= 2;
-
-    for (pair<int, Scalar> &iE : *odd)
-        iE.first = 2 * iE.first + 1;
-
-    auto a = even->begin();
-    auto b = odd->begin();
-    while (a != even->end() || b != odd->end()) {
-        if (a == even->end())
-            values->push_back(*b++);
-        else if (b == odd->end())
-            values->push_back(*a++);
-        else {
-            if (*a < *b)
-                values->push_back(*a++);
-            else
-                values->push_back(*b++);
+    auto a = even.begin();
+    auto b = odd.begin();
+    while (a != even.end() || b != odd.end()) {
+        if (a == even.end() || (b != odd.end() && b->first < a->first)) {
+            values.push_back({2 * b->first + 1, b->second});
+            ++b;
+        } else {
+            values.push_back({2 * a->first, a->second});
+            ++a;
         }
     }
 
-    delete even;
-    delete odd;
     return values;
-
 }
 
 template<typename Scalar>
@@ -140,7 +127,7 @@ Scalar HalfRange<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar
 }
 
 template<typename Scalar>
-vector<pair<int, Scalar>> *
+vector<pair<int, Scalar>>
 HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side, const Y<Scalar> &right) const {
     checkSymmetry(side, right);
     return mergeEigenvalues(
@@ -149,7 +136,7 @@ HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar>
 }
 
 template<typename Scalar>
-vector<pair<int, Scalar>> *
+vector<pair<int, Scalar>>
 HalfRange<Scalar>::computeEigenvalues(
         const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side, const Y<Scalar> &right) const {
     checkSymmetry(side, right);
