@@ -71,6 +71,8 @@ namespace matslise {
         std::vector<Scalar> computeEigenvaluesByIndex(int Imin, int Imax) const;
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
+        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E) const;
+
         bool contains(const Scalar &point) const {
             return point <= domain.max && point >= domain.min;
         }
@@ -78,9 +80,11 @@ namespace matslise {
         virtual ~SE2D();
 
     protected:
-        Y<Scalar, Eigen::Dynamic> *computeEigenfunctionSteps(const Scalar &E) const;
+        std::vector<Y<Scalar, Eigen::Dynamic>> computeEigenfunctionSteps(const Scalar &E) const;
 
         MatrixXs calculateM(int k) const;
+
+        MatrixXs conditionY(Y<Scalar, Eigen::Dynamic> &y) const;
 
     public:
         class Sector {
@@ -96,8 +100,9 @@ namespace matslise {
 
             Sector(SE2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
 
-            Y<Scalar, Eigen::Dynamic> propagate(
-                    const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
+            template<int r>
+            Y<Scalar, Eigen::Dynamic, r> propagate(
+                    const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
                     bool use_h = true) const;
 
             bool contains(const Scalar &point) const {
@@ -107,6 +112,8 @@ namespace matslise {
             ArrayXs computeEigenfunction(int index, const ArrayXs &x) const;
 
             Scalar calculateError() const;
+
+            std::function<ArrayXs(Scalar)> basisCalculator() const;
 
             virtual ~Sector();
 

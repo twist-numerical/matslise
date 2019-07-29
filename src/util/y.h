@@ -31,7 +31,7 @@ namespace matslise {
             }
         }
 
-        Y(Eigen::Matrix<Scalar, n2, cols> y, Eigen::Matrix<Scalar, n2, cols> dy) : y(y), dy(dy) {
+        Y(const Eigen::Matrix<Scalar, n2, cols> &y, const Eigen::Matrix<Scalar, n2, cols> &dy) : y(y), dy(dy) {
         }
 
         long getN() const {
@@ -90,7 +90,9 @@ namespace matslise {
             return !(rhs == *this);
         }
 
-
+        Y<Scalar, n, 1> col(int j) const {
+            return Y<Scalar, n, 1>(y.col(j), dy.col(j));
+        }
     };
 
     template<typename Scalar, int n, int cols, int count>

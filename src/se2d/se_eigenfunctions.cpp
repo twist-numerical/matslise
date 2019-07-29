@@ -8,8 +8,8 @@ using namespace std;
 #define cec_cce(y) ((y).getdY(0).transpose()*(y).getY(1) - (y).getY(0).transpose()*(y).getdY(1))
 
 template<typename Scalar>
-Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
-    Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
+vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
+    vector<Y<Scalar, Dynamic>> steps(sectorCount + 1);
 
     steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
     steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
@@ -39,26 +39,24 @@ Y<Scalar, Dynamic> *SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) con
 
     FullPivLU<MatrixXs> lu(Ul - Ur);
     lu.setThreshold(1e-4);
-    if (lu.dimensionOfKernel() == 0) {
-        delete[] steps;
-        return nullptr;
+
+    vector<Y<Scalar, Dynamic>> elements;
+    if (lu.dimensionOfKernel() > 0) {
+        elements.resize(sectorCount + 1);
+        MatrixXs kernel = lu.kernel();
+
+        MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
+        MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
+        MatrixXs scaling = (left.transpose() * normLeft * left
+                            + right.transpose() * normRight * right).diagonal();
+        scaling = scaling.unaryExpr([](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); });
+        left *= scaling.asDiagonal();
+        right *= scaling.asDiagonal();
+        for (int i = 0; i <= matchIndex; ++i)
+            elements[i] = steps[i] * left;
+        for (int i = sectorCount; i > matchIndex; --i)
+            elements[i] = steps[i] * right;
     }
-    MatrixXs kernel = lu.kernel();
-
-    Y<Scalar, Dynamic> *elements = new Y<Scalar, Dynamic>[sectorCount + 1];
-    MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
-    MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-    MatrixXs scaling = (left.transpose() * normLeft * left
-                        + right.transpose() * normRight * right).diagonal();
-    scaling = scaling.unaryExpr([](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); });
-    left *= scaling.asDiagonal();
-    right *= scaling.asDiagonal();
-    for (int i = 0; i <= matchIndex; ++i)
-        elements[i] = steps[i] * left;
-    for (int i = sectorCount; i > matchIndex; --i)
-        elements[i] = steps[i] * right;
-    delete[] steps;
-
     return elements;
 }
 
@@ -81,8 +79,8 @@ SE2D<Scalar>::computeEigenfunction(
 
 
     vector<ArrayXXs> result;
-    Y<Scalar, Dynamic> *steps = computeEigenfunctionSteps(E);
-    if (steps != nullptr) {
+    vector<Y<Scalar, Dynamic>> steps = computeEigenfunctionSteps(E);
+    if (steps.size() > 0) {
         int cols = (int) steps[0].getY(0).cols();
         for (int i = 0; i < cols; ++i)
             result.push_back(ArrayXXs::Zero(nx, ny));
@@ -108,10 +106,46 @@ SE2D<Scalar>::computeEigenfunction(
                 ++nextY;
             }
         }
-
-        delete[] steps;
     }
 
+    return result;
+}
+
+template<typename Scalar>
+vector<function<Scalar(Scalar, Scalar)>> SE2D<Scalar>::eigenfunctionCalculator(const Scalar &E) const {
+    shared_ptr<vector<Y<Scalar, Dynamic>>> steps
+            = make_shared<vector<Y<Scalar, Dynamic>>>(move(computeEigenfunctionSteps(E)));
+    vector<function<Scalar(Scalar, Scalar)>> result;
+    auto bases = make_shared<vector<function<ArrayXs(Scalar)>>>(sectorCount);
+    for (int i = 0; i < sectorCount; ++i)
+        (*bases)[i] = sectors[i]->basisCalculator();
+
+    if (steps->size() > 0) {
+        int cols = (int) steps->at(0).getY(0).cols();
+        for (int column = 0; column < cols; ++column) {
+            result.push_back([this, steps, E, column, bases](Scalar x, Scalar y) -> Scalar {
+                unsigned long sectorIndex;
+                {
+                    unsigned long a = 0;
+                    unsigned long b = (unsigned long) this->sectorCount;
+                    while (a + 1 < b) {
+                        unsigned long c = (a + b) / 2;
+                        if (y < this->sectors[c]->min)
+                            b = c;
+                        else
+                            a = c;
+                    }
+                    sectorIndex = a;
+                }
+                const SE2D<Scalar>::Sector *sector = this->sectors[sectorIndex];
+
+                return sector->propagate(
+                        E, (*steps)[sectorIndex].col(column), sector->min, y, true).getY(0).dot(
+                        (*bases)[sectorIndex](x).matrix()
+                );
+            });
+        }
+    }
     return result;
 }
 

@@ -66,9 +66,10 @@ SE2D<Scalar>::Sector::~Sector() {
 }
 
 template<typename Scalar>
-Y<Scalar, Eigen::Dynamic>
+template<int r>
+Y<Scalar, Eigen::Dynamic, r>
 SE2D<Scalar>::Sector::propagate(
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
+        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     return matscs->propagate(E, y0,
                              a < min ? min : a > max ? max : a,
                              b < min ? min : b > max ? max : b, use_h);
@@ -111,5 +112,29 @@ SE2D<Scalar>::Sector::computeEigenfunction(int index, const typename SE2D<Scalar
         result(i) = raw(i).y[0];
     return result;
 }
+
+template<typename Scalar>
+function<typename SE2D<Scalar>::ArrayXs(Scalar)> SE2D<Scalar>::Sector::basisCalculator() const {
+    const Y<Scalar> y0 = Y<Scalar>::Dirichlet(1);
+    vector<function<Y<Scalar>(Scalar)>> basis(se2d->N);
+    for (int index = 0; index < se2d->N; ++index) {
+        basis[index] = matslise->eigenfunctionCalculator(eigenvalues[index], y0, y0);
+    }
+    return [basis](const Scalar &x) -> ArrayXs {
+        ArrayXs result(basis.size());
+        for (unsigned int i = 0; i < basis.size(); ++i)
+            result[i] = basis[i](x).y(0, 0);
+        return result;
+    };
+}
+
+#define INSTANTIATE_PROPAGATE(Scalar, r)\
+template Y<Scalar, Dynamic, r>\
+SE2D<Scalar>::Sector::propagate<r>(\
+        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
+
+#define INSTANTIATE_MORE(Scalar)\
+INSTANTIATE_PROPAGATE(Scalar, 1)\
+INSTANTIATE_PROPAGATE(Scalar, -1)
 
 #include "../util/instantiate.h"
