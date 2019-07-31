@@ -40,7 +40,7 @@ void pySE2d(py::module &m) {
                          o2.sectorCount(y_count);
                      else
                          o2.tolerance(y_tol);
-                     return std::unique_ptr<SE2D<>>(new SE2D<>(V, {{xmin, xmax}, ymin, ymax}, o2));
+                     return unique_ptr<SE2D<>>(new SE2D<>(V, {{xmin, xmax}, ymin, ymax}, o2));
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -86,6 +86,14 @@ Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the
 :param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
 :returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
 )"""", py::arg("E"), py::arg("x"), py::arg("y"))
+            .def("eigenfunction", &SE2D<>::eigenfunctionCalculator, R""""(\
+Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
+
+:param float E: the eigenvalue.
+
+:returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
+)"""",
+                 py::arg("E"))
             .def("eigenvalue", &SE2D<>::findEigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 

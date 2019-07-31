@@ -69,6 +69,10 @@ cmake --build . --target matslise_test
 ./test/matslise_test
 ```
 
+## Notes
+
+- lapack (especially from mkl) does allocate some buffers. Because these are never freed this can cause valgrind to suspect memory leaks. See  (https://stackoverflow.com/questions/36197527/insight-as-to-why-valgrind-shows-memory-leak-for-intels-mkl-lapacke)
+
 ## Bibliography
 * **[1]** Ledoux, Veerle, and Marnix Van Daele. “MATSLISE 2.0 : A Matlab Toolbox for Sturm-Liouville Computations.” ACM TRANSACTIONS ON MATHEMATICAL SOFTWARE 42, no. 4 (2016): 18.
 * **[2]** Ixaru, L. Gr. “New Numerical Method for the Eigenvalue Problem of the 2D Schrödinger Equation.” Computer Physics Communications 181 (October 1, 2010): 1738–42. https://doi.org/10.1016/j.cpc.2010.06.031.
