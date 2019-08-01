@@ -122,6 +122,8 @@ namespace matslise {
             ~Sector();
 
         private :
+            MatrixXcs theta(const Y <Scalar, Eigen::Dynamic> &) const;
+
             template<int r>
             Y <Scalar, Eigen::Dynamic, r> propagate_delta(
                     const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &_delta, bool use_h) const;

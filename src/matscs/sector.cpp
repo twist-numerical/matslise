@@ -4,6 +4,7 @@
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"
 #include "../util/horner.h"
+#include "../util/constants.h"
 
 #define EPS (1.e-12)
 
@@ -127,41 +128,57 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate_delta(
 }
 
 template<typename Scalar>
-typename Matscs<Scalar>::MatrixXcs theta(const Y<Scalar, Dynamic> &y) {
-    return (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1)).transpose()
-            .partialPivLu().solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
-            .transpose();
+typename Matscs<Scalar>::MatrixXcs Matscs<Scalar>::Sector::theta(const Y<Scalar, Dynamic> &y) const {
+    return diagonalize
+           * (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1))
+                   .transpose()
+                   .partialPivLu()
+                   .solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
+                   .transpose()
+           * diagonalize.transpose();
 }
 
 template<typename Scalar, typename InputMatrix>
 inline Array<Scalar, Dynamic, 1> angle(const InputMatrix &m) {
-    return m.eigenvalues().array().arg();
+    Array<Scalar, Dynamic, 1> angles = m.eigenvalues().array().arg();
+
+    const Scalar PI2 = constants<Scalar>::pi() * 2;
+    for (int i = 0; i < angles.size(); ++i) {
+        if (angles[i] <= 0)
+            angles[i] += PI2;
+    }
+    return angles;
 }
 
 template<typename Scalar>
 Y<Scalar, Dynamic> Matscs<Scalar>::Sector::propagate_delta(
         const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &delta, Scalar &argdet, bool use_h) const {
     Y<Scalar, Dynamic> y1 = propagate_delta(E, y0, delta, use_h);
-    MatrixXcs thetaZ0 = theta(y0);
-    MatrixXcs thetaZ = theta(y1);
 
-    ArrayXs Z = delta * delta * (vs[0].diagonal().array() - ArrayXs::Constant(s->n, E));
+    Scalar d = (delta > h ? h : delta < -h ? -h : delta);
+
+    ArrayXs Z = d * d * (vs[0].diagonal().array() - ArrayXs::Constant(s->n, E));
+
     ArrayXs *eta = calculateEta(Z, 2);
+    Scalar theta0 = 0;
     for (int i = 0; i < s->n; ++i) {
-        if (Z[i] < -0.1) {
-            Scalar sZ = sqrt(-Z[i]);
-            argdet += 2 * (sZ + atan2(
-                    (1 - sZ) * eta[1][i] * eta[0][i],
-                    1 + (sZ + Z[i]) * eta[1][i] * eta[1][i]));
+        if (Z[i] < 0) {
+            Scalar sZ = (d < 0 ? -1 : 1) * sqrt(-Z[i]);
+            theta0 += (sZ + atan2(
+                    (d - sZ) * eta[1][i] * eta[0][i],
+                    1 + (d * sZ + Z[i]) * eta[1][i] * eta[1][i]));
         } else {
-            argdet += 2 * atan2(eta[1][i], eta[0][i]);
+            theta0 += atan2(d * eta[1][i], eta[0][i]);
         }
     }
+    argdet += 2 * theta0;
 
+    MatrixXcs thetaZ0 = theta(y0);
+    MatrixXcs thetaZ = theta(y1);
     ArrayXs betas = angle<Scalar>(thetaZ);
-    const complex<Scalar> i(0, 1);
+    const complex<Scalar> i_delta(0, d);
     ArrayXs alphas = angle<Scalar>(
-            ((eta[0] + i * eta[1]) / (eta[0] - i * eta[1])).matrix().asDiagonal() * thetaZ0
+            ((eta[0] + i_delta * eta[1]) / (eta[0] - i_delta * eta[1])).matrix().asDiagonal() * thetaZ0
     );
     argdet += (betas - alphas).sum();
 
