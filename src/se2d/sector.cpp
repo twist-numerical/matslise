@@ -70,9 +70,8 @@ template<int r>
 Y<Scalar, Eigen::Dynamic, r>
 SE2D<Scalar>::Sector::propagate(
         const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
-    return matscs->propagate(E, y0,
-                             a < min ? min : a > max ? max : a,
-                             b < min ? min : b > max ? max : b, use_h);
+    return matscs->propagateColumn(
+            E, y0, a < min ? min : a > max ? max : a, b < min ? min : b > max ? max : b, use_h);
 }
 
 template<typename Scalar>

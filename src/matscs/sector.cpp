@@ -105,7 +105,7 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_
 
 template<typename Scalar>
 template<int r>
-Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate_delta(
+Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagateDeltaColumn(
         const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &_delta, bool use_h) const {
     Scalar delta = _delta;
     if (backward)
@@ -129,13 +129,11 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate_delta(
 
 template<typename Scalar>
 typename Matscs<Scalar>::MatrixXcs Matscs<Scalar>::Sector::theta(const Y<Scalar, Dynamic> &y) const {
-    return diagonalize
-           * (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1))
-                   .transpose()
-                   .partialPivLu()
-                   .solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
-                   .transpose()
-           * diagonalize.transpose();
+    return (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1))
+            .transpose()
+            .partialPivLu()
+            .solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
+            .transpose();
 }
 
 template<typename Scalar, typename InputMatrix>
@@ -151,27 +149,27 @@ inline Array<Scalar, Dynamic, 1> angle(const InputMatrix &m) {
 }
 
 template<typename Scalar>
-Y<Scalar, Dynamic> Matscs<Scalar>::Sector::propagate_delta(
-        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &delta, Scalar &argdet, bool use_h) const {
-    Y<Scalar, Dynamic> y1 = propagate_delta(E, y0, delta, use_h);
+pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagateDelta(
+        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &delta, bool use_h) const {
+    Y<Scalar, Dynamic> y1 = propagateDeltaColumn(E, y0, delta, use_h);
 
     Scalar d = (delta > h ? h : delta < -h ? -h : delta);
 
     ArrayXs Z = d * d * (vs[0].diagonal().array() - ArrayXs::Constant(s->n, E));
 
     ArrayXs *eta = calculateEta(Z, 2);
-    Scalar theta0 = 0;
+    Scalar argdet = 0;
     for (int i = 0; i < s->n; ++i) {
         if (Z[i] < 0) {
             Scalar sZ = (d < 0 ? -1 : 1) * sqrt(-Z[i]);
-            theta0 += (sZ + atan2(
+            argdet += (sZ + atan2(
                     (d - sZ) * eta[1][i] * eta[0][i],
                     1 + (d * sZ + Z[i]) * eta[1][i] * eta[1][i]));
         } else {
-            theta0 += atan2(d * eta[1][i], eta[0][i]);
+            argdet += atan2(d * eta[1][i], eta[0][i]);
         }
     }
-    argdet += 2 * theta0;
+    argdet *= 2;
 
     MatrixXcs thetaZ0 = theta(y0);
     MatrixXcs thetaZ = theta(y1);
@@ -184,49 +182,58 @@ Y<Scalar, Dynamic> Matscs<Scalar>::Sector::propagate_delta(
 
     delete[] eta;
 
-    return y1;
+    return {y1, argdet};
 }
 
 template<typename Scalar>
 template<int r>
-Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate(
+Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagateColumn(
         const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar, Dynamic, r> y = y0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
             if (a > min)
-                y = propagate_delta(E, y, min - a, use_h);
+                y = propagateDeltaColumn(E, y, min - a, use_h);
             if (b > min)
-                y = propagate_delta(E, y, b - min, use_h);
+                y = propagateDeltaColumn(E, y, b - min, use_h);
         } else {
             if (a < max)
-                y = propagate_delta(E, y, max - a, use_h);
+                y = propagateDeltaColumn(E, y, max - a, use_h);
             if (b < max)
-                y = propagate_delta(E, y, b - max, use_h);
+                y = propagateDeltaColumn(E, y, b - max, use_h);
         }
     }
     return y;
 }
 
 template<typename Scalar>
-Y<Scalar, Dynamic> Matscs<Scalar>::Sector::propagate(
-        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, Scalar &theta,
-        bool use_h) const {
+pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagate(
+        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar, Dynamic> y = y0;
+    Scalar argdet = 0;
+    Scalar theta;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
-            if (a > min)
-                y = propagate_delta(E, y, min - a, theta, use_h);
-            if (b > min)
-                y = propagate_delta(E, y, b - min, theta, use_h);
+            if (a > min) {
+                tie(y, theta) = propagateDelta(E, y, min - a, use_h);
+                argdet += theta;
+            }
+            if (b > min) {
+                tie(y, theta) = propagateDelta(E, y, b - min, use_h);
+                argdet += theta;
+            }
         } else {
-            if (a < max)
-                y = propagate_delta(E, y, max - a, theta, use_h);
-            if (b < max)
-                y = propagate_delta(E, y, b - max, theta, use_h);
+            if (a < max) {
+                tie(y, theta) = propagateDelta(E, y, max - a, use_h);
+                argdet += theta;
+            }
+            if (b < max) {
+                tie(y, theta) = propagateDelta(E, y, b - max, use_h);
+                argdet += theta;
+            }
         }
     }
-    return y;
+    return {y, argdet};
 }
 
 
@@ -297,7 +304,7 @@ Matscs<Scalar>::Sector::~Sector() {
 
 #define INSTANTIATE_PROPAGATE(Scalar, r)\
 template Y<Scalar, Dynamic, r>\
-Matscs<Scalar>::Sector::propagate<r>(\
+Matscs<Scalar>::Sector::propagateColumn<r>(\
     const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
 
 #define INSTANTIATE_MORE(Scalar)\

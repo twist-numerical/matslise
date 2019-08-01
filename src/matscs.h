@@ -57,12 +57,13 @@ namespace matslise {
 
         template<int r>
         matslise::Y<Scalar, Eigen::Dynamic, r>
-        propagate(const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, r> &y, const Scalar &a, const Scalar &b,
-                  bool use_h = true) const;
+        propagateColumn(const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, r> &y, const Scalar &a,
+                        const Scalar &b,
+                        bool use_h = true) const;
 
-        matslise::Y<Scalar, Eigen::Dynamic>
+        std::pair<matslise::Y<Scalar, Eigen::Dynamic>, Scalar>
         propagate(const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic> &y, const Scalar &a, const Scalar &b,
-                  Scalar &theta, bool use_h = true) const;
+                  bool use_h = true) const;
 
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
         propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
@@ -106,12 +107,13 @@ namespace matslise {
 
             template<int r = Eigen::Dynamic>
             Y <Scalar, Eigen::Dynamic, r>
-            propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
-                      bool use_h = true) const;
+            propagateColumn(const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
+                            bool use_h = true) const;
 
-            Y <Scalar, Eigen::Dynamic>
+            std::pair<Y < Scalar, Eigen::Dynamic>, Scalar>
+
             propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
-                      Scalar &theta, bool use_h = true) const;
+                      bool use_h = true) const;
 
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
             propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
@@ -125,12 +127,13 @@ namespace matslise {
             MatrixXcs theta(const Y <Scalar, Eigen::Dynamic> &) const;
 
             template<int r>
-            Y <Scalar, Eigen::Dynamic, r> propagate_delta(
+            Y <Scalar, Eigen::Dynamic, r> propagateDeltaColumn(
                     const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &_delta, bool use_h) const;
 
-            Y <Scalar, Eigen::Dynamic> propagate_delta(
-                    const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &_delta, Scalar &argdet,
-                    bool use_h) const;
+            std::pair<Y < Scalar, Eigen::Dynamic>, Scalar>
+
+            propagateDelta(
+                    const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &_delta, bool use_h) const;
 
         };
     };

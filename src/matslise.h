@@ -158,18 +158,30 @@ namespace matslise {
 
             T<Scalar> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
-            matslise::Y<Scalar>
-            propagate(const Scalar &E, const matslise::Y<Scalar> &y, bool forward, bool use_h = true) const;
+            std::pair<matslise::Y<Scalar>, Scalar>
+            propagate(const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, bool use_h = true) const;
 
-            matslise::Y<Scalar>
-            propagate(const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, Scalar &theta,
-                      bool use_h = true) const;
+            std::pair<matslise::Y<Scalar>, Scalar>
+            propagateForward(const Scalar &E, const matslise::Y<Scalar> &y, bool use_h = true) const {
+                return propagate(E, y, min, max, use_h);
+            }
+
+            std::pair<matslise::Y<Scalar>, Scalar>
+            propagateBackward(const Scalar &E, const matslise::Y<Scalar> &y, bool use_h = true) const {
+                return propagate(E, y, max, min, use_h);
+            }
 
             Scalar prufer(const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const;
 
             Scalar calculateError() const;
 
             virtual ~Sector();
+
+        private :
+            std::pair<Y<Scalar>, Scalar>
+            propagateDelta(
+                    const Scalar &E, const Y<Scalar> &y0, Scalar delta, bool use_h) const;
+
         };
     };
 

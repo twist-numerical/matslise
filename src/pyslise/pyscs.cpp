@@ -26,10 +26,9 @@ void pyScs(py::module &m) {
                  [](Matscs<> &m, double E, tuple<MatrixXd, MatrixXd> y, double a,
                     double b) -> pair<pair<MatrixXd, MatrixXd>, double> {
                      double theta = 0;
-                     Y<double, Dynamic> r = m.propagate(E, packY(y), a, b, theta, true);
-                     return make_pair(
-                             make_pair(r.getY(0), r.getY(1)),
-                             theta);
+                     Y<double, Dynamic> r;
+                     tie(r, theta) = m.propagate(E, packY(y), a, b, true);
+                     return make_pair(make_pair(r.getY(0), r.getY(1)), theta);
                  })
             .def("propagatePsi", &Matscs<>::propagatePsi)
             .def("__sector", [](Matscs<> &p, int i) -> Matscs<>::Sector * {

@@ -25,9 +25,11 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
     int sectorIndex = find_sector<Matslise<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
+    Scalar thetaTmp;
     do {
         sector = sectors[sectorIndex];
-        y = sector->propagate(E, y, a, b, theta, use_h);
+        tie(y, thetaTmp) = sector->propagate(E, y, a, b, use_h);
+        theta += thetaTmp;
         sectorIndex += direction;
     } while (!sector->contains(b));
     return {y, theta};
@@ -173,13 +175,13 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     ys[0] = left;
     unsigned int m = 0;
     for (unsigned int i = 1; ms.match > ms.sectors[i - 1]->min; ++i) {
-        ys[i] = ms.sectors[i - 1]->propagate(E, ys[i - 1], true);
+        ys[i] = ms.sectors[i - 1]->propagateForward(E, ys[i - 1]).first;
         m = i;
     }
     ys[n] = right;
     for (unsigned int i = n - 1; i > m; --i)
-        ys[i] = ms.sectors[i]->propagate(E, ys[i + 1], false);
-    Y<Scalar> yr = ms.sectors[m]->propagate(E, ys[m + 1], false);
+        ys[i] = ms.sectors[i]->propagateBackward(E, ys[i + 1]).first;
+    Y<Scalar> yr = ms.sectors[m]->propagateBackward(E, ys[m + 1]).first;
     Y<Scalar> &yl = ys[m];
     Scalar s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
     Scalar norm = yl.dy[0] * yl.y[1] - yl.dy[1] * yl.y[0];
@@ -214,14 +216,13 @@ Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar
     Array<Y<Scalar>, Dynamic, 1> ys(n);
 
     unsigned int sector = 0;
-    Scalar theta = 0;
     for (int i = 0; i < n; ++i) {
         while (x[i] > sectors[sector]->max)
             ++sector;
         if (sectors[sector]->backward) {
-            ys[i] = sectors[sector]->propagate(E, steps[sector + 1], sectors[sector]->max, x[i], theta);
+            ys[i] = sectors[sector]->propagate(E, steps[sector + 1], sectors[sector]->max, x[i]).first;
         } else {
-            ys[i] = sectors[sector]->propagate(E, steps[sector], sectors[sector]->min, x[i], theta);
+            ys[i] = sectors[sector]->propagate(E, steps[sector], sectors[sector]->min, x[i]).first;
         }
 
     }
@@ -244,11 +245,10 @@ std::function<Y<Scalar>(Scalar)> Matslise<Scalar>::eigenfunctionCalculator(
                 a = c;
         }
         const Matslise<Scalar>::Sector *sector = this->sectors[a];
-        Scalar theta = 0;
         if (sector->backward) {
-            return sector->propagate(E, ys[static_cast<unsigned long>(a + 1)], sector->max, x, theta);
+            return sector->propagate(E, ys[static_cast<unsigned long>(a + 1)], sector->max, x).first;
         } else {
-            return sector->propagate(E, ys[static_cast<unsigned long>(a)], sector->min, x, theta);
+            return sector->propagate(E, ys[static_cast<unsigned long>(a)], sector->min, x).first;
         }
     };
 }

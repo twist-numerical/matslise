@@ -103,56 +103,60 @@ Scalar Matslise<Scalar>::Sector::prufer(
 }
 
 template<typename Scalar>
-Y<Scalar> propagate_delta(const typename Matslise<Scalar>::Sector *ms, Scalar E, const Y<Scalar> &y0,
-                          Scalar delta, Scalar &theta, bool use_h) {
-    if (ms->backward)
+pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagateDelta(
+        const Scalar &E, const Y<Scalar> &y0, Scalar delta, bool use_h) const {
+    if (backward)
         delta *= -1;
     bool forward = delta >= 0;
     if (!forward)
         delta = -delta;
-    if (delta > ms->h)
-        delta = ms->h;
+    if (delta > h)
+        delta = h;
 
-    const T<Scalar> &t = ms->calculateT(E, delta, use_h);
+    const T<Scalar> &t = calculateT(E, delta, use_h);
     Y<Scalar> y = y0;
-    if (ms->backward)
+    if (backward)
         y.reverse();
     Y<Scalar> y1 = forward ? t * y : t / y;
-    if (ms->backward)
+    if (backward)
         y1.reverse();
 
-    if (forward != ms->backward)
-        theta += ms->prufer(E, delta, y0, y1);
-    else
-        theta -= ms->prufer(E, delta, y1, y0);
-
-    return y1;
+    return {
+            y1,
+            forward != backward ?
+            prufer(E, delta, y0, y1) :
+            -prufer(E, delta, y1, y0)
+    };
 }
 
 template<typename Scalar>
-Y<Scalar> Matslise<Scalar>::Sector::propagate(const Scalar &E, const Y<Scalar> &y0, bool forward, bool use_h) const {
-    Scalar theta = 0;
-    return propagate_delta(this, E, y0, forward ? h : -h, theta, use_h);
-}
-
-template<typename Scalar>
-Y<Scalar> Matslise<Scalar>::Sector::propagate(
-        const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, Scalar &theta, bool use_h) const {
+pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagate(
+        const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar> y = y0;
+    Scalar argdet = 0;
+    Scalar theta;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
-            if (a > min)
-                y = propagate_delta(this, E, y, min - a, theta, use_h);
-            if (b > min)
-                y = propagate_delta(this, E, y, b - min, theta, use_h);
+            if (a > min) {
+                tie(y, theta) = propagateDelta(E, y, min - a, use_h);
+                argdet += theta;
+            }
+            if (b > min) {
+                tie(y, theta) = propagateDelta(E, y, b - min, use_h);
+                argdet += theta;
+            }
         } else {
-            if (a < max)
-                y = propagate_delta(this, E, y, max - a, theta, use_h);
-            if (b < max)
-                y = propagate_delta(this, E, y, b - max, theta, use_h);
+            if (a < max) {
+                tie(y, theta) = propagateDelta(E, y, max - a, use_h);
+                argdet += theta;
+            }
+            if (b < max) {
+                tie(y, theta) = propagateDelta(E, y, b - max, use_h);
+                argdet += theta;
+            }
         }
     }
-    return y;
+    return {y, argdet};
 }
 
 template<typename Scalar>

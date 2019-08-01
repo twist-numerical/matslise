@@ -11,8 +11,8 @@ using namespace Eigen;
 template<typename Scalar>
 template<int r>
 Y<Scalar, Dynamic, r>
-Matscs<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic, r> &_y,
-                          const Scalar &a, const Scalar &b, bool use_h) const {
+Matscs<Scalar>::propagateColumn(const Scalar &E, const Y<Scalar, Dynamic, r> &_y,
+                                const Scalar &a, const Scalar &b, bool use_h) const {
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic, r> y = _y;
@@ -21,28 +21,31 @@ Matscs<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic, r> &_y,
     Sector *sector;
     do {
         sector = sectors[sectorIndex];
-        y = sector->propagate(E, y, a, b, use_h);
+        y = sector->propagateColumn(E, y, a, b, use_h);
         sectorIndex += direction;
     } while (!sector->contains(b));
     return y;
 }
 
 template<typename Scalar>
-Y<Scalar, Dynamic>
+pair<Y<Scalar, Dynamic>, Scalar>
 Matscs<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &_y,
-                          const Scalar &a, const Scalar &b, Scalar &theta, bool use_h) const {
+                          const Scalar &a, const Scalar &b, bool use_h) const {
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic> y = _y;
     int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
+    Scalar argdet = 0;
     do {
         sector = sectors[sectorIndex];
-        y = sector->propagate(E, y, a, b, theta, use_h);
+        Scalar theta;
+        tie(y, theta) = sector->propagate(E, y, a, b, use_h);
+        argdet += theta;
         sectorIndex += direction;
     } while (!sector->contains(b));
-    return y;
+    return {y, argdet};
 }
 
 template<typename Scalar>
@@ -100,7 +103,7 @@ vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::computeEigenfunction(const Scalar &E
 
 #define INSTANTIATE_PROPAGATE(Scalar, r)\
 template Y<Scalar, Dynamic, r>\
-Matscs<Scalar>::propagate<r>(\
+Matscs<Scalar>::propagateColumn<r>(\
     const Scalar &E, const Y<Scalar, Dynamic, r> &y, const Scalar &a, const Scalar &b, bool use_h) const;
 
 #define INSTANTIATE_MORE(Scalar)\
