@@ -16,7 +16,7 @@ if (NOT (DEFINED EMSCRIPTEN))
     add_executable(matslise_test EXCLUDE_FROM_ALL
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp
-            matscs/propagatePsi.cpp
+            matscs/propagatePsi.cpp matscs/propagateTheta.cpp
             se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
             util/lobatto.cpp
             main.cpp)
@@ -62,5 +62,5 @@ if (NOT (DEFINED EMSCRIPTEN))
     add_custom_target(benchmark_tests
             COMMAND ${CMAKE_COMMAND} -E env MATSLISE_TEST_EXECUTABLE="$<TARGET_FILE:matslise_test>" MATSLISE_BENCHMARK_RESULTS="${benchmark_results}" ${PYTHON_EXECUTABLE} benchmark.py
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    add_dependencies(matslise_test pyslise)
+    add_dependencies(matslise_test matslise)
 endif ()

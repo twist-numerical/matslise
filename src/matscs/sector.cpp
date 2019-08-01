@@ -30,10 +30,15 @@ void Matscs<Scalar>::Sector::calculateTCoeffs() {
     calculate_tcoeff_matrix(s->n, h, vs, t_coeff, t_coeff_h);
 }
 
+template<typename Scalar, typename T>
+Matrix<Scalar, Dynamic, Dynamic> diagonalMatrix(const T &arr) {
+    return arr.matrix().asDiagonal();
+}
+
 template<typename Scalar>
 T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &delta, bool use_h) const {
-    Matrix<Scalar, Dynamic, Dynamic> zero = Matrix<Scalar, Dynamic, Dynamic>::Zero(s->n, s->n);
-    Matrix<Scalar, Dynamic, Dynamic> one = Matrix<Scalar, Dynamic, Dynamic>::Identity(s->n, s->n);
+    MatrixXs zero = MatrixXs::Zero(s->n, s->n);
+    MatrixXs one = MatrixXs::Identity(s->n, s->n);
 
     if (abs(delta) <= EPS) {
         return T<Scalar, Dynamic>(s->n);
@@ -41,19 +46,20 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, const Sca
     if (use_h && abs(delta - h) <= EPS)
         return calculateT(E);
 
-    Matrix<Scalar, Dynamic, 1> VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(s->n, E)) * delta;
-    Matrix<Scalar, Dynamic, Dynamic> *eta = calculateEta<Scalar>(VEd * delta, s->n, MATSCS_ETA_delta);
+    ArrayXs VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(s->n, E)) * delta;
+    ArrayXs *eta = calculateEta<Scalar>(VEd * delta, MATSCS_ETA_delta);
     T<Scalar, Dynamic> t(s->n);
-    t.t << zero, zero, eta[1] * VEd.asDiagonal(), zero;
-    t.dt << zero, zero, -delta * eta[1] - (delta * delta / 2) * eta[2] * VEd.asDiagonal(), zero;
+    t.t << zero, zero, diagonalMatrix<Scalar>(eta[1] * VEd), zero;
+    t.dt << zero, zero, diagonalMatrix<Scalar>(-delta * eta[1] - (delta * delta / 2) * eta[2] * VEd), zero;
 
     for (int i = 0; i < MATSCS_ETA_delta; ++i) {
-        Matrix<Scalar, Dynamic, Dynamic> hor = horner<Matrix<Scalar, Dynamic, Dynamic>>(t_coeff.row(i), delta,
-                                                                                        MATSCS_HMAX_delta);
-        t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i]);
+        MatrixXs hor = horner<MatrixXs>(
+                t_coeff.row(i), delta, MATSCS_HMAX_delta);
+        t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i]));
 
         if (i + 1 < MATSCS_ETA_delta)
-            t.dt += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i + 1] * (-delta * delta / 2.));
+            t.dt += hor * kroneckerProduct(
+                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i + 1] * (-delta * delta / 2.)));
     }
 
 
@@ -71,20 +77,21 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_
     if (!use_h)
         return calculateT(E, h, false);
     int N = s->n;
-    Matrix<Scalar, Dynamic, Dynamic> zero = Matrix<Scalar, Dynamic, Dynamic>::Zero(N, N);
-    Matrix<Scalar, Dynamic, Dynamic> one = Matrix<Scalar, Dynamic, Dynamic>::Identity(N, N);
+    MatrixXs zero = MatrixXs::Zero(N, N);
+    MatrixXs one = MatrixXs::Identity(N, N);
 
-    Matrix<Scalar, Dynamic, 1> VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(N, E)) * h;
-    Matrix<Scalar, Dynamic, Dynamic> *eta = calculateEta<Scalar>(VEd * h, N, MATSCS_ETA_h);
+    ArrayXs VEd = (vs[0].diagonal().array() - Array<Scalar, Dynamic, 1>::Constant(N, E)) * h;
+    ArrayXs *eta = calculateEta<Scalar>(VEd * h, MATSCS_ETA_h);
     T<Scalar, Dynamic> t(N);
-    t.t << zero, zero, eta[1] * VEd.asDiagonal(), zero;
-    t.dt << zero, zero, -h * eta[1] - (h * h / 2) * eta[2] * VEd.asDiagonal(), zero;
+    t.t << zero, zero, diagonalMatrix<Scalar>(eta[1] * VEd), zero;
+    t.dt << zero, zero, diagonalMatrix<Scalar>(-h * eta[1] - (h * h / 2) * eta[2] * VEd), zero;
 
     for (int i = 0; i < MATSCS_ETA_h; ++i) {
-        t.t += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i]);
+        t.t += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i]));
 
         if (i + 1 < MATSCS_ETA_h)
-            t.dt += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), eta[i + 1] * (-h * h / 2));
+            t.dt += t_coeff_h[i] * kroneckerProduct(
+                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i + 1] * (-h * h / 2)));
     }
     delete[] eta;
 
@@ -95,26 +102,70 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_
     return t;
 }
 
-template<typename Scalar, int r>
-Y<Scalar, Dynamic, r>
-propagate_delta(const typename Matscs<Scalar>::Sector *ms, const Scalar &E, const Y<Scalar, Dynamic, r> &y0,
-                const Scalar &_delta, bool use_h) {
+template<typename Scalar>
+template<int r>
+Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate_delta(
+        const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &_delta, bool use_h) const {
     Scalar delta = _delta;
-    if (ms->backward)
+    if (backward)
         delta *= -1;
-    bool forward = delta >= 0;
-    if (!forward)
+    bool rightDirection = delta >= 0;
+    if (!rightDirection)
         delta = -delta;
-    if (delta > ms->h)
-        delta = ms->h;
+    if (delta > h)
+        delta = h;
 
-    const T<Scalar, Dynamic> &t = ms->calculateT(E, delta, use_h);
+    const T<Scalar, Dynamic> &t = calculateT(E, delta, use_h);
     Y<Scalar, Dynamic, r> y = y0;
-    if (ms->backward)
+    if (backward)
         y.reverse();
-    Y<Scalar, Dynamic, r> y1 = forward ? t * y : t / y;
-    if (ms->backward)
+    Y<Scalar, Dynamic, r> y1 = rightDirection ? t * y : t / y;
+    if (backward)
         y1.reverse();
+
+    return y1;
+}
+
+template<typename Scalar>
+typename Matscs<Scalar>::MatrixXcs theta(const Y<Scalar, Dynamic> &y) {
+    return (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1)).transpose()
+            .partialPivLu().solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
+            .transpose();
+}
+
+template<typename Scalar, typename InputMatrix>
+inline Array<Scalar, Dynamic, 1> angle(const InputMatrix &m) {
+    return m.eigenvalues().array().arg();
+}
+
+template<typename Scalar>
+Y<Scalar, Dynamic> Matscs<Scalar>::Sector::propagate_delta(
+        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &delta, Scalar &argdet, bool use_h) const {
+    Y<Scalar, Dynamic> y1 = propagate_delta(E, y0, delta, use_h);
+    MatrixXcs thetaZ0 = theta(y0);
+    MatrixXcs thetaZ = theta(y1);
+
+    ArrayXs Z = delta * delta * (vs[0].diagonal().array() - ArrayXs::Constant(s->n, E));
+    ArrayXs *eta = calculateEta(Z, 2);
+    for (int i = 0; i < s->n; ++i) {
+        if (Z[i] < -0.1) {
+            Scalar sZ = sqrt(-Z[i]);
+            argdet += 2 * (sZ + atan2(
+                    (1 - sZ) * eta[1][i] * eta[0][i],
+                    1 + (sZ + Z[i]) * eta[1][i] * eta[1][i]));
+        } else {
+            argdet += 2 * atan2(eta[1][i], eta[0][i]);
+        }
+    }
+
+    ArrayXs betas = angle<Scalar>(thetaZ);
+    const complex<Scalar> i(0, 1);
+    ArrayXs alphas = angle<Scalar>(
+            ((eta[0] + i * eta[1]) / (eta[0] - i * eta[1])).matrix().asDiagonal() * thetaZ0
+    );
+    argdet += (betas - alphas).sum();
+
+    delete[] eta;
 
     return y1;
 }
@@ -127,14 +178,35 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagate(
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
             if (a > min)
-                y = propagate_delta(this, E, y, min - a, use_h);
+                y = propagate_delta(E, y, min - a, use_h);
             if (b > min)
-                y = propagate_delta(this, E, y, b - min, use_h);
+                y = propagate_delta(E, y, b - min, use_h);
         } else {
             if (a < max)
-                y = propagate_delta(this, E, y, max - a, use_h);
+                y = propagate_delta(E, y, max - a, use_h);
             if (b < max)
-                y = propagate_delta(this, E, y, b - max, use_h);
+                y = propagate_delta(E, y, b - max, use_h);
+        }
+    }
+    return y;
+}
+
+template<typename Scalar>
+Y<Scalar, Dynamic> Matscs<Scalar>::Sector::propagate(
+        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, Scalar &theta,
+        bool use_h) const {
+    Y<Scalar, Dynamic> y = y0;
+    if (!((a >= max && b >= max) || (a <= min && b <= min))) {
+        if (!backward) { // forward
+            if (a > min)
+                y = propagate_delta(E, y, min - a, theta, use_h);
+            if (b > min)
+                y = propagate_delta(E, y, b - min, theta, use_h);
+        } else {
+            if (a < max)
+                y = propagate_delta(E, y, max - a, theta, use_h);
+            if (b < max)
+                y = propagate_delta(E, y, b - max, theta, use_h);
         }
     }
     return y;

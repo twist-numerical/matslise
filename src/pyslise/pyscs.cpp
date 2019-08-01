@@ -24,8 +24,12 @@ void pyScs(py::module &m) {
             .def_readonly("max", &Matscs<>::xmax)
             .def("propagate",
                  [](Matscs<> &m, double E, tuple<MatrixXd, MatrixXd> y, double a,
-                    double b) -> pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> {
-                     return unpackY(m.propagate(E, packY(y), a, b));
+                    double b) -> pair<pair<MatrixXd, MatrixXd>, double> {
+                     double theta = 0;
+                     Y<double, Dynamic> r = m.propagate(E, packY(y), a, b, theta, true);
+                     return make_pair(
+                             make_pair(r.getY(0), r.getY(1)),
+                             theta);
                  })
             .def("propagatePsi", &Matscs<>::propagatePsi)
             .def("__sector", [](Matscs<> &p, int i) -> Matscs<>::Sector * {

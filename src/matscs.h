@@ -16,6 +16,10 @@ namespace matslise {
     class Matscs {
     public:
         typedef _Scalar Scalar;
+        typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
+        typedef Eigen::Matrix<std::complex<Scalar>, Eigen::Dynamic, Eigen::Dynamic> MatrixXcs;
+        typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
+        typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
 
         class Sector;
 
@@ -56,6 +60,10 @@ namespace matslise {
         propagate(const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, r> &y, const Scalar &a, const Scalar &b,
                   bool use_h = true) const;
 
+        matslise::Y<Scalar, Eigen::Dynamic>
+        propagate(const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic> &y, const Scalar &a, const Scalar &b,
+                  Scalar &theta, bool use_h = true) const;
+
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
         propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
                      const Scalar &a, const Scalar &b) const;
@@ -68,6 +76,9 @@ namespace matslise {
                 const matslise::Y<Scalar, Eigen::Dynamic, 1> &right);
 
         ~Matscs();
+
+
+    public:
 
         class Sector {
         private:
@@ -98,6 +109,10 @@ namespace matslise {
             propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
                       bool use_h = true) const;
 
+            Y <Scalar, Eigen::Dynamic>
+            propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
+                      Scalar &theta, bool use_h = true) const;
+
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
             propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
                          const Scalar &a, const Scalar &b) const;
@@ -105,6 +120,15 @@ namespace matslise {
             Scalar calculateError() const;
 
             ~Sector();
+
+        private :
+            template<int r>
+            Y <Scalar, Eigen::Dynamic, r> propagate_delta(
+                    const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &_delta, bool use_h) const;
+
+            Y <Scalar, Eigen::Dynamic> propagate_delta(
+                    const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &_delta, Scalar &argdet,
+                    bool use_h) const;
 
         };
     };

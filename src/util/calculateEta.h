@@ -53,10 +53,10 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
 }
 
 template<typename Scalar>
-Matrix<Scalar, Dynamic, Dynamic> *calculateEta(const Matrix<Scalar, Dynamic, 1> &Z, int n, int etaCount) {
-    Matrix<Scalar, Dynamic, 1> *eta = new Matrix<Scalar, Dynamic, 1>[etaCount];
+Array<Scalar, Dynamic, 1> *calculateEta(const Array<Scalar, Dynamic, 1> &Z, int etaCount) {
+    Array<Scalar, Dynamic, 1> *eta = new Array<Scalar, Dynamic, 1>[etaCount];
     for (int j = 0; j < etaCount; ++j)
-        eta[j] = Matrix<Scalar, Dynamic, 1>::Zero(n);
+        eta[j].resize(Z.size(), 1);
 
     for (int i = 0; i < Z.size(); ++i) {
         Scalar *eta_i = calculateEta<Scalar>(Z[i], etaCount);
@@ -67,12 +67,7 @@ Matrix<Scalar, Dynamic, Dynamic> *calculateEta(const Matrix<Scalar, Dynamic, 1> 
         delete[] eta_i;
     }
 
-    Matrix<Scalar, Dynamic, Dynamic> *eta_mat = new Matrix<Scalar, Dynamic, Dynamic>[etaCount];
-    for (int j = 0; j < etaCount; ++j)
-        eta_mat[j] = eta[j].asDiagonal();
-
-    delete[] eta;
-    return eta_mat;
+    return eta;
 }
 
 #endif
