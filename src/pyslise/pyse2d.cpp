@@ -4,6 +4,7 @@ void pySE2d(py::module &m) {
     py::class_<SE2D<>>(m, "PySE2d")
             .def(py::init([](function<double(double, double)> V,
                              double xmin, double xmax, double ymin, double ymax,
+                             bool symmetric,
                              int x_count, double x_tol,
                              int y_count, double y_tol,
                              double tol,
@@ -35,7 +36,7 @@ void pySE2d(py::module &m) {
                      o2.N(N)
                              .stepsPerSector(in_sector_count)
                              .gridPoints(grid_points)
-                             .nested(o1);
+                             .nested(o1.symmetric(symmetric));
                      if (y_count != -1)
                          o2.sectorCount(y_count);
                      else
@@ -61,6 +62,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
 )"""",
                  py::arg("V"),
                  py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"),
+                 py::arg("symmetric") = true,
                  py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,

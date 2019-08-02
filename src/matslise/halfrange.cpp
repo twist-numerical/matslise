@@ -15,27 +15,14 @@ HalfRange<Scaler>::HalfRange(
     ms = new Matslise<Scaler>(V, 0, xmax, sectorBuilder);
 }
 
-template<typename T>
-void removeDoubles(vector<T> &x) {
-    sort(x.begin(), x.end());
-    unsigned long s = x.size();
-    int i = 0;
-    for (unsigned long j = 1; j < s; ++j) {
-        if (x[i] != x[j])
-            x[++i] = x[j];
-    }
-    x.erase(x.begin() + i + 1, x.end());
-}
-
-
 template<typename Scalar>
-inline bool isEven(const HalfRange<Scalar> *hr, Scalar E, const Y<Scalar> &side, int even) {
-    if (even == HalfRange<Scalar>::AUTO) {
+inline bool isEven(const HalfRange<Scalar> *hr, Scalar E, const Y<Scalar> &side, int index) {
+    if (index == -1) {
         Scalar error0 = get<0>(hr->ms->calculateError(E, Y<Scalar>({1, 0}, {0, 0}), side));
         Scalar error1 = get<0>(hr->ms->calculateError(E, Y<Scalar>({0, 1}, {0, 0}), side));
         return abs(error0) < abs(error1);
     }
-    return bool(even);
+    return bool(index % 2 == 0);
 }
 
 template<typename Scalar>
@@ -45,9 +32,8 @@ inline Y<Scalar> getY0(bool even) {
 
 template<typename Scalar>
 Array<Y<Scalar>, Dynamic, 1>
-HalfRange<Scalar>::computeEigenfunction(const Scalar &E, const Y<Scalar> &side,
-                                        const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
-                                        int _even) const {
+HalfRange<Scalar>::computeEigenfunction(
+        const Scalar &E, const Y<Scalar> &side, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -68,7 +54,7 @@ HalfRange<Scalar>::computeEigenfunction(const Scalar &E, const Y<Scalar> &side,
         xPos[i - negatives] = x[i];
 
 
-    bool even = isEven(this, E, side, _even);
+    bool even = isEven(this, E, side, index);
     Y<Scalar> y = getY0<Scalar>(even);
     Array<Y<Scalar>, Dynamic, 1> yNeg, yPos, ys(n);
     yNeg = ms->computeEigenfunction(E, y, side, xNeg);
@@ -89,8 +75,8 @@ HalfRange<Scalar>::computeEigenfunction(const Scalar &E, const Y<Scalar> &side,
 
 template<typename Scalar>
 std::function<Y<Scalar>(Scalar)>
-HalfRange<Scalar>::eigenfunctionCalculator(const Scalar &E, const Y<Scalar> &side, int _even) const {
-    bool even = isEven(this, E, side, _even);
+HalfRange<Scalar>::eigenfunctionCalculator(const Scalar &E, const Y<Scalar> &side, int index) const {
+    bool even = isEven(this, E, side, index);
     function<Y<Scalar>(Scalar)> calculator(ms->eigenfunctionCalculator(E, getY0<Scalar>(even), side));
     return [calculator, even](Scalar x) -> Y<Scalar> {
         Y<Scalar> c = calculator(x < 0 ? -x : x);
@@ -122,14 +108,13 @@ mergeEigenvalues(const vector<pair<int, Scalar>> &even, const vector<pair<int, S
 }
 
 template<typename Scalar>
-Scalar HalfRange<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar> &side, int _even) const {
-    return ms->computeEigenvalueError(E, getY0<Scalar>(isEven(this, E, side, _even)), side);
+Scalar HalfRange<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar> &side, int index) const {
+    return ms->computeEigenvalueError(E, getY0<Scalar>(isEven(this, E, side, index)), side);
 }
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side, const Y<Scalar> &right) const {
-    checkSymmetry(side, right);
+HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side) const {
     return mergeEigenvalues(
             ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>({1, 0}, {0, 0}), side),
             ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>({0, 1}, {0, 0}), side));
@@ -138,8 +123,7 @@ HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar>
 template<typename Scalar>
 vector<pair<int, Scalar>>
 HalfRange<Scalar>::computeEigenvalues(
-        const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side, const Y<Scalar> &right) const {
-    checkSymmetry(side, right);
+        const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side) const {
     return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<Scalar>({1, 0}, {0, 0}), side),
                             ms->computeEigenvalues(Emin, Emax, Y<Scalar>({0, 1}, {0, 0}), side));
 }

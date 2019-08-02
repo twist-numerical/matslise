@@ -155,7 +155,7 @@ Matslise<Scalar>::computeEigenvalues(const Scalar &Emin, const Scalar &Emax, con
 }
 
 template<typename Scalar>
-Scalar Matslise<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right) const {
+Scalar Matslise<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
     return abs(E - newtonIteration<Scalar>(this, E, left, right, 1e-9, false).second);
 }
 
@@ -203,7 +203,7 @@ template<typename Scalar>
 Array<Y<Scalar>, Dynamic, 1>
 Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
                                        const matslise::Y<Scalar> &right,
-                                       const Array<Scalar, Dynamic, 1> &x) const {
+                                       const Array<Scalar, Dynamic, 1> &x, int) const {
     long n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
@@ -231,7 +231,7 @@ Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar
 
 template<typename Scalar>
 std::function<Y<Scalar>(Scalar)> Matslise<Scalar>::eigenfunctionCalculator(
-        const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right) const {
+        const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
     vector<Y<Scalar>> ys = propagationSteps(*this, E, left, right);
     return [this, E, ys](Scalar x) -> Y<Scalar> {
         int a = 0;
