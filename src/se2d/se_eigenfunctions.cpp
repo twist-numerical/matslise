@@ -9,28 +9,31 @@ using namespace std;
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
-    vector<Y<Scalar, Dynamic>> steps(sectorCount + 1);
+    vector<Y<Scalar, Dynamic>> steps(static_cast<size_t>(sectorCount + 1));
 
     steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
-    steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
+    steps[static_cast<size_t>(sectorCount)] = Y<Scalar, Dynamic>::Dirichlet(N);
 
     MatrixXs normRight = MatrixXs::Zero(N, N);
     int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
-        Y<Scalar, Dynamic> next = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
-        steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
-        normRight += cec_cce(next) - cec_cce(steps[i]);
+        Y<Scalar, Dynamic> next = i < sectorCount - 1 ?
+                                  (MatrixXs)(M[i].transpose()) * steps[static_cast<size_t>(i + 1)]
+                                                      : steps[static_cast<size_t>(i + 1)];
+        steps[static_cast<size_t>(i)] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
+        normRight += cec_cce(next) - cec_cce(steps[static_cast<size_t>(i)]);
         matchIndex = i;
     }
-    Y<Scalar, Dynamic> matchRight = steps[matchIndex];
+    Y<Scalar, Dynamic> matchRight = steps[static_cast<size_t>(matchIndex)];
 
     MatrixXs normLeft = MatrixXs::Zero(N, N);
     for (int i = 0; i < matchIndex; ++i) {
-        Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
-        steps[i + 1] = M[i] * next;
-        normLeft += cec_cce(next) - cec_cce(steps[i]);
+        Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[static_cast<size_t>(i)], sectors[i]->min,
+                                                        sectors[i]->max, true);
+        steps[static_cast<size_t>(i + 1)] = M[i] * next;
+        normLeft += cec_cce(next) - cec_cce(steps[static_cast<size_t>(i)]);
     }
-    Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
+    Y<Scalar, Dynamic> matchLeft = steps[static_cast<size_t>(matchIndex)];
 
     ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
     ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
@@ -42,7 +45,7 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
 
     vector<Y<Scalar, Dynamic>> elements;
     if (lu.dimensionOfKernel() > 0) {
-        elements.resize(sectorCount + 1);
+        elements.resize(static_cast<size_t>(sectorCount + 1));
         MatrixXs kernel = lu.kernel();
 
         MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
@@ -53,9 +56,9 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
         left *= scaling.asDiagonal();
         right *= scaling.asDiagonal();
         for (int i = 0; i <= matchIndex; ++i)
-            elements[i] = steps[i] * left;
+            elements[static_cast<size_t>(i)] = steps[static_cast<size_t>(i)] * left;
         for (int i = sectorCount; i > matchIndex; --i)
-            elements[i] = steps[i] * right;
+            elements[static_cast<size_t>(i)] = steps[static_cast<size_t>(i)] * right;
     }
     return elements;
 }
@@ -100,7 +103,7 @@ SE2D<Scalar>::computeEigenfunction(
 
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
                 MatrixXs prod = B * sectors[sector]->propagate(
-                        E, steps[sector], sectors[sector]->min, y[nextY], true).getY(0);
+                        E, steps[static_cast<size_t>(sector)], sectors[sector]->min, y[nextY], true).getY(0);
                 for (int i = 0; i < cols; ++i)
                     result[static_cast<unsigned>(i)].col(nextY) = prod.col(i);
                 ++nextY;
@@ -118,7 +121,7 @@ vector<function<Scalar(Scalar, Scalar)>> SE2D<Scalar>::eigenfunctionCalculator(c
     vector<function<Scalar(Scalar, Scalar)>> result;
     auto bases = make_shared<vector<function<ArrayXs(Scalar)>>>(sectorCount);
     for (int i = 0; i < sectorCount; ++i)
-        (*bases)[i] = sectors[i]->basisCalculator();
+        (*bases)[static_cast<size_t>(i)] = sectors[i]->basisCalculator();
 
     if (steps->size() > 0) {
         int cols = (int) steps->at(0).getY(0).cols();

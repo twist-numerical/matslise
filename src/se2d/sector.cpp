@@ -22,16 +22,19 @@ SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scala
         matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
                                         se2d->options.nestedOptions._builder);
 
-    vector<pair<int, Scalar>> index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0, y0);
+    vector<pair<int, Scalar>> index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0);
     if (static_cast<int>(index_eigv.size()) != se2d->N) {
         throw std::runtime_error("SE2D: not enough basis-functions found on a sector");
     }
     eigenvalues = new Scalar[se2d->N];
     eigenfunctions = new ArrayXs[se2d->N];
+    Scalar E;
+    int index;
     for (int i = 0; i < se2d->N; ++i) {
-        Scalar E = index_eigv[static_cast<unsigned long>(i)].second;
+        tie(index, E) = index_eigv[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
-        Array<Y<Scalar>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, y0, se2d->grid);
+        // TODO: check i == index
+        Array<Y<Scalar>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, se2d->grid, index);
         eigenfunctions[i] = ArrayXs(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
@@ -41,14 +44,14 @@ SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scala
             [this](Scalar y) -> MatrixXs { return this->calculateDeltaV(y); },
             se2d->N, ymin, ymax,
             std::shared_ptr<SectorBuilder<Matscs<Scalar>>>(
-                    new Custom<Matscs<Scalar>>([this, backward](Matscs<Scalar> *p, Scalar min, Scalar max) {
+                    new Custom<Matscs<Scalar>>([this, backward](Matscs<Scalar> *p, Scalar xmin, Scalar xmax) {
                         int n = this->se2d->options._stepsPerSector;
-                        Scalar h = (max - min) / n;
+                        Scalar h = (xmax - xmin) / n;
                         p->sectorCount = n;
                         p->sectors = new typename Matscs<Scalar>::Sector *[n];
-                        Scalar left = min;
+                        Scalar left = xmin;
                         for (int i = 0; i < n; ++i) {
-                            Scalar right = max - (n - i - 1) * h;
+                            Scalar right = xmax - (n - i - 1) * h;
                             p->sectors[i] = new typename Matscs<Scalar>::Sector(p, left, right, backward);
                             left = right;
                         }
@@ -62,7 +65,6 @@ SE2D<Scalar>::Sector::~Sector() {
     delete matscs;
     delete[] eigenvalues;
     delete[] eigenfunctions;
-    //delete[] eigenfunctionsScaling;
 }
 
 template<typename Scalar>
@@ -105,7 +107,7 @@ SE2D<Scalar>::Sector::computeEigenfunction(int index, const typename SE2D<Scalar
     const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
     long size = x.size();
 
-    Array<matslise::Y<Scalar>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, y0, x);
+    Array<matslise::Y<Scalar>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, x, index);
     ArrayXs result(size);
     for (int i = 0; i < size; ++i)
         result(i) = raw(i).y[0];
@@ -115,14 +117,14 @@ SE2D<Scalar>::Sector::computeEigenfunction(int index, const typename SE2D<Scalar
 template<typename Scalar>
 function<typename SE2D<Scalar>::ArrayXs(Scalar)> SE2D<Scalar>::Sector::basisCalculator() const {
     const Y<Scalar> y0 = Y<Scalar>::Dirichlet(1);
-    vector<function<Y<Scalar>(Scalar)>> basis(se2d->N);
+    vector<function<Y<Scalar>(Scalar)>> basis(static_cast<size_t>(se2d->N));
     for (int index = 0; index < se2d->N; ++index) {
-        basis[index] = matslise->eigenfunctionCalculator(eigenvalues[index], y0, y0);
+        basis[static_cast<size_t>(index)] = matslise->eigenfunctionCalculator(eigenvalues[index], y0, index);
     }
     return [basis](const Scalar &x) -> ArrayXs {
         ArrayXs result(basis.size());
-        for (unsigned int i = 0; i < basis.size(); ++i)
-            result[i] = basis[i](x).y(0, 0);
+        for (int i = 0; i < static_cast<int>(basis.size()); ++i)
+            result[i] = basis[static_cast<size_t>(i)](x).y(0, 0);
         return result;
     };
 }

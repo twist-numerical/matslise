@@ -71,10 +71,10 @@ TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctio
     HalfRange<double> ms(&hr_mathieu, M_PI_2, Matslise<double>::UNIFORM(8));
     Y<double> ystart({0, 1}, {0, 0});
 
-    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, 10, ystart, ystart);
+    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, 10, ystart);
     for (pair<int, double> ie : eigenvalues) {
         double e = ie.second;
-        function<Y<double>(double)> f = ms.eigenfunctionCalculator(e, ystart, ystart);
+        function<Y<double>(double)> f = ms.eigenfunctionCalculator(e, ystart);
 
         int n = 61;
         double v = 0;

@@ -7,13 +7,12 @@ using namespace emscripten;
 using namespace std;
 using namespace Eigen;
 
-val transformEigenvalues(vector<pair<int, double>> *values) {
+val transformEigenvalues(const vector<pair<int, double>> &values) {
     val result(val::array());
 
-    for (pair<int, double> value: *values)
+    for (pair<int, double> value: values)
         result.call<val>("push", val(value));
 
-    delete values;
     return result;
 }
 
@@ -177,11 +176,10 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                 return se2d.calculateError(E, SEnD_util::ABS_SORTER<>);
             }))
             .function("calculateErrors", optional_override([](SE2D<> &se2d, double E) -> val {
-                vector<pair<double, double>> *result = se2d.calculateErrors(E);
+                vector<pair<double, double>> result = se2d.calculateErrors(E);
                 val r = val::array();
-                for (pair<double, double> &eigenvalue  :*result)
+                for (pair<double, double> &eigenvalue  :result)
                     r.call<val>("push", eigenvalue);
-                delete result;
                 return r;
             }))
             .function("findEigenvalue", optional_override([](SE2D<> &se2d, double E) -> double {
@@ -194,11 +192,10 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                 return r;
             }))
             .function("computeEigenfunction", optional_override([](SE2D<> &se2d, double E, val x, val y) -> val {
-                vector<ArrayXXd> *result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
+                vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                 val r = val::array();
-                for (ArrayXXd &eigenfunction  : *result)
+                for (ArrayXXd &eigenfunction : result)
                     r.call<val>("push", ArrayXXd2val(eigenfunction));
-                delete result;
                 return r;
             }));
 }
