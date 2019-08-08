@@ -10,14 +10,14 @@
 template<typename Scalar>
 class constants {
 public:
-    inline static Scalar pi() {
 #ifdef BOOST
-        return boost::math::constants::pi<Scalar>();
+    static constexpr Scalar PI = boost::math::constants::pi<Scalar>();
 #else
-        return (Scalar) M_PI;
+    static constexpr Scalar PI = static_cast<Scalar>(3.1415926535897932384626l);
 #endif
-    }
 };
 
+template<typename Scalar>
+constexpr Scalar constants<Scalar>::PI;
 
 #endif

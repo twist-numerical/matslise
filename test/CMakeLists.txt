@@ -4,26 +4,16 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 if (MSVC)
     add_compile_options(/W4 /WX)
 else ()
-    add_compile_options(-Wall -Wextra -pedantic -Werror)
+    add_compile_options(-Wall -Wextra -Werror)
 endif ()
 
 if (NOT (DEFINED EMSCRIPTEN))
     set(libraries matslise Eigen3::Eigen)
-    find_package(Boost)
 
     OPTION(LONG_DOUBLE "Option description" OFF)
     IF (LONG_DOUBLE)
         ADD_DEFINITIONS(-DMATSLISE_long_double)
     ENDIF (LONG_DOUBLE)
-
-
-    add_executable(matslise_test EXCLUDE_FROM_ALL
-            matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
-            matslise/hr_mathieu.cpp
-            matscs/propagatePsi.cpp matscs/propagateTheta.cpp
-            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
-            util/lobatto.cpp
-            main.cpp)
 
     OPTION(QUADMATH "Option description" OFF)
     IF (QUADMATH)
@@ -39,6 +29,14 @@ if (NOT (DEFINED EMSCRIPTEN))
             endif ()
         endif ()
     ENDIF (QUADMATH)
+
+    add_executable(matslise_test EXCLUDE_FROM_ALL
+            matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
+            matslise/hr_mathieu.cpp
+            matscs/propagatePsi.cpp matscs/propagateTheta.cpp
+            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
+            util/lobatto.cpp
+            main.cpp)
 
     find_package(MKL)
     if (MKL_FOUND)

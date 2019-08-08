@@ -15,7 +15,7 @@ double mathieu(double x) {
 }
 
 TEST_CASE("Solving the mathieu problem (first 10)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu, 0, M_PI, 8);
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
 
     vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
@@ -33,7 +33,7 @@ TEST_CASE("Solving the mathieu problem (first 10)", "[matslise][mathieu]") {
 }
 
 TEST_CASE("Solving the mathieu problem (first 10) (auto)", "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu, 0, M_PI, Matslise<double>::AUTO(1e-8));
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, Matslise<double>::AUTO(1e-8));
 
     vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
@@ -51,7 +51,7 @@ TEST_CASE("Solving the mathieu problem (first 10) (auto)", "[matslise][mathieu][
 }
 
 TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu, 0, M_PI, 8);
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
 
     vector<double> correct = {10201.000049019607, 10404.000048063059, 10609.000047134254, 10816.000046232084,
                               11025.000045355584, 11236.000044503782, 11449.000043675751, 11664.000042870637,
@@ -68,7 +68,7 @@ TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
 }
 
 TEST_CASE("Mathieu normalized", "[mathieu][matslise][eigenfunctionCalculator]") {
-    Matslise<double> ms(&mathieu, 0, M_PI, 8);
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
     Y<double> ystart({0, 1}, {0, 0});
 
     vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, 10, ystart, ystart);
@@ -79,10 +79,10 @@ TEST_CASE("Mathieu normalized", "[mathieu][matslise][eigenfunctionCalculator]") 
         int n = 61;
         double v = 0;
         for (int i = 0; i < n; ++i) {
-            double q = f((i + .5) / n * M_PI).y[0];
+            double q = f((i + .5) / n * constants<double>::PI).y[0];
             v += q * q;
         }
-        v *= M_PI / n;
+        v *= constants<double>::PI / n;
         REQUIRE(Approx(v).margin(1e-7) == 1);
     }
 }
@@ -126,7 +126,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -2.57141674375544, -3.13821749458430, -3.10573501735402, -2.51014152163740, -1.48587759669341,
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
-    Matslise<double> ms(&mathieu, 0, M_PI, 8);
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
     Y<double> ystart({0, 1}, {0, 0});
 
     {
@@ -154,7 +154,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
 
         REQUIRE(Approx(16.03297008140580).margin(1e-12) == e);
         Array<Y<double>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
-        REQUIRE(result.size() == y0.size());
+        REQUIRE(result.size() == static_cast<long>(y0.size()));
         for (long i = result.size() - 1; i >= 0; --i)
             result[i] *= dy3[0] / result[0].y[1];
 

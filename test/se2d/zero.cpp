@@ -43,7 +43,7 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
             [](double, double) -> double {
                 return 0;
             },
-            {{0, M_PI}, 0, M_PI},
+            {{0, constants<double>::PI}, 0, constants<double>::PI},
             Options2<>().sectorCount(13).stepsPerSector(4).N(12).nested(Options1<>().sectorCount(13)));
 
     set<double> eigenvalues;
@@ -61,7 +61,7 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
                 int l = (int) round(sqrt(E - k * k));
                 if (l * l == E - k * k) {
                     v.push_back([k, l](double x, double y) -> double {
-                        return sin(x * k) * sin(y * l) / M_PI_2;
+                        return 2 * sin(x * k) * sin(y * l) / constants<double>::PI;
                     });
                 }
             }

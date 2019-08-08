@@ -15,7 +15,7 @@ double hr_mathieu(double x) {
 }
 
 TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][mathieu]") {
-    HalfRange<double> ms(&hr_mathieu, M_PI_2, Matslise<double>::UNIFORM(8));
+    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::UNIFORM(8));
 
     vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
@@ -23,7 +23,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][m
 
     Y<double> y0({0, 1}, {0, 0});
     vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(), y0, y0);
-    for (unsigned int i = 0; i < correct.size(); ++i) {
+    for (int i = 0; i < static_cast<int>(correct.size()); ++i) {
         REQUIRE(i == eigenvalues[i].first);
         double E = eigenvalues[i].second;
         double error = ms.computeEigenvalueError(E, y0);
@@ -33,7 +33,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][m
 }
 
 TEST_CASE("HR: Solving the mathieu problem (first 10) (auto)", "[halfrange][matslise][mathieu][auto]") {
-    HalfRange<double> ms(&hr_mathieu, M_PI_2, Matslise<double>::AUTO(1e-8));
+    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::AUTO(1e-8));
 
     vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
@@ -51,7 +51,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10) (auto)", "[halfrange][mats
 }
 
 TEST_CASE("HR: Solving the mathieu problem (skip 100)", "[halfrange][matslise][mathieu]") {
-    HalfRange<double> ms(&hr_mathieu, M_PI_2, Matslise<double>::UNIFORM(8));
+    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::UNIFORM(8));
 
     vector<double> correct = {10201.000049019607, 10404.000048063059, 10609.000047134254, 10816.000046232084,
                               11025.000045355584, 11236.000044503782, 11449.000043675751, 11664.000042870637,
@@ -68,7 +68,7 @@ TEST_CASE("HR: Solving the mathieu problem (skip 100)", "[halfrange][matslise][m
 }
 
 TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctionCalculator]") {
-    HalfRange<double> ms(&hr_mathieu, M_PI_2, Matslise<double>::UNIFORM(8));
+    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::UNIFORM(8));
     Y<double> ystart({0, 1}, {0, 0});
 
     vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, 10, ystart);
@@ -79,10 +79,10 @@ TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctio
         int n = 61;
         double v = 0;
         for (int i = 0; i < n; ++i) {
-            double q = f((i + .5) / n * M_PI - M_PI_2).y[0];
+            double q = f((i + .5) / n * constants<double>::PI - constants<double>::PI/2).y[0];
             v += q * q;
         }
-        v *= M_PI / n;
+        v *= constants<double>::PI / n;
         REQUIRE(Approx(v).margin(1e-7) == 1);
     }
 }

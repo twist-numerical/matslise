@@ -7,7 +7,7 @@
 template<typename Scalar>
 inline Scalar atan_safe(Scalar y, Scalar x) {
     if (x == 0)
-        return y == 0 ? 0 : constants<Scalar>::pi() / 2;
+        return y == 0 ? 0 : constants<Scalar>::PI / 2;
     return atan(y / x);
 }
 

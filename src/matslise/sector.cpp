@@ -85,17 +85,17 @@ Scalar Matslise<Scalar>::Sector::prufer(
     if (ff > 0) {
         Scalar f = sqrt(ff);
         Scalar C = atan_safe(y0.y[0] * f, y0.y[1]) / f;
-        theta0 -= round(((C + delta) * f - theta1) / M_PI) * M_PI;
+        theta0 -= round(((C + delta) * f - theta1) / constants<Scalar>::PI) * constants<Scalar>::PI;
     } else {
         Scalar s0 = y0.y[0] * y0.y[1];
         Scalar s1 = y1.y[0] * y1.y[1];
         if (y0.y[0] * y1.y[0] >= 0) {
             if (s0 > 0 && s1 < 0)
-                theta1 += M_PI;
+                theta1 += constants<Scalar>::PI;
             else if (s0 < 0 && s1 > 0)
-                theta1 -= M_PI;
+                theta1 -= constants<Scalar>::PI;
         } else if (s0 * s1 > 0) {
-            theta1 += M_PI;
+            theta1 += constants<Scalar>::PI;
         }
     }
 
