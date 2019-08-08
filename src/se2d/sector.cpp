@@ -105,7 +105,7 @@ template<typename Scalar>
 typename SE2D<Scalar>::ArrayXs
 SE2D<Scalar>::Sector::computeEigenfunction(int index, const typename SE2D<Scalar>::ArrayXs &x) const {
     const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
-    long size = x.size();
+    Eigen::Index size = x.size();
 
     Array<matslise::Y<Scalar>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, x, index);
     ArrayXs result(size);

@@ -10,11 +10,11 @@
 #include <unsupported/Eigen/KroneckerProduct>
 #pragma GCC diagnostic pop
 #else
-
+#pragma warning(push, 0)
 #include <Eigen/Dense>
 #include <unsupported/Eigen/CXX11/Tensor>
 #include <unsupported/Eigen/KroneckerProduct>
-
+#pragma warning(pop)
 #endif
 
 #endif //MATSLISE_EIGEN_H

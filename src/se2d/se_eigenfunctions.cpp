@@ -67,13 +67,13 @@ template<typename Scalar>
 std::vector<typename SE2D<Scalar>::ArrayXXs>
 SE2D<Scalar>::computeEigenfunction(
         const Scalar &E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
-    long nx = x.size();
-    for (long i = 1; i < nx; ++i)
+	Eigen::Index nx = x.size();
+    for (Eigen::Index i = 1; i < nx; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("SE2D::computeEigenfunction(): x has to be sorted");
 
-    long ny = y.size();
-    for (long i = 1; i < ny; ++i)
+	Eigen::Index ny = y.size();
+    for (Eigen::Index i = 1; i < ny; ++i)
         if (y[i - 1] > y[i])
             throw runtime_error("SE2D::computeEigenfunction(): y has to be sorted");
 
@@ -84,11 +84,11 @@ SE2D<Scalar>::computeEigenfunction(
     vector<ArrayXXs> result;
     vector<Y<Scalar, Dynamic>> steps = computeEigenfunctionSteps(E);
     if (steps.size() > 0) {
-        int cols = (int) steps[0].getY(0).cols();
-        for (int i = 0; i < cols; ++i)
+		Eigen::Index cols = steps[0].getY(0).cols();
+        for (Eigen::Index i = 0; i < cols; ++i)
             result.push_back(ArrayXXs::Zero(nx, ny));
 
-        long nextY = 0;
+		Eigen::Index nextY = 0;
         int sector = 0;
         while (nextY < ny) {
             while (sector < sectorCount && y[nextY] > sectors[sector]->max) {

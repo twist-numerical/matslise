@@ -205,7 +205,7 @@ Array<Y<Scalar>, Dynamic, 1>
 Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
                                        const matslise::Y<Scalar> &right,
                                        const Array<Scalar, Dynamic, 1> &x, int) const {
-    long n = x.size();
+    Eigen::Index n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");

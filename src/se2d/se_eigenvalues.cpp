@@ -88,7 +88,7 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
 
     vector<Scalar> result;
     for (const Scalar &E : eigenvalues) {
-        unsigned long valueCount = result.size();
+        long valueCount = static_cast<long>(result.size());
         //++countCalls;
         for (const auto &error : calculateErrors(E)) {
             const Scalar d = error.first / error.second;

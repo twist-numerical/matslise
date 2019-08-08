@@ -2,9 +2,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(PYSLISE_VERSION 0.0.4)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 if(MSVC)
-    add_compile_options(/W4 /WX /DNOMINMAX /D_USE_MATH_DEFINES /bigobj)
+    add_compile_options(
+	/wd4661 # no suitable definition provided for explicit template instantiation request
+	/wd4820 #'bytes' bytes padding added after construct 'member_name'
+	/wd4464  # relative include path contains '..'
+	/DNOMINMAX
+	/D_USE_MATH_DEFINES
+	/bigobj)
 else()
     add_compile_options(-Wall -Wextra -Werror)
 endif()
@@ -29,7 +34,7 @@ else ()
     set(libraries Eigen3::Eigen)
     pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
             pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyse2d.cpp)
-    add_library(matslise SHARED ${MATSLISE_SRC})
+    add_library(matslise ${MATSLISE_SRC})
 
     OPTION(LONG_DOUBLE "Option description" OFF)
     IF (LONG_DOUBLE)
