@@ -2,13 +2,12 @@ set(CMAKE_CXX_STANDARD 11)
 set(PYSLISE_VERSION 0.0.4)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O2 -ansi -Wall -Wextra -Wconversion -fPIC")
-    message("-- added GCC/Clang flags")
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /O2 /DNOMINMAX /D_USE_MATH_DEFINES /w /bigobj")
-    message("-- added MSVC flags")
-endif ()
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+if(MSVC)
+    add_compile_options(/W4 /WX /DNOMINMAX /D_USE_MATH_DEFINES /bigobj)
+else()
+    add_compile_options(-Wall -Wextra -pedantic -Werror)
+endif()
 
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp

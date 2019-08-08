@@ -40,7 +40,7 @@ void compareEigenfunctions(
 
 TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
     SE2D<> p(
-            [](double x, double y) -> double {
+            [](double, double) -> double {
                 return 0;
             },
             {{0, M_PI}, 0, M_PI},

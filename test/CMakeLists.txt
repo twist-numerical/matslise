@@ -1,7 +1,11 @@
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
-set(CMAKE_CXX_FLAGS "-O2 -Wall")
+if (MSVC)
+    add_compile_options(/W4 /WX)
+else ()
+    add_compile_options(-Wall -Wextra -pedantic -Werror)
+endif ()
 
 if (NOT (DEFINED EMSCRIPTEN))
     set(libraries matslise Eigen3::Eigen)
