@@ -1,11 +1,17 @@
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
-if (MSVC)
-    add_compile_options(/W4 /WX)
-else ()
+if(MSVC)
+    add_compile_options(
+	/wd4661 # no suitable definition provided for explicit template instantiation request
+	/wd4820 #'bytes' bytes padding added after construct 'member_name'
+	/wd4464  # relative include path contains '..'
+	/DNOMINMAX
+	/D_USE_MATH_DEFINES
+	/bigobj)
+else()
     add_compile_options(-Wall -Wextra -Werror)
-endif ()
+endif()
 
 if (NOT (DEFINED EMSCRIPTEN))
     set(libraries matslise Eigen3::Eigen)

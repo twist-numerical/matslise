@@ -34,23 +34,23 @@ template<typename Scalar>
 Array<Y<Scalar>, Dynamic, 1>
 HalfRange<Scalar>::computeEigenfunction(
         const Scalar &E, const Y<Scalar> &side, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index) const {
-    long n = x.size();
+    Eigen::Index n = x.size();
     for (int i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
 
-    long negatives = 0;
-    for (long i = 0; i < n; ++i)
+    Eigen::Index negatives = 0;
+    for (Eigen::Index i = 0; i < n; ++i)
         if (x[i] < 0)
             negatives = i + 1;
 
     Array<Scalar, Dynamic, 1> xNeg(negatives);
     Array<Scalar, Dynamic, 1> xPos(n - negatives);
 
-    for (long i = 0; i < negatives; ++i)
+    for (Eigen::Index i = 0; i < negatives; ++i)
         xNeg[i] = -x[negatives - 1 - i];
 
-    for (long i = negatives; i < n; ++i)
+    for (Eigen::Index i = negatives; i < n; ++i)
         xPos[i - negatives] = x[i];
 
 
@@ -61,12 +61,12 @@ HalfRange<Scalar>::computeEigenfunction(
     yPos = ms->computeEigenfunction(E, y, side, xPos);
 
     static const Scalar SQRT1_2 = sqrt(Scalar(.5));
-    for (long i = 0; i < negatives; ++i) {
+    for (Eigen::Index i = 0; i < negatives; ++i) {
         Scalar f = (even ? 1 : -1) * SQRT1_2;
         ys[negatives - 1 - i].y = f * DiagonalMatrix<Scalar, 2>(1, -1) * yNeg[i].y;
         ys[negatives - 1 - i].dy = f * DiagonalMatrix<Scalar, 2>(1, -1) * yNeg[i].dy;
     }
-    for (long i = negatives; i < n; ++i)
+    for (Eigen::Index i = negatives; i < n; ++i)
         ys[i] = yPos[i - negatives] * SQRT1_2;
 
     return ys;

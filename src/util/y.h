@@ -11,7 +11,7 @@ namespace matslise {
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
         Eigen::Matrix<Scalar, n2, cols> y, dy;
 
-        static Y<Scalar, n, n> Dirichlet(long N = n) {
+        static Y<Scalar, n, n> Dirichlet(Eigen::Index N = n) {
             Y<Scalar, n, n> y(N);
             y.y.bottomRows(y.getN()) = Eigen::Matrix<Scalar, n, cols>::Identity(N, N);
             return y;
@@ -22,7 +22,7 @@ namespace matslise {
             getdY(1) *= -1;
         }
 
-        Y(long N = n, long R = n) {
+        Y(Eigen::Index N = n, Eigen::Index R = n) {
             if (R == -1)
                 R = N;
             if (N != -1) {
@@ -34,7 +34,7 @@ namespace matslise {
         Y(const Eigen::Matrix<Scalar, n2, cols> &y, const Eigen::Matrix<Scalar, n2, cols> &dy) : y(y), dy(dy) {
         }
 
-        long getN() const {
+        Eigen::Index getN() const {
             return y.rows() / 2;
         };
 
@@ -43,22 +43,22 @@ namespace matslise {
         }
 
         Eigen::Block<Eigen::Matrix<Scalar, n2, cols>> getY(int derivative) {
-            long N = getN();
+            Eigen::Index N = getN();
             return y.block(derivative * N, 0, N, y.cols());
         }
 
         Eigen::Block<const Eigen::Matrix<Scalar, n2, cols>> getY(int derivative) const {
-            long N = getN();
+            Eigen::Index N = getN();
             return y.block(derivative * N, 0, N, y.cols());
         }
 
         Eigen::Block<Eigen::Matrix<Scalar, n2, cols>> getdY(int derivative) {
-            long N = getN();
+            Eigen::Index N = getN();
             return dy.block(derivative * N, 0, N, dy.cols());
         }
 
         Eigen::Block<const Eigen::Matrix<Scalar, n2, cols>> getdY(int derivative) const {
-            long N = getN();
+            Eigen::Index N = getN();
             return dy.block(derivative * N, 0, N, dy.cols());
         }
 
@@ -90,7 +90,7 @@ namespace matslise {
             return !(rhs == *this);
         }
 
-        Y<Scalar, n, 1> col(int j) const {
+        Y<Scalar, n, 1> col(Eigen::Index j) const {
             return Y<Scalar, n, 1>(y.col(j), dy.col(j));
         }
     };
@@ -147,12 +147,12 @@ namespace matslise {
         }
 
         Eigen::Block<Eigen::Matrix<Scalar, n2, n2>> getT(int row, int col) {
-            long N = t.rows() / 2;
+            Eigen::Index N = t.rows() / 2;
             return t.block(row * N, col * N, N, N);
         }
 
         Eigen::Block<Eigen::Matrix<Scalar, n2, n2>> getdT(int row, int col) {
-            long N = dt.rows() / 2;
+            Eigen::Index N = dt.rows() / 2;
             return dt.block(row * N, col * N, N, N);
         }
 
