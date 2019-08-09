@@ -114,6 +114,7 @@ It is not a good idea to make the number of initial values large. This will incr
 :param int inital_values: the number of starting guesses that will be used. Defaults to 16.
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("initial_values") = 16)
+            .def("firstEigenvalue", &SE2D<>::findFirstEigenvalue)
             .def("__calculateErrorMatrix", &SE2D<>::calculateErrorMatrix)
             .def("__propagate",
                  [](const SE2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->

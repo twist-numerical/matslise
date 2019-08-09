@@ -65,6 +65,8 @@ namespace matslise {
                 const Scalar &Emin, const Scalar &Emax,
                 const int &initialSteps = 16) const;
 
+        Scalar findFirstEigenvalue() const;
+
         std::vector<ArrayXXs>
         computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
 

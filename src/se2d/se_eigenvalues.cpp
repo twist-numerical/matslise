@@ -88,7 +88,7 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
 
     vector<Scalar> result;
     for (const Scalar &E : eigenvalues) {
-        unsigned long valueCount = result.size();
+        long valueCount = static_cast<long>(result.size());
         //++countCalls;
         for (const auto &error : calculateErrors(E)) {
             const Scalar d = error.first / error.second;
@@ -96,12 +96,37 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
                 result.push_back(E - d);
             }
         }
-        if (valueCount != result.size())
-            sort(result.begin() + (long) valueCount, result.end());
+        if (valueCount != static_cast<long>(result.size()))
+            sort(result.begin() + valueCount, result.end());
     }
     //cout << "calculateError: " << countCalls << endl;
     //cout << "findEigenvalue: " << countFind << endl;
     return result;
+}
+
+template<typename Scalar>
+Scalar SE2D<Scalar>::findFirstEigenvalue() const {
+    // TODO: still a WIP
+    Scalar E = 0;
+    bool changed;
+    Scalar err, derr;
+    do {
+        E = findEigenvalue(0);
+        cout << E << endl;
+        changed = false;
+        for (const pair<Scalar, Scalar> &errorPair: calculateErrors(E)) {
+            tie(err, derr) = errorPair;
+            Scalar newE = E - err / derr;
+            cout << "       " << newE << endl;
+            if (newE < E) {
+                cout << E << " >> " << newE << endl;
+                E = newE;
+                changed = abs(E - newE) > 1e-9;
+            }
+
+        }
+    } while (changed);
+    return E;
 }
 
 template<typename Scalar>
