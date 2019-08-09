@@ -1,4 +1,4 @@
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(PYSLISE_VERSION 0.0.4)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
@@ -27,8 +27,11 @@ if (DEFINED EMSCRIPTEN)
 else ()
     set(targets matslise pyslise)
     set(libraries Eigen3::Eigen)
+
+    add_subdirectory(../cmake/pybind11 pybind11)
     pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
             pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyse2d.cpp)
+
     add_library(matslise SHARED ${MATSLISE_SRC})
 
     OPTION(LONG_DOUBLE "Option description" OFF)
