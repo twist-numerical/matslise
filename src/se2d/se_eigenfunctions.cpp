@@ -9,31 +9,29 @@ using namespace std;
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
-    vector<Y<Scalar, Dynamic>> steps(static_cast<size_t>(sectorCount + 1));
+    Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
     steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
-    steps[static_cast<size_t>(sectorCount)] = Y<Scalar, Dynamic>::Dirichlet(N);
+    steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
 
     MatrixXs normRight = MatrixXs::Zero(N, N);
     int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
-        Y<Scalar, Dynamic> next = i < sectorCount - 1 ?
-                                  (MatrixXs)(M[i].transpose()) * steps[static_cast<size_t>(i + 1)]
-                                                      : steps[static_cast<size_t>(i + 1)];
-        steps[static_cast<size_t>(i)] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
-        normRight += cec_cce(next) - cec_cce(steps[static_cast<size_t>(i)]);
+        Y<Scalar, Dynamic> next
+                = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
+        steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
+        normRight += cec_cce(next) - cec_cce(steps[i]);
         matchIndex = i;
     }
-    Y<Scalar, Dynamic> matchRight = steps[static_cast<size_t>(matchIndex)];
+    Y<Scalar, Dynamic> matchRight = steps[matchIndex];
 
     MatrixXs normLeft = MatrixXs::Zero(N, N);
     for (int i = 0; i < matchIndex; ++i) {
-        Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[static_cast<size_t>(i)], sectors[i]->min,
-                                                        sectors[i]->max, true);
-        steps[static_cast<size_t>(i + 1)] = M[i] * next;
-        normLeft += cec_cce(next) - cec_cce(steps[static_cast<size_t>(i)]);
+        Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
+        steps[i + 1] = M[i] * next;
+        normLeft += cec_cce(next) - cec_cce(steps[i]);
     }
-    Y<Scalar, Dynamic> matchLeft = steps[static_cast<size_t>(matchIndex)];
+    Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
 
     ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
     ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
@@ -56,10 +54,11 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
         left *= scaling.asDiagonal();
         right *= scaling.asDiagonal();
         for (int i = 0; i <= matchIndex; ++i)
-            elements[static_cast<size_t>(i)] = steps[static_cast<size_t>(i)] * left;
+            elements[static_cast<size_t>(i)] = steps[i] * left;
         for (int i = sectorCount; i > matchIndex; --i)
-            elements[static_cast<size_t>(i)] = steps[static_cast<size_t>(i)] * right;
+            elements[static_cast<size_t>(i)] = steps[i] * right;
     }
+    delete[] steps;
     return elements;
 }
 
