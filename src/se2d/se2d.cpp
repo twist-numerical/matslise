@@ -33,14 +33,14 @@ SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
 
 template<typename Scalar>
 typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::calculateM(int k) const {
-    MatrixXs M(N, N);
+    MatrixXs result(N, N);
 
     for (int i = 0; i < N; ++i)
         for (int j = 0; j < N; ++j)
-            M(i, j) = lobatto::quadrature<Scalar>(grid,
-                                                  sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
+            result(i, j) = lobatto::quadrature<Scalar>(
+                    grid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
 
-    return M;
+    return result;
 }
 
 template<typename Scalar>

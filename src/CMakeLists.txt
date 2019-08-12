@@ -11,7 +11,7 @@ if(MSVC)
     /D_USE_MATH_DEFINES
     /bigobj)
 else()
-    add_compile_options(-Wall -Wextra -Werror -Wno-unknown-pragmas)
+    add_compile_options(-Wall -Wextra -Werror)
 endif()
 
 SET(MATSLISE_SRC
