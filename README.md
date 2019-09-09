@@ -26,7 +26,10 @@ Full documentation can be found on
 
 ### Obtaining the source
 To obtain the source one could simply:
-git clone --recursive ...
+
+```
+git clone --recursive https://github.com/twist-numerical/matslise.git
+```
 
 The --recursive flag is needed to also add pybind to the project.
 
