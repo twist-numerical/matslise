@@ -11,8 +11,6 @@ using namespace matslise::sectorbuilder;
 template<typename Scalar>
 SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
-    const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
-
     const Scalar ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->V(x, ybar); };
     vbar = se2d->grid.unaryExpr(vbar_fun);
@@ -22,7 +20,7 @@ SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scala
         matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
                                         se2d->options.nestedOptions._builder);
 
-    vector<pair<int, Scalar>> index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, y0);
+    vector<pair<int, Scalar>> index_eigv = matslise->computeEigenvaluesByIndex(0, se2d->N, Y<Scalar>::Dirichlet());
     if (static_cast<int>(index_eigv.size()) != se2d->N) {
         throw std::runtime_error("SE2D: not enough basis-functions found on a sector");
     }
@@ -34,7 +32,8 @@ SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scala
         tie(index, E) = index_eigv[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
         // TODO: check i == index
-        Array<Y<Scalar>, Dynamic, 1> func = matslise->computeEigenfunction(E, y0, se2d->grid, index);
+        Array<Y<Scalar>, Dynamic, 1> func = matslise->computeEigenfunction(
+                E, Y<Scalar>::Dirichlet(), se2d->grid, index);
         eigenfunctions[i] = ArrayXs(func.size());
         for (int j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
