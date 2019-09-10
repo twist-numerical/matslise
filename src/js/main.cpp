@@ -57,6 +57,12 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                           return self(x).y;
                       }));
 
+    class_<std::function<double(double, double)>>("EigenfunctionCalculator2D")
+            .function("eval",
+                      optional_override([](std::function<double(double, double)> &self, double x, double y) -> double {
+                          return self(x, y);
+                      }));
+
     class_<Matslise<>>("Matslise")
             .constructor(optional_override(
                     [](val f, double min, double max, val options) -> Matslise<> * {
@@ -197,5 +203,19 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                 for (ArrayXXd &eigenfunction : result)
                     r.call<val>("push", ArrayXXd2val(eigenfunction));
                 return r;
-            }));
+            }))
+            .function("eigenfunction", optional_override(
+                    [](const SE2D<> &se2d, double E) -> val {
+                        std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunctionCalculator(
+                                E);
+                        val r = val::array();
+                        for (const auto &f : calculators)
+                            r.call<val>("push", val::global("Function")
+                                    .new_(string("calculator"), string(
+                                            "var f = function(x, y) { return calculator.eval(x, y); };"
+                                            "f.delete = function() { calculator.delete(); };"
+                                            "return f;")
+                                    )(f));
+                        return r;
+                    }));
 }
