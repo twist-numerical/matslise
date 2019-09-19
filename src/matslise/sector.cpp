@@ -161,7 +161,10 @@ pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagate(
 
 template<typename Scalar>
 Scalar Matslise<Scalar>::Sector::calculateError() const {
-    return (calculateT(vs[0], true).t - calculateT(vs[0], false).t).cwiseAbs().sum();
+    return (
+            (calculateT(vs[0], true).t - calculateT(vs[0], false).t).array() *
+            (Array<Scalar, 2, 2>() << 1, 1 / h, h, 1).finished()
+    ).cwiseAbs().sum();
 }
 
 template<typename Scalar>
