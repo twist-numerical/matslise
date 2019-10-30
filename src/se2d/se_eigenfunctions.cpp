@@ -13,6 +13,7 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
 
     steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
     steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
+    MatrixXs *U = new MatrixXs[sectorCount + 1];
 
     MatrixXs normRight = MatrixXs::Zero(N, N);
     int matchIndex = 0;
@@ -20,16 +21,19 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
         Y<Scalar, Dynamic> next
                 = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
-        normRight += cec_cce(next) - cec_cce(steps[i]);
+        U[i + 1] = conditionY(steps[i]);
+        // normRight += cec_cce(next) - cec_cce(steps[i]);
         matchIndex = i;
     }
     Y<Scalar, Dynamic> matchRight = steps[matchIndex];
 
     MatrixXs normLeft = MatrixXs::Zero(N, N);
+    U[0] = MatrixXs::Identity(N, N);
     for (int i = 0; i < matchIndex; ++i) {
         Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
+        U[i + 1] = conditionY(next);
         steps[i + 1] = M[i] * next;
-        normLeft += cec_cce(next) - cec_cce(steps[i]);
+        // normLeft += cec_cce(next) - cec_cce(steps[i]);
     }
     Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
 
@@ -48,15 +52,24 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
 
         MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
         MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-        MatrixXs scaling = (left.transpose() * normLeft * left
+        /*
+         MatrixXs scaling = (left.transpose() * normLeft * left
                             + right.transpose() * normRight * right).diagonal();
         scaling = scaling.unaryExpr([](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); });
         left *= scaling.asDiagonal();
         right *= scaling.asDiagonal();
-        for (int i = 0; i <= matchIndex; ++i)
+        */
+        for (int i = matchIndex; i >= 0; --i) {
             elements[static_cast<size_t>(i)] = steps[i] * left;
-        for (int i = sectorCount; i > matchIndex; --i)
+            if (i > 0)
+                U[i].template triangularView<Upper>().
+                        template solveInPlace<OnTheLeft>(left);
+        }
+        for (int i = matchIndex + 1; i <= sectorCount; ++i) {
+            U[i].template triangularView<Upper>().
+                    template solveInPlace<OnTheLeft>(right);
             elements[static_cast<size_t>(i)] = steps[i] * right;
+        }
     }
     delete[] steps;
     return elements;
