@@ -5,7 +5,10 @@ using namespace matslise;
 using namespace matslise::SEnD_util;
 using namespace std;
 
-#define cec_cce(y) ((y).getdY(0).transpose()*(y).getY(1) - (y).getY(0).transpose()*(y).getdY(1))
+template<typename Scalar>
+Matrix<Scalar, Dynamic, Dynamic> cec_cce(Y<Scalar, Dynamic, Dynamic> y) {
+    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1));
+}
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
@@ -15,34 +18,28 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
     steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
     MatrixXs *U = new MatrixXs[sectorCount + 1];
 
-    MatrixXs normRight = MatrixXs::Zero(N, N);
     int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
-        Y<Scalar, Dynamic> next
+        const Y<Scalar, Dynamic> next
                 = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
         U[i + 1] = conditionY(steps[i]);
-        // normRight += cec_cce(next) - cec_cce(steps[i]);
         matchIndex = i;
     }
-    Y<Scalar, Dynamic> matchRight = steps[matchIndex];
+    const Y<Scalar, Dynamic> matchRight = steps[matchIndex];
 
-    MatrixXs normLeft = MatrixXs::Zero(N, N);
     U[0] = MatrixXs::Identity(N, N);
     for (int i = 0; i < matchIndex; ++i) {
-        Y<Scalar, Dynamic> next = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
-        U[i + 1] = conditionY(next);
-        steps[i + 1] = M[i] * next;
-        // normLeft += cec_cce(next) - cec_cce(steps[i]);
+        steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
+        U[i + 1] = conditionY(steps[i + 1]);
     }
-    Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
+    const Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
 
     ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
     ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
-    MatrixXs Ul = left_solver.solve(matchLeft.getY(1).transpose()).transpose();
-    MatrixXs Ur = right_solver.solve(matchRight.getY(1).transpose()).transpose();
-
-    FullPivLU<MatrixXs> lu(Ul - Ur);
+    FullPivLU<MatrixXs> lu(
+            left_solver.solve(matchLeft.getY(1).transpose()).transpose()
+            - right_solver.solve(matchRight.getY(1).transpose()).transpose());
     lu.setThreshold(1e-4);
 
     vector<Y<Scalar, Dynamic>> elements;
@@ -59,17 +56,33 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
         left *= scaling.asDiagonal();
         right *= scaling.asDiagonal();
         */
+
+        VectorXs norm = VectorXs::Zero(kernel.cols());
         for (int i = matchIndex; i >= 0; --i) {
             elements[static_cast<size_t>(i)] = steps[i] * left;
-            if (i > 0)
+            if (i > 0) {
                 U[i].template triangularView<Upper>().
                         template solveInPlace<OnTheLeft>(left);
+            }
+            if (i < matchIndex) {
+                norm += (cec_cce<>((MatrixXs)(M[i].transpose()) * elements[i + 1]) - cec_cce<>(elements[i])).diagonal();
+            }
         }
+        Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
         for (int i = matchIndex + 1; i <= sectorCount; ++i) {
             U[i].template triangularView<Upper>().
                     template solveInPlace<OnTheLeft>(right);
             elements[static_cast<size_t>(i)] = steps[i] * right;
+
+            norm += (cec_cce<>(i < sectorCount ? (MatrixXs)(M[i - 1].transpose()) * elements[i] : elements[i]) -
+                     cec_cce<>(i == matchIndex + 1 ? elementMatchRight : elements[i - 1])).diagonal();
+
         }
+
+        for (int i = 0; i <= sectorCount; ++i)
+            elements[i] *= norm.unaryExpr(
+                    [](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); }).asDiagonal();
+
     }
     delete[] steps;
     return elements;

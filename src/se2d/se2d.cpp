@@ -73,6 +73,7 @@ SE2D<Scalar>::calculateErrorMatrix(const Scalar &E) const {
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
             E, y0, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
+    conditionY(yr);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
         conditionY(yr);

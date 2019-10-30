@@ -22,6 +22,7 @@ namespace matslise {
     class SE2D {
     public:
         typedef _Scalar Scalar;
+        typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorXs;
         typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
