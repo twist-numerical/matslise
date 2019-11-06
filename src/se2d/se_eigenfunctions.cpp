@@ -79,9 +79,11 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
 
         }
 
+        /*
         for (int i = 0; i <= sectorCount; ++i)
             elements[i] *= norm.unaryExpr(
                     [](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); }).asDiagonal();
+                    */
 
     }
     delete[] steps;
