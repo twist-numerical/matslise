@@ -61,7 +61,7 @@ vector<double> correct = {-0.110248816992, 3.917024772998, 9.047739259809, 16.03
                           38416.000013015735, 38809.000012883931, 39204.000012754113, 39601.000012626253,
                           40000.000012500299, 40401.000012376229};
 
-TEST_CASE("Solving the mathieu problem (first 50)", "[matslise][mathieu]") {
+TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
 
     Y<double> y0({0, 1}, {0, 0});
@@ -75,7 +75,7 @@ TEST_CASE("Solving the mathieu problem (first 50)", "[matslise][mathieu]") {
     }
 }
 
-TEST_CASE("Solving the mathieu problem (first 50) (auto)", "[matslise][mathieu][auto]") {
+TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu][auto]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, Matslise<double>::AUTO(1e-8));
 
     Y<double> y0({0, 1}, {0, 0});
