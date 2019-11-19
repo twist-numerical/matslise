@@ -18,7 +18,7 @@ TEST_CASE("V(x) = 0", "[matslise][simple]") {
 
     Y<double> y0({0, 1}, {0, 0});
 
-    for (int a = 1; a < 10; ++a) {
+    for (int a = 1; a < 50; ++a) {
         double E = a * a;
         std::function<Y<double>(double)> f = ms.eigenfunctionCalculator(E, y0, y0);
         double scale = (a % 2 == 1 ? f(0) : f(constants<double>::PI / 2 / a)).y[0];
@@ -37,7 +37,7 @@ TEST_CASE("V(x) = 0 (auto)", "[matslise][simple][auto)") {
 
     Y<double> y0({0, 1}, {0, 0});
 
-    for (int a = 1; a < 10; ++a) {
+    for (int a = 1; a < 50; ++a) {
         double E = a * a;
         std::function<Y<double>(double)> f = ms.eigenfunctionCalculator(E, y0, y0);
         double scale = (a % 2 == 1 ? f(0) : f(constants<double>::PI / 2 / a)).y[0];
