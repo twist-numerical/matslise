@@ -104,7 +104,9 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
                 toCheck.push(make_tuple(a, ta, c, tc, depth));
                 toCheck.push(make_tuple(c, tc, b, tb, depth));
             } else {
-                if ((ta - ia) * (tc - ia) < 0)
+                if (abs(tc - ia) < 1e-8)
+                    eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
+                else if ((ta - ia) * (tc - ia) < 0)
                     toCheck.push(make_tuple(a, ta, c, tc, depth + 1));
                 else
                     toCheck.push(make_tuple(c, tc, b, tb, depth + 1));

@@ -12,10 +12,10 @@
 #include "util/y.h"
 #include "util/SectorBuilder_header.h"
 
-#define MATSLISE_HMAX_delta 15
-#define MATSLISE_ETA_delta 7
-#define MATSLISE_ETA_h 9
-#define MATSLISE_N 15
+#define MATSLISE_HMAX_delta 17
+#define MATSLISE_ETA_delta 8
+#define MATSLISE_ETA_h 10
+#define MATSLISE_N 16
 
 namespace matslise {
     template<typename Scalar>
