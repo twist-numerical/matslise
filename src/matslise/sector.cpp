@@ -76,30 +76,50 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) cons
 }
 
 template<typename Scalar>
+Scalar rescale(const Scalar &theta, const Scalar &sigma) {
+    Scalar sinTheta = sin(theta);
+    Scalar cosTheta = cos(theta);
+    return theta + atan2((sigma - 1) * sinTheta * cosTheta, 1 + (sigma - 1) * sinTheta * sinTheta);
+}
+
+template<typename Scalar>
 Scalar Matslise<Scalar>::Sector::prufer(
         const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const {
-    Scalar theta0 = theta(y0);
-
-    Scalar theta1 = theta(y1);
     Scalar ff = E - vs[0];
     if (ff > 0) {
-        Scalar f = sqrt(ff);
-        Scalar C = atan_safe(y0.y[0] * f, y0.y[1]) / f;
-        theta0 -= round(((C + delta) * f - theta1) / constants<Scalar>::PI) * constants<Scalar>::PI;
-    } else {
-        Scalar s0 = y0.y[0] * y0.y[1];
-        Scalar s1 = y1.y[0] * y1.y[1];
-        if (y0.y[0] * y1.y[0] >= 0) {
-            if (s0 > 0 && s1 < 0)
-                theta1 += constants<Scalar>::PI;
-            else if (s0 < 0 && s1 > 0)
-                theta1 -= constants<Scalar>::PI;
-        } else if (s0 * s1 > 0) {
+        // page 56 (PhD Ledoux)
+        Scalar omega = sqrt(ff);
+        Scalar theta0 = atan_safe(y0.y[0] * omega, y0.y[1]);
+        Scalar phi_star = atan_safe(y1.y[0] * omega, y1.y[1]);
+        Scalar phi_bar = omega * delta + theta0;
+        phi_bar -= floor(phi_bar / constants<Scalar>::PI) * constants<Scalar>::PI;
+        Scalar theta1 = phi_star - phi_bar;
+        if (theta1 < -constants<Scalar>::PI / 2)
+            theta1 += constants<Scalar>::PI;
+        else if (theta1 > constants<Scalar>::PI / 2)
+            theta1 -= constants<Scalar>::PI;
+        theta1 += theta0 + omega * delta;
+
+        if (theta1 < theta0) {
+            // theta has to be increasing
             theta1 += constants<Scalar>::PI;
         }
-    }
 
-    return theta1 - theta0;
+        return rescale(theta1, 1 / omega) - rescale(theta0, 1 / omega);
+    } else {
+        Scalar theta0 = atan_safe(y0.y[0], y0.y[1]);
+        Scalar theta1 = atan_safe(y1.y[0], y1.y[1]);
+        if (y0.y[0] * y1.y[0] >= 0) {
+            if (theta0 > 0 && theta1 < 0)
+                theta1 += constants<Scalar>::PI;
+            else if (theta0 < 0 && theta1 > 0)
+                theta1 -= constants<Scalar>::PI;
+        } else if (theta0 * theta1 > 0) {
+            theta1 += constants<Scalar>::PI;
+        }
+
+        return theta1 - theta0;
+    }
 }
 
 template<typename Scalar>

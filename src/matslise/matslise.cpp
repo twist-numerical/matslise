@@ -56,9 +56,9 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
         tie(error, derror, theta) = ms->calculateError(E, left, right, use_h);
         adjust = error / derror;
         E -= adjust;
-    } while (++i < 50 && abs(adjust) > tol);
+    } while (++i < 20 && abs(adjust) > tol);
 
-    if (i >= 50) {
+    if (i >= 20 && abs(adjust) > 1e-5) {
         cerr << "Newton-iteration did not converge for E=" << (double) E << endl;
     }
 
@@ -93,7 +93,9 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         if (ta >= tb || ia == ib || ib <= Imin || Imax <= ia)
             continue;
 
-        c = ia + 1 < ib || depth % 2 == 0 ? .5 * (a + b) : ((tb - ia) * a - (ta - ia) * b) / (tb - ta);
+        c = ia + 1 < ib || tb - ta < 1e-5 || depth % 2 == 0
+            ? .5 * (a + b)
+            : ((tb - ia) * a - (ta - ia) * b) / (tb - ta);
         if ((tb - ta < 0.05 && depth > 3) || depth > 20) {
             eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
         } else {

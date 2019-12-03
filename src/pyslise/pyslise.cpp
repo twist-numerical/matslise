@@ -247,23 +247,11 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
             .def_readonly("min", &Matslise<>::Sector::min)
             .def_readonly("max", &Matslise<>::Sector::max)
             .def_readonly("backward", &Matslise<>::Sector::backward)
-            .def("eigenfunction",
-                 [](HalfRange<> &m, double E, const Vector2d &side, int even)
-                         -> function<pair<double, double>(double)> {
-                     function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, make_y(side), even);
-                     return [calculator](double x) -> pair<double, double> {
-                         Y<> y = calculator(x);
-                         return make_pair(y.y[0], y.y[1]);
-                     };
-                 }, R""""(\
-Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
-
-:param float E: the eigenvalue.
-:param (float,float) side: the symmetric boundary conditions.
-:param int even: indication if the eigenvalue is even (1) or odd (0). Defaults to auto (-1).
-
-:returns: a function that takes a value and returns a tuple with the eigenfunction and derivative in that value.
-)"""",
-                 py::arg("E"), py::arg("side"), py::arg("even") = -1);
+            .def_property_readonly("v", [](const Matslise<>::Sector &s) -> vector<double> {
+                vector<double> r(MATSLISE_N);
+                for (int i = 0; i < MATSLISE_N; ++i)
+                    r[i] = s.vs[i];
+                return r;
+            });
 
 }

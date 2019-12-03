@@ -5,10 +5,13 @@
 #include "constants.h"
 
 template<typename Scalar>
-inline Scalar atan_safe(Scalar y, Scalar x) {
-    if (x == 0)
-        return y == 0 ? 0 : constants<Scalar>::PI / 2;
-    return atan(y / x);
+inline Scalar atan_safe(const Scalar &y, const Scalar &x) {
+    Scalar r = atan2(y, x);
+    if (r > constants<Scalar>::PI / 2)
+        r -= constants<Scalar>::PI;
+    else if (r <= -constants<Scalar>::PI / 2)
+        r += constants<Scalar>::PI;
+    return r;
 }
 
 namespace matslise {
