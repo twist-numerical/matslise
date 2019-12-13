@@ -70,5 +70,6 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
         }
     }
 
-    checkOrthonormality(p, eigenvalues.begin(), eigenvalues.end());
+    vector<double> eigenvalues_v(eigenvalues.begin(), eigenvalues.end());
+    checkOrthonormality(p, eigenvalues_v.begin(), eigenvalues_v.end());
 }

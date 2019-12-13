@@ -18,8 +18,10 @@ void checkOrthonormality(const SE2D<Scalar> &p, const doubleIterator &begin, con
             Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(1), p.domain.getMax(1)));
 
     vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctions;
-    for (auto i = begin; i != end; ++i) {
+    #pragma omp parallel for ordered
+    for (auto i = begin; i < end; ++i) {
         vector<Array<Scalar, Dynamic, Dynamic>> fs = p.computeEigenfunction(*i, x, y);
+        #pragma omp ordered
         for (const Array<Scalar, Dynamic, Dynamic> &f : fs)
             eigenfunctions.push_back(f);
     }

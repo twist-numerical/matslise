@@ -44,6 +44,11 @@ if (NOT (DEFINED EMSCRIPTEN))
             util/lobatto.cpp
             main.cpp)
 
+    find_package(OpenMP)
+    if(OpenMP_CXX_FOUND)
+        target_link_libraries(matslise_test PUBLIC OpenMP::OpenMP_CXX)
+    endif()
+
     find_package(MKL)
     if (MKL_FOUND)
         set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
