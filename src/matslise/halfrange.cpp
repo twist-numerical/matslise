@@ -80,7 +80,7 @@ HalfRange<Scalar>::eigenfunctionCalculator(const Scalar &E, const Y<Scalar> &sid
     function<Y<Scalar>(Scalar)> calculator(ms->eigenfunctionCalculator(E, getY0<Scalar>(even), side));
     return [calculator, even](Scalar x) -> Y<Scalar> {
         Y<Scalar> c = calculator(x < 0 ? -x : x);
-        c *= M_SQRT1_2;
+        c *= sqrt(Scalar(.5));
         if (x < 0 && !even)
             c *= -1;
         return c;

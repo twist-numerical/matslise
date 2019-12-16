@@ -9,8 +9,9 @@ using namespace std;
 using namespace Eigen;
 using namespace matslise;
 
-template<typename Scalar, typename doubleIterator>
-void checkOrthonormality(const SE2D<Scalar> &p, const doubleIterator &begin, const doubleIterator &end) {
+template<typename Problem, typename doubleIterator>
+void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIterator &end) {
+    typedef typename Problem::Scalar Scalar;
     int n = 71;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
             Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));

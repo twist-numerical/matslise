@@ -59,7 +59,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
-TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenvalues][ixaru][halfrange]") {
+TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfrange]") {
     SE2DHalf<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
@@ -79,12 +79,21 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenvalues][ixaru][halfrang
             {13.3323313, 1}
     };
 
+
+    ArrayXd x(3);
+    x << -1, 0, 1;
     double E;
     int multiplicity;
+    for (int i = 0; i < 9; ++i) {
+        double error = get<0>(p2.calculateError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
+        CHECK(abs(error) > 1e-3);
+    }
     vector<double> eigenvalues_simple;
     for (auto &Emult  : eigenvalues) {
         tie(E, multiplicity) = Emult;
         eigenvalues_simple.push_back(E);
+        const pair<double, double> &error = p2.calculateError(E);
+        CHECK(abs(error.first) < 1e-3);
 
         if (E < 6) {
             double El = p2.findEigenvalue(E - 0.01);
@@ -92,7 +101,11 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenvalues][ixaru][halfrang
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
         }
+
+        const vector<Array<double, -1, -1>> f = p2.computeEigenfunction(E, x, x);
+        CHECK(f.size() == multiplicity);
     }
+    checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
 TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {

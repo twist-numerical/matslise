@@ -23,6 +23,8 @@ SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
                    const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {
+    y0Left = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
+    y0Right = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
     grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     options._builder->build(this, domain.min, domain.max);
 

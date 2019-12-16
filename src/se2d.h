@@ -39,8 +39,8 @@ namespace matslise {
         int N;
         Scalar match;
         Options2<Scalar> options;
-        Y<Scalar, Eigen::Dynamic> y0Left = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
-        Y<Scalar, Eigen::Dynamic> y0Right = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
+        Y<Scalar, Eigen::Dynamic> y0Left;
+        Y<Scalar, Eigen::Dynamic> y0Right;
     public:
         SE2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
              const Options2<Scalar> &options);
@@ -142,6 +142,7 @@ namespace matslise {
         void setParity(bool even);
     public:
         SE2D<Scalar> *se2d;
+        Rectangle<2, Scalar> domain;
 
     public:
         SE2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
@@ -158,6 +159,10 @@ namespace matslise {
 
         std::vector<ArrayXXs>
         computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y);
+
+        std::pair<Scalar, Scalar> calculateError(const Scalar &E, const std::function<bool(
+                std::pair<Scalar, Scalar>,
+                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>);
 
         std::vector<Scalar> computeEigenvaluesByIndex(int Imin, int Imax);
         // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
