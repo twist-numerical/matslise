@@ -65,14 +65,13 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) 
 template<typename Scalar>
 pair<typename SE2D<Scalar>::MatrixXs, typename SE2D<Scalar>::MatrixXs>
 SE2D<Scalar>::calculateErrorMatrix(const Scalar &E) const {
-    Y<Scalar, Dynamic> y0 = Y<Scalar, Dynamic>::Dirichlet(N);
-    Y<Scalar, Dynamic> yl = y0;
+    Y<Scalar, Dynamic> yl = y0Left;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
         conditionY(yl);
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
-            E, y0, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
+            E, y0Right, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     conditionY(yr);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);

@@ -14,8 +14,8 @@ template<typename Scalar>
 vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
     Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
-    steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
-    steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
+    steps[0] = y0Left;
+    steps[sectorCount] = y0Right;
     MatrixXs *U = new MatrixXs[sectorCount + 1];
 
     int matchIndex = 0;

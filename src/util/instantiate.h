@@ -10,6 +10,7 @@ template class matslise::Matslise<Scalar>;\
 template class matslise::HalfRange<Scalar>;\
 template class matslise::Matscs<Scalar>;\
 template class matslise::SE2D<Scalar>;\
+template class matslise::SE2DHalf<Scalar>;\
 INSTANTIATE_MORE(Scalar)
 
 INSTANTIATE_MATSLISE(double)
