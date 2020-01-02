@@ -223,7 +223,22 @@ It is not a good idea to make the number of initial values large. This will incr
 :param int inital_values: the number of starting guesses that will be used. Defaults to 16.
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("initial_values") = 16)
-            .def("firstEigenvalue", &SE2DHalf<>::findFirstEigenvalue);
+            .def("firstEigenvalue", &SE2DHalf<>::findFirstEigenvalue)
+            .def("eigenfunction", &SE2DHalf<>::computeEigenfunction, R""""(\
+Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
+
+:param float E: the eigenvalue to compute eigenfunctions for.
+:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
+:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
+)"""", py::arg("E"), py::arg("x"), py::arg("y"))
+            .def("eigenfunction", &SE2DHalf<>::eigenfunctionCalculator, R""""(\
+Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
+
+:param float E: the eigenvalue.
+
+:returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
+)"""",
+                 py::arg("E"));
 
     py::class_<SE2D<>::Sector, std::unique_ptr<SE2D<>::Sector, py::nodelete>>(m, "PySE2dSector")
             .def_property_readonly("eigenvalues", [](SE2D<>::Sector &s) -> vector<double> * {

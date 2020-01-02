@@ -103,7 +103,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfr
         }
 
         const vector<Array<double, -1, -1>> f = p2.computeEigenfunction(E, x, x);
-        CHECK(f.size() == multiplicity);
+        CHECK(static_cast<long>(f.size()) == multiplicity);
     }
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }

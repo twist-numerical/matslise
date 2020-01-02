@@ -12,7 +12,7 @@ using namespace matslise;
 template<typename Problem, typename doubleIterator>
 void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIterator &end) {
     typedef typename Problem::Scalar Scalar;
-    int n = 71;
+    int n = 101;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
             Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));
     Array<Scalar, Dynamic, 1> y = lobatto::grid<Scalar>(
