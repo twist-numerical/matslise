@@ -19,26 +19,24 @@ void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIt
             Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(1), p.domain.getMax(1)));
 
     vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctions;
-    #pragma omp parallel for ordered
+#pragma omp parallel for ordered
     for (auto i = begin; i < end; ++i) {
         vector<Array<Scalar, Dynamic, Dynamic>> fs = p.computeEigenfunction(*i, x, y);
-        #pragma omp ordered
+#pragma omp ordered
         for (const Array<Scalar, Dynamic, Dynamic> &f : fs)
             eigenfunctions.push_back(f);
     }
 
     for (auto i = eigenfunctions.begin(); i != eigenfunctions.end(); ++i)
         for (auto j = eigenfunctions.begin(); j != eigenfunctions.end(); ++j) {
-            if (i != j) { // not needed when normalizing is done
-                CHECKED_ELSE(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-1) == (i == j ? 1 : 0)) {
-                    auto l = begin;
-                    for (auto k = eigenfunctions.begin(); k != eigenfunctions.end(); ++k) {
-                        if (k == i)
-                            break;
-                        ++l;
-                    }
-                    FAIL(*l);
+            CHECKED_ELSE(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-1) == (i == j ? 1 : 0)) {
+                auto l = begin;
+                for (auto k = eigenfunctions.begin(); k != eigenfunctions.end(); ++k) {
+                    if (k == i)
+                        break;
+                    ++l;
                 }
+                FAIL(*l);
             }
         }
 
