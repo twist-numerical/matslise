@@ -17,6 +17,12 @@ namespace matslise {
             return y;
         }
 
+        static Y<Scalar, n, n> Neumann(Eigen::Index N = n) {
+            Y<Scalar, n, n> y(N);
+            y.y.topRows(y.getN()) = Eigen::Matrix<Scalar, n, cols>::Identity(N, N);
+            return y;
+        }
+
         void reverse() {
             getY(1) *= -1;
             getdY(1) *= -1;

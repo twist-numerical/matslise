@@ -38,13 +38,12 @@ namespace lobatto {
     Scalar quadrature(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x,
                       const Eigen::Array<Scalar, Eigen::Dynamic, 1> &y,
                       const Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> &f) {
-        Eigen::Index n = x.size();
-        Eigen::Array<Scalar, Eigen::Dynamic, 1> result = Eigen::Array<Scalar, Eigen::Dynamic, 1>::Zero(n);
+        Eigen::Array<Scalar, Eigen::Dynamic, 1> result = Eigen::Array<Scalar, Eigen::Dynamic, 1>::Zero(x.size());
 
-        for (Eigen::Index i = 0; i < n - 1; i += 3)
-            result += (x[i + 3] - x[i]) / 2 * ((f.col(i) + f.col(i + 3)) / 6 + (f.col(i + 1) + f.col(i + 2)) * 5 / 6);
+        for (Eigen::Index i = 0; i < y.size() - 1; i += 3)
+            result += (y[i + 3] - y[i]) / 2 * ((f.col(i) + f.col(i + 3)) / 6 + (f.col(i + 1) + f.col(i + 2)) * 5 / 6);
 
-        return lobatto::quadrature<Scalar>(y, result);
+        return lobatto::quadrature<Scalar>(x, result);
     }
 }
 

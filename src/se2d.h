@@ -39,6 +39,8 @@ namespace matslise {
         int N;
         Scalar match;
         Options2<Scalar> options;
+        Y<Scalar, Eigen::Dynamic> y0Left;
+        Y<Scalar, Eigen::Dynamic> y0Right;
     public:
         SE2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
              const Options2<Scalar> &options);
@@ -124,6 +126,50 @@ namespace matslise {
         public:
             MatrixXs calculateDeltaV(const Scalar &y) const;
         };
+    };
+
+    template<typename _Scalar=double>
+    class SE2DHalf {
+    public:
+        typedef _Scalar Scalar;
+        typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorXs;
+        typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixXs;
+        typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
+        typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
+    private:
+        Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> oddBoundary;
+        Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> evenBoundary;
+        void setParity(bool even);
+    public:
+        SE2D<Scalar> *se2d;
+        Rectangle<2, Scalar> domain;
+
+    public:
+        SE2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
+             const Options2<Scalar> &options);
+
+        Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
+                              const Scalar &minTolerance = 1e-5);
+
+        std::vector<Scalar> findEigenvalues(
+                const Scalar &Emin, const Scalar &Emax,
+                const int &initialSteps = 16);
+
+        Scalar findFirstEigenvalue();
+
+        std::vector<ArrayXXs>
+        computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y);
+
+        std::pair<Scalar, Scalar> calculateError(const Scalar &E, const std::function<bool(
+                std::pair<Scalar, Scalar>,
+                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>);
+
+        std::vector<Scalar> computeEigenvaluesByIndex(int Imin, int Imax);
+        // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
+
+        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E);
+
+        virtual ~SE2DHalf();
     };
 }
 

@@ -17,7 +17,7 @@ endif()
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp
-        se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h
+        se2d/halfrange.cpp se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h
         util/legendre.cpp)
 
 if (DEFINED EMSCRIPTEN)

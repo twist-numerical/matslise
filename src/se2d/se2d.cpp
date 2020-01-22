@@ -23,6 +23,8 @@ SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
                    const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {
+    y0Left = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
+    y0Right = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
     grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     options._builder->build(this, domain.min, domain.max);
 
@@ -65,14 +67,13 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) 
 template<typename Scalar>
 pair<typename SE2D<Scalar>::MatrixXs, typename SE2D<Scalar>::MatrixXs>
 SE2D<Scalar>::calculateErrorMatrix(const Scalar &E) const {
-    Y<Scalar, Dynamic> y0 = Y<Scalar, Dynamic>::Dirichlet(N);
-    Y<Scalar, Dynamic> yl = y0;
+    Y<Scalar, Dynamic> yl = y0Left;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
         conditionY(yl);
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
-            E, y0, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
+            E, y0Right, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     conditionY(yr);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);

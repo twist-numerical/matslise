@@ -14,8 +14,8 @@ template<typename Scalar>
 vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
     Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
-    steps[0] = Y<Scalar, Dynamic>::Dirichlet(N);
-    steps[sectorCount] = Y<Scalar, Dynamic>::Dirichlet(N);
+    steps[0] = y0Left;
+    steps[sectorCount] = y0Right;
     MatrixXs *U = new MatrixXs[sectorCount + 1];
 
     int matchIndex = 0;
@@ -57,34 +57,27 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
         right *= scaling.asDiagonal();
         */
 
-        VectorXs norm = VectorXs::Zero(kernel.cols());
+        VectorXs normalizer = (cec_cce<>(matchLeft * left) - cec_cce<>(matchRight * right)).diagonal()
+                .unaryExpr([](Scalar s) { return s <= 0 ? Scalar(1) : Scalar(1) / sqrt(s); });
+
         for (int i = matchIndex; i >= 0; --i) {
             elements[static_cast<size_t>(i)] = steps[i] * left;
             if (i > 0) {
                 U[i].template triangularView<Upper>().
                         template solveInPlace<OnTheLeft>(left);
             }
-            if (i < matchIndex) {
-                norm += (cec_cce<>((MatrixXs)(M[i].transpose()) * elements[i + 1]) - cec_cce<>(elements[i])).diagonal();
-            }
         }
+
         Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
         for (int i = matchIndex + 1; i <= sectorCount; ++i) {
             U[i].template triangularView<Upper>().
                     template solveInPlace<OnTheLeft>(right);
             elements[static_cast<size_t>(i)] = steps[i] * right;
-
-            norm += (cec_cce<>(i < sectorCount ? (MatrixXs)(M[i - 1].transpose()) * elements[i] : elements[i]) -
-                     cec_cce<>(i == matchIndex + 1 ? elementMatchRight : elements[i - 1])).diagonal();
-
         }
 
-        /*
-        for (int i = 0; i <= sectorCount; ++i)
-            elements[i] *= norm.unaryExpr(
-                    [](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); }).asDiagonal();
-                    */
-
+        for(int i = 0; i <= sectorCount; ++i) {
+            elements[static_cast<size_t>(i)] *= normalizer.asDiagonal();
+        }
     }
     delete[] steps;
     return elements;
