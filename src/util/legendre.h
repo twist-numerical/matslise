@@ -4,22 +4,6 @@
 #include "../matslise.h"
 
 namespace legendre {
-    template<class D = double>
-    class array2d {
-        int rows, cols;
-        D *values;
-    public:
-        array2d(int rows, int cols, D *values) : rows(rows), cols(cols), values(values) {}
-
-        D *operator[](int row) const {
-            return values + cols * row;
-        }
-
-        virtual ~array2d() {
-            delete[] values;
-        }
-    };
-
     template<typename Scalar>
     struct LegendreData {
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> weights;

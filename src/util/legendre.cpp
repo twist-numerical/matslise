@@ -3,7 +3,8 @@
 namespace legendre {
 template<>
 const LegendreData<double> *LegendreData<double>::initData() {
-    LegendreData<double> *data = new LegendreData<double>[10];    data[1].nodes.resize(2, 1);
+    LegendreData<double> *data = new LegendreData<double>[10];
+    data[1].nodes.resize(2, 1);
     data[1].nodes << -0.577350269189625765, 0.577350269189625765;
     data[1].weights.resize(2, 2);
     data[1].weights << 0.500000000000000000, 0.500000000000000000, -0.433012701892219323, 0.433012701892219323;
@@ -48,7 +49,8 @@ return data;
 namespace legendre {
 template<>
 const LegendreData<long double> *LegendreData<long double>::initData() {
-    LegendreData<long double> *data = new LegendreData<long double>[10];    data[1].nodes.resize(2, 1);
+    LegendreData<long double> *data = new LegendreData<long double>[10];
+    data[1].nodes.resize(2, 1);
     data[1].nodes << -0.57735026918962576450915l, 0.57735026918962576450915l;
     data[1].weights.resize(2, 2);
     data[1].weights << 0.50000000000000000000000l, 0.50000000000000000000000l, -0.43301270189221932338186l, 0.43301270189221932338186l;
@@ -95,7 +97,8 @@ return data;
 namespace legendre {
 template<>
 const LegendreData<boost::multiprecision::float128> *LegendreData<boost::multiprecision::float128>::initData() {
-    LegendreData<boost::multiprecision::float128> *data = new LegendreData<boost::multiprecision::float128>[10];    data[1].nodes.resize(2, 1);
+    LegendreData<boost::multiprecision::float128> *data = new LegendreData<boost::multiprecision::float128>[10];
+    data[1].nodes.resize(2, 1);
     data[1].nodes << -0.57735026918962576450914878050195745565q, 0.57735026918962576450914878050195745565q;
     data[1].weights.resize(2, 2);
     data[1].weights << 0.50000000000000000000000000000000000000q, 0.50000000000000000000000000000000000000q, -0.43301270189221932338186158537646809174q, 0.43301270189221932338186158537646809174q;
