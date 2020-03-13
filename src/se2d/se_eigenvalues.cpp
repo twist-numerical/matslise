@@ -41,7 +41,7 @@ inline bool set_contains(const set<Scalar> &values, const Scalar &guess, const S
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initalSteps) const {
+vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
     typedef pair<Scalar, Scalar> Interval;
 
     const Scalar linear = 0.001;
@@ -52,7 +52,7 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
     };
 
     vector<Interval> intervals;
-    Scalar length = (Emax - Emin) / initalSteps;
+    Scalar length = (Emax - Emin) / initialSteps;
     {
         Scalar a = Emin + length / 2;
         while (a < Emax - length / 4) {

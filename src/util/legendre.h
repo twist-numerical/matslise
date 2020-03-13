@@ -27,7 +27,7 @@ namespace legendre {
         Scalar h = (b - a) / 2;
         Eigen::Array<D, Eigen::Dynamic, 1> result = (m + data->nodes * h).unaryExpr(V);
         D *coeffs = new D[n];
-        Scalar H = static_cast<Scalar>(1);
+        Scalar H(1);
         for (int i = 0; i < n; ++i) {
             coeffs[i] = data->weights(i, 0) * result[0];
             for (int j = 1; j < data->weights.rows(); ++j)
