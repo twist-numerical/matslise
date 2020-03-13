@@ -4,8 +4,8 @@ template<typename Scalar>
 void calculate_tcoeff_matrix(
         const Scalar &h,
         const Scalar *vs,
-        Eigen::Array<Eigen::Matrix<Scalar, 2, 2>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &tDelta,
-        Eigen::Matrix<Scalar, 2, 2> *tH) {
+        Eigen::Array<Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta, Eigen::DontAlign> &tDelta,
+        Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> *tH) {
     const Scalar &v1 = vs[1];
     const Scalar &v2 = vs[2];
     const Scalar &v3 = vs[3];

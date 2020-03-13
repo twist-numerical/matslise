@@ -171,7 +171,6 @@ template<typename Scalar>
 Matslise<Scalar>::~Matslise() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
-    delete[] sectors;
 }
 
 template<typename Scalar>

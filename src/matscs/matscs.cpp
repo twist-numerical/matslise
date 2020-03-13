@@ -67,23 +67,22 @@ template<typename Scalar>
 Matscs<Scalar>::~Matscs() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
-    delete[] sectors;
 }
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::computeEigenfunction(const Scalar &E, vector<Scalar> &x) const {
     sort(x.begin(), x.end());
-    vector<Y<Scalar, Dynamic>> *ys = new vector<Y<Scalar, Dynamic>>();
+    auto *ys = new vector<Y<Scalar, Dynamic>>();
 
     auto iterator = x.begin();
 
     while (iterator != x.end() && *iterator < xmin - EPS)
         iterator = x.erase(iterator);
 
-    Sector *sector;
     Y<Scalar, Dynamic> y(n);
     for (int i = 0; iterator != x.end(); ++iterator) {
-        while (*iterator > (sector = sectors[i])->max) {
+        Sector *const &sector = sectors[i];
+        while (*iterator > sector->max) {
             y = sector->calculateT(E) * y;
             ++i;
             if (i >= sectorCount)

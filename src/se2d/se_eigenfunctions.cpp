@@ -6,7 +6,7 @@ using namespace matslise::SEnD_util;
 using namespace std;
 
 template<typename Scalar>
-Matrix<Scalar, Dynamic, Dynamic> cec_cce(Y<Scalar, Dynamic, Dynamic> y) {
+Matrix<Scalar, Dynamic, Dynamic> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
     return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1));
 }
 
@@ -75,11 +75,12 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
             elements[static_cast<size_t>(i)] = steps[i] * right;
         }
 
-        for(int i = 0; i <= sectorCount; ++i) {
+        for (int i = 0; i <= sectorCount; ++i) {
             elements[static_cast<size_t>(i)] *= normalizer.asDiagonal();
         }
     }
     delete[] steps;
+    delete[] U;
     return elements;
 }
 

@@ -103,7 +103,7 @@ namespace matslise {
         Scalar xmin, xmax;
         int sectorCount;
         Scalar match;
-        Matslise::Sector **sectors;
+        std::vector<Matslise::Sector *> sectors;
     public:
         static std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> UNIFORM(int sectorCount) {
             return std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>>(
@@ -171,15 +171,14 @@ namespace matslise {
     public:
         class Sector {
         public:
-            Eigen::Array<Eigen::Matrix<Scalar, 2, 2>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta>
-                    t_coeff;
-            Eigen::Matrix<Scalar, 2, 2> t_coeff_h[MATSLISE_ETA_h];
-            Matslise<Scalar> *s;
+            Eigen::Array<Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta, Eigen::DontAlign> t_coeff;
+            Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> t_coeff_h[MATSLISE_ETA_h];
+            const Matslise<Scalar> *s;
             Scalar *vs;
             Scalar min, max, h;
             bool backward;
 
-            Sector(Matslise *problem, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const Matslise *problem, const Scalar &min, const Scalar &max, bool backward);
 
             void calculateTCoeffs();
 

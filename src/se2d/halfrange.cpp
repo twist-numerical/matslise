@@ -72,12 +72,6 @@ Scalar SE2DHalf<Scalar>::findFirstEigenvalue() {
 }
 
 template<typename Scalar>
-Array<Scalar, Dynamic, 1> mergeAbsolute(const Array<Scalar, Dynamic, 1> &sorted) {
-
-
-}
-
-template<typename Scalar>
 vector<typename SE2DHalf<Scalar>::ArrayXXs>
 SE2DHalf<Scalar>::computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) {
     Eigen::Index n = y.size();

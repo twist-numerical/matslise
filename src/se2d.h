@@ -34,7 +34,7 @@ namespace matslise {
         MatrixXs *M;
         Rectangle<2, Scalar> domain;
         int sectorCount;
-        SE2D<Scalar>::Sector **sectors;
+        std::vector<SE2D<Scalar>::Sector *> sectors;
         ArrayXs grid;
         int N;
         Scalar match;
@@ -95,7 +95,7 @@ namespace matslise {
     public:
         class Sector {
         public:
-            SE2D<Scalar> *se2d;
+            const SE2D<Scalar> *se2d;
             AbstractMatslise<Scalar> *matslise;
             matslise::Matscs<Scalar> *matscs;
             ArrayXs vbar;
@@ -104,7 +104,7 @@ namespace matslise {
             Scalar *eigenvalues;
             ArrayXs *eigenfunctions;
 
-            Sector(SE2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const SE2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
 
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(
@@ -139,14 +139,16 @@ namespace matslise {
     private:
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> oddBoundary;
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> evenBoundary;
+
         void setParity(bool even);
+
     public:
         SE2D<Scalar> *se2d;
         Rectangle<2, Scalar> domain;
 
     public:
         SE2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
-             const Options2<Scalar> &options);
+                 const Options2<Scalar> &options);
 
         Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
                               const Scalar &minTolerance = 1e-5);

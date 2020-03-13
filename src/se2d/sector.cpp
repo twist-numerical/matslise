@@ -9,7 +9,7 @@ using namespace matslise::SEnD_util;
 using namespace matslise::sectorbuilder;
 
 template<typename Scalar>
-SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
+SE2D<Scalar>::Sector::Sector(const SE2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
     const Scalar ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->V(x, ybar); };
@@ -47,7 +47,7 @@ SE2D<Scalar>::Sector::Sector(SE2D<Scalar> *se2d, const Scalar &ymin, const Scala
                         int n = this->se2d->options._stepsPerSector;
                         Scalar h = (xmax - xmin) / n;
                         p->sectorCount = n;
-                        p->sectors = new typename Matscs<Scalar>::Sector *[n];
+                        p->sectors.resize(n);
                         Scalar left = xmin;
                         for (int i = 0; i < n; ++i) {
                             Scalar right = xmax - (n - i - 1) * h;

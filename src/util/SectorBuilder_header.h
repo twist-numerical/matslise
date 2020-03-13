@@ -14,7 +14,7 @@ namespace matslise {
 
     namespace sectorbuilder {
         template<typename Problem>
-        inline bool compareSectors(typename Problem::Sector *a, typename Problem::Sector *b);
+        inline bool compareSectors(const typename Problem::Sector &a, const typename Problem::Sector &b);
 
         template<typename Problem>
         class Uniform : public SectorBuilder<Problem> {
@@ -40,8 +40,9 @@ namespace matslise {
             virtual void build(Problem *ms, typename Problem::Scalar min, typename Problem::Scalar max) const override;
 
             template<bool forward>
-            typename Problem::Sector *nextSector(Problem *ms, typename Problem::Scalar h, typename Problem::Scalar left,
-                                                 typename Problem::Scalar right) const;
+            typename Problem::Sector *nextSector(
+                    const Problem *ms, const typename Problem::Scalar &h, const typename Problem::Scalar &left,
+                    const typename Problem::Scalar &right) const;
         };
 
         template<typename Problem>

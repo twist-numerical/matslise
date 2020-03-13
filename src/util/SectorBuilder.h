@@ -9,16 +9,17 @@
 #include <stdexcept>
 
 template<typename Problem>
-inline bool matslise::sectorbuilder::compareSectors(typename Problem::Sector *a, typename Problem::Sector *b) {
+inline bool matslise::sectorbuilder::compareSectors(
+        const typename Problem::Sector &a, const typename Problem::Sector &b) {
     if (std::is_same<Problem, matslise::Matslise<typename Problem::Scalar>>::value) {
-        return ((typename Matslise<typename Problem::Scalar>::Sector *) a)->vs[0] <
-               ((typename Matslise<typename Problem::Scalar>::Sector *) b)->vs[0];
+        return ((const typename Matslise<typename Problem::Scalar>::Sector &) a).vs[0] <
+               ((const typename Matslise<typename Problem::Scalar>::Sector &) b).vs[0];
     } else if (std::is_same<Problem, matslise::Matscs<typename Problem::Scalar>>::value) {
-        return (((typename Matscs<typename Problem::Scalar>::Sector *) a)->vs[0].diagonal() -
-                ((typename Matscs<typename Problem::Scalar>::Sector *) b)->vs[0].diagonal()).sum() < 0;
+        return (((const typename Matscs<typename Problem::Scalar>::Sector &) a).vs[0].diagonal() -
+                ((const typename Matscs<typename Problem::Scalar>::Sector &) b).vs[0].diagonal()).sum() < 0;
     } else if (std::is_same<Problem, matslise::SE2D<typename Problem::Scalar>>::value) {
-        return ((typename SE2D<typename Problem::Scalar>::Sector *) a)->vbar.minCoeff() <
-               ((typename SE2D<typename Problem::Scalar>::Sector *) b)->vbar.minCoeff();
+        return ((const typename SE2D<typename Problem::Scalar>::Sector &) a).vbar.minCoeff() <
+               ((const typename SE2D<typename Problem::Scalar>::Sector &) b).vbar.minCoeff();
     }
     throw std::invalid_argument("Not supported");
 }
@@ -27,9 +28,9 @@ template<typename Problem>
 void matslise::sectorbuilder::Uniform<Problem>::build(
         Problem *ms, typename Problem::Scalar min, typename Problem::Scalar max) const {
     ms->sectorCount = sectorCount;
-    ms->sectors = new typename Problem::Sector *[sectorCount];
     typename Problem::Scalar h = (max - min) / sectorCount;
 
+    ms->sectors.resize(sectorCount);
     if (sectorCount == 1) {
         ms->sectors[0] = new typename Problem::Sector(ms, min, max, false);
         return;
@@ -39,7 +40,7 @@ void matslise::sectorbuilder::Uniform<Problem>::build(
     ms->sectors[sectorCount - 1] = new typename Problem::Sector(ms, min + (sectorCount - 1) * h, max, true);
     int i = 0, j = sectorCount - 1;
     while (i + 1 != j) {
-        if (compareSectors<Problem>(ms->sectors[j], ms->sectors[i])) {
+        if (compareSectors<Problem>(*ms->sectors[j], *ms->sectors[i])) {
             ++i;
             ms->sectors[i] = new typename Problem::Sector(ms, min + i * h, min + (i + 1) * h, false);
         } else {
@@ -64,7 +65,7 @@ void matslise::sectorbuilder::Auto<Problem>::build(
 
 
     while (forward.back()->max != backward.back()->min) {
-        if (compareSectors<Problem>(backward.back(), forward.back()))
+        if (compareSectors<Problem>(*backward.back(), *forward.back()))
             forward.push_back(nextSector<true>(ms, forward.back()->max - forward.back()->min,
                                                forward.back()->max, backward.back()->min));
         else
@@ -74,12 +75,10 @@ void matslise::sectorbuilder::Auto<Problem>::build(
 
     ms->match = forward.back()->max;
     ms->sectorCount = (int) (forward.size() + backward.size());
-    ms->sectors = new typename Problem::Sector *[ms->sectorCount];
-    int i = 0;
-    for (typename Problem::Sector *s : forward)
-        ms->sectors[i++] = s;
+    for (typename Problem::Sector *const &s : forward)
+        ms->sectors.push_back(s);
     for (auto j = backward.rbegin(); j != backward.rend(); ++j)
-        ms->sectors[i++] = *j;
+        ms->sectors.push_back(*j);
 
 
     /*  for (int i = 0; i < ms->sectorCount; ++i)
@@ -92,7 +91,9 @@ void matslise::sectorbuilder::Auto<Problem>::build(
 template<typename Problem>
 template<bool forward>
 typename Problem::Sector *matslise::sectorbuilder::Auto<Problem>::nextSector(
-        Problem *ms, typename Problem::Scalar h, typename Problem::Scalar left, typename Problem::Scalar right) const {
+        const Problem *ms, const typename Problem::Scalar &_h, const typename Problem::Scalar &left,
+        const typename Problem::Scalar &right) const {
+    typename Problem::Scalar h = _h;
     typename Problem::Scalar xmin = forward ? left : right - h;
     typename Problem::Scalar xmax = forward ? left + h : right;
     if (forward && xmax > right) {

@@ -2,6 +2,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(PYSLISE_VERSION 0.0.4)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
+message("Matslise")
 if(MSVC)
     add_compile_options(
     /wd4661 # no suitable definition provided for explicit template instantiation request
@@ -12,6 +13,11 @@ if(MSVC)
     /bigobj)
 else()
     add_compile_options(-Wall -Wextra -Werror)
+    OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
+    IF (OPTIMIZE)
+        message("-- Using -O3 -march=native")
+        add_compile_options(-O3 -march=native)
+    ENDIF (OPTIMIZE)
 endif()
 
 SET(MATSLISE_SRC
@@ -80,6 +86,7 @@ else ()
     endif ()
 
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+    message("-- Eigen3 version ${Eigen3_VERSION}")
     target_link_libraries(matslise PUBLIC ${libraries})
     target_link_libraries(pyslise PRIVATE ${libraries})
 

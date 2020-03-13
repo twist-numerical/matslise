@@ -28,7 +28,7 @@ namespace matslise {
         int n;
         Scalar xmin, xmax;
         int sectorCount;
-        Matscs::Sector **sectors;
+        std::vector<Matscs::Sector *> sectors;
         Scalar match;
     public:
         static std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> UNIFORM(int sectorCount) {

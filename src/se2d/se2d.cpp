@@ -49,7 +49,6 @@ template<typename Scalar>
 SE2D<Scalar>::~SE2D() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
-    delete[] sectors;
     delete[] M;
 }
 

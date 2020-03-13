@@ -1,6 +1,8 @@
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
+
+message("Matslise test")
 if(MSVC)
     add_compile_options(
 	/wd4661 # no suitable definition provided for explicit template instantiation request
@@ -11,17 +13,23 @@ if(MSVC)
 	/bigobj)
 else()
     add_compile_options(-Wall -Wextra -Werror)
+
+    OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
+    IF (OPTIMIZE)
+        message("-- Using -O3 -march=native")
+        add_compile_options(-O3 -march=native)
+    ENDIF (OPTIMIZE)
 endif()
 
 if (NOT (DEFINED EMSCRIPTEN))
     set(libraries matslise Eigen3::Eigen)
 
-    OPTION(LONG_DOUBLE "Option description" OFF)
+    OPTION(LONG_DOUBLE "Compile also for the 'long double' type." OFF)
     IF (LONG_DOUBLE)
         ADD_DEFINITIONS(-DMATSLISE_long_double)
     ENDIF (LONG_DOUBLE)
 
-    OPTION(QUADMATH "Option description" OFF)
+    OPTION(QUADMATH "Compile also for quadruple precision (_float128). Boost and a supporting compiler are required." OFF)
     IF (QUADMATH)
         find_package(Boost REQUIRED)
         if (Boost_FOUND)

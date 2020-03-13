@@ -13,7 +13,7 @@ using namespace std;
 using namespace matslise;
 
 template<typename Scalar>
-Matslise<Scalar>::Sector::Sector(Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
+Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
         : s(s), min(min), max(max), backward(backward) {
     h = max - min;
     vs = legendre::getCoefficients(MATSLISE_N, s->V, min, max);
