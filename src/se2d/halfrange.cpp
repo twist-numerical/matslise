@@ -2,7 +2,6 @@
 #include <map>
 #include "../matslise.h"
 #include "../util/lobatto.h"
-#include "../util/find_sector.h"
 
 using namespace Eigen;
 using namespace matslise;
@@ -75,7 +74,7 @@ template<typename Scalar>
 vector<typename SE2DHalf<Scalar>::ArrayXXs>
 SE2DHalf<Scalar>::computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) {
     Eigen::Index n = y.size();
-    for (int i = 1; i < n; ++i)
+    for (Eigen::Index i = 1; i < n; ++i)
         if (y[i - 1] > y[i])
             throw runtime_error("SE2DHalf::computeEigenfunction(): y has to be sorted");
 
@@ -144,7 +143,7 @@ vector<function<Scalar(Scalar, Scalar)>> SE2DHalf<Scalar>::eigenfunctionCalculat
     for (bool even : {false, true}) {
         setParity(even);
         if (abs(E - se2d->findEigenvalue(E)) < 1e-5) {
-            for (function<Scalar(Scalar, Scalar)> f : se2d->eigenfunctionCalculator(E)) {
+            for (const function<Scalar(Scalar, Scalar)> &f : se2d->eigenfunctionCalculator(E)) {
                 result.push_back([f, even, SQRT1_2](const Scalar &x, const Scalar &y) -> Scalar {
                     Scalar r = f(x, y < 0 ? -y : y);
                     if (y < 0 && !even)

@@ -27,7 +27,6 @@ inline bool matslise::sectorbuilder::compareSectors(
 template<typename Problem>
 void matslise::sectorbuilder::Uniform<Problem>::build(
         Problem *ms, typename Problem::Scalar min, typename Problem::Scalar max) const {
-    ms->sectorCount = sectorCount;
     typename Problem::Scalar h = (max - min) / sectorCount;
 
     ms->sectors.resize(sectorCount);
@@ -74,7 +73,7 @@ void matslise::sectorbuilder::Auto<Problem>::build(
     }
 
     ms->match = forward.back()->max;
-    ms->sectorCount = (int) (forward.size() + backward.size());
+    ms->sectors.reserve(forward.size() + backward.size());
     for (typename Problem::Sector *const &s : forward)
         ms->sectors.push_back(s);
     for (auto j = backward.rbegin(); j != backward.rend(); ++j)
@@ -134,7 +133,7 @@ typename Problem::Sector *matslise::sectorbuilder::Auto<Problem>::nextSector(
                     xmin = left;
             }
             h = xmax - xmin;
-            typename Problem::Sector *newSector = new typename Problem::Sector(ms, xmin, xmax, !forward);
+            auto *newSector = new typename Problem::Sector(ms, xmin, xmax, !forward);
             error = newSector->calculateError();
             // cout << "(h: " << h << ", error: " << error << ") ";
             if (error > tol) {

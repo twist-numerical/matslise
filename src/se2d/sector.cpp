@@ -35,7 +35,7 @@ SE2D<Scalar>::Sector::Sector(const SE2D<Scalar> *se2d, const Scalar &ymin, const
         Array<Y<Scalar>, Dynamic, 1> func = matslise->computeEigenfunction(
                 E, Y<Scalar>::Dirichlet(), se2d->grid, index);
         eigenfunctions[i] = ArrayXs(func.size());
-        for (int j = 0; j < func.size(); ++j)
+        for (Eigen::Index j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
     }
 
@@ -46,7 +46,6 @@ SE2D<Scalar>::Sector::Sector(const SE2D<Scalar> *se2d, const Scalar &ymin, const
                     new Custom<Matscs<Scalar>>([this, backward](Matscs<Scalar> *p, Scalar xmin, Scalar xmax) {
                         int n = this->se2d->options._stepsPerSector;
                         Scalar h = (xmax - xmin) / n;
-                        p->sectorCount = n;
                         p->sectors.resize(n);
                         Scalar left = xmin;
                         for (int i = 0; i < n; ++i) {
@@ -108,7 +107,7 @@ SE2D<Scalar>::Sector::computeEigenfunction(int index, const typename SE2D<Scalar
 
     Array<matslise::Y<Scalar>, Dynamic, 1> raw = matslise->computeEigenfunction(eigenvalues[index], y0, x, index);
     ArrayXs result(size);
-    for (int i = 0; i < size; ++i)
+    for (Eigen::Index i = 0; i < size; ++i)
         result(i) = raw(i).y[0];
     return result;
 }

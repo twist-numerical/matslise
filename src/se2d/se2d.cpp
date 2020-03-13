@@ -27,6 +27,7 @@ SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
     y0Right = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
     grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     options._builder->build(this, domain.min, domain.max);
+    sectorCount = sectors.size();
 
     M = new MatrixXs[sectorCount - 1];
     for (int i = 0; i < sectorCount - 1; ++i)

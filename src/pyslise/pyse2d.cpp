@@ -2,7 +2,7 @@
 
 void pySE2d(py::module &m) {
     py::class_<SE2D<>>(m, "PySE2d")
-            .def(py::init([](function<double(double, double)> V,
+            .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax,
                              bool symmetric,
                              int x_count, double x_tol,
@@ -41,7 +41,7 @@ void pySE2d(py::module &m) {
                          o2.sectorCount(y_count);
                      else
                          o2.tolerance(y_tol);
-                     return unique_ptr<SE2D<>>(new SE2D<>(V, {{xmin, xmax}, ymin, ymax}, o2));
+                     return make_unique<SE2D<>>(V, Rectangle<2, double>{{xmin, xmax}, ymin, ymax}, o2);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -106,12 +106,12 @@ By using the algorithm of Newton-Raphson the closest eigenvalue around ``start``
 :returns: the eigenvalue found starting with ``guess``. Note that the found eigenvalue doesn't necessarily is the closest .
 )"""", py::arg("start"), py::arg("tolerance") = 1e-9, py::arg("iterations") = 30, py::arg("min_tolerance") = 1e-5)
             .def("eigenvalues", &SE2D<>::findEigenvalues, R""""(\
-This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algortihm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
+This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algorithm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
 
 It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
 
 :param float Emin Emax: the start and end point of the range that will be searched.
-:param int inital_values: the number of starting guesses that will be used. Defaults to 16.
+:param int initial_values: the number of starting guesses that will be used. Defaults to 16.
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("initial_values") = 16)
             .def("firstEigenvalue", &SE2D<>::findFirstEigenvalue)
@@ -140,7 +140,7 @@ It is not a good idea to make the number of initial values large. This will incr
             });
 
     py::class_<SE2DHalf<>>(m, "PySE2dHalf")
-            .def(py::init([](function<double(double, double)> V,
+            .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymax,
                              bool symmetric,
                              int x_count, double x_tol,
@@ -179,7 +179,7 @@ It is not a good idea to make the number of initial values large. This will incr
                          o2.sectorCount(y_count);
                      else
                          o2.tolerance(y_tol);
-                     return unique_ptr<SE2DHalf<>>(new SE2DHalf<>(V, {{xmin, xmax}, -ymax, ymax}, o2));
+                     return make_unique<SE2DHalf<>>(V, Rectangle<2, double>{{xmin, xmax}, -ymax, ymax}, o2);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -243,13 +243,13 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
     py::class_<SE2D<>::Sector, std::unique_ptr<SE2D<>::Sector, py::nodelete>>(m, "PySE2dSector")
             .def_property_readonly("eigenvalues", [](SE2D<>::Sector &s) -> vector<double> * {
                 auto l = new vector<double>(s.se2d->N);
-                for (unsigned int i = 0; i < l->size(); ++i)
+                for (unsigned long i = 0; i < l->size(); ++i)
                     l->at(i) = s.eigenvalues[i];
                 return l;
             })
             .def_property_readonly("eigenfunctions", [](SE2D<>::Sector &s) -> vector<ArrayXd> * {
                 auto l = new vector<ArrayXd>(s.se2d->N);
-                for (unsigned int i = 0; i < l->size(); ++i)
+                for (unsigned long i = 0; i < l->size(); ++i)
                     l->at(i) = s.eigenfunctions[i];
                 return l;
             })

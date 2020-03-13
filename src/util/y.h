@@ -28,7 +28,7 @@ namespace matslise {
             getdY(1) *= -1;
         }
 
-        Y(Eigen::Index N = n, Eigen::Index R = n) {
+        explicit Y(Eigen::Index N = n, Eigen::Index R = n) {
             if (R == -1)
                 R = N;
             if (N != -1) {
@@ -124,7 +124,7 @@ namespace matslise {
         Eigen::Matrix<Scalar, n2, n2> t;
         Eigen::Matrix<Scalar, n2, n2> dt;
 
-        T(int N = n) {
+        explicit T(int N = n) {
             if (N != -1) {
                 t = Eigen::Matrix<Scalar, n2, n2>::Identity(2 * N, 2 * N);
                 dt = Eigen::Matrix<Scalar, n2, n2>::Zero(2 * N, 2 * N);

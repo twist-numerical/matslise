@@ -9,7 +9,7 @@ namespace matslise {
     public:
         virtual void build(Problem *, typename Problem::Scalar min, typename Problem::Scalar max) const = 0;
 
-        virtual ~SectorBuilder() {};
+        virtual ~SectorBuilder() = default;;
     };
 
     namespace sectorbuilder {
@@ -21,7 +21,7 @@ namespace matslise {
         public:
             int sectorCount;
 
-            Uniform(int sectorCount) : sectorCount(sectorCount) {
+            explicit Uniform(int sectorCount) : sectorCount(sectorCount) {
 
             }
 
@@ -33,11 +33,11 @@ namespace matslise {
         public:
             typename Problem::Scalar tol;
 
-            Auto(typename Problem::Scalar tol) : tol(tol) {
+            explicit Auto(typename Problem::Scalar tol) : tol(tol) {
 
             }
 
-            virtual void build(Problem *ms, typename Problem::Scalar min, typename Problem::Scalar max) const override;
+            void build(Problem *ms, typename Problem::Scalar min, typename Problem::Scalar max) const override;
 
             template<bool forward>
             typename Problem::Sector *nextSector(
@@ -49,7 +49,7 @@ namespace matslise {
         class Custom : public SectorBuilder<Problem> {
             std::function<void(Problem *, typename Problem::Scalar, typename Problem::Scalar)> builder;
         public:
-            Custom(std::function<void(Problem *, typename Problem::Scalar, typename Problem::Scalar)> builder)
+            explicit Custom(std::function<void(Problem *, typename Problem::Scalar, typename Problem::Scalar)> builder)
                     : builder(builder) {}
 
             virtual void build(Problem *p, typename Problem::Scalar min, typename Problem::Scalar max) const {

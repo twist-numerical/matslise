@@ -18,7 +18,7 @@ using namespace matslise;
 
 
 inline Y<> make_y(const Vector2d &value) {
-    return Y<>(value, {0, 0});
+    return {value, {0, 0}};
 }
 
 inline Y<> packY(const tuple<double, double> &t) {
@@ -35,7 +35,8 @@ inline Y<double, Dynamic> packY(const tuple<MatrixXd, MatrixXd> &t) {
 }
 
 inline Y<> packY(const tuple<double, double> &t, const tuple<double, double> &dt) {
-    return Y<>({get<0>(t), get<1>(t)}, {get<0>(dt), get<1>(dt)});
+    return {{get<0>(t),  get<1>(t)},
+            {get<0>(dt), get<1>(dt)}};
 }
 
 inline pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> unpackY(const Y<double, Dynamic> &y) {

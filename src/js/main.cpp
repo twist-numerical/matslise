@@ -26,14 +26,14 @@ ArrayXd val2ArrayXd(const val &a) {
 
 val ArrayXd2val(const ArrayXd &a) {
     val rv = val::array();
-    for (int i = 0; i < a.size(); ++i)
+    for (Eigen::Index i = 0; i < a.size(); ++i)
         rv.call<double>("push", a[i]);
     return rv;
 }
 
 val ArrayXXd2val(const ArrayXXd &a) {
     val r = val::array();
-    for (int i = 0; i < a.rows(); ++i)
+    for (Eigen::Index i = 0; i < a.rows(); ++i)
         r.call<val>("push", ArrayXd2val(a.row(i)));
     return r;
 }
@@ -65,7 +65,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
 
     class_<Matslise<>>("Matslise")
             .constructor(optional_override(
-                    [](val f, double min, double max, val options) -> Matslise<> * {
+                    [](val f, double min, double max, const val &options) -> Matslise<> * {
                         std::shared_ptr<matslise::SectorBuilder<Matslise<>>> builder;
                         if (options["sectorCount"] != val::undefined())
                             builder = Matslise<>::UNIFORM(options["sectorCount"].as<int>());
@@ -119,7 +119,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
 
     class_<HalfRange<>>("HalfRange")
             .constructor(optional_override(
-                    [](val f, double max, val options) -> HalfRange<> * {
+                    [](val f, double max, const val &options) -> HalfRange<> * {
                         std::shared_ptr<matslise::SectorBuilder<Matslise<>>> builder;
                         if (options["sectorCount"] != val::undefined())
                             builder = Matslise<>::UNIFORM(options["sectorCount"].as<int>());
@@ -158,7 +158,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
 
     class_<SE2D<>>("SE2D")
             .constructor(optional_override(
-                    [](val f, double xmin, double xmax, double ymin, double ymax, val options) -> SE2D<> * {
+                    [](val f, double xmin, double xmax, double ymin, double ymax, const val &options) -> SE2D<> * {
                         Options2<> o2;
                         if (options["sectorCount"] != val::undefined())
                             o2.sectorCount(options["sectorCount"].as<int>());
@@ -197,7 +197,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     r.call<val>("push", se2d.sectors[i]->min);
                 return r;
             }))
-            .function("computeEigenfunction", optional_override([](SE2D<> &se2d, double E, val x, val y) -> val {
+            .function("computeEigenfunction", optional_override([](SE2D<> &se2d, double E, const val &x, const val &y) -> val {
                 vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                 val r = val::array();
                 for (ArrayXXd &eigenfunction : result)

@@ -46,6 +46,7 @@ namespace matslise {
                std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> sectorBuilder) :
                 V(V), n(n), xmin(xmin), xmax(xmax) {
             sectorBuilder->build(this, xmin, xmax);
+            sectorCount = sectors.size();
         }
 
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,

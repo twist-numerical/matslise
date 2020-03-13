@@ -88,7 +88,7 @@ namespace matslise {
             return eigenfunctionCalculator(E, left, left, index);
         };
 
-        virtual ~AbstractMatslise() {}
+        virtual ~AbstractMatslise() = default;
     };
 
     template<typename _Scalar=double>
@@ -119,6 +119,7 @@ namespace matslise {
                  std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder) : V(V), xmin(xmin),
                                                                                              xmax(xmax) {
             sectorBuilder->build(this, xmin, xmax);
+            sectorCount = sectors.size();
         }
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax, int sectorCount)

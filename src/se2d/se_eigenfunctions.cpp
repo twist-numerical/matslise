@@ -12,11 +12,11 @@ Matrix<Scalar, Dynamic, Dynamic> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
-    Y<Scalar, Dynamic> *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
+    auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
     steps[0] = y0Left;
     steps[sectorCount] = y0Right;
-    MatrixXs *U = new MatrixXs[sectorCount + 1];
+    auto *U = new MatrixXs[sectorCount + 1];
 
     int matchIndex = 0;
     for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
@@ -44,7 +44,7 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
 
     vector<Y<Scalar, Dynamic>> elements;
     if (lu.dimensionOfKernel() > 0) {
-        elements.resize(static_cast<size_t>(sectorCount + 1));
+        elements.resize(sectorCount + 1);
         MatrixXs kernel = lu.kernel();
 
         MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
@@ -105,7 +105,7 @@ SE2D<Scalar>::computeEigenfunction(
 
     vector<ArrayXXs> result;
     vector<Y<Scalar, Dynamic>> steps = computeEigenfunctionSteps(E);
-    if (steps.size() > 0) {
+    if (!steps.empty()) {
         Eigen::Index cols = steps[0].getY(0).cols();
         for (Eigen::Index i = 0; i < cols; ++i)
             result.push_back(ArrayXXs::Zero(nx, ny));
@@ -126,8 +126,8 @@ SE2D<Scalar>::computeEigenfunction(
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
                 MatrixXs prod = B * sectors[sector]->propagate(
                         E, steps[static_cast<size_t>(sector)], sectors[sector]->min, y[nextY], true).getY(0);
-                for (int i = 0; i < cols; ++i)
-                    result[static_cast<unsigned>(i)].col(nextY) = prod.col(i);
+                for (Eigen::Index i = 0; i < cols; ++i)
+                    result[i].col(nextY) = prod.col(i);
                 ++nextY;
             }
         }
@@ -145,16 +145,16 @@ vector<function<Scalar(Scalar, Scalar)>> SE2D<Scalar>::eigenfunctionCalculator(c
     for (int i = 0; i < sectorCount; ++i)
         (*bases)[static_cast<size_t>(i)] = sectors[i]->basisCalculator();
 
-    if (steps->size() > 0) {
+    if (!steps->empty()) {
         int cols = (int) steps->at(0).getY(0).cols();
         for (int column = 0; column < cols; ++column) {
             result.push_back([this, steps, E, column, bases](Scalar x, Scalar y) -> Scalar {
-                unsigned long sectorIndex;
+                Eigen::Index sectorIndex;
                 {
-                    unsigned long a = 0;
-                    unsigned long b = (unsigned long) this->sectorCount;
+                    Eigen::Index a = 0;
+                    Eigen::Index b = this->sectorCount;
                     while (a + 1 < b) {
-                        unsigned long c = (a + b) / 2;
+                        Eigen::Index c = (a + b) / 2;
                         if (y < this->sectors[c]->min)
                             b = c;
                         else

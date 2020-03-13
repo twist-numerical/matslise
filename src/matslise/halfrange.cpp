@@ -9,10 +9,10 @@ using namespace Eigen;
 
 #define EPS (1e-12)
 
-template<typename Scaler>
-HalfRange<Scaler>::HalfRange(
-        function<Scaler(Scaler)> V, const Scalar &xmax, shared_ptr<SectorBuilder<Matslise<Scaler>>> sectorBuilder) {
-    ms = new Matslise<Scaler>(V, 0, xmax, sectorBuilder);
+template<typename Scalar>
+HalfRange<Scalar>::HalfRange(
+        function<Scalar(Scalar)> V, const Scalar &xmax, shared_ptr<SectorBuilder<Matslise<Scalar>>> sectorBuilder) {
+    ms = new Matslise<Scalar>(V, 0, xmax, sectorBuilder);
 }
 
 template<typename Scalar>
@@ -35,7 +35,7 @@ Array<Y<Scalar>, Dynamic, 1>
 HalfRange<Scalar>::computeEigenfunction(
         const Scalar &E, const Y<Scalar> &side, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index) const {
     Eigen::Index n = x.size();
-    for (int i = 1; i < n; ++i)
+    for (Eigen::Index i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
 

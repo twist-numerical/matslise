@@ -54,7 +54,7 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
 
 template<typename Scalar>
 Array<Scalar, Dynamic, 1> *calculateEta(const Array<Scalar, Dynamic, 1> &Z, int etaCount) {
-    Array<Scalar, Dynamic, 1> *eta = new Array<Scalar, Dynamic, 1>[etaCount];
+    auto *eta = new Array<Scalar, Dynamic, 1>[etaCount];
     for (int j = 0; j < etaCount; ++j)
         eta[j].resize(Z.size(), 1);
 

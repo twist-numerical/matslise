@@ -1,9 +1,12 @@
+#include <utility>
+
+
 #include "module.h"
 
 void pySlise(py::module &m) {
 
     py::class_<Matslise<>>(m, "PySlise")
-            .def(py::init([](function<double(double)> V, double min, double max, int steps, double tolerance) {
+            .def(py::init([](const function<double(double)> &V, double min, double max, int steps, double tolerance) {
                 if (steps != -1 && tolerance != -1)
                     throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
                 if (steps == -1 && tolerance == -1)
@@ -91,7 +94,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
                  }, R""""(\
 Calculate the error for a given eigenvalue. It will use a less accurate method to estimate another (worse) guess for that eigenvalue. The true error on the given eigenvalue will be less than the value returned by this method.
 
-:param float E: the eigenvalue to calcualte the error for.
+:param float E: the eigenvalue to calculate the error for.
 :param (float,float) left, right: the boundary conditions.
 
 :returns: the error.
@@ -103,7 +106,7 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
                      auto ysY = m.computeEigenfunction(E, make_y(left), make_y(right), xs);
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
-                     for (int i = 0; i < ysY.size(); ++i) {
+                     for (Eigen::Index i = 0; i < ysY.size(); ++i) {
                          ys[i] = ysY[i].y[0];
                          dys[i] = ysY[i].y[1];
                      }
@@ -150,7 +153,7 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
             }, py::return_value_policy::reference);
 
     py::class_<HalfRange<>>(m, "PySliseHalf")
-            .def(py::init([](function<double(double)> V, double xmax, int steps, double tolerance) {
+            .def(py::init([](const function<double(double)> &V, double xmax, int steps, double tolerance) {
                 if (steps != -1 && tolerance != -1)
                     throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
                 if (steps == -1 && tolerance == -1)
@@ -197,7 +200,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
                  }, R""""(\
 Calculate the error for a given eigenvalue. It will use a less accurate method to estimate another (worse) guess for that eigenvalue. The true error on the given eigenvalue will be less than the value returned by this method.
 
-:param float E: the eigenvalue to calcualte the error for.
+:param float E: the eigenvalue to calculate the error for.
 :param (float,float) side: the symmetric boundary conditions.
 :param int even: indication if the eigenvalue is even (1) or odd (0). Defaults to auto (-1).
 
@@ -210,7 +213,7 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
                      auto ysY = m.computeEigenfunction(E, make_y(side), xs, even);
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
-                     for (int i = 0; i < ysY.size(); ++i) {
+                     for (Eigen::Index i = 0; i < ysY.size(); ++i) {
                          ys[i] = ysY[i].y[0];
                          dys[i] = ysY[i].y[1];
                      }

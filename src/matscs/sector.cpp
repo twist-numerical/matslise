@@ -142,7 +142,7 @@ inline Array<Scalar, Dynamic, 1> angle(const InputMatrix &m) {
     Array<Scalar, Dynamic, 1> angles = m.eigenvalues().array().arg();
 
     const Scalar PI2 = constants<Scalar>::PI * 2;
-    for (int i = 0; i < angles.size(); ++i) {
+    for (Eigen::Index i = 0; i < angles.size(); ++i) {
         if (angles[i] <= 0)
             angles[i] += PI2;
     }

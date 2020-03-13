@@ -176,7 +176,7 @@ Matslise<Scalar>::~Matslise() {
 template<typename Scalar>
 vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
                                    const Y<Scalar> &left, const Y<Scalar> &right) {
-    unsigned int n = static_cast<unsigned int>(ms.sectorCount);
+    auto n = static_cast<unsigned int>(ms.sectorCount);
     vector<Y<Scalar>> ys(n + 1);
     ys[0] = left;
     unsigned int m = 0;
@@ -212,7 +212,7 @@ Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar
                                        const matslise::Y<Scalar> &right,
                                        const Array<Scalar, Dynamic, 1> &x, int) const {
     Eigen::Index n = x.size();
-    for (int i = 1; i < n; ++i)
+    for (Eigen::Index i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
     if (x[0] < xmin || x[n - 1] > xmax)
@@ -222,7 +222,7 @@ Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar
     Array<Y<Scalar>, Dynamic, 1> ys(n);
 
     unsigned int sector = 0;
-    for (int i = 0; i < n; ++i) {
+    for (Eigen::Index i = 0; i < n; ++i) {
         while (x[i] > sectors[sector]->max)
             ++sector;
         if (sectors[sector]->backward) {
@@ -252,9 +252,9 @@ std::function<Y<Scalar>(Scalar)> Matslise<Scalar>::eigenfunctionCalculator(
         }
         const Matslise<Scalar>::Sector *sector = this->sectors[a];
         if (sector->backward) {
-            return sector->propagate(E, ys[static_cast<unsigned long>(a + 1)], sector->max, x).first;
+            return sector->propagate(E, ys[a + 1], sector->max, x).first;
         } else {
-            return sector->propagate(E, ys[static_cast<unsigned long>(a)], sector->min, x).first;
+            return sector->propagate(E, ys[a], sector->min, x).first;
         }
     };
 }

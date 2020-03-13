@@ -53,28 +53,26 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
 
     vector<Interval> intervals;
     Scalar length = (Emax - Emin) / initalSteps;
-    for (Scalar a = Emin + length / 2; a < Emax - length / 4; a += length) {
-        intervals.push_back({length / 2, a});
-        push_heap(intervals.begin(), intervals.end(), comp);
+    {
+        Scalar a = Emin + length / 2;
+        while (a < Emax - length / 4) {
+            intervals.push_back({length / 2, a});
+            push_heap(intervals.begin(), intervals.end(), comp);
+            a += length;
+        }
     }
 
     set<Scalar> eigenvalues;
     Scalar guess;
-    //int countCalls = 0;
-    //int countFind = 0;
     while (!intervals.empty()) {
-        //cout << "size: " << intervals.size() << endl;
         tie(length, guess) = intervals.front();
         pop_heap(intervals.begin(), intervals.end(), comp);
         intervals.pop_back();
 
         if (!set_contains(eigenvalues, guess, length)) {
-            //cout << "interval: [" << guess - length << "; " << guess << "; " << guess + length << "]" << endl;
-            //++countCalls;
             for (const pair<Scalar, Scalar> &error : calculateErrors(guess)) {
                 Scalar d = error.first / error.second;
                 if (abs(d) < minLength) {
-                    //++countFind;
                     Scalar E = findEigenvalue(guess - d);
                     if (!isnan(E) && !set_contains(eigenvalues, E, minLength))
                         eigenvalues.insert(E);
@@ -89,7 +87,6 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
     vector<Scalar> result;
     for (const Scalar &E : eigenvalues) {
         long valueCount = static_cast<long>(result.size());
-        //++countCalls;
         for (const auto &error : calculateErrors(E)) {
             const Scalar d = error.first / error.second;
             if (error.first < 1 && abs(d) < linear) {
@@ -99,8 +96,6 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
         if (valueCount != static_cast<long>(result.size()))
             sort(result.begin() + valueCount, result.end());
     }
-    //cout << "calculateError: " << countCalls << endl;
-    //cout << "findEigenvalue: " << countFind << endl;
     return result;
 }
 

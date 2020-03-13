@@ -7,7 +7,8 @@ void pyScs(py::module &m) {
             .def_readonly("backward", &Matscs<>::Sector::backward);
     py::class_<Matscs<>>(m, "PyScs")
             .def(py::init(
-                    [](function<MatrixXd(double)> V, int N, double xmin, double xmax, int steps, double tolerance) {
+                    [](const function<MatrixXd(double)> &V, int N, double xmin, double xmax, int steps,
+                       double tolerance) {
                         if (steps != -1 && tolerance != -1)
                             throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
                         if (steps == -1 && tolerance == -1)
@@ -23,7 +24,7 @@ void pyScs(py::module &m) {
             .def_readonly("min", &Matscs<>::xmin)
             .def_readonly("max", &Matscs<>::xmax)
             .def("propagate",
-                 [](Matscs<> &m, double E, tuple<MatrixXd, MatrixXd> y, double a,
+                 [](Matscs<> &m, double E, const tuple<MatrixXd, MatrixXd> &y, double a,
                     double b) -> pair<pair<MatrixXd, MatrixXd>, double> {
                      double theta = 0;
                      Y<double, Dynamic> r;
