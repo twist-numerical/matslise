@@ -12,7 +12,7 @@ if(MSVC)
     /D_USE_MATH_DEFINES
     /bigobj)
 else()
-    add_compile_options(-Wall -Wextra -Werror)
+    add_compile_options(-Wall -Wextra)
     OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
     IF (OPTIMIZE)
         message("-- Using -O3 -march=native")
@@ -65,24 +65,27 @@ else ()
         endif ()
     ENDIF (QUADMATH)
 
-    find_package(MKL)
-    if (MKL_FOUND)
-        set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
-        set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
-        set(BLA_DEFINITIONS USE_MKL)
-        foreach (target ${targets})
-            target_compile_definitions(${target} PUBLIC ${BLA_DEFINITIONS})
-            target_include_directories(${target} PUBLIC ${BLA_INCLUDE_DIR})
+    OPTION(USE_MKL "Use the Intel's MKL if available" OFF)
+    if (USE_MKL)
+        find_package(MKL)
+        if (MKL_FOUND)
+            set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
+            set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
+            set(BLA_DEFINITIONS USE_MKL)
+            foreach (target ${targets})
+                target_compile_definitions(${target} PUBLIC ${BLA_DEFINITIONS})
+                target_include_directories(${target} PUBLIC ${BLA_INCLUDE_DIR})
 
-            set(THREADS_PREFER_PTHREAD_FLAG ON)
-            find_package(Threads REQUIRED)
-            target_link_libraries(${target} PUBLIC
-                    m
-                    Threads::Threads
-                    ${CMAKE_DL_LIBS}
-                    ${BLAS_LIBRARIES})
-        endforeach ()
-        add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
+                set(THREADS_PREFER_PTHREAD_FLAG ON)
+                find_package(Threads REQUIRED)
+                target_link_libraries(${target} PUBLIC
+                        m
+                        Threads::Threads
+                        ${CMAKE_DL_LIBS}
+                        ${BLAS_LIBRARIES})
+            endforeach ()
+            add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
+        endif ()
     endif ()
 
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
