@@ -69,6 +69,15 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
 }
 
 template<typename Scalar>
+Scalar Matslise<Scalar>::estimatePotentialMinimum() const {
+    auto iterator = this->sectors.begin();
+    Scalar minimal = (*iterator++)->vs[0];
+    for (; iterator != this->sectors.end(); ++iterator)
+        minimal = min(minimal, (*iterator)->vs[0]);
+    return minimal;
+}
+
+template<typename Scalar>
 vector<pair<int, Scalar>>
 computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, int Imin, int Imax,
                          const Y<Scalar> &left, const Y<Scalar> &right) {

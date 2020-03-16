@@ -30,6 +30,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
             {13.3323313, 1}
     };
 
+    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
     ArrayXd x(3);
     x << -1, 0, 1;
@@ -79,6 +80,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfr
             {13.3323313, 1}
     };
 
+    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
     ArrayXd x(3);
     x << -1, 0, 1;
@@ -128,6 +130,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
             {13.3323313, 1}
     };
 
+    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
     ArrayXd x(3);
     x << -1, 0, 1;
@@ -177,6 +180,7 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[se2d][eigenfunctions][ixaru][aut
             {13.3323313, 1}
     };
 
+    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
     ArrayXd x(3);
     x << -1, 0, 1;

@@ -85,6 +85,10 @@ namespace matslise {
                 return max;
             return sub.getMax(axis);
         }
+
+        Scalar diameter() const {
+            return hypot(max - min, sub.diameter());
+        }
     };
 
     template<typename Scalar>
@@ -102,6 +106,10 @@ namespace matslise {
             assert(axis == 0);
             (void) (axis); // UNUSED
             return max;
+        }
+
+        Scalar diameter() const {
+            return abs(max - min);
         }
     };
 }

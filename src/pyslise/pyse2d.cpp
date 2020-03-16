@@ -67,6 +67,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
                  py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
+            .def("firstEigenvalue", &SE2D<>::findFirstEigenvalue)
             .def("error", [](const SE2D<> &se2d, double const &E) -> pair<double, double> {
                 return se2d.calculateError(E, &SEnD_util::ABS_SORTER<>);
             }, R""""(\

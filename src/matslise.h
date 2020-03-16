@@ -27,6 +27,8 @@ namespace matslise {
         }
 
     public:
+        virtual Scalar estimatePotentialMinimum() const = 0;
+
         virtual std::vector<std::pair<int, Scalar>>
         computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const {
@@ -138,6 +140,8 @@ namespace matslise {
                        bool use_h = true) const;
 
     public: // Override
+        Scalar estimatePotentialMinimum() const override;
+
         using AbstractMatslise<Scalar>::computeEigenvalues;
 
         std::vector<std::pair<int, Scalar>>
@@ -227,6 +231,10 @@ namespace matslise {
     public:
         HalfRange(std::function<Scalar(Scalar)> V, const Scalar &xmax,
                   std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder);
+
+        Scalar estimatePotentialMinimum() const override {
+            return ms->estimatePotentialMinimum();
+        }
 
         using AbstractMatslise<Scalar>::computeEigenvalues;
 

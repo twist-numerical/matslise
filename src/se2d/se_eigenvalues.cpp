@@ -100,27 +100,41 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
 }
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::findFirstEigenvalue() const {
-    // TODO: still a WIP
-    Scalar E = 0;
-    bool changed;
-    Scalar err, derr;
-    do {
-        E = findEigenvalue(0);
-        cout << E << endl;
-        changed = false;
-        for (const pair<Scalar, Scalar> &errorPair: calculateErrors(E)) {
-            tie(err, derr) = errorPair;
-            Scalar newE = E - err / derr;
-            cout << "       " << newE << endl;
-            if (newE < E) {
-                cout << E << " >> " << newE << endl;
-                E = newE;
-                changed = abs(E - newE) > 1e-9;
-            }
+inline bool is_first_eigenvalue(const SE2D<Scalar> &se2d, const Scalar &E) {
+    vector<typename SE2D<Scalar>::ArrayXXs> eigenfunctions = se2d.computeEigenfunction(
+            E,
+            SE2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
+            SE2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
+    if (eigenfunctions.size() != 1)
+        return false;
 
-        }
-    } while (changed);
+    return eigenfunctions[0].minCoeff() > -1e-5;
+}
+
+template<typename Scalar>
+Scalar SE2D<Scalar>::findFirstEigenvalue() const {
+    Scalar E = sectors[0]->matslise->estimatePotentialMinimum();
+    for (int i = 0; i < sectorCount; ++i)
+        E = min(E, sectors[i]->matslise->estimatePotentialMinimum());
+    E = findEigenvalue(E);
+
+    // https://arxiv.org/abs/1006.1686
+    Scalar tmp_step = constants<Scalar>::PI / domain.diameter();
+    Scalar step = 3 * tmp_step * tmp_step;
+
+    while (!is_first_eigenvalue(*this, E)) {
+
+        Scalar estimate = E;
+        Scalar prevE = E;
+        int i = 0;
+        do {
+            estimate -= step;
+            E = findEigenvalue(estimate);
+            if (++i > 30)
+                throw runtime_error("Could not find the first eigenvalue.");
+        } while (E > prevE - 1e-5);
+    }
+
     return E;
 }
 

@@ -27,6 +27,8 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
             {4.87014557482289,  1},
             {4.89864497284387,  2}};
 
+    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
+
     int n = 2;
     ArrayXd x = ArrayXd::LinSpaced(n, -5, 5);
     double E;
