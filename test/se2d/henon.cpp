@@ -12,7 +12,7 @@ using namespace Eigen;
 TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
     SE2D<> p2(
             [](double x, double y) -> double {
-                return (x * x + y * y) + 1 / (2 * sqrt(5)) * x * (y * y - x * x / 3);
+                return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },
             {{-6, 6}, -6, 6},
             Options2<>().sectorCount(15).stepsPerSector(4).nested(Options1<>().sectorCount(16)));
@@ -27,7 +27,7 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
             {4.87014557482289,  1},
             {4.89864497284387,  2}};
 
-    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
+    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == 2 * eigenvalues[0].first);
 
     int n = 2;
     ArrayXd x = ArrayXd::LinSpaced(n, -5, 5);

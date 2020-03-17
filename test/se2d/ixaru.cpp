@@ -32,6 +32,11 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
 
     CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
+    const vector<double> foundEigenvalues = p2.computeEigenvaluesByIndex(0, 10);
+    for (int i = 0; i < 10; ++i) {
+        CHECK(Approx(foundEigenvalues[i]).margin(1e-7) == eigenvalues[i].first);
+    }
+
     ArrayXd x(3);
     x << -1, 0, 1;
     double E;
@@ -81,6 +86,12 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfr
     };
 
     CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
+
+
+    const vector<double> foundEigenvalues = p2.computeEigenvaluesByIndex(0, 10);
+    for (int i = 0; i < 10; ++i) {
+        CHECK(Approx(foundEigenvalues[i]).margin(1e-7) == eigenvalues[i].first);
+    }
 
     ArrayXd x(3);
     x << -1, 0, 1;

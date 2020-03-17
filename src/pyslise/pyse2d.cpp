@@ -115,6 +115,15 @@ It is not a good idea to make the number of initial values large. This will incr
 :param int initial_values: the number of starting guesses that will be used. Defaults to 16.
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("initial_values") = 16)
+            .def("eigenvaluesByIndex", &SE2D<>::computeEigenvaluesByIndex, R""""(\
+Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
+
+:param int Imin: the first eigenvalue to find, by index.
+:param int Imax: only the first Imax eigenvalues will be considered.
+
+:returns: a list of eigenvalues.
+)"""",
+                 py::arg("Imin"), py::arg("Imax"))
             .def("firstEigenvalue", &SE2D<>::findFirstEigenvalue)
             .def("__calculateErrorMatrix", &SE2D<>::calculateErrorMatrix)
             .def("__propagate",

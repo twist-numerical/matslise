@@ -108,8 +108,42 @@ inline bool is_first_eigenvalue(const SE2D<Scalar> &se2d, const Scalar &E) {
     if (eigenfunctions.size() != 1)
         return false;
 
-    return eigenfunctions[0].minCoeff() > -1e-5;
+    return eigenfunctions[0].minCoeff() * eigenfunctions[0].abs().maxCoeff() > -1e-5;
 }
+
+template<typename Scalar>
+constexpr Scalar fundamentalGap(const Rectangle<2, Scalar> &domain) {
+    // https://arxiv.org/abs/1006.1686
+    Scalar step = constants<Scalar>::PI / domain.diameter();
+    step *= step;
+    step *= 3;
+    return step;
+}
+
+template<typename Scalar>
+vector<Scalar> SE2D<Scalar>::findFirstEigenvalues(int n) const {
+    Scalar E0 = findFirstEigenvalue();
+    const Scalar step = max(Scalar(1), fundamentalGap(domain));
+    vector<Scalar> eigenvalues{E0};
+    Scalar start = E0;
+    while (eigenvalues.size() < (unsigned long) n) {
+        for (auto E : findEigenvalues(start, start + step, 16)) {
+            auto lowerBound = lower_bound(eigenvalues.begin(), eigenvalues.end(), E);
+            if (lowerBound == eigenvalues.end()) {
+                if (abs(lowerBound[-1] - E) > 1e-5)
+                    eigenvalues.push_back(E);
+            } else if (abs(lowerBound[0] - E) > 1e-5) {
+                if (lowerBound - 1 == eigenvalues.begin() || abs(lowerBound[-1] - E) > 1e-5)
+                    eigenvalues.insert(lowerBound, E);
+            }
+        }
+        start += step;
+    }
+    while (eigenvalues.size() > (unsigned long) n)
+        eigenvalues.pop_back();
+    return eigenvalues;
+}
+
 
 template<typename Scalar>
 Scalar SE2D<Scalar>::findFirstEigenvalue() const {
@@ -118,9 +152,7 @@ Scalar SE2D<Scalar>::findFirstEigenvalue() const {
         E = min(E, sectors[i]->matslise->estimatePotentialMinimum());
     E = findEigenvalue(E);
 
-    // https://arxiv.org/abs/1006.1686
-    Scalar tmp_step = constants<Scalar>::PI / domain.diameter();
-    Scalar step = 3 * tmp_step * tmp_step;
+    const Scalar step = fundamentalGap(domain) / 8.;
 
     while (!is_first_eigenvalue(*this, E)) {
 
@@ -140,11 +172,9 @@ Scalar SE2D<Scalar>::findFirstEigenvalue() const {
 
 template<typename Scalar>
 vector<Scalar> SE2D<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax) const {
-    // TODO
-    (void) Imin;
-    (void) Imax;
-    vector<Scalar> values;
-    return values;
+    vector<Scalar> eigenvalues = findFirstEigenvalues(Imax);
+    eigenvalues.erase(eigenvalues.begin(), eigenvalues.begin() + Imin);
+    return eigenvalues;
 }
 
 #include "../util/instantiate.h"

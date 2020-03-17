@@ -71,6 +71,8 @@ namespace matslise {
 
         Scalar findFirstEigenvalue() const;
 
+        std::vector<Scalar> findFirstEigenvalues(int n) const;
+
         std::vector<ArrayXXs>
         computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
 
