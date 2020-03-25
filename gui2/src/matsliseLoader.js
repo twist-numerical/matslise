@@ -605,8 +605,8 @@ var wasmMemory;
 // In the wasm backend, we polyfill the WebAssembly object,
 // so this creates a (non-native-wasm) table for us.
 var wasmTable = new WebAssembly.Table({
-  'initial': 546,
-  'maximum': 546 + 0,
+  'initial': 548,
+  'maximum': 548 + 0,
   'element': 'anyfunc'
 });
 
@@ -1202,11 +1202,11 @@ function updateGlobalBufferAndViews(buf) {
 }
 
 var STATIC_BASE = 1024,
-    STACK_BASE = 5299440,
+    STACK_BASE = 5299472,
     STACKTOP = STACK_BASE,
-    STACK_MAX = 56560,
-    DYNAMIC_BASE = 5299440,
-    DYNAMICTOP_PTR = 56400;
+    STACK_MAX = 56592,
+    DYNAMIC_BASE = 5299472,
+    DYNAMICTOP_PTR = 56432;
 
 
 
@@ -1629,7 +1629,7 @@ var ASM_CONSTS = {
 
 
 
-// STATICTOP = STATIC_BASE + 55536;
+// STATICTOP = STATIC_BASE + 55568;
 /* global initializers */  __ATINIT__.push({ func: function() { ___wasm_call_ctors() } });
 
 
@@ -6239,7 +6239,7 @@ var ASM_CONSTS = {
     }
 
   function _emscripten_get_sbrk_ptr() {
-      return 56400;
+      return 56432;
     }
 
   function _emscripten_memcpy_big(dest, src, num) {
@@ -7012,6 +7012,14 @@ var dynCall_viidii = Module["dynCall_viidii"] = function() {
 
 var dynCall_iiidii = Module["dynCall_iiidii"] = function() {
   return (dynCall_iiidii = Module["dynCall_iiidii"] = Module["asm"]["dynCall_iiidii"]).apply(null, arguments);
+};
+
+var dynCall_viidiii = Module["dynCall_viidiii"] = function() {
+  return (dynCall_viidiii = Module["dynCall_viidiii"] = Module["asm"]["dynCall_viidiii"]).apply(null, arguments);
+};
+
+var dynCall_iiidiii = Module["dynCall_iiidiii"] = function() {
+  return (dynCall_iiidiii = Module["dynCall_iiidiii"] = Module["asm"]["dynCall_iiidiii"]).apply(null, arguments);
 };
 
 var dynCall_viiiiii = Module["dynCall_viiiiii"] = function() {

@@ -8,8 +8,8 @@ const evaluatePair = ([a, b]: [string, string]): [number, number] => {
 export default class Problem {
   public Matslise: typeof Matslise | null = null;
   public HalfRange: typeof HalfRange | null = null;
-  public matslise?: Matslise | HalfRange;
-  public parsed?: {
+  public matslise: Matslise | HalfRange | null = null;
+  public parsed: {
     potential: (x: number) => number;
     x: [number, number];
     ymin: [number, number];
@@ -18,7 +18,7 @@ export default class Problem {
     right: [number, number];
     tolerance: number;
     symmetric: boolean;
-  };
+  } | null = null;
 
   public potential = "0";
   public x: [string, string] = ["0", "pi"];
@@ -69,14 +69,14 @@ export default class Problem {
   }
 
   reset() {
-    this.parsed = undefined;
-    this.matslise = undefined;
+    this.parsed = null;
+    this.matslise = null;
     for (const obj of this.toDelete.splice(0, this.toDelete.length))
       obj.delete();
   }
 
   eigenvaluesByIndex(imin: number, imax: number): [number, number][] {
-    if (this.matslise === undefined) this.parse();
+    if (this.matslise === null || this.parsed === null) this.parse();
     return (this.parsed!.symmetric
       ? (this.matslise as HalfRange).eigenvaluesByIndex(
           imin,
@@ -93,7 +93,7 @@ export default class Problem {
   }
 
   eigenvalueError(index: number, E: number): number {
-    if (this.matslise === undefined) this.parse();
+    if (this.matslise === null || this.parsed === null) this.parse();
     return this.symmetric
       ? (this.matslise as HalfRange).eigenvalueError(
           E,
@@ -105,5 +105,22 @@ export default class Problem {
           this.parsed!.left,
           this.parsed!.right
         );
+  }
+
+  eigenfunction(index: number, E: number, x: number[]): number {
+    if (this.matslise === null || this.parsed === null) this.parse();
+    /*    return this.symmetric
+      ? (this.matslise as HalfRange).computeEigenfunction(
+          E,
+          this.parsed!.right,
+          index
+        )
+      :*/
+    return (this.matslise as Matslise).computeEigenfunction(
+      E,
+      this.parsed!.left,
+      this.parsed!.right,
+      x
+    );
   }
 }

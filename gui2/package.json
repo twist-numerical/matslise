@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "An online GUI for matslise",
   "scripts": {
-    "start": "npx parcel index.html"
+    "start": "parcel index.html"
   },
   "author": "Toon Baeyens",
   "license": "MIT",
@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "bootstrap-css-only": "^4.4.1",
+    "chart.js": "^2.9.3",
     "mathjs-expression-parser": "^1.0.2",
     "parcel-plugin-static-files-copy": "^2.3.1",
     "vue-hot-reload-api": "^2.3.4"

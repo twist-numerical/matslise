@@ -97,6 +97,15 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                         "return f;")
                                 )(calculator);
                     }))
+            .function("computeEigenfunction", optional_override(
+                    [](const Matslise<> &m, double E, const Vector2d &left, const Vector2d &right, const val &x) ->
+                            val {
+                        Array<Y<double>, Dynamic, 1> array = m.computeEigenfunction(
+                                E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), val2ArrayXd(x));
+                        return ArrayXd2val(array.unaryExpr([](const Y<double> &y) -> double {
+                            return y.y(0);
+                        }));
+                    }))
             .function("eigenvaluesByIndex", optional_override(
                     [](const Matslise<> &m, int Imin, int Imax, const Vector2d &left,
                        const Vector2d &right) -> val {
@@ -197,13 +206,14 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     r.call<val>("push", se2d.sectors[i]->min);
                 return r;
             }))
-            .function("computeEigenfunction", optional_override([](SE2D<> &se2d, double E, const val &x, const val &y) -> val {
-                vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
-                val r = val::array();
-                for (ArrayXXd &eigenfunction : result)
-                    r.call<val>("push", ArrayXXd2val(eigenfunction));
-                return r;
-            }))
+            .function("computeEigenfunction",
+                      optional_override([](SE2D<> &se2d, double E, const val &x, const val &y) -> val {
+                          vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
+                          val r = val::array();
+                          for (ArrayXXd &eigenfunction : result)
+                              r.call<val>("push", ArrayXXd2val(eigenfunction));
+                          return r;
+                      }))
             .function("eigenfunction", optional_override(
                     [](const SE2D<> &se2d, double E) -> val {
                         std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunctionCalculator(

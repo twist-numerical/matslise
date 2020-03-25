@@ -1,7 +1,7 @@
 <template lang="pug">
 div.container
   h1 Matslise
-  form(action="" @submit="(e) => e.preventDefault()")
+  form(action="" @submit.prevent="matslise.calculate")
     .form-row
       label.input-group.col-12
         .input-group-prepend 
@@ -66,10 +66,15 @@ div.container
                 @input="matslise.reset()",
                 v-model="matslise.problem.symmetric")
     .form-row.justify-content-end
-      button.btn.btn-primary(@click="matslise.calculate()" v-bind:disabled="matslise.problem.Matslise === null") Calculate
+      input.btn.btn-primary(type="submit" v-bind:disabled="matslise.problem.Matslise === null", value="Calculate")
+
+  eigenfunctions-graph(
+    v-if="matslise.eigenvalues !== null"
+    :eigenfunctions="visibleEigenfunctions"
+    :x="matslise.xValues")
 
   eigenvalues-table(
-      v-bind:eigenvalues="matslise.eigenvalues"
+      :eigenvalues="matslise.eigenvalues"
       @more-eigenvalues="() => matslise.moreEigenvalues()")
 </template>
 
@@ -77,12 +82,27 @@ div.container
 import Vue from "vue";
 import MatsliseController from "./MatsliseController";
 import EigenvaluesTable from "./EigenvaluesTable.vue";
+import EigenfunctionsGraph from "./EigenfunctionsGraph.vue";
 
 const matsliseController = new MatsliseController();
 export default Vue.extend({
   data() {
     return { matslise: matsliseController };
   },
-  components: { "eigenvalues-table": EigenvaluesTable }
+  components: {
+    "eigenvalues-table": EigenvaluesTable,
+    "eigenfunctions-graph": EigenfunctionsGraph
+  },
+  computed: {
+    visibleEigenfunctions() {
+      console.log("test");
+      const eigenvalues = (this.matslise as MatsliseController).eigenvalues;
+      if (eigenvalues === null) return [];
+      const r = eigenvalues.filter(e => e.visible).map(e => e.eigenfunction);
+      console.log(r);
+      return r;
+    }
+  }
 });
+window.mc = matsliseController;
 </script>
