@@ -1,10 +1,12 @@
 import Problem from "./Problem";
+import Color = require("color");
 
 export interface Eigenvalue {
   index: number;
   value: number;
   error: number;
   visible: boolean;
+  color: string;
   readonly eigenfunction: number[];
 }
 
@@ -25,7 +27,7 @@ export default class MatsliseController {
     this.eigenvalues = [];
     this.problem.parse();
     this.xValues = [];
-    const n = 60;
+    const n = 120;
     const [xmin, xmax] = this.problem.parsed!.x;
     for (let i = 0; i < n; ++i) {
       this.xValues.push(
@@ -37,7 +39,8 @@ export default class MatsliseController {
       );
     }
     this.moreEigenvalues();
-    this.eigenvalues[3].visible = true;
+    this.eigenvalues[0].visible = true;
+    this.eigenvalues[1].visible = true;
   }
 
   moreEigenvalues() {
@@ -51,9 +54,10 @@ export default class MatsliseController {
         value,
         error: this.problem.eigenvalueError(index, value),
         visible: false,
-        get eigenfunction() {
+        color: Color.hsv(1.61803398875 * index * 100, 100, 80).string(),
+        get eigenfunction(): number[] {
           if (self.eigenfunctions.has(index))
-            return self.eigenfunctions.get(index);
+            return self.eigenfunctions.get(index)!;
           const f = self.problem.eigenfunction(index, value, self.xValues);
           self.eigenfunctions.set(index, f);
           return f;

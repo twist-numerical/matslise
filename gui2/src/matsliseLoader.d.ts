@@ -1,17 +1,4 @@
-declare class Matslise {
-  constructor(
-    potential: (x: number) => number,
-    xmin: number,
-    xmax: number,
-    options:
-      | {
-          sectorCount: number;
-        }
-      | {
-          tolerance: number;
-        }
-  );
-
+declare class AbstractMatslise {
   delete(): void;
 
   eigenvaluesByIndex(
@@ -24,11 +11,37 @@ declare class Matslise {
   eigenvalueError(
     E: number,
     left: [number, number],
-    right: [number, number]
+    right: [number, number],
+    index?: number
   ): number;
+
+  computeEigenfunction(
+    E: number,
+    left: [number, number],
+    right: [number, number],
+    x: number[],
+    index?: number
+  ): number[];
+
+  delete(): void;
 }
 
-declare class HalfRange {
+declare class Matslise extends AbstractMatslise {
+  constructor(
+    potential: (x: number) => number,
+    xmin: number,
+    xmax: number,
+    options:
+      | {
+          sectorCount: number;
+        }
+      | {
+          tolerance: number;
+        }
+  );
+}
+
+declare class MatsliseHalfRange extends AbstractMatslise {
   constructor(
     potential: (x: number) => number,
     xmax: number,
@@ -40,21 +53,11 @@ declare class HalfRange {
           tolerance: number;
         }
   );
-
-  delete(): void;
-
-  eigenvaluesByIndex(
-    imin: number,
-    imax: number,
-    right: [number, number]
-  ): { first: number; second: number }[];
-
-  eigenvalueError(E: number, right: [number, number], index: number): number;
 }
 
 declare interface matslise {
   Matslise: typeof Matslise;
-  HalfRange: typeof HalfRange;
+  MatsliseHalfRange: typeof MatsliseHalfRange;
 }
 
 export default class matsliseLoader {

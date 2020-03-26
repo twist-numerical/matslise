@@ -1,4 +1,8 @@
-import Module, { Matslise, HalfRange } from "./matsliseLoader";
+import Module, {
+  AbstractMatslise,
+  MatsliseHalfRange,
+  Matslise
+} from "./matsliseLoader";
 import math from "mathjs-expression-parser";
 
 const evaluatePair = ([a, b]: [string, string]): [number, number] => {
@@ -7,8 +11,8 @@ const evaluatePair = ([a, b]: [string, string]): [number, number] => {
 
 export default class Problem {
   public Matslise: typeof Matslise | null = null;
-  public HalfRange: typeof HalfRange | null = null;
-  public matslise: Matslise | HalfRange | null = null;
+  public HalfRange: typeof MatsliseHalfRange | null = null;
+  public matslise: AbstractMatslise | null = null;
   public parsed: {
     potential: (x: number) => number;
     x: [number, number];
@@ -35,7 +39,7 @@ export default class Problem {
   initMatslise() {
     new Module().then(module => {
       this.Matslise = module.Matslise;
-      this.HalfRange = module.HalfRange;
+      this.HalfRange = module.MatsliseHalfRange;
     });
   }
 
@@ -48,12 +52,13 @@ export default class Problem {
 
     const ymin = evaluatePair(this.ymin);
     const ymax = evaluatePair(this.ymax);
+    const x = evaluatePair(this.x);
     this.parsed = {
       potential,
-      x: evaluatePair(this.x),
-      ymin,
+      x: this.symmetric ? [-x[1], x[1]] : x,
+      ymin: this.symmetric ? ymax : ymin,
       ymax,
-      left: [ymin[1], -ymin[0]],
+      left: this.symmetric ? [ymax[1], -ymax[0]] : [ymin[1], -ymin[0]],
       right: [ymax[1], -ymax[0]],
       tolerance: math.eval(this.tolerance),
       symmetric: this.symmetric
@@ -65,7 +70,7 @@ export default class Problem {
       : new this.Matslise(potential, this.parsed.x[0], this.parsed.x[1], {
           tolerance: this.parsed.tolerance
         });
-    this.toDelete.push(this.matslise);
+    this.toDelete.push(this.matslise!);
   }
 
   reset() {
@@ -77,50 +82,33 @@ export default class Problem {
 
   eigenvaluesByIndex(imin: number, imax: number): [number, number][] {
     if (this.matslise === null || this.parsed === null) this.parse();
-    return (this.parsed!.symmetric
-      ? (this.matslise as HalfRange).eigenvaluesByIndex(
-          imin,
-          imax,
-          this.parsed!.right
-        )
-      : (this.matslise as Matslise).eigenvaluesByIndex(
-          imin,
-          imax,
-          this.parsed!.left,
-          this.parsed!.right
-        )
+    return this.matslise!.eigenvaluesByIndex(
+      imin,
+      imax,
+      this.parsed!.left,
+      this.parsed!.right
     ).map(({ first, second }) => [first, second]);
   }
 
   eigenvalueError(index: number, E: number): number {
     if (this.matslise === null || this.parsed === null) this.parse();
-    return this.symmetric
-      ? (this.matslise as HalfRange).eigenvalueError(
-          E,
-          this.parsed!.right,
-          index
-        )
-      : (this.matslise as Matslise).eigenvalueError(
-          E,
-          this.parsed!.left,
-          this.parsed!.right
-        );
-  }
-
-  eigenfunction(index: number, E: number, x: number[]): number {
-    if (this.matslise === null || this.parsed === null) this.parse();
-    /*    return this.symmetric
-      ? (this.matslise as HalfRange).computeEigenfunction(
-          E,
-          this.parsed!.right,
-          index
-        )
-      :*/
-    return (this.matslise as Matslise).computeEigenfunction(
+    return this.matslise!.eigenvalueError(
       E,
       this.parsed!.left,
       this.parsed!.right,
-      x
+      index
+    );
+  }
+
+  eigenfunction(index: number, E: number, x: number[]): number[] {
+    if (this.matslise === null || this.parsed === null) this.parse();
+
+    return this.matslise!.computeEigenfunction(
+      E,
+      this.parsed!.left,
+      this.parsed!.right,
+      x,
+      index
     );
   }
 }

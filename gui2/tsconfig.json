@@ -2,6 +2,9 @@
   "compilerOptions": {
     "noImplicitAny": true,
     "strictNullChecks": true,
-    "esModuleInterop": true
+    "esModuleInterop": true,
+    "downlevelIteration": true,
+    "lib": ["ES2015", "ES5", "ES2015.Collection", "ES2015.Iterable", "DOM"],
+    "target": "ES5"
   }
 }
