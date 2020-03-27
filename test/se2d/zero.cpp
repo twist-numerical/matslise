@@ -15,7 +15,7 @@ using namespace Eigen;
 using namespace Catch::Matchers;
 
 void compareEigenfunctions(
-        const SE2D<> &p, double E, const vector<function<double(double, double)>> &exact) {
+        const Matslise2D<> &p, double E, const vector<function<double(double, double)>> &exact) {
     int n = 50, m = 60;
     ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
     ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
@@ -39,7 +39,7 @@ void compareEigenfunctions(
 }
 
 TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
-    SE2D<> p(
+    Matslise2D<> p(
             [](double, double) -> double {
                 return 0;
             },

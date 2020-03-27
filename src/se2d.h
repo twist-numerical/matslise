@@ -5,7 +5,7 @@
 
 namespace matslise {
     template<typename _Scalar>
-    class SE2D {
+    class Matslise2D {
     public:
         typedef _Scalar Scalar;
         typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorXs;
@@ -20,7 +20,7 @@ namespace matslise {
         MatrixXs *M;
         Rectangle<2, Scalar> domain;
         int sectorCount;
-        std::vector<SE2D<Scalar>::Sector *> sectors;
+        std::vector<Matslise2D<Scalar>::Sector *> sectors;
         ArrayXs grid;
         int N;
         Scalar match;
@@ -28,8 +28,8 @@ namespace matslise {
         Y<Scalar, Eigen::Dynamic> y0Left;
         Y<Scalar, Eigen::Dynamic> y0Right;
     public:
-        SE2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
-             const Options2<Scalar> &options);
+        Matslise2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
+                   const Options2<Scalar> &options);
 
         std::pair<MatrixXs, MatrixXs> matchingErrorMatrix(const Scalar &E) const;
 
@@ -63,7 +63,7 @@ namespace matslise {
             return point <= domain.max && point >= domain.min;
         }
 
-        virtual ~SE2D();
+        virtual ~Matslise2D();
 
     protected:
         std::vector<Y<Scalar, Eigen::Dynamic>> eigenfunctionSteps(const Scalar &E) const;
@@ -75,7 +75,7 @@ namespace matslise {
     public:
         class Sector {
         public:
-            const SE2D<Scalar> *se2d;
+            const Matslise2D<Scalar> *se2d;
             AbstractMatslise<Scalar> *matslise;
             matslise::Matscs<Scalar> *matscs;
             ArrayXs vbar;
@@ -84,7 +84,7 @@ namespace matslise {
             Scalar *eigenvalues;
             ArrayXs *eigenfunctions;
 
-            Sector(const SE2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
 
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(
@@ -109,7 +109,7 @@ namespace matslise {
     };
 
     template<typename _Scalar=double>
-    class SE2DHalf {
+    class Matslise2DHalf {
     public:
         typedef _Scalar Scalar;
         typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorXs;
@@ -123,12 +123,12 @@ namespace matslise {
         void setParity(bool even);
 
     public:
-        SE2D<Scalar> *se2d;
+        Matslise2D<Scalar> *se2d;
         Rectangle<2, Scalar> domain;
 
     public:
-        SE2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
-                 const Options2<Scalar> &options);
+        Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
+                       const Options2<Scalar> &options);
 
         Scalar eigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
                           const Scalar &minTolerance = 1e-5);
@@ -145,7 +145,7 @@ namespace matslise {
 
         std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E);
 
-        virtual ~SE2DHalf();
+        virtual ~Matslise2DHalf();
     };
 }
 

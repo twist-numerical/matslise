@@ -18,9 +18,9 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 }
 
 template<typename Scalar>
-SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
-                   const matslise::Rectangle<2, Scalar> &domain,
-                   const Options2<Scalar> &_options) :
+Matslise2D<Scalar>::Matslise2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
+                               const matslise::Rectangle<2, Scalar> &domain,
+                               const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {
     y0Left = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
@@ -35,7 +35,7 @@ SE2D<Scalar>::SE2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
 }
 
 template<typename Scalar>
-typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::calculateM(int k) const {
+typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::calculateM(int k) const {
     MatrixXs result(N, N);
 
     for (int i = 0; i < N; ++i)
@@ -47,14 +47,14 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::calculateM(int k) const {
 }
 
 template<typename Scalar>
-SE2D<Scalar>::~SE2D() {
+Matslise2D<Scalar>::~Matslise2D() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
     delete[] M;
 }
 
 template<typename Scalar>
-typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) const {
+typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) const {
     MatrixXs U = y.getY(0).partialPivLu().matrixLU();
     U.template triangularView<StrictlyLower>().setZero();
     U.template triangularView<Upper>().
@@ -65,8 +65,8 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) 
 }
 
 template<typename Scalar>
-pair<typename SE2D<Scalar>::MatrixXs, typename SE2D<Scalar>::MatrixXs>
-SE2D<Scalar>::matchingErrorMatrix(const Scalar &E) const {
+pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
+Matslise2D<Scalar>::matchingErrorMatrix(const Scalar &E) const {
     Y<Scalar, Dynamic> yl = y0Left;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
@@ -94,12 +94,12 @@ SE2D<Scalar>::matchingErrorMatrix(const Scalar &E) const {
 
 template<typename Scalar>
 Y<Scalar, Dynamic>
-SE2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b,
-                        bool use_h) const {
+Matslise2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b,
+                              bool use_h) const {
     if (!contains(a) || !contains(b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic> y = y0;
-    int sectorIndex = find_sector<SE2D<Scalar>>(this, a);
+    int sectorIndex = find_sector<Matslise2D<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
     do {
@@ -116,7 +116,7 @@ SE2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Sca
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> SE2D<Scalar>::matchingErrors(const Scalar &E) const {
+vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(const Scalar &E) const {
     pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(E);
     EigenSolver<MatrixXs> solver(N);
 
@@ -151,7 +151,7 @@ vector<pair<Scalar, Scalar>> SE2D<Scalar>::matchingErrors(const Scalar &E) const
 }
 
 template<typename Scalar>
-pair<Scalar, Scalar> SE2D<Scalar>::matchingError(const Scalar &E) const {
+pair<Scalar, Scalar> Matslise2D<Scalar>::matchingError(const Scalar &E) const {
     vector<pair<Scalar, Scalar>> errors = matchingErrors(E);
     return *min_element(errors.begin(), errors.end(), [](
             const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {

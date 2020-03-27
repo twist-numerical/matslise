@@ -10,13 +10,13 @@ using namespace Eigen;
 #define EPS (1e-12)
 
 template<typename Scalar>
-HalfRange<Scalar>::HalfRange(
+MatsliseHalf<Scalar>::MatsliseHalf(
         function<Scalar(Scalar)> V, const Scalar &xmax, shared_ptr<SectorBuilder<Matslise<Scalar>>> sectorBuilder) {
     ms = new Matslise<Scalar>(V, 0, xmax, sectorBuilder);
 }
 
 template<typename Scalar>
-inline bool isEven(const HalfRange<Scalar> *hr, Scalar E, const Y<Scalar> &side, int index) {
+inline bool isEven(const MatsliseHalf<Scalar> *hr, Scalar E, const Y<Scalar> &side, int index) {
     if (index == -1) {
         Scalar error0 = get<0>(hr->ms->matchingError(E, Y<Scalar>({1, 0}, {0, 0}), side));
         Scalar error1 = get<0>(hr->ms->matchingError(E, Y<Scalar>({0, 1}, {0, 0}), side));
@@ -32,7 +32,7 @@ inline Y<Scalar> getY0(bool even) {
 
 template<typename Scalar>
 Array<Y<Scalar>, Dynamic, 1>
-HalfRange<Scalar>::eigenfunction(
+MatsliseHalf<Scalar>::eigenfunction(
         const Scalar &E, const Y<Scalar> &side, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index) const {
     Eigen::Index n = x.size();
     for (Eigen::Index i = 1; i < n; ++i)
@@ -75,7 +75,7 @@ HalfRange<Scalar>::eigenfunction(
 
 template<typename Scalar>
 std::function<Y<Scalar>(Scalar)>
-HalfRange<Scalar>::eigenfunctionCalculator(const Scalar &E, const Y<Scalar> &side, int index) const {
+MatsliseHalf<Scalar>::eigenfunctionCalculator(const Scalar &E, const Y<Scalar> &side, int index) const {
     bool even = isEven(this, E, side, index);
     function<Y<Scalar>(Scalar)> calculator(ms->eigenfunctionCalculator(E, getY0<Scalar>(even), side));
     return [calculator, even](Scalar x) -> Y<Scalar> {
@@ -108,13 +108,13 @@ mergeEigenvalues(const vector<pair<int, Scalar>> &even, const vector<pair<int, S
 }
 
 template<typename Scalar>
-Scalar HalfRange<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &side, int index) const {
+Scalar MatsliseHalf<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &side, int index) const {
     return ms->eigenvalueError(E, getY0<Scalar>(isEven(this, E, side, index)), side);
 }
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-HalfRange<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side) const {
+MatsliseHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side) const {
     return mergeEigenvalues(
             ms->eigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>({1, 0}, {0, 0}), side),
             ms->eigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>({0, 1}, {0, 0}), side));
@@ -122,14 +122,14 @@ HalfRange<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side)
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-HalfRange<Scalar>::eigenvalues(
+MatsliseHalf<Scalar>::eigenvalues(
         const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side) const {
     return mergeEigenvalues(ms->eigenvalues(Emin, Emax, Y<Scalar>({1, 0}, {0, 0}), side),
                             ms->eigenvalues(Emin, Emax, Y<Scalar>({0, 1}, {0, 0}), side));
 }
 
 template<typename Scalar>
-HalfRange<Scalar>::~HalfRange() {
+MatsliseHalf<Scalar>::~MatsliseHalf() {
     delete ms;
 }
 

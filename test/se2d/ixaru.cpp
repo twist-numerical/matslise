@@ -11,7 +11,7 @@ using namespace std;
 using namespace Eigen;
 
 TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
-    SE2D<> p2(
+    Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
@@ -66,7 +66,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
 }
 
 TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfrange]") {
-    SE2DHalf<> p2(
+    Matslise2DHalf<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
@@ -122,7 +122,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfr
 }
 
 TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
-    SE2D<> p2(
+    Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
@@ -172,7 +172,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
 }
 
 TEST_CASE("Eigenfunctions ixaru auto high n", "[se2d][eigenfunctions][ixaru][auto][slow]") {
-    SE2D<> p2(
+    Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },

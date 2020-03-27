@@ -10,7 +10,7 @@ using namespace std;
 using namespace Eigen;
 
 TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
-    SE2D<> p2(
+    Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },

@@ -3,7 +3,7 @@
 
 namespace matslise {
     template<typename Scalar=double>
-    class SE2D;
+    class Matslise2D;
 
     template<typename Scalar=double>
     struct Options1 {
@@ -29,9 +29,9 @@ namespace matslise {
     template<typename Scalar=double>
     struct Options2 {
         Options1<Scalar> nestedOptions;
-        std::shared_ptr<matslise::SectorBuilder<matslise::SE2D<Scalar>>> _builder
-                = std::shared_ptr<matslise::SectorBuilder<matslise::SE2D<Scalar>>>(
-                        new matslise::sectorbuilder::Uniform<SE2D<Scalar>>(17));
+        std::shared_ptr<matslise::SectorBuilder<matslise::Matslise2D<Scalar>>> _builder
+                = std::shared_ptr<matslise::SectorBuilder<matslise::Matslise2D<Scalar>>>(
+                        new matslise::sectorbuilder::Uniform<Matslise2D<Scalar>>(17));
         int _stepsPerSector = 1;
         int _N = 12;
         int _gridPoints = 52;
@@ -42,12 +42,12 @@ namespace matslise {
         }
 
         Options2<Scalar> &sectorCount(int count) {
-            _builder.reset(new matslise::sectorbuilder::Uniform<SE2D<Scalar>>(count));
+            _builder.reset(new matslise::sectorbuilder::Uniform<Matslise2D<Scalar>>(count));
             return *this;
         }
 
         Options2<Scalar> &tolerance(Scalar tol) {
-            _builder.reset(new matslise::sectorbuilder::Auto<SE2D<Scalar>>(tol));
+            _builder.reset(new matslise::sectorbuilder::Auto<Matslise2D<Scalar>>(tol));
             return *this;
         }
 

@@ -6,7 +6,7 @@ using namespace matslise;
 using namespace std;
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::eigenvalue(
+Scalar Matslise2D<Scalar>::eigenvalue(
         const Scalar &_E, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) const {
     Scalar E = _E;
     Scalar error, derror;
@@ -40,7 +40,7 @@ inline bool set_contains(const set<Scalar> &values, const Scalar &guess, const S
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
+vector<Scalar> Matslise2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
     typedef pair<Scalar, Scalar> Interval;
 
     const Scalar linear = 0.001;
@@ -99,11 +99,11 @@ vector<Scalar> SE2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax,
 }
 
 template<typename Scalar>
-inline bool is_first_eigenvalue(const SE2D<Scalar> &se2d, const Scalar &E) {
-    vector<typename SE2D<Scalar>::ArrayXXs> eigenfunctions = se2d.eigenfunction(
+inline bool is_first_eigenvalue(const Matslise2D<Scalar> &se2d, const Scalar &E) {
+    vector<typename Matslise2D<Scalar>::ArrayXXs> eigenfunctions = se2d.eigenfunction(
             E,
-            SE2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
-            SE2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
+            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
+            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
     if (eigenfunctions.size() != 1)
         return false;
 
@@ -120,7 +120,7 @@ constexpr Scalar fundamentalGap(const Rectangle<2, Scalar> &domain) {
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::firstEigenvalues(int n) const {
+vector<Scalar> Matslise2D<Scalar>::firstEigenvalues(int n) const {
     Scalar E0 = firstEigenvalue();
     const Scalar step = max(Scalar(1), fundamentalGap(domain));
     vector<Scalar> values{E0};
@@ -145,7 +145,7 @@ vector<Scalar> SE2D<Scalar>::firstEigenvalues(int n) const {
 
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::firstEigenvalue() const {
+Scalar Matslise2D<Scalar>::firstEigenvalue() const {
     Scalar E = sectors[0]->matslise->estimatePotentialMinimum();
     for (int i = 0; i < sectorCount; ++i)
         E = min(E, sectors[i]->matslise->estimatePotentialMinimum());
@@ -170,7 +170,7 @@ Scalar SE2D<Scalar>::firstEigenvalue() const {
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
+vector<Scalar> Matslise2D<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
     vector<Scalar> eigenvalues = firstEigenvalues(Imax);
     eigenvalues.erase(eigenvalues.begin(), eigenvalues.begin() + Imin);
     return eigenvalues;

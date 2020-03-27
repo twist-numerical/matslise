@@ -10,7 +10,7 @@ Matrix<Scalar, Dynamic, Dynamic> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
 }
 
 template<typename Scalar>
-vector<Y<Scalar, Dynamic>> SE2D<Scalar>::eigenfunctionSteps(const Scalar &E) const {
+vector<Y<Scalar, Dynamic>> Matslise2D<Scalar>::eigenfunctionSteps(const Scalar &E) const {
     auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
     steps[0] = y0Left;
@@ -84,9 +84,9 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::eigenfunctionSteps(const Scalar &E) con
 }
 
 template<typename Scalar>
-std::vector<typename SE2D<Scalar>::ArrayXXs>
-SE2D<Scalar>::eigenfunction(
-        const Scalar &E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
+std::vector<typename Matslise2D<Scalar>::ArrayXXs>
+Matslise2D<Scalar>::eigenfunction(
+        const Scalar &E, const typename Matslise2D<Scalar>::ArrayXs &x, const typename Matslise2D<Scalar>::ArrayXs &y) const {
 
     Eigen::Index nx = x.size();
     for (Eigen::Index i = 1; i < nx; ++i)
@@ -136,7 +136,7 @@ SE2D<Scalar>::eigenfunction(
 }
 
 template<typename Scalar>
-vector<function<Scalar(Scalar, Scalar)>> SE2D<Scalar>::eigenfunctionCalculator(const Scalar &E) const {
+vector<function<Scalar(Scalar, Scalar)>> Matslise2D<Scalar>::eigenfunctionCalculator(const Scalar &E) const {
     shared_ptr<vector<Y<Scalar, Dynamic>>> steps
             = make_shared<vector<Y<Scalar, Dynamic>>>(move(eigenfunctionSteps(E)));
     vector<function<Scalar(Scalar, Scalar)>> result;
@@ -161,7 +161,7 @@ vector<function<Scalar(Scalar, Scalar)>> SE2D<Scalar>::eigenfunctionCalculator(c
                     }
                     sectorIndex = a;
                 }
-                const SE2D<Scalar>::Sector *sector = this->sectors[sectorIndex];
+                const Matslise2D<Scalar>::Sector *sector = this->sectors[sectorIndex];
 
                 return sector->propagate(
                         E, (*steps)[sectorIndex].col(column), sector->min, y, true).getY(0).dot(

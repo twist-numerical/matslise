@@ -152,13 +152,13 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
                 return p.sectors[i];
             }, py::return_value_policy::reference);
 
-    py::class_<HalfRange<>>(m, "PySliseHalf")
+    py::class_<MatsliseHalf<>>(m, "PySliseHalf")
             .def(py::init([](const function<double(double)> &V, double xmax, int steps, double tolerance) {
                 if (steps != -1 && tolerance != -1)
                     throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
                 if (steps == -1 && tolerance == -1)
                     throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
-                return new HalfRange<>(V, xmax,
+                return new MatsliseHalf<>(V, xmax,
                                        steps != -1 ? Matslise<>::UNIFORM(steps) : Matslise<>::AUTO(tolerance));
             }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
@@ -170,7 +170,7 @@ Note: only one of steps and tolerance have to be set.
 :param int steps: the number of steps to take.
 :param int tolerance: automatically choose steps with at least the given accuracy.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("steps") = -1, py::arg("tolerance") = -1)
-            .def("eigenvalues", [](HalfRange<double> &m, double Emin, double Emax,
+            .def("eigenvalues", [](MatsliseHalf<double> &m, double Emin, double Emax,
                                    const Vector2d &side) -> vector<pair<int, double>> {
                 return m.eigenvalues(Emin, Emax, make_y(side));
             }, R""""(\
@@ -182,7 +182,7 @@ Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions h
 :returns: a list of tuples. Each tuples contains the index and the eigenvalue with that index.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("side"))
             .def("eigenvaluesByIndex",
-                 [](HalfRange<> &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>> {
+                 [](MatsliseHalf<> &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>> {
                      return m.eigenvaluesByIndex(Imin, Imax, make_y(side));
                  }, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
@@ -195,7 +195,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
 )"""",
                  py::arg("Imin"), py::arg("Imax"), py::arg("side"))
             .def("eigenvalueError",
-                 [](HalfRange<> &m, double E, const Vector2d &side, int even) -> double {
+                 [](MatsliseHalf<> &m, double E, const Vector2d &side, int even) -> double {
                      return m.eigenvalueError(E, make_y(side), even);
                  }, R""""(\
 Calculate the error for a given eigenvalue. It will use a less accurate method to estimate another (worse) guess for that eigenvalue. The true error on the given eigenvalue will be less than the value returned by this method.
@@ -208,7 +208,7 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
 )"""",
                  py::arg("E"), py::arg("side"), py::arg("even") = -1)
             .def("eigenfunction",
-                 [](HalfRange<> &m, double E, const Vector2d &side, const ArrayXd &xs, int even)
+                 [](MatsliseHalf<> &m, double E, const Vector2d &side, const ArrayXd &xs, int even)
                          -> tuple<ArrayXd, ArrayXd> {
                      auto ysY = m.eigenfunction(E, make_y(side), xs, even);
                      ArrayXd ys(ysY.size());
@@ -229,7 +229,7 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
 :returns: a pair of lists which each a length of len(xs). The first list contains the values of the eigenfunction in the points xs. The second contains the derivative of the eigenfunction in those points.
 )"""", py::arg("E"), py::arg("side"), py::arg("xs"), py::arg("even") = -1)
             .def("eigenfunction",
-                 [](HalfRange<> &m, double E, const Vector2d &side, int even) -> function<pair<double, double>(
+                 [](MatsliseHalf<> &m, double E, const Vector2d &side, int even) -> function<pair<double, double>(
                          double)> {
                      function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, make_y(side), even);
                      return [calculator](double x) -> pair<double, double> {

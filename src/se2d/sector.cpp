@@ -8,13 +8,13 @@ using namespace Eigen;
 using namespace matslise::sectorbuilder;
 
 template<typename Scalar>
-SE2D<Scalar>::Sector::Sector(const SE2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
+Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
     const Scalar ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->V(x, ybar); };
     vbar = se2d->grid.unaryExpr(vbar_fun);
     if (se2d->options.nestedOptions._symmetric)
-        matslise = new HalfRange<Scalar>(vbar_fun, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
+        matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
     else
         matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
                                         se2d->options.nestedOptions._builder);
@@ -57,7 +57,7 @@ SE2D<Scalar>::Sector::Sector(const SE2D<Scalar> *se2d, const Scalar &ymin, const
 }
 
 template<typename Scalar>
-SE2D<Scalar>::Sector::~Sector() {
+Matslise2D<Scalar>::Sector::~Sector() {
     delete matslise;
     delete matscs;
     delete[] eigenvalues;
@@ -67,14 +67,14 @@ SE2D<Scalar>::Sector::~Sector() {
 template<typename Scalar>
 template<int r>
 Y<Scalar, Eigen::Dynamic, r>
-SE2D<Scalar>::Sector::propagate(
+Matslise2D<Scalar>::Sector::propagate(
         const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     return matscs->propagateColumn(
             E, y0, a < min ? min : a > max ? max : a, b < min ? min : b > max ? max : b, use_h);
 }
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::Sector::error() const {
+Scalar Matslise2D<Scalar>::Sector::error() const {
     Scalar error = 0;
     for (int i = 0; i < matscs->sectorCount; ++i)
         error += matscs->sectors[i]->error();
@@ -82,7 +82,7 @@ Scalar SE2D<Scalar>::Sector::error() const {
 }
 
 template<typename Scalar>
-typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::Sector::calculateDeltaV(const Scalar &y) const {
+typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::Sector::calculateDeltaV(const Scalar &y) const {
     MatrixXs dV(se2d->N, se2d->N);
 
     ArrayXs vDiff = se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->V(x, y); }) - vbar;
@@ -99,8 +99,8 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::Sector::calculateDeltaV(const Scal
 }
 
 template<typename Scalar>
-typename SE2D<Scalar>::ArrayXs
-SE2D<Scalar>::Sector::eigenfunction(int index, const typename SE2D<Scalar>::ArrayXs &x) const {
+typename Matslise2D<Scalar>::ArrayXs
+Matslise2D<Scalar>::Sector::eigenfunction(int index, const typename Matslise2D<Scalar>::ArrayXs &x) const {
     const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
     Eigen::Index size = x.size();
 
@@ -112,7 +112,7 @@ SE2D<Scalar>::Sector::eigenfunction(int index, const typename SE2D<Scalar>::Arra
 }
 
 template<typename Scalar>
-function<typename SE2D<Scalar>::ArrayXs(Scalar)> SE2D<Scalar>::Sector::basisCalculator() const {
+function<typename Matslise2D<Scalar>::ArrayXs(Scalar)> Matslise2D<Scalar>::Sector::basisCalculator() const {
     const Y<Scalar> y0 = Y<Scalar>::Dirichlet(1);
     vector<function<Y<Scalar>(Scalar)>> basis(static_cast<size_t>(se2d->N));
     for (int index = 0; index < se2d->N; ++index) {
@@ -128,7 +128,7 @@ function<typename SE2D<Scalar>::ArrayXs(Scalar)> SE2D<Scalar>::Sector::basisCalc
 
 #define INSTANTIATE_PROPAGATE(Scalar, r)\
 template Y<Scalar, Dynamic, r>\
-SE2D<Scalar>::Sector::propagate<r>(\
+Matslise2D<Scalar>::Sector::propagate<r>(\
         const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
 
 #define INSTANTIATE_MORE(Scalar)\

@@ -15,7 +15,7 @@ double hr_mathieu(double x) {
 }
 
 TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][mathieu]") {
-    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::UNIFORM(8));
+    MatsliseHalf<double> ms(&hr_mathieu, constants<double>::PI / 2, Matslise<double>::UNIFORM(8));
 
     vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
@@ -33,7 +33,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][m
 }
 
 TEST_CASE("HR: Solving the mathieu problem (first 10) (auto)", "[halfrange][matslise][mathieu][auto]") {
-    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::AUTO(1e-8));
+    MatsliseHalf<double> ms(&hr_mathieu, constants<double>::PI / 2, Matslise<double>::AUTO(1e-8));
 
     vector<double> correct = {-0.11024881635796, 3.91702477214389, 9.04773925867679, 16.03297008079835,
                               25.02084082368434, 36.01428991115492, 49.01041825048373, 64.00793719066102,
@@ -51,7 +51,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10) (auto)", "[halfrange][mats
 }
 
 TEST_CASE("HR: Solving the mathieu problem (skip 100)", "[halfrange][matslise][mathieu]") {
-    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::UNIFORM(8));
+    MatsliseHalf<double> ms(&hr_mathieu, constants<double>::PI / 2, Matslise<double>::UNIFORM(8));
 
     vector<double> correct = {10201.000049019607, 10404.000048063059, 10609.000047134254, 10816.000046232084,
                               11025.000045355584, 11236.000044503782, 11449.000043675751, 11664.000042870637,
@@ -68,7 +68,7 @@ TEST_CASE("HR: Solving the mathieu problem (skip 100)", "[halfrange][matslise][m
 }
 
 TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctionCalculator]") {
-    HalfRange<double> ms(&hr_mathieu, constants<double>::PI/2, Matslise<double>::UNIFORM(8));
+    MatsliseHalf<double> ms(&hr_mathieu, constants<double>::PI / 2, Matslise<double>::UNIFORM(8));
     Y<double> ystart({0, 1}, {0, 0});
 
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart);

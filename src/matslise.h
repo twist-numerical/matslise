@@ -223,14 +223,14 @@ namespace matslise {
     };
 
     template<typename _Scalar = double>
-    class HalfRange : public AbstractMatslise<_Scalar> {
+    class MatsliseHalf : public AbstractMatslise<_Scalar> {
         typedef _Scalar Scalar;
 
     public:
         const Matslise<Scalar> *ms;
     public:
-        HalfRange(std::function<Scalar(Scalar)> V, const Scalar &xmax,
-                  std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder);
+        MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax,
+                     std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder);
 
         Scalar estimatePotentialMinimum() const override {
             return ms->estimatePotentialMinimum();
@@ -261,7 +261,7 @@ namespace matslise {
         std::function<Y<Scalar>(Scalar)>
         eigenfunctionCalculator(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
 
-        virtual ~HalfRange();
+        virtual ~MatsliseHalf();
     };
 }
 

@@ -17,9 +17,9 @@ inline bool matslise::sectorbuilder::compareSectors(
     } else if (std::is_same<Problem, matslise::Matscs<typename Problem::Scalar>>::value) {
         return (((const typename Matscs<typename Problem::Scalar>::Sector &) a).vs[0].diagonal() -
                 ((const typename Matscs<typename Problem::Scalar>::Sector &) b).vs[0].diagonal()).sum() < 0;
-    } else if (std::is_same<Problem, matslise::SE2D<typename Problem::Scalar>>::value) {
-        return ((const typename SE2D<typename Problem::Scalar>::Sector &) a).vbar.minCoeff() <
-               ((const typename SE2D<typename Problem::Scalar>::Sector &) b).vbar.minCoeff();
+    } else if (std::is_same<Problem, matslise::Matslise2D<typename Problem::Scalar>>::value) {
+        return ((const typename Matslise2D<typename Problem::Scalar>::Sector &) a).vbar.minCoeff() <
+               ((const typename Matslise2D<typename Problem::Scalar>::Sector &) b).vbar.minCoeff();
     }
     throw std::invalid_argument("Not supported");
 }

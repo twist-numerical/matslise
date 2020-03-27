@@ -138,28 +138,28 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         return r;
                     }));
 
-    class_<HalfRange<>, base<AbstractMatslise<double>>>("MatsliseHalfRange")
+    class_<MatsliseHalf<>, base<AbstractMatslise<double>>>("MatsliseHalfRange")
             .constructor(optional_override(
-                    [](val f, double max, const val &options) -> HalfRange<> * {
+                    [](val f, double max, const val &options) -> MatsliseHalf<> * {
                         std::shared_ptr<matslise::SectorBuilder<Matslise<>>> builder;
                         if (options["sectorCount"] != val::undefined())
                             builder = Matslise<>::UNIFORM(options["sectorCount"].as<int>());
                         else if (options["tolerance"] != val::undefined())
                             builder = Matslise<>::AUTO(options["tolerance"].as<double>());
 
-                        return new HalfRange<>([f](double x) -> double { return f(x).as<double>(); }, max, builder);
+                        return new MatsliseHalf<>([f](double x) -> double { return f(x).as<double>(); }, max, builder);
                     }))
             .function("sectorPoints", optional_override(
-                    [](const HalfRange<> &m) -> val {
+                    [](const MatsliseHalf<> &m) -> val {
                         val r = val::array();
                         for (int i = 1; i < m.ms->sectorCount; ++i)
                             r.call<val>("push", m.ms->sectors[i]->min);
                         return r;
                     }));
 
-    class_<SE2D<>>("Matslise2D")
+    class_<Matslise2D<>>("Matslise2D")
             .constructor(optional_override(
-                    [](val f, double xmin, double xmax, double ymin, double ymax, const val &options) -> SE2D<> * {
+                    [](val f, double xmin, double xmax, double ymin, double ymax, const val &options) -> Matslise2D<> * {
                         Options2<> o2;
                         if (options["sectorCount"] != val::undefined())
                             o2.sectorCount(options["sectorCount"].as<int>());
@@ -176,34 +176,34 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         if (options["stepsPerSector"] != val::undefined())
                             o2.stepsPerSector(options["stepsPerSector"].as<int>());
 
-                        return new SE2D<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
-                                          {{xmin, xmax}, ymin, ymax}, o2);
+                        return new Matslise2D<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
+                                                {{xmin, xmax}, ymin, ymax}, o2);
                     }))
-            .function("eigenvaluesByIndex", optional_override([](const SE2D<> &se2d, int imin, int imax) -> val {
+            .function("eigenvaluesByIndex", optional_override([](const Matslise2D<> &se2d, int imin, int imax) -> val {
                 return vector2val(se2d.eigenvaluesByIndex(imin, imax));
             }))
-            .function("firstEigenvalue", &SE2D<double>::firstEigenvalue)
-            .function("calculateError", optional_override([](SE2D<> &se2d, double E) -> pair<double, double> {
+            .function("firstEigenvalue", &Matslise2D<double>::firstEigenvalue)
+            .function("calculateError", optional_override([](Matslise2D<> &se2d, double E) -> pair<double, double> {
                 return se2d.matchingError(E, SEnD_util::ABS_SORTER<>);
             }))
-            .function("calculateErrors", optional_override([](SE2D<> &se2d, double E) -> val {
+            .function("calculateErrors", optional_override([](Matslise2D<> &se2d, double E) -> val {
                 vector<pair<double, double>> result = se2d.matchingErrors(E);
                 val r = val::array();
                 for (pair<double, double> &eigenvalue  :result)
                     r.call<val>("push", eigenvalue);
                 return r;
             }))
-            .function("eigenvalue", optional_override([](SE2D<> &se2d, double E) -> double {
+            .function("eigenvalue", optional_override([](Matslise2D<> &se2d, double E) -> double {
                 return se2d.eigenvalue(E);
             }))
-            .function("sectorPoints", optional_override([](const SE2D<> &se2d) -> val {
+            .function("sectorPoints", optional_override([](const Matslise2D<> &se2d) -> val {
                 val r = val::array();
                 for (int i = 1; i < se2d.sectorCount; ++i)
                     r.call<val>("push", se2d.sectors[i]->min);
                 return r;
             }))
             .function("computeEigenfunction",
-                      optional_override([](SE2D<> &se2d, double E, const val &x, const val &y) -> val {
+                      optional_override([](Matslise2D<> &se2d, double E, const val &x, const val &y) -> val {
                           vector<ArrayXXd> result = se2d.eigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                           val r = val::array();
                           for (ArrayXXd &eigenfunction : result)
@@ -211,7 +211,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                           return r;
                       }))
             .function("eigenfunction", optional_override(
-                    [](const SE2D<> &se2d, double E) -> val {
+                    [](const Matslise2D<> &se2d, double E) -> val {
                         std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunctionCalculator(
                                 E);
                         val r = val::array();
