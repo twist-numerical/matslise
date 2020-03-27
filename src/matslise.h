@@ -210,7 +210,7 @@ namespace matslise {
 
             Scalar prufer(const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const;
 
-            Scalar calculateError() const;
+            Scalar error() const;
 
             virtual ~Sector();
 

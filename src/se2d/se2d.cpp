@@ -66,7 +66,7 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) 
 
 template<typename Scalar>
 pair<typename SE2D<Scalar>::MatrixXs, typename SE2D<Scalar>::MatrixXs>
-SE2D<Scalar>::calculateErrorMatrix(const Scalar &E) const {
+SE2D<Scalar>::matchingErrorMatrix(const Scalar &E) const {
     Y<Scalar, Dynamic> yl = y0Left;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
@@ -116,8 +116,8 @@ SE2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Sca
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> SE2D<Scalar>::calculateErrors(const Scalar &E) const {
-    pair<MatrixXs, MatrixXs> error_matrix = calculateErrorMatrix(E);
+vector<pair<Scalar, Scalar>> SE2D<Scalar>::matchingErrors(const Scalar &E) const {
+    pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(E);
     EigenSolver<MatrixXs> solver(N);
 
     solver.compute(error_matrix.first, true);
@@ -151,20 +151,14 @@ vector<pair<Scalar, Scalar>> SE2D<Scalar>::calculateErrors(const Scalar &E) cons
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> SE2D<Scalar>::sortedErrors(
-        const Scalar &E,
-        const std::function<bool(pair<Scalar, Scalar>, pair<Scalar, Scalar>)> &sorter) const {
-    vector<pair<Scalar, Scalar>> errors = calculateErrors(E);
-    sort(errors.begin(), errors.end(), sorter);
-    return errors;
-}
-
-template<typename Scalar>
-pair<Scalar, Scalar> SE2D<Scalar>::calculateError(
-        const Scalar &E,
-        const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter) const {
-    vector<pair<Scalar, Scalar>> errors = calculateErrors(E);
-    return *min_element(errors.begin(), errors.end(), sorter);
+pair<Scalar, Scalar> SE2D<Scalar>::matchingError(const Scalar &E) const {
+    vector<pair<Scalar, Scalar>> errors = matchingErrors(E);
+    return *min_element(errors.begin(), errors.end(), [](
+            const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {
+        if (abs(a.first) > 100 || abs(b.first) > 100)
+            return abs(a.first) < abs(b.first);
+        return abs(a.first / a.second) < abs(b.first / b.second);
+    });
 }
 
 #include "../util/instantiate.h"

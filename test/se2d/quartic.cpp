@@ -22,8 +22,8 @@ void testQuartic(
             Options2<Scalar>().sectorCount(sectorCount).nested(
                     Options1<Scalar>().tolerance(tolerance).symmetric(true)));
     for (const Scalar &E : eigenvalues) {
-        CHECK(Approx(E).margin(error) == p.findEigenvalue(E+100*error));
-        CHECK(Approx(E).margin(error) == p.findEigenvalue(E-100*error));
+        CHECK(Approx(E).margin(error) == p.eigenvalue(E+100*error));
+        CHECK(Approx(E).margin(error) == p.eigenvalue(E-100*error));
     }
 }
 

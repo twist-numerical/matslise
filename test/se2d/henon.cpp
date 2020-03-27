@@ -27,7 +27,7 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
             {4.87014557482289,  1},
             {4.89864497284387,  2}};
 
-    CHECK(Approx(p2.findFirstEigenvalue()).margin(1e-7) == 2 * eigenvalues[0].first);
+    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == 2 * eigenvalues[0].first);
 
     int n = 2;
     ArrayXd x = ArrayXd::LinSpaced(n, -5, 5);
@@ -37,11 +37,11 @@ TEST_CASE("Eigenfunctions henon", "[se2d][eigenfunctions][henon]") {
         tie(E, multiplicity) = Em;
         E *= 2;
 
-        const pair<double, double> &error = p2.calculateError(E);
+        const pair<double, double> &error = p2.matchingError(E);
         REQUIRE(abs(error.first) < 1e-3);
-        REQUIRE(Approx(p2.findEigenvalue(E)).margin(1e-7) == E);
+        REQUIRE(Approx(p2.eigenvalue(E)).margin(1e-7) == E);
 
-        const vector<Array<double, -1, -1>> f = p2.computeEigenfunction(E, x, x);
+        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
         REQUIRE(f.size() == multiplicity);
         vector<function<double(double, double)>> funcs = p2.eigenfunctionCalculator(E);
         REQUIRE(funcs.size() == multiplicity);

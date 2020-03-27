@@ -67,22 +67,22 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
                  py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
-            .def("firstEigenvalue", &SE2D<>::findFirstEigenvalue)
+            .def("firstEigenvalue", &SE2D<>::firstEigenvalue)
             .def("error", [](const SE2D<> &se2d, double const &E) -> pair<double, double> {
-                return se2d.calculateError(E, &SEnD_util::ABS_SORTER<>);
+                return se2d.matchingError(E, &SEnD_util::ABS_SORTER<>);
             }, R""""(\
 Compute the error given a guess for E. This error is the result of the requirement that the found eigenfunctions are continues. The error expresses how 'discontinues' the corresponding eigenfunction would be.
 
 :param float E: the guessed eigenvalue.
 :returns: A tuple with the computed error and the derivative of that error with respect to E.
 )"""", py::arg("E"))
-            .def("errors", &SE2D<>::calculateErrors, R""""(\
+            .def("errors", &SE2D<>::matchingErrors, R""""(\
 Just like PySE2d::calculateError(E) computes this function the discontinuity of the eigenfunction. The corresponding eigenfunction will be continuous once any of the N returned values is zero.
 
 :param float E: the guessed eigenvalue.
 :returns: A list of tuples with each of the computed errors and its derivative with respect to E.
 )"""", py::arg("E"))
-            .def("eigenfunction", &SE2D<>::computeEigenfunction, R""""(\
+            .def("eigenfunction", &SE2D<>::eigenfunction, R""""(\
 Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
 
 :param float E: the eigenvalue to compute eigenfunctions for.
@@ -97,7 +97,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 :returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
 )"""",
                  py::arg("E"))
-            .def("eigenvalue", &SE2D<>::findEigenvalue, R""""(\
+            .def("eigenvalue", &SE2D<>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 
 :param float start: the initial guess.
@@ -106,7 +106,7 @@ By using the algorithm of Newton-Raphson the closest eigenvalue around ``start``
 :param float min_tolerance: if the maximum number of iterations is reached and the error is smaller than ``min_tolerance`` then the found value will be counted is eigenvalue. Defaults to 1e-5.
 :returns: the eigenvalue found starting with ``guess``. Note that the found eigenvalue doesn't necessarily is the closest .
 )"""", py::arg("start"), py::arg("tolerance") = 1e-9, py::arg("iterations") = 30, py::arg("min_tolerance") = 1e-5)
-            .def("eigenvalues", &SE2D<>::findEigenvalues, R""""(\
+            .def("eigenvalues", &SE2D<>::eigenvalues, R""""(\
 This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algorithm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
 
 It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
@@ -115,7 +115,7 @@ It is not a good idea to make the number of initial values large. This will incr
 :param int initial_values: the number of starting guesses that will be used. Defaults to 16.
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("initial_values") = 16)
-            .def("eigenvaluesByIndex", &SE2D<>::computeEigenvaluesByIndex, R""""(\
+            .def("eigenvaluesByIndex", &SE2D<>::eigenvaluesByIndex, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
 
 :param int Imin: the first eigenvalue to find, by index.
@@ -124,8 +124,8 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
 :returns: a list of eigenvalues.
 )"""",
                  py::arg("Imin"), py::arg("Imax"))
-            .def("firstEigenvalue", &SE2D<>::findFirstEigenvalue)
-            .def("__calculateErrorMatrix", &SE2D<>::calculateErrorMatrix)
+            .def("firstEigenvalue", &SE2D<>::firstEigenvalue)
+            .def("__calculateErrorMatrix", &SE2D<>::matchingErrorMatrix)
             .def("__propagate",
                  [](const SE2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
                          pair<MatrixXd, MatrixXd> {
@@ -215,7 +215,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
                  py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
-            .def("eigenvalue", &SE2DHalf<>::findEigenvalue, R""""(\
+            .def("eigenvalue", &SE2DHalf<>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 
 :param float start: the initial guess.
@@ -224,7 +224,7 @@ By using the algorithm of Newton-Raphson the closest eigenvalue around ``start``
 :param float min_tolerance: if the maximum number of iterations is reached and the error is smaller than ``min_tolerance`` then the found value will be counted is eigenvalue. Defaults to 1e-5.
 :returns: the eigenvalue found starting with ``guess``. Note that the found eigenvalue doesn't necessarily is the closest .
 )"""", py::arg("start"), py::arg("tolerance") = 1e-9, py::arg("iterations") = 30, py::arg("min_tolerance") = 1e-5)
-            .def("eigenvalues", &SE2DHalf<>::findEigenvalues, R""""(\
+            .def("eigenvalues", &SE2DHalf<>::eigenvalues, R""""(\
 This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algortihm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
 
 It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
@@ -233,8 +233,8 @@ It is not a good idea to make the number of initial values large. This will incr
 :param int inital_values: the number of starting guesses that will be used. Defaults to 16.
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("initial_values") = 16)
-            .def("firstEigenvalue", &SE2DHalf<>::findFirstEigenvalue)
-            .def("eigenfunction", &SE2DHalf<>::computeEigenfunction, R""""(\
+            .def("firstEigenvalue", &SE2DHalf<>::firstEigenvalue)
+            .def("eigenfunction", &SE2DHalf<>::eigenfunction, R""""(\
 Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
 
 :param float E: the eigenvalue to compute eigenfunctions for.

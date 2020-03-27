@@ -121,7 +121,7 @@ namespace matslise {
             propagatePsi(const Scalar &E, const Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> &psi,
                          const Scalar &a, const Scalar &b) const;
 
-            Scalar calculateError() const;
+            Scalar error() const;
 
             ~Sector();
 

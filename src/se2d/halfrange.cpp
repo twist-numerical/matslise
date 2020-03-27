@@ -28,22 +28,21 @@ void SE2DHalf<Scalar>::setParity(bool even) {
 }
 
 template<typename Scalar>
-pair<Scalar, Scalar> SE2DHalf<Scalar>::calculateError(
-        const Scalar &E, const function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter) {
+pair<Scalar, Scalar> SE2DHalf<Scalar>::matchingError(const Scalar &E) {
     setParity(true);
-    pair<Scalar, Scalar> errorEven = se2d->calculateError(E, sorter);
+    pair<Scalar, Scalar> errorEven = se2d->matchingError(E);
     setParity(false);
-    pair<Scalar, Scalar> errorOdd = se2d->calculateError(E, sorter);
+    pair<Scalar, Scalar> errorOdd = se2d->matchingError(E);
     return abs(get<0>(errorEven)) <= abs(get<0>(errorOdd)) ? errorEven : errorOdd;
 }
 
 template<typename Scalar>
-Scalar SE2DHalf<Scalar>::findEigenvalue(
+Scalar SE2DHalf<Scalar>::eigenvalue(
         const Scalar &guessE, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) {
     setParity(true);
-    Scalar evenE = se2d->findEigenvalue(guessE, tolerance, maxIterations, minTolerance);
+    Scalar evenE = se2d->eigenvalue(guessE, tolerance, maxIterations, minTolerance);
     setParity(false);
-    Scalar oddE = se2d->findEigenvalue(guessE, tolerance, maxIterations, minTolerance);
+    Scalar oddE = se2d->eigenvalue(guessE, tolerance, maxIterations, minTolerance);
     if (abs(evenE - guessE) < abs(oddE - guessE))
         return evenE;
     else
@@ -51,12 +50,12 @@ Scalar SE2DHalf<Scalar>::findEigenvalue(
 }
 
 template<typename Scalar>
-vector<Scalar> SE2DHalf<Scalar>::findEigenvalues(
+vector<Scalar> SE2DHalf<Scalar>::eigenvalues(
         const Scalar &Emin, const Scalar &Emax, const int &initialSteps) {
     setParity(true);
-    vector<Scalar> eigenvalues = se2d->findEigenvalues(Emin, Emax, initialSteps);
+    vector<Scalar> eigenvalues = se2d->eigenvalues(Emin, Emax, initialSteps);
     setParity(false);
-    vector<Scalar> eigenvaluesOdd = se2d->findEigenvalues(Emin, Emax, initialSteps);
+    vector<Scalar> eigenvaluesOdd = se2d->eigenvalues(Emin, Emax, initialSteps);
     eigenvalues.insert(eigenvalues.end(),
                        make_move_iterator(eigenvaluesOdd.begin()),
                        make_move_iterator(eigenvaluesOdd.end()));
@@ -65,14 +64,14 @@ vector<Scalar> SE2DHalf<Scalar>::findEigenvalues(
 }
 
 template<typename Scalar>
-Scalar SE2DHalf<Scalar>::findFirstEigenvalue() {
+Scalar SE2DHalf<Scalar>::firstEigenvalue() {
     setParity(true);
-    return se2d->findFirstEigenvalue();
+    return se2d->firstEigenvalue();
 }
 
 template<typename Scalar>
 vector<typename SE2DHalf<Scalar>::ArrayXXs>
-SE2DHalf<Scalar>::computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) {
+SE2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) {
     Eigen::Index n = y.size();
     for (Eigen::Index i = 1; i < n; ++i)
         if (y[i - 1] > y[i])
@@ -103,8 +102,8 @@ SE2DHalf<Scalar>::computeEigenfunction(const Scalar &E, const ArrayXs &x, const 
     vector<ArrayXXs> result;
     for (bool even : {false, true}) {
         setParity(even);
-        if (abs(E - se2d->findEigenvalue(E)) < 1e-3) {
-            vector<ArrayXXs> sortedFs = se2d->computeEigenfunction(E, x, sortedY);
+        if (abs(E - se2d->eigenvalue(E)) < 1e-3) {
+            vector<ArrayXXs> sortedFs = se2d->eigenfunction(E, x, sortedY);
             for (auto sortedF : sortedFs) {
                 ArrayXXs f = ArrayXXs::Zero(x.size(), y.size());
                 Eigen::Index negativeIndex = 0;
@@ -131,7 +130,7 @@ SE2DHalf<Scalar>::computeEigenfunction(const Scalar &E, const ArrayXs &x, const 
 }
 
 template<typename Scalar>
-vector<Scalar> SE2DHalf<Scalar>::computeEigenvaluesByIndex(int, int) {
+vector<Scalar> SE2DHalf<Scalar>::eigenvaluesByIndex(int, int) {
     throw std::logic_error("Function not yet implemented");
 }
 // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
@@ -142,7 +141,7 @@ vector<function<Scalar(Scalar, Scalar)>> SE2DHalf<Scalar>::eigenfunctionCalculat
     vector<function<Scalar(Scalar, Scalar)>> result;
     for (bool even : {false, true}) {
         setParity(even);
-        if (abs(E - se2d->findEigenvalue(E)) < 1e-5) {
+        if (abs(E - se2d->eigenvalue(E)) < 1e-5) {
             for (const function<Scalar(Scalar, Scalar)> &f : se2d->eigenfunctionCalculator(E)) {
                 result.push_back([f, even, SQRT1_2](const Scalar &x, const Scalar &y) -> Scalar {
                     Scalar r = f(x, y < 0 ? -y : y);

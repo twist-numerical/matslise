@@ -4,20 +4,6 @@
 #include "schrodinger.h"
 
 namespace matslise {
-    namespace SEnD_util {
-        template<typename Scalar=double>
-        bool NEWTON_RAPHSON_SORTER(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
-            if (abs(a.first) > 100 || abs(b.first) > 100)
-                return abs(a.first) < abs(b.first);
-            return abs(a.first / a.second) < abs(b.first / b.second);
-        }
-
-        template<typename Scalar=double>
-        bool ABS_SORTER(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
-            return abs(a.first) < abs(b.first);
-        }
-    }
-
     template<typename _Scalar>
     class SE2D {
     public:
@@ -45,39 +31,31 @@ namespace matslise {
         SE2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
              const Options2<Scalar> &options);
 
-        std::pair<MatrixXs, MatrixXs> calculateErrorMatrix(const Scalar &E) const;
+        std::pair<MatrixXs, MatrixXs> matchingErrorMatrix(const Scalar &E) const;
 
-        std::pair<Scalar, Scalar> calculateError(const Scalar &E, const std::function<bool(
-                std::pair<Scalar, Scalar>,
-                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
+        std::pair<Scalar, Scalar> matchingError(const Scalar &E) const;
 
-        std::vector<std::pair<Scalar, Scalar>> calculateErrors(const Scalar &E) const;
+        std::vector<std::pair<Scalar, Scalar>> matchingErrors(const Scalar &E) const;
 
-        std::vector<std::pair<Scalar, Scalar>> sortedErrors(
-                const Scalar &E,
-                const std::function<bool(std::pair<Scalar, Scalar>, std::pair<Scalar, Scalar>)> &sorter
-                = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>) const;
+        std::vector<std::pair<Scalar, Scalar>> sortedErrors(const Scalar &E) const;
 
         Y<Scalar, Eigen::Dynamic>
         propagate(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
                   bool use_h = true) const;
 
-        Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
-                              const Scalar &minTolerance = 1e-5) const;
+        Scalar eigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
+                          const Scalar &minTolerance = 1e-5) const;
 
-        std::vector<Scalar> findEigenvalues(
-                const Scalar &Emin, const Scalar &Emax,
-                const int &initialSteps = 16) const;
+        std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps = 16) const;
 
-        Scalar findFirstEigenvalue() const;
+        std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const;
 
-        std::vector<Scalar> findFirstEigenvalues(int n) const;
+        Scalar firstEigenvalue() const;
+
+        std::vector<Scalar> firstEigenvalues(int n) const;
 
         std::vector<ArrayXXs>
-        computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
-
-        std::vector<Scalar> computeEigenvaluesByIndex(int Imin, int Imax) const;
-        // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
+        eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
 
         std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E) const;
 
@@ -88,7 +66,7 @@ namespace matslise {
         virtual ~SE2D();
 
     protected:
-        std::vector<Y<Scalar, Eigen::Dynamic>> computeEigenfunctionSteps(const Scalar &E) const;
+        std::vector<Y<Scalar, Eigen::Dynamic>> eigenfunctionSteps(const Scalar &E) const;
 
         MatrixXs calculateM(int k) const;
 
@@ -117,9 +95,9 @@ namespace matslise {
                 return point <= max && point >= min;
             }
 
-            ArrayXs computeEigenfunction(int index, const ArrayXs &x) const;
+            ArrayXs eigenfunction(int index, const ArrayXs &x) const;
 
-            Scalar calculateError() const;
+            Scalar error() const;
 
             std::function<ArrayXs(Scalar)> basisCalculator() const;
 
@@ -152,24 +130,18 @@ namespace matslise {
         SE2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
                  const Options2<Scalar> &options);
 
-        Scalar findEigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
-                              const Scalar &minTolerance = 1e-5);
+        Scalar eigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
+                          const Scalar &minTolerance = 1e-5);
 
-        std::vector<Scalar> findEigenvalues(
-                const Scalar &Emin, const Scalar &Emax,
-                const int &initialSteps = 16);
+        std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps = 16);
 
-        Scalar findFirstEigenvalue();
+        std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax);
 
-        std::vector<ArrayXXs>
-        computeEigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y);
+        Scalar firstEigenvalue();
 
-        std::pair<Scalar, Scalar> calculateError(const Scalar &E, const std::function<bool(
-                std::pair<Scalar, Scalar>,
-                std::pair<Scalar, Scalar>)> &sorter = SEnD_util::NEWTON_RAPHSON_SORTER<Scalar>);
+        std::vector<ArrayXXs> eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y);
 
-        std::vector<Scalar> computeEigenvaluesByIndex(int Imin, int Imax);
-        // std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
+        std::pair<Scalar, Scalar> matchingError(const Scalar &E);
 
         std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E);
 

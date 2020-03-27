@@ -180,21 +180,21 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                                           {{xmin, xmax}, ymin, ymax}, o2);
                     }))
             .function("eigenvaluesByIndex", optional_override([](const SE2D<> &se2d, int imin, int imax) -> val {
-                return vector2val(se2d.computeEigenvaluesByIndex(imin, imax));
+                return vector2val(se2d.eigenvaluesByIndex(imin, imax));
             }))
-            .function("firstEigenvalue", &SE2D<double>::findFirstEigenvalue)
+            .function("firstEigenvalue", &SE2D<double>::firstEigenvalue)
             .function("calculateError", optional_override([](SE2D<> &se2d, double E) -> pair<double, double> {
-                return se2d.calculateError(E, SEnD_util::ABS_SORTER<>);
+                return se2d.matchingError(E, SEnD_util::ABS_SORTER<>);
             }))
             .function("calculateErrors", optional_override([](SE2D<> &se2d, double E) -> val {
-                vector<pair<double, double>> result = se2d.calculateErrors(E);
+                vector<pair<double, double>> result = se2d.matchingErrors(E);
                 val r = val::array();
                 for (pair<double, double> &eigenvalue  :result)
                     r.call<val>("push", eigenvalue);
                 return r;
             }))
             .function("eigenvalue", optional_override([](SE2D<> &se2d, double E) -> double {
-                return se2d.findEigenvalue(E);
+                return se2d.eigenvalue(E);
             }))
             .function("sectorPoints", optional_override([](const SE2D<> &se2d) -> val {
                 val r = val::array();
@@ -204,7 +204,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             }))
             .function("computeEigenfunction",
                       optional_override([](SE2D<> &se2d, double E, const val &x, const val &y) -> val {
-                          vector<ArrayXXd> result = se2d.computeEigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
+                          vector<ArrayXXd> result = se2d.eigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
                           val r = val::array();
                           for (ArrayXXd &eigenfunction : result)
                               r.call<val>("push", ArrayXXd2val(eigenfunction));

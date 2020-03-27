@@ -281,7 +281,7 @@ Matscs<Scalar>::Sector::propagatePsi(
 }
 
 template<typename Scalar>
-Scalar Matscs<Scalar>::Sector::calculateError() const {
+Scalar Matscs<Scalar>::Sector::error() const {
     Scalar E = vs[0].diagonal().minCoeff();
     Scalar error = (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().mean();
     if (isnan(error))

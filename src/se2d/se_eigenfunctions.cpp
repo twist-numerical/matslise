@@ -2,7 +2,6 @@
 
 using namespace Eigen;
 using namespace matslise;
-using namespace matslise::SEnD_util;
 using namespace std;
 
 template<typename Scalar>
@@ -11,7 +10,7 @@ Matrix<Scalar, Dynamic, Dynamic> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
 }
 
 template<typename Scalar>
-vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar &E) const {
+vector<Y<Scalar, Dynamic>> SE2D<Scalar>::eigenfunctionSteps(const Scalar &E) const {
     auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
     steps[0] = y0Left;
@@ -86,7 +85,7 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
 
 template<typename Scalar>
 std::vector<typename SE2D<Scalar>::ArrayXXs>
-SE2D<Scalar>::computeEigenfunction(
+SE2D<Scalar>::eigenfunction(
         const Scalar &E, const typename SE2D<Scalar>::ArrayXs &x, const typename SE2D<Scalar>::ArrayXs &y) const {
 
     Eigen::Index nx = x.size();
@@ -104,7 +103,7 @@ SE2D<Scalar>::computeEigenfunction(
 
 
     vector<ArrayXXs> result;
-    vector<Y<Scalar, Dynamic>> steps = computeEigenfunctionSteps(E);
+    vector<Y<Scalar, Dynamic>> steps = eigenfunctionSteps(E);
     if (!steps.empty()) {
         Eigen::Index cols = steps[0].getY(0).cols();
         for (Eigen::Index i = 0; i < cols; ++i)
@@ -121,7 +120,7 @@ SE2D<Scalar>::computeEigenfunction(
 
             MatrixXs B(nx, N);
             for (int j = 0; j < N; ++j)
-                B.col(j) = sectors[sector]->computeEigenfunction(j, x);
+                B.col(j) = sectors[sector]->eigenfunction(j, x);
 
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
                 MatrixXs prod = B * sectors[sector]->propagate(
@@ -139,7 +138,7 @@ SE2D<Scalar>::computeEigenfunction(
 template<typename Scalar>
 vector<function<Scalar(Scalar, Scalar)>> SE2D<Scalar>::eigenfunctionCalculator(const Scalar &E) const {
     shared_ptr<vector<Y<Scalar, Dynamic>>> steps
-            = make_shared<vector<Y<Scalar, Dynamic>>>(move(computeEigenfunctionSteps(E)));
+            = make_shared<vector<Y<Scalar, Dynamic>>>(move(eigenfunctionSteps(E)));
     vector<function<Scalar(Scalar, Scalar)>> result;
     auto bases = make_shared<vector<function<ArrayXs(Scalar)>>>(sectorCount);
     for (int i = 0; i < sectorCount; ++i)

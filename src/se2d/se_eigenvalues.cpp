@@ -3,17 +3,16 @@
 
 using namespace Eigen;
 using namespace matslise;
-using namespace matslise::SEnD_util;
 using namespace std;
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::findEigenvalue(
+Scalar SE2D<Scalar>::eigenvalue(
         const Scalar &_E, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) const {
     Scalar E = _E;
     Scalar error, derror;
     int i = 0;
     do {
-        tie(error, derror) = calculateError(E, &NEWTON_RAPHSON_SORTER<Scalar>);
+        tie(error, derror) = matchingError(E);
         E -= error / derror;
         ++i;
     } while (i < maxIterations && abs(error) > tolerance);
@@ -41,7 +40,7 @@ inline bool set_contains(const set<Scalar> &values, const Scalar &guess, const S
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
+vector<Scalar> SE2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
     typedef pair<Scalar, Scalar> Interval;
 
     const Scalar linear = 0.001;
@@ -70,10 +69,10 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
         intervals.pop_back();
 
         if (!set_contains(eigenvalues, guess, length)) {
-            for (const pair<Scalar, Scalar> &error : calculateErrors(guess)) {
+            for (const pair<Scalar, Scalar> &error : matchingErrors(guess)) {
                 Scalar d = error.first / error.second;
                 if (abs(d) < minLength) {
-                    Scalar E = findEigenvalue(guess - d);
+                    Scalar E = eigenvalue(guess - d);
                     if (!isnan(E) && !set_contains(eigenvalues, E, minLength))
                         eigenvalues.insert(E);
                 } else if (abs(d) < 2 * length) {
@@ -87,7 +86,7 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
     vector<Scalar> result;
     for (const Scalar &E : eigenvalues) {
         long valueCount = static_cast<long>(result.size());
-        for (const auto &error : calculateErrors(E)) {
+        for (const auto &error : matchingErrors(E)) {
             const Scalar d = error.first / error.second;
             if (error.first < 1 && abs(d) < linear) {
                 result.push_back(E - d);
@@ -101,7 +100,7 @@ vector<Scalar> SE2D<Scalar>::findEigenvalues(const Scalar &Emin, const Scalar &E
 
 template<typename Scalar>
 inline bool is_first_eigenvalue(const SE2D<Scalar> &se2d, const Scalar &E) {
-    vector<typename SE2D<Scalar>::ArrayXXs> eigenfunctions = se2d.computeEigenfunction(
+    vector<typename SE2D<Scalar>::ArrayXXs> eigenfunctions = se2d.eigenfunction(
             E,
             SE2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
             SE2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
@@ -121,36 +120,36 @@ constexpr Scalar fundamentalGap(const Rectangle<2, Scalar> &domain) {
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::findFirstEigenvalues(int n) const {
-    Scalar E0 = findFirstEigenvalue();
+vector<Scalar> SE2D<Scalar>::firstEigenvalues(int n) const {
+    Scalar E0 = firstEigenvalue();
     const Scalar step = max(Scalar(1), fundamentalGap(domain));
-    vector<Scalar> eigenvalues{E0};
+    vector<Scalar> values{E0};
     Scalar start = E0;
-    while (eigenvalues.size() < (unsigned long) n) {
-        for (auto E : findEigenvalues(start, start + step, 16)) {
-            auto lowerBound = lower_bound(eigenvalues.begin(), eigenvalues.end(), E);
-            if (lowerBound == eigenvalues.end()) {
+    while (values.size() < (unsigned long) n) {
+        for (auto E : eigenvalues(start, start + step, 16)) {
+            auto lowerBound = lower_bound(values.begin(), values.end(), E);
+            if (lowerBound == values.end()) {
                 if (abs(lowerBound[-1] - E) > 1e-5)
-                    eigenvalues.push_back(E);
+                    values.emplace_back(E);
             } else if (abs(lowerBound[0] - E) > 1e-5) {
-                if (lowerBound - 1 == eigenvalues.begin() || abs(lowerBound[-1] - E) > 1e-5)
-                    eigenvalues.insert(lowerBound, E);
+                if (lowerBound - 1 == values.begin() || abs(lowerBound[-1] - E) > 1e-5)
+                    values.insert(lowerBound, E);
             }
         }
         start += step;
     }
-    while (eigenvalues.size() > (unsigned long) n)
-        eigenvalues.pop_back();
-    return eigenvalues;
+    while (values.size() > (unsigned long) n)
+        values.pop_back();
+    return values;
 }
 
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::findFirstEigenvalue() const {
+Scalar SE2D<Scalar>::firstEigenvalue() const {
     Scalar E = sectors[0]->matslise->estimatePotentialMinimum();
     for (int i = 0; i < sectorCount; ++i)
         E = min(E, sectors[i]->matslise->estimatePotentialMinimum());
-    E = findEigenvalue(E);
+    E = eigenvalue(E);
 
     const Scalar step = fundamentalGap(domain) / 8.;
 
@@ -161,7 +160,7 @@ Scalar SE2D<Scalar>::findFirstEigenvalue() const {
         int i = 0;
         do {
             estimate -= step;
-            E = findEigenvalue(estimate);
+            E = eigenvalue(estimate);
             if (++i > 30)
                 throw runtime_error("Could not find the first eigenvalue.");
         } while (E > prevE - 1e-5);
@@ -171,8 +170,8 @@ Scalar SE2D<Scalar>::findFirstEigenvalue() const {
 }
 
 template<typename Scalar>
-vector<Scalar> SE2D<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax) const {
-    vector<Scalar> eigenvalues = findFirstEigenvalues(Imax);
+vector<Scalar> SE2D<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
+    vector<Scalar> eigenvalues = firstEigenvalues(Imax);
     eigenvalues.erase(eigenvalues.begin(), eigenvalues.begin() + Imin);
     return eigenvalues;
 }

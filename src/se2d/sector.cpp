@@ -5,7 +5,6 @@
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
-using namespace matslise::SEnD_util;
 using namespace matslise::sectorbuilder;
 
 template<typename Scalar>
@@ -75,10 +74,10 @@ SE2D<Scalar>::Sector::propagate(
 }
 
 template<typename Scalar>
-Scalar SE2D<Scalar>::Sector::calculateError() const {
+Scalar SE2D<Scalar>::Sector::error() const {
     Scalar error = 0;
     for (int i = 0; i < matscs->sectorCount; ++i)
-        error += matscs->sectors[i]->calculateError();
+        error += matscs->sectors[i]->error();
     return error;
 }
 
@@ -101,7 +100,7 @@ typename SE2D<Scalar>::MatrixXs SE2D<Scalar>::Sector::calculateDeltaV(const Scal
 
 template<typename Scalar>
 typename SE2D<Scalar>::ArrayXs
-SE2D<Scalar>::Sector::computeEigenfunction(int index, const typename SE2D<Scalar>::ArrayXs &x) const {
+SE2D<Scalar>::Sector::eigenfunction(int index, const typename SE2D<Scalar>::ArrayXs &x) const {
     const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
     Eigen::Index size = x.size();
 

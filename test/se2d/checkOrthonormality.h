@@ -20,7 +20,7 @@ void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIt
 
     vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctions;
     for (auto i = begin; i < end; ++i) {
-        vector<Array<Scalar, Dynamic, Dynamic>> fs = p.computeEigenfunction(*i, x, y);
+        vector<Array<Scalar, Dynamic, Dynamic>> fs = p.eigenfunction(*i, x, y);
         for (const Array<Scalar, Dynamic, Dynamic> &f : fs)
             eigenfunctions.push_back(f);
     }

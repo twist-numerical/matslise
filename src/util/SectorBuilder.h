@@ -118,7 +118,7 @@ typename Problem::Sector *matslise::sectorbuilder::Auto<Problem>::nextSector(
             delete s;
         }
         s = new typename Problem::Sector(ms, xmin, xmax, !forward);
-        error = s->calculateError();
+        error = s->error();
         // cout << "(h: " << h << ", error: " << error << ") ";
     } while (error > tol && steps < 10 && h > 1e-5);
     if (steps == 0) {
@@ -136,7 +136,7 @@ typename Problem::Sector *matslise::sectorbuilder::Auto<Problem>::nextSector(
             }
             h = xmax - xmin;
             auto *newSector = new typename Problem::Sector(ms, xmin, xmax, !forward);
-            error = newSector->calculateError();
+            error = newSector->error();
             // cout << "(h: " << h << ", error: " << error << ") ";
             if (error > tol) {
                 delete newSector;
