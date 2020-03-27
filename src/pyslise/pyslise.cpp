@@ -63,7 +63,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
             .def("eigenvalues",
                  [](Matslise<> &m, double Emin, double Emax, const Vector2d &left, const Vector2d &right)
                          -> vector<pair<int, double>> {
-                     return m.computeEigenvalues(Emin, Emax, make_y(left), make_y(right));
+                     return m.eigenvalues(Emin, Emax, make_y(left), make_y(right));
                  }, R""""(\
 Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions have to be specified.
 
@@ -76,7 +76,7 @@ Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions h
             .def("eigenvaluesByIndex",
                  [](Matslise<> &m, int Imin, int Imax, const Vector2d &left, const Vector2d &right)
                          -> vector<pair<int, double>> {
-                     return m.computeEigenvaluesByIndex(Imin, Imax, make_y(left), make_y(right));
+                     return m.eigenvaluesByIndex(Imin, Imax, make_y(left), make_y(right));
                  }, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
 
@@ -90,7 +90,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
             .def("eigenvalueError",
                  [](Matslise<> &m, double E, const Vector2d &left, const Vector2d &right)
                          -> double {
-                     return m.computeEigenvalueError(E, make_y(left), make_y(right));
+                     return m.eigenvalueError(E, make_y(left), make_y(right));
                  }, R""""(\
 Calculate the error for a given eigenvalue. It will use a less accurate method to estimate another (worse) guess for that eigenvalue. The true error on the given eigenvalue will be less than the value returned by this method.
 
@@ -103,7 +103,7 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
             .def("eigenfunction",
                  [](Matslise<> &m, double E, const Vector2d &left, const Vector2d &right, const ArrayXd &xs)
                          -> tuple<ArrayXd, ArrayXd> {
-                     auto ysY = m.computeEigenfunction(E, make_y(left), make_y(right), xs);
+                     auto ysY = m.eigenfunction(E, make_y(left), make_y(right), xs);
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
                      for (Eigen::Index i = 0; i < ysY.size(); ++i) {
@@ -141,7 +141,7 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
             .def("__error",
                  [](Matslise<> &m, double E, const Vector2d &left, const Vector2d &right)
                          -> tuple<double, double, double> {
-                     return m.calculateError(E, make_y(left), make_y(right));
+                     return m.matchingError(E, make_y(left), make_y(right));
                  },
                  py::arg("E"), py::arg("left"), py::arg("right"))
             .def_readonly("__sectorCount", &Matslise<>::sectorCount)
@@ -172,7 +172,7 @@ Note: only one of steps and tolerance have to be set.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("steps") = -1, py::arg("tolerance") = -1)
             .def("eigenvalues", [](HalfRange<double> &m, double Emin, double Emax,
                                    const Vector2d &side) -> vector<pair<int, double>> {
-                return m.computeEigenvalues(Emin, Emax, make_y(side));
+                return m.eigenvalues(Emin, Emax, make_y(side));
             }, R""""(\
 Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions have to be specified.
 
@@ -183,7 +183,7 @@ Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions h
 )"""", py::arg("Emin"), py::arg("Emax"), py::arg("side"))
             .def("eigenvaluesByIndex",
                  [](HalfRange<> &m, int Imin, int Imax, const Vector2d &side) -> vector<pair<int, double>> {
-                     return m.computeEigenvaluesByIndex(Imin, Imax, make_y(side));
+                     return m.eigenvaluesByIndex(Imin, Imax, make_y(side));
                  }, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
 
@@ -196,7 +196,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
                  py::arg("Imin"), py::arg("Imax"), py::arg("side"))
             .def("eigenvalueError",
                  [](HalfRange<> &m, double E, const Vector2d &side, int even) -> double {
-                     return m.computeEigenvalueError(E, make_y(side), even);
+                     return m.eigenvalueError(E, make_y(side), even);
                  }, R""""(\
 Calculate the error for a given eigenvalue. It will use a less accurate method to estimate another (worse) guess for that eigenvalue. The true error on the given eigenvalue will be less than the value returned by this method.
 
@@ -210,7 +210,7 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
             .def("eigenfunction",
                  [](HalfRange<> &m, double E, const Vector2d &side, const ArrayXd &xs, int even)
                          -> tuple<ArrayXd, ArrayXd> {
-                     auto ysY = m.computeEigenfunction(E, make_y(side), xs, even);
+                     auto ysY = m.eigenfunction(E, make_y(side), xs, even);
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
                      for (Eigen::Index i = 0; i < ysY.size(); ++i) {

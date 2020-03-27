@@ -36,7 +36,7 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
 
 template<typename Scalar>
 tuple<Scalar, Scalar, Scalar>
-Matslise<Scalar>::calculateError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
+Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
     tie(l, thetaL) = propagate(E, left, xmin, match, use_h);
@@ -53,7 +53,7 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
     Scalar adjust, error, derror, theta;
     int i = 0;
     do {
-        tie(error, derror, theta) = ms->calculateError(E, left, right, use_h);
+        tie(error, derror, theta) = ms->matchingError(E, left, right, use_h);
         adjust = error / derror;
         E -= adjust;
     } while (++i < 20 && abs(adjust) > tol);
@@ -88,8 +88,8 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
     vector<pair<int, Scalar>> eigenvalues;
     queue<tuple<Scalar, Scalar, Scalar, Scalar, int>> toCheck;
 
-    toCheck.push(make_tuple(Emin, get<2>(ms->calculateError(Emin, left, right)) / constants<Scalar>::PI,
-                            Emax, get<2>(ms->calculateError(Emax, left, right)) / constants<Scalar>::PI,
+    toCheck.push(make_tuple(Emin, get<2>(ms->matchingError(Emin, left, right)) / constants<Scalar>::PI,
+                            Emax, get<2>(ms->matchingError(Emax, left, right)) / constants<Scalar>::PI,
                             0));
 
     Scalar a, ta, b, tb, c, tc;
@@ -108,7 +108,7 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         if ((tb - ta < 0.05 && depth > 3) || depth > 20) {
             eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
         } else {
-            tc = get<2>(ms->calculateError(c, left, right)) / constants<Scalar>::PI;
+            tc = get<2>(ms->matchingError(c, left, right)) / constants<Scalar>::PI;
             if (isnan(tc)) {
                 cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
             } else if (ia + 1 < ib) {
@@ -133,11 +133,11 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &left, const Y<Scalar> &right) const {
+Matslise<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &left, const Y<Scalar> &right) const {
     Scalar Emin = -1;
     Scalar Emax = 1;
     while (true) {
-        Scalar t = get<2>(calculateError(Emax, left, right)) / constants<Scalar>::PI;
+        Scalar t = get<2>(matchingError(Emax, left, right)) / constants<Scalar>::PI;
         int i = (int) floor(t);
         if (i >= Imax)
             break;
@@ -149,7 +149,7 @@ Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> 
     }
     if (Emin == -1) {
         while (true) {
-            Scalar t = get<2>(calculateError(Emin, left, right)) / constants<Scalar>::PI;
+            Scalar t = get<2>(matchingError(Emin, left, right)) / constants<Scalar>::PI;
             int i = (int) ceil(t);
             if (i <= Imin)
                 break;
@@ -165,14 +165,14 @@ Matslise<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> 
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-Matslise<Scalar>::computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &left,
-                                     const Y<Scalar> &right) const {
+Matslise<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &left,
+                              const Y<Scalar> &right) const {
     return computeEigenvaluesHelper(this, Emin, Emax, 0, INT_MAX, left, right);
 }
 
 template<typename Scalar>
 Scalar
-Matslise<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
+Matslise<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
     return abs(E - newtonIteration<Scalar>(this, E, left, right, 1e-9, false).second);
 }
 
@@ -217,9 +217,9 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
 
 template<typename Scalar>
 Array<Y<Scalar>, Dynamic, 1>
-Matslise<Scalar>::computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
-                                       const matslise::Y<Scalar> &right,
-                                       const Array<Scalar, Dynamic, 1> &x, int) const {
+Matslise<Scalar>::eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
+                                const matslise::Y<Scalar> &right,
+                                const Array<Scalar, Dynamic, 1> &x, int) const {
     Eigen::Index n = x.size();
     for (Eigen::Index i = 1; i < n; ++i)
         if (x[i - 1] > x[i])

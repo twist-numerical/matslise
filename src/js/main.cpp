@@ -89,7 +89,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     [](const AbstractMatslise<double> &m, double E, const Vector2d &left, const Vector2d &right,
                        const val &x, int index = -1) ->
                             val {
-                        Array<Y<double>, Dynamic, 1> array = m.computeEigenfunction(
+                        Array<Y<double>, Dynamic, 1> array = m.eigenfunction(
                                 E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), val2ArrayXd(x), index);
                         return ArrayXd2val(array.unaryExpr([](const Y<double> &y) -> double {
                             return y.y(0);
@@ -99,13 +99,13 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     [](const AbstractMatslise<double> &m, int Imin, int Imax, const Vector2d &left,
                        const Vector2d &right) -> val {
                         return transformEigenvalues(
-                                m.computeEigenvaluesByIndex(Imin, Imax, Y<>(left, {0, 0}),
-                                                            Y<>(right, {0, 0})));
+                                m.eigenvaluesByIndex(Imin, Imax, Y<>(left, {0, 0}),
+                                                     Y<>(right, {0, 0})));
                     }))
             .function("eigenvalueError", optional_override(
                     [](const AbstractMatslise<double> &m, double E, const Vector2d &left, const Vector2d &right,
                        int index = -1) -> double {
-                        return m.computeEigenvalueError(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index);
+                        return m.eigenvalueError(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index);
                     }));
 
     class_<Matslise<>, base<AbstractMatslise<double>>>("Matslise")

@@ -22,7 +22,7 @@ void test_eigenfunctions(const Matslise<Scalar> &ms, const Y<Scalar> &y0, const 
         Scalar E;
         tie(i, E) = p;
         std::function<Y<Scalar>(Scalar)> f = ms.eigenfunctionCalculator(E, y0, y1);
-        Array<Y<Scalar>, Dynamic, 1> ys = ms.computeEigenfunction(E, y0, y1, xs);
+        Array<Y<Scalar>, Dynamic, 1> ys = ms.eigenfunction(E, y0, y1, xs);
 
         Scalar scale = ys[scalePoint].y[0] / f(xs[scalePoint]).y[0];
         for (int j = 0; j < xs.size(); ++j) {
@@ -41,7 +41,7 @@ TEST_CASE("coffey_evans", "[matslise][coffey_evans]") {
 
     Y<double> y0({0, 1}, {0, 0});
     Y<double> y1({1, 0}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, 20, y0, y1);
+    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
     test_eigenfunctions(ms, y0, y1, eigenvalues);
 }
 
@@ -52,7 +52,7 @@ TEST_CASE("high potential", "[matslise][high]") {
 
     Y<double> y0({1, 0}, {0, 0});
     Y<double> y1({0, -1}, {0, 0});
-    test_eigenfunctions(ms, y0, y1, ms.computeEigenvaluesByIndex(0, 20, y0, y1));
+    test_eigenfunctions(ms, y0, y1, ms.eigenvaluesByIndex(0, 20, y0, y1));
 }
 
 TEST_CASE("high potential (auto)", "[matslise][high]") {
@@ -62,7 +62,7 @@ TEST_CASE("high potential (auto)", "[matslise][high]") {
 
     Y<double> y0({1, 0}, {0, 0});
     Y<double> y1({0, -1}, {0, 0});
-    test_eigenfunctions(ms, y0, y1, ms.computeEigenvaluesByIndex(0, 20, y0, y1));
+    test_eigenfunctions(ms, y0, y1, ms.eigenvaluesByIndex(0, 20, y0, y1));
 }
 
 #ifdef MATSLISE_long_double

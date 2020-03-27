@@ -65,11 +65,11 @@ TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
 
     Y<double> y0({0, 1}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(), y0, y0);
+    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
     for (unsigned int i = 0; i < correct.size(); ++i) {
         REQUIRE(i == eigenvalues[i].first);
         double E = eigenvalues[i].second;
-        double error = ms.computeEigenvalueError(E, y0, y0);
+        double error = ms.eigenvalueError(E, y0, y0);
         REQUIRE(fabs(error) < 1e-6);
         REQUIRE(Approx(correct[i]).margin(error) == E);
     }
@@ -79,11 +79,11 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu]
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, Matslise<double>::AUTO(1e-8));
 
     Y<double> y0({0, 1}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, (int) correct.size(), y0, y0);
+    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
     for (unsigned int i = 0; i < correct.size(); ++i) {
         REQUIRE(i == eigenvalues[i].first);
         double E = eigenvalues[i].second;
-        double error = ms.computeEigenvalueError(E, y0, y0);
+        double error = ms.eigenvalueError(E, y0, y0);
         REQUIRE(fabs(error) < 1e-6);
         REQUIRE(Approx(correct[i]).margin(error) == E);
     }
@@ -93,7 +93,7 @@ TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
 
     unsigned int offset = 100;
-    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(
+    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(
             offset, (unsigned int) correct.size(), Y<double>({0, 1}, {0, 0}), Y<double>({0, 1}, {0, 0}));
 
     for (unsigned int i = offset; i < correct.size(); ++i) {
@@ -106,7 +106,7 @@ TEST_CASE("Mathieu normalized", "[mathieu][matslise][eigenfunctionCalculator]") 
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
     Y<double> ystart({0, 1}, {0, 0});
 
-    vector<pair<int, double>> eigenvalues = ms.computeEigenvaluesByIndex(0, 10, ystart, ystart);
+    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart, ystart);
     for (pair<int, double> ie : eigenvalues) {
         double e = ie.second;
         function<Y<double>(double)> f = ms.eigenfunctionCalculator(e, ystart, ystart);
@@ -165,13 +165,13 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
     Y<double> ystart({0, 1}, {0, 0});
 
     {
-        auto eigenvalues = ms.computeEigenvaluesByIndex(0, 1, ystart, ystart);
+        auto eigenvalues = ms.eigenvaluesByIndex(0, 1, ystart, ystart);
         REQUIRE(eigenvalues.size() == 1);
         REQUIRE(0 == eigenvalues[0].first);
         double e = eigenvalues[0].second;
 
         REQUIRE(Approx(-0.11024881635796).margin(1e-12) == e);
-        Array<Y<double>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
+        Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart, x);
         REQUIRE(result.size() == y0.size());
         for (Eigen::Index i = result.size() - 1; i >= 0; --i)
             result[i] *= dy0[0] / result[0].y[1];
@@ -183,12 +183,12 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
     }
 
     {
-        auto eigenvalues = ms.computeEigenvaluesByIndex(3, 4, ystart, ystart);
+        auto eigenvalues = ms.eigenvaluesByIndex(3, 4, ystart, ystart);
         REQUIRE(eigenvalues.size() == 1);
         double e = eigenvalues.at(0).second;
 
         REQUIRE(Approx(16.03297008140580).margin(1e-12) == e);
-        Array<Y<double>, Dynamic, 1> result = ms.computeEigenfunction(e, ystart, ystart, x);
+        Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart, x);
         REQUIRE(result.size() == static_cast<long>(y0.size()));
         for (Eigen::Index i = result.size() - 1; i >= 0; --i)
             result[i] *= dy3[0] / result[0].y[1];

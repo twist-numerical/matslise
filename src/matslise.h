@@ -30,52 +30,52 @@ namespace matslise {
         virtual Scalar estimatePotentialMinimum() const = 0;
 
         virtual std::vector<std::pair<int, Scalar>>
-        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
+        eigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
+                    const matslise::Y<Scalar> &right) const {
+            checkSymmetry(left, right);
+            return eigenvalues(Emin, Emax, right);
+        }
+
+
+        virtual std::vector<std::pair<int, Scalar>>
+        eigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left) const {
+            return eigenvalues(Emin, Emax, left, left);
+        }
+
+        virtual std::vector<std::pair<int, Scalar>>
+        eigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const {
             checkSymmetry(left, right);
-            return computeEigenvalues(Emin, Emax, right);
-        }
-
-
-        virtual std::vector<std::pair<int, Scalar>>
-        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left) const {
-            return computeEigenvalues(Emin, Emax, left, left);
+            return eigenvaluesByIndex(Imin, Imax, right);
         }
 
         virtual std::vector<std::pair<int, Scalar>>
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
-                                  const matslise::Y<Scalar> &right) const {
-            checkSymmetry(left, right);
-            return computeEigenvaluesByIndex(Imin, Imax, right);
-        }
-
-        virtual std::vector<std::pair<int, Scalar>>
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &side) const {
-            return computeEigenvaluesByIndex(Imin, Imax, side, side);
+        eigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &side) const {
+            return eigenvaluesByIndex(Imin, Imax, side, side);
         };
 
         virtual Scalar
-        computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
-                               const matslise::Y<Scalar> &right, int index = -1) const {
+        eigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
+                        const matslise::Y<Scalar> &right, int index = -1) const {
             checkSymmetry(left, right);
-            return computeEigenvalueError(E, right, index);
+            return eigenvalueError(E, right, index);
         }
 
-        virtual Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left, int index = -1) const {
-            return computeEigenvalueError(E, left, left, index);
+        virtual Scalar eigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left, int index = -1) const {
+            return eigenvalueError(E, left, left, index);
         };
 
         virtual Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
-                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const {
+        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const {
             checkSymmetry(left, right);
-            return computeEigenfunction(E, right, x, index);
+            return eigenfunction(E, right, x, index);
         }
 
         virtual Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
-                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const {
-            return computeEigenfunction(E, side, side, x, index);
+        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const {
+            return eigenfunction(E, side, side, x, index);
         }
 
         virtual std::function<Y<Scalar>(Scalar)> eigenfunctionCalculator(
@@ -136,34 +136,34 @@ namespace matslise {
                   bool use_h = true) const;
 
         std::tuple<Scalar, Scalar, Scalar>
-        calculateError(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
-                       bool use_h = true) const;
+        matchingError(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+                      bool use_h = true) const;
 
     public: // Override
         Scalar estimatePotentialMinimum() const override;
 
-        using AbstractMatslise<Scalar>::computeEigenvalues;
+        using AbstractMatslise<Scalar>::eigenvalues;
 
         std::vector<std::pair<int, Scalar>>
-        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
+        eigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &left,
+                    const matslise::Y<Scalar> &right) const override;
+
+        using AbstractMatslise<Scalar>::eigenvaluesByIndex;
+
+        std::vector<std::pair<int, Scalar>>
+        eigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const override;
 
-        using AbstractMatslise<Scalar>::computeEigenvaluesByIndex;
+        using AbstractMatslise<Scalar>::eigenvalueError;
 
-        std::vector<std::pair<int, Scalar>>
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
-                                  const matslise::Y<Scalar> &right) const override;
+        Scalar eigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
+                               const matslise::Y<Scalar> &right, int index = -1) const override;
 
-        using AbstractMatslise<Scalar>::computeEigenvalueError;
-
-        Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
-                                      const matslise::Y<Scalar> &right, int index = -1) const override;
-
-        using AbstractMatslise<Scalar>::computeEigenfunction;
+        using AbstractMatslise<Scalar>::eigenfunction;
 
         Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
-                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const override;
+        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const override;
 
         using AbstractMatslise<Scalar>::eigenfunctionCalculator;
 
@@ -236,25 +236,25 @@ namespace matslise {
             return ms->estimatePotentialMinimum();
         }
 
-        using AbstractMatslise<Scalar>::computeEigenvalues;
+        using AbstractMatslise<Scalar>::eigenvalues;
 
         std::vector<std::pair<int, Scalar>>
-        computeEigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &side) const override;
+        eigenvalues(const Scalar &Emin, const Scalar &Emax, const matslise::Y<Scalar> &side) const override;
 
-        using AbstractMatslise<Scalar>::computeEigenvaluesByIndex;
+        using AbstractMatslise<Scalar>::eigenvaluesByIndex;
 
         std::vector<std::pair<int, Scalar>>
-        computeEigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &side) const override;
+        eigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &side) const override;
 
-        using AbstractMatslise<Scalar>::computeEigenvalueError;
+        using AbstractMatslise<Scalar>::eigenvalueError;
 
-        Scalar computeEigenvalueError(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
+        Scalar eigenvalueError(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
 
-        using AbstractMatslise<Scalar>::computeEigenfunction;
+        using AbstractMatslise<Scalar>::eigenfunction;
 
         Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        computeEigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
-                             const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const override;
+        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
+                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const override;
 
         using AbstractMatslise<Scalar>::eigenfunctionCalculator;
 

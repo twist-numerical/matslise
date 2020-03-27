@@ -18,8 +18,8 @@ HalfRange<Scalar>::HalfRange(
 template<typename Scalar>
 inline bool isEven(const HalfRange<Scalar> *hr, Scalar E, const Y<Scalar> &side, int index) {
     if (index == -1) {
-        Scalar error0 = get<0>(hr->ms->calculateError(E, Y<Scalar>({1, 0}, {0, 0}), side));
-        Scalar error1 = get<0>(hr->ms->calculateError(E, Y<Scalar>({0, 1}, {0, 0}), side));
+        Scalar error0 = get<0>(hr->ms->matchingError(E, Y<Scalar>({1, 0}, {0, 0}), side));
+        Scalar error1 = get<0>(hr->ms->matchingError(E, Y<Scalar>({0, 1}, {0, 0}), side));
         return abs(error0) < abs(error1);
     }
     return bool(index % 2 == 0);
@@ -32,7 +32,7 @@ inline Y<Scalar> getY0(bool even) {
 
 template<typename Scalar>
 Array<Y<Scalar>, Dynamic, 1>
-HalfRange<Scalar>::computeEigenfunction(
+HalfRange<Scalar>::eigenfunction(
         const Scalar &E, const Y<Scalar> &side, const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index) const {
     Eigen::Index n = x.size();
     for (Eigen::Index i = 1; i < n; ++i)
@@ -57,8 +57,8 @@ HalfRange<Scalar>::computeEigenfunction(
     bool even = isEven(this, E, side, index);
     Y<Scalar> y = getY0<Scalar>(even);
     Array<Y<Scalar>, Dynamic, 1> yNeg, yPos, ys(n);
-    yNeg = ms->computeEigenfunction(E, y, side, xNeg);
-    yPos = ms->computeEigenfunction(E, y, side, xPos);
+    yNeg = ms->eigenfunction(E, y, side, xNeg);
+    yPos = ms->eigenfunction(E, y, side, xPos);
 
     static const Scalar SQRT1_2 = sqrt(Scalar(.5));
     for (Eigen::Index i = 0; i < negatives; ++i) {
@@ -108,24 +108,24 @@ mergeEigenvalues(const vector<pair<int, Scalar>> &even, const vector<pair<int, S
 }
 
 template<typename Scalar>
-Scalar HalfRange<Scalar>::computeEigenvalueError(const Scalar &E, const Y<Scalar> &side, int index) const {
-    return ms->computeEigenvalueError(E, getY0<Scalar>(isEven(this, E, side, index)), side);
+Scalar HalfRange<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &side, int index) const {
+    return ms->eigenvalueError(E, getY0<Scalar>(isEven(this, E, side, index)), side);
 }
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-HalfRange<Scalar>::computeEigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side) const {
+HalfRange<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side) const {
     return mergeEigenvalues(
-            ms->computeEigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>({1, 0}, {0, 0}), side),
-            ms->computeEigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>({0, 1}, {0, 0}), side));
+            ms->eigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>({1, 0}, {0, 0}), side),
+            ms->eigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>({0, 1}, {0, 0}), side));
 }
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
-HalfRange<Scalar>::computeEigenvalues(
+HalfRange<Scalar>::eigenvalues(
         const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side) const {
-    return mergeEigenvalues(ms->computeEigenvalues(Emin, Emax, Y<Scalar>({1, 0}, {0, 0}), side),
-                            ms->computeEigenvalues(Emin, Emax, Y<Scalar>({0, 1}, {0, 0}), side));
+    return mergeEigenvalues(ms->eigenvalues(Emin, Emax, Y<Scalar>({1, 0}, {0, 0}), side),
+                            ms->eigenvalues(Emin, Emax, Y<Scalar>({0, 1}, {0, 0}), side));
 }
 
 template<typename Scalar>
