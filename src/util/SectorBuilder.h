@@ -57,7 +57,9 @@ void matslise::sectorbuilder::Auto<Problem>::build(
         Problem *ms, typename Problem::Scalar min, typename Problem::Scalar max) const {
     std::vector<typename Problem::Sector *> forward;
     std::vector<typename Problem::Sector *> backward;
-    typename Problem::Scalar mid = (max + min) / 2;
+    // It shouldn't be the true middle
+    //  so just dividing by something ~= 2
+    typename Problem::Scalar mid = (max + min) / 2.11803398875;
     typename Problem::Scalar h = mid - min;
     forward.push_back(nextSector<true>(ms, h, min, mid));
     backward.push_back(nextSector<false>(ms, h, mid, max));

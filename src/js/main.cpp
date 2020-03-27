@@ -24,6 +24,14 @@ ArrayXd val2ArrayXd(const val &a) {
     return r;
 }
 
+template<typename T>
+val vector2val(const vector<T> &a) {
+    val rv = val::array();
+    for (size_t i = 0; i < a.size(); ++i)
+        rv.call<T>("push", a[i]);
+    return rv;
+}
+
 val ArrayXd2val(const ArrayXd &a) {
     val rv = val::array();
     for (Eigen::Index i = 0; i < a.size(); ++i)
@@ -149,7 +157,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         return r;
                     }));
 
-    class_<SE2D<>>("SE2D")
+    class_<SE2D<>>("Matslise2D")
             .constructor(optional_override(
                     [](val f, double xmin, double xmax, double ymin, double ymax, const val &options) -> SE2D<> * {
                         Options2<> o2;
@@ -171,6 +179,10 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                         return new SE2D<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
                                           {{xmin, xmax}, ymin, ymax}, o2);
                     }))
+            .function("eigenvaluesByIndex", optional_override([](const SE2D<> &se2d, int imin, int imax) -> val {
+                return vector2val(se2d.computeEigenvaluesByIndex(imin, imax));
+            }))
+            .function("firstEigenvalue", &SE2D<double>::findFirstEigenvalue)
             .function("calculateError", optional_override([](SE2D<> &se2d, double E) -> pair<double, double> {
                 return se2d.calculateError(E, SEnD_util::ABS_SORTER<>);
             }))
@@ -181,7 +193,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
                     r.call<val>("push", eigenvalue);
                 return r;
             }))
-            .function("findEigenvalue", optional_override([](SE2D<> &se2d, double E) -> double {
+            .function("eigenvalue", optional_override([](SE2D<> &se2d, double E) -> double {
                 return se2d.findEigenvalue(E);
             }))
             .function("sectorPoints", optional_override([](const SE2D<> &se2d) -> val {

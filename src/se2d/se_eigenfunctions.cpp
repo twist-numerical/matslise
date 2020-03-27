@@ -19,7 +19,7 @@ vector<Y<Scalar, Dynamic>> SE2D<Scalar>::computeEigenfunctionSteps(const Scalar 
     auto *U = new MatrixXs[sectorCount + 1];
 
     int matchIndex = 0;
-    for (int i = sectorCount - 1; sectors[i]->min > match; --i) {
+    for (int i = sectorCount - 1; i >= 0 && sectors[i]->min >= match; --i) {
         const Y<Scalar, Dynamic> next
                 = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);

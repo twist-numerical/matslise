@@ -44,14 +44,16 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
                 return 0;
             },
             {{0, constants<double>::PI}, 0, constants<double>::PI},
-            Options2<>().sectorCount(13).stepsPerSector(4).N(12).nested(Options1<>().sectorCount(13)));
+            Options2<>().tolerance(1e-5).stepsPerSector(4).N(12).nested(Options1<>().tolerance(1e-5)));
 
     set<double> eigenvalues;
+    vector<double> eigenvaluesList;
     for (int i = 1; i < 6; ++i) {
-        for (int j = 1; j <= i; ++j) {
+        for (int j = 1; j <= 6; ++j) {
             double E = i * i + j * j;
             if (eigenvalues.find(E) != eigenvalues.end())
                 continue;
+            eigenvaluesList.emplace_back(E);
             eigenvalues.insert(E);
             for (int k = -1; k <= 1; ++k)
                 CHECK(Approx(p.findEigenvalue(E + k * 1e-2)).margin(1e-7) == E);
@@ -60,14 +62,21 @@ TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
             for (int k = 1; k * k < E; ++k) {
                 int l = (int) round(sqrt(E - k * k));
                 if (l * l == E - k * k) {
-                    v.push_back([k, l](double x, double y) -> double {
+                    v.emplace_back([k, l](double x, double y) -> double {
                         return 2 * sin(x * k) * sin(y * l) / constants<double>::PI;
                     });
                 }
             }
             // can be executed when normalizing is done
-            // compareEigenfunctions(p, E, v);
+            compareEigenfunctions(p, E, v);
         }
+    }
+    sort(eigenvaluesList.begin(), eigenvaluesList.end());
+
+    int i = 0;
+    for (const double E : p.findFirstEigenvalues(10)) {
+        CHECK(Approx(E).margin(1e-7) == eigenvaluesList[i]);
+        ++i;
     }
 
     vector<double> eigenvalues_v(eigenvalues.begin(), eigenvalues.end());
