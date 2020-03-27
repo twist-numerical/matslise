@@ -72,7 +72,7 @@ namespace matslise {
                      const Scalar &a, const Scalar &b) const;
 
         std::vector<matslise::Y<Scalar, Eigen::Dynamic>> *
-        computeEigenfunction(const Scalar &E, std::vector<Scalar> &x) const;
+        eigenfunction(const Scalar &E, std::vector<Scalar> &x) const;
 
         std::function<Y<Scalar, Eigen::Dynamic, 1>(Scalar)> eigenfunctionCalculator(
                 const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, 1> &left,

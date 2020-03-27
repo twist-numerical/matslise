@@ -70,7 +70,7 @@ Matscs<Scalar>::~Matscs() {
 }
 
 template<typename Scalar>
-vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::computeEigenfunction(const Scalar &E, vector<Scalar> &x) const {
+vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::eigenfunction(const Scalar &E, vector<Scalar> &x) const {
     sort(x.begin(), x.end());
     auto *ys = new vector<Y<Scalar, Dynamic>>();
 
