@@ -10,7 +10,7 @@
 #include <memory>
 #include "util/eigen.h"
 #include "util/y.h"
-#include "util/SectorBuilder_header.h"
+#include "util/sectorbuilder_header.h"
 
 #define MATSLISE_HMAX_delta 17
 #define MATSLISE_ETA_delta 8
@@ -266,7 +266,7 @@ namespace matslise {
 }
 
 #include "matscs.h"
-#include "se2d.h"
-#include "util/SectorBuilder.h"
+#include "matslise2d.h"
+#include "util/sectorbuilder.h"
 
 #endif //SCHRODINGER_MATSLISE_H

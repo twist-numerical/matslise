@@ -38,7 +38,7 @@ void compareEigenfunctions(
     }
 }
 
-TEST_CASE("Eigenvalues V=0", "[se2d][eigenfunctions][zero]") {
+TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
     Matslise2D<> p(
             [](double, double) -> double {
                 return 0;

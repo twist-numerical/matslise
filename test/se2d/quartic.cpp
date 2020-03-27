@@ -27,7 +27,7 @@ void testQuartic(
     }
 }
 
-TEST_CASE("Eigenfunctions quartic: c=-3", "[se2d][eigenvalues][quartic]") {
+TEST_CASE("Eigenfunctions quartic: c=-3", "[matslise2d][eigenvalues][quartic]") {
     testQuartic<double>(
             -1, 1e-3, 7.5,
             {2.0009985054698104735, 4.0029925416713028329, 6.0029940290428079650, 6.0069702421328217062,
@@ -45,7 +45,7 @@ TEST_CASE("Eigenfunctions quartic: c=-3", "[se2d][eigenvalues][quartic]") {
              10.037726447540990997, 12.041699947383956422});
 }
 
-TEST_CASE("Eigenfunctions quartic: c=0", "[se2d][eigenvalues][quartic]") {
+TEST_CASE("Eigenfunctions quartic: c=0", "[matslise2d][eigenvalues][quartic]") {
     testQuartic<double>(
             -1, 1, 6,
             {2.5616265756400316393, 5.3968039831941313950, 7.5491560629022652232, 8.4359873223484674428,
@@ -63,7 +63,7 @@ TEST_CASE("Eigenfunctions quartic: c=0", "[se2d][eigenvalues][quartic]") {
              20.661082690597886009, 24.033166193470850317});
 }
 
-TEST_CASE("Eigenfunctions quartic: c=3", "[se2d][eigenvalues][quartic]") {
+TEST_CASE("Eigenfunctions quartic: c=3", "[matslise2d][eigenvalues][quartic]") {
     // unsolvable
     /* testQuartic<double>(-1, 1e3, 2.8,
                 {17.686909350775717644, 37.965440109662577256, 48.868379100596636584, 56.219242763197933124,

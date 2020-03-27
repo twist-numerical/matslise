@@ -1,6 +1,6 @@
 #include <emscripten/bind.h>
 #include "../matslise.h"
-#include "../se2d.h"
+#include "../matslise2d.h"
 
 using namespace matslise;
 using namespace emscripten;

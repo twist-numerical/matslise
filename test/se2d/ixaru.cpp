@@ -10,7 +10,7 @@ using namespace matslise;
 using namespace std;
 using namespace Eigen;
 
-TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
+TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
     Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
@@ -65,7 +65,7 @@ TEST_CASE("Eigenfunctions ixaru", "[se2d][eigenfunctions][ixaru]") {
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
-TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfrange]") {
+TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru][halfrange]") {
     Matslise2DHalf<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
@@ -121,7 +121,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[se2d][eigenfunctions][ixaru][halfr
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
-TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
+TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto]") {
     Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
@@ -171,7 +171,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[se2d][eigenfunctions][ixaru][auto]") {
     checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
-TEST_CASE("Eigenfunctions ixaru auto high n", "[se2d][eigenfunctions][ixaru][auto][slow]") {
+TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixaru][auto][slow]") {
     Matslise2D<> p2(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);

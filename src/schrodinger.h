@@ -68,50 +68,6 @@ namespace matslise {
     };
 
 
-    template<int n, typename Scalar>
-    class Rectangle {
-    public:
-        Rectangle<n - 1, Scalar> sub;
-        Scalar min, max;
-
-        Scalar getMin(int axis) const {
-            if (axis + 1 == n)
-                return min;
-            return sub.getMin(axis);
-        }
-
-        Scalar getMax(int axis) const {
-            if (axis + 1 == n)
-                return max;
-            return sub.getMax(axis);
-        }
-
-        Scalar diameter() const {
-            return hypot(max - min, sub.diameter());
-        }
-    };
-
-    template<typename Scalar>
-    class Rectangle<1, Scalar> {
-    public:
-        Scalar min, max;
-
-        Scalar getMin(int axis) const {
-            assert(axis == 0);
-            (void) (axis); // UNUSED
-            return min;
-        }
-
-        Scalar getMax(int axis) const {
-            assert(axis == 0);
-            (void) (axis); // UNUSED
-            return max;
-        }
-
-        Scalar diameter() const {
-            return abs(max - min);
-        }
-    };
 }
 
 #endif //MATSLISE_SCHRODINGER_H

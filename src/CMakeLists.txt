@@ -23,7 +23,8 @@ endif()
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp
-        se2d/halfrange.cpp se2d/se_eigenvalues.cpp se2d/se_eigenfunctions.cpp se2d/se2d.cpp se2d/sector.cpp schrodinger.h
+        matslise2d/halfrange.cpp matslise2d/se_eigenvalues.cpp matslise2d/se_eigenfunctions.cpp
+        matslise2d/matslise2d.cpp matslise2d/sector.cpp schrodinger.h
         util/legendre.cpp)
 
 if (DEFINED EMSCRIPTEN)
@@ -114,7 +115,7 @@ else ()
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(pyslise_install pyslise)
 
-    install(FILES matslise.h Array2D.h matscs.h se2d.h schrodinger.h DESTINATION include/matslise/)
-    install(FILES util/lobatto.h util/y.h util/eigen.h util/SectorBuilder.h DESTINATION include/matslise/util)
+    install(FILES matslise.h Array2D.h matscs.h matslise2d.h schrodinger.h DESTINATION include/matslise/)
+    install(FILES util/lobatto.h util/y.h util/eigen.h util/sectorbuilder.h DESTINATION include/matslise/util)
 
 endif (DEFINED EMSCRIPTEN)

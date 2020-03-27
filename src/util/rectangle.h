@@ -1,0 +1,54 @@
+#ifndef MATSLISE_RECTANGLE_H
+#define MATSLISE_RECTANGLE_H
+
+#include <cassert>
+
+namespace matslise {
+
+    template<int n, typename Scalar>
+    class Rectangle {
+    public:
+        Rectangle<n - 1, Scalar> sub;
+        Scalar min, max;
+
+        constexpr Scalar getMin(int axis) const {
+            if (axis + 1 == n)
+                return min;
+            return sub.getMin(axis);
+        }
+
+        constexpr Scalar getMax(int axis) const {
+            if (axis + 1 == n)
+                return max;
+            return sub.getMax(axis);
+        }
+
+        Scalar diameter() const {
+            return hypot(max - min, sub.diameter());
+        }
+    };
+
+    template<typename Scalar>
+    class Rectangle<1, Scalar> {
+    public:
+        Scalar min, max;
+
+        constexpr Scalar getMin(int axis) const {
+            assert(axis == 0);
+            (void) (axis); // UNUSED
+            return min;
+        }
+
+        constexpr Scalar getMax(int axis) const {
+            assert(axis == 0);
+            (void) (axis); // UNUSED
+            return max;
+        }
+
+        Scalar diameter() const {
+            return abs(max - min);
+        }
+    };
+}
+
+#endif //MATSLISE_RECTANGLE_H

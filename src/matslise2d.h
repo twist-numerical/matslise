@@ -1,7 +1,8 @@
-#ifndef MATSLISE_SE2D_H
-#define MATSLISE_SE2D_H
+#ifndef MATSLISE_MATSLISE2D_H
+#define MATSLISE_MATSLISE2D_H
 
 #include "schrodinger.h"
+#include "util/rectangle.h"
 
 namespace matslise {
     template<typename _Scalar>
@@ -28,7 +29,7 @@ namespace matslise {
         Y<Scalar, Eigen::Dynamic> y0Left;
         Y<Scalar, Eigen::Dynamic> y0Right;
     public:
-        Matslise2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
+        Matslise2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const matslise::Rectangle<2, Scalar> &domain,
                    const Options2<Scalar> &options);
 
         std::pair<MatrixXs, MatrixXs> matchingErrorMatrix(const Scalar &E) const;
@@ -127,7 +128,8 @@ namespace matslise {
         Rectangle<2, Scalar> domain;
 
     public:
-        Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V, const Rectangle<2, Scalar> &domain,
+        Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V,
+                       const Rectangle<2, Scalar> &domain,
                        const Options2<Scalar> &options);
 
         Scalar eigenvalue(const Scalar &Eguess, const Scalar &tolerance = 1e-9, int maxIterations = 30,
@@ -149,4 +151,4 @@ namespace matslise {
     };
 }
 
-#endif //MATSLISE_SE2D_H
+#endif //MATSLISE_MATSLISE2D_H

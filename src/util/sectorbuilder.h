@@ -1,10 +1,10 @@
 #ifndef MATSLISE_SECTORBUILDER_H
 #define MATSLISE_SECTORBUILDER_H
 
-#include "SectorBuilder_header.h"
+#include "sectorbuilder_header.h"
 #include "../matslise.h"
 #include "../matscs.h"
-#include "../se2d.h"
+#include "../matslise2d.h"
 #include "constants.h"
 #include <stdexcept>
 
@@ -80,12 +80,6 @@ void matslise::sectorbuilder::Auto<Problem>::build(
         ms->sectors.push_back(s);
     for (auto j = backward.rbegin(); j != backward.rend(); ++j)
         ms->sectors.push_back(*j);
-
-
-    /*  for (int i = 0; i < ms->sectorCount; ++i)
-          cout << "h: " << (ms->sectors[i]->xmax - ms->sectors[i]->xmin) << " (" << ms->sectors[i]->xmin << ", "
-               << ms->sectors[i]->xmax << ") error: " << ms->sectors[i]->calculateError() << endl;
-      cout << "match: " << ms->match << "\n" << endl;*/
 }
 
 
