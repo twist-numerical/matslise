@@ -32,9 +32,10 @@ if (DEFINED EMSCRIPTEN)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
+    configure_file(js/matslise.d.ts matslise.d.ts COPYONLY)
     set_target_properties(matslise
             PROPERTIES SUFFIX ".js"
-            LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O3 -s TOTAL_MEMORY=128mb -s EXPORT_ES6=1 -s MODULARIZE=1 -s USE_ES6_IMPORT_META=0")
+            LINK_FLAGS " --bind -s  NO_EXIT_RUNTIME=1 -O3 -s TOTAL_MEMORY=128mb -s MODULARIZE=1 -s USE_ES6_IMPORT_META=0")
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
     set(targets matslise pyslise)

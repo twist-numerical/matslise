@@ -184,7 +184,7 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             }))
             .function("firstEigenvalue", &Matslise2D<double>::firstEigenvalue)
             .function("calculateError", optional_override([](Matslise2D<> &se2d, double E) -> pair<double, double> {
-                return se2d.matchingError(E, SEnD_util::ABS_SORTER<>);
+                return se2d.matchingError(E);
             }))
             .function("calculateErrors", optional_override([](Matslise2D<> &se2d, double E) -> val {
                 vector<pair<double, double>> result = se2d.matchingErrors(E);

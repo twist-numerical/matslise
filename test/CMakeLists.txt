@@ -21,7 +21,18 @@ else()
     ENDIF (OPTIMIZE)
 endif()
 
-if (NOT (DEFINED EMSCRIPTEN))
+if (DEFINED EMSCRIPTEN)
+    add_custom_target(matslise_test_copy_files ALL
+            COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_BINARY_DIR}/test-js
+            COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_SOURCE_DIR}/test/js ${CMAKE_BINARY_DIR}/test-js
+            DEPENDS matslise)
+    option(NODE_BIN "Binary directory of node installation. Make sure 'ava' is installed." "")
+    add_custom_target(matslise_test
+            COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} npm link ava
+            COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} ava --verbose
+            DEPENDS matslise_test_copy_files
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test-js)
+else()
     set(libraries matslise Eigen3::Eigen)
 
     OPTION(LONG_DOUBLE "Compile also for the 'long double' type." OFF)
