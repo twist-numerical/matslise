@@ -3,13 +3,15 @@
   "version": "0.0.1",
   "description": "An online GUI for matslise",
   "scripts": {
-    "start": "parcel index.html"
+    "ti1d": "parcel ti1d.html",
+    "ti2d": "parcel ti2d.html",
+    "start": "parcel ti1d.html ti2d.html"
   },
   "author": "Toon Baeyens",
   "license": "MIT",
   "devDependencies": {
     "@vue/component-compiler-utils": "^3.1.1",
-    "parcel": "^1.0.0",
+    "parcel": "^1.12.4",
     "pug": "^2.0.4",
     "sass": "^1.26.3",
     "typescript": "^3.8.3",
@@ -19,12 +21,14 @@
   "dependencies": {
     "@types/chart.js": "^2.9.16",
     "@types/color": "^3.0.1",
+    "@types/mathjs": "^6.0.4",
     "bootstrap-css-only": "^4.4.1",
     "chart.js": "^2.9.3",
     "color": "^3.1.2",
     "mathjs-expression-parser": "^1.0.2",
     "parcel-plugin-static-files-copy": "^2.3.1",
-    "vue-hot-reload-api": "^2.3.4"
+    "vue-hot-reload-api": "^2.3.4",
+    "webworker-promise": "^0.4.2"
   },
   "staticFiles": {
     "staticPath": "src/wasm"

@@ -10,7 +10,7 @@ export interface Eigenvalue {
   readonly eigenfunction: number[];
 }
 
-export default class MatsliseController {
+export default class Controller {
   public eigenvalues: Eigenvalue[] | null = null;
   public problem = new Problem();
   public xValues: number[] = [];

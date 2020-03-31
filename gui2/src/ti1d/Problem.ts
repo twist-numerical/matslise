@@ -2,7 +2,7 @@ import Module, {
   AbstractMatslise,
   MatsliseHalfRange,
   Matslise
-} from "./matsliseLoader";
+} from "../util/matsliseLoader";
 import math from "mathjs-expression-parser";
 
 const evaluatePair = ([a, b]: [string, string]): [number, number] => {
@@ -28,7 +28,7 @@ export default class Problem {
   public x: [string, string] = ["0", "pi"];
   public ymin: [string, string] = ["1", "0"];
   public ymax: [string, string] = ["1", "0"];
-  public tolerance = "1e-5";
+  public tolerance = "1e-8";
   public symmetric = false;
   public toDelete: { delete: () => void }[] = [];
 

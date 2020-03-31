@@ -5,7 +5,7 @@
 <script lang="ts">
 import Vue from "vue";
 import Chart from "chart.js";
-import { Eigenvalue } from "./MatsliseController";
+import { Eigenvalue } from "./Controller";
 
 function ensureLength<T>(arr: T[], length: number, newElement: () => T) {
   while (arr.length < length) arr.push(newElement());
