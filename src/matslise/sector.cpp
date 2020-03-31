@@ -181,10 +181,22 @@ pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagate(
 
 template<typename Scalar>
 Scalar Matslise<Scalar>::Sector::error() const {
-    return (
+    Scalar e_loc0 = (
             (calculateT(vs[0], true).t - calculateT(vs[0], false).t).array() *
             (Array<Scalar, 2, 2>() << 1, 1 / h, h, 1).finished()
-    ).cwiseAbs().sum();
+    ).cwiseAbs().maxCoeff();
+    if (MATSLISE_N < 16)
+        return e_loc0;
+    Scalar h12 = pow(h, 12);
+    Scalar e_locu = 0.0024 * abs(vs[15]) * h12 * h * h * h + 2.5e-5 * vs[7] * vs[7] * h12 * h * h +
+                    (1.8e-5 * abs(vs[3] * vs[10]) + 2e-5 * abs(vs[2] * vs[11]) + 6e-6 * abs(vs[5] * vs[8]) +
+                     4e-6 * abs(vs[4] * vs[9])) * h12 * h;
+    Scalar e_locup = (0.0002 * vs[7] * vs[7] + 0.0003 * abs(vs[5] * vs[9]) + 0.0003 * abs(vs[6] * vs[8]) +
+                      0.0006 * abs(vs[1] * vs[13]) + 0.0005 * abs(vs[2] * vs[12]) + 0.0004 * abs(vs[3] * vs[11])) *
+                     h12 * h * h;
+    Scalar e_locv = 0.0002 * abs(vs[14]) * h12 * h * h + 1e-5 * vs[6] * vs[6] * h12;
+    
+    return std::max(e_loc0, std::max(e_locu, std::max(e_locup, e_locv)));
 }
 
 template<typename Scalar>

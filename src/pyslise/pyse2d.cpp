@@ -69,7 +69,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
             .def("firstEigenvalue", &Matslise2D<>::firstEigenvalue)
             .def("error", [](const Matslise2D<> &se2d, double const &E) -> pair<double, double> {
-                return se2d.matchingError(E, &SEnD_util::ABS_SORTER<>);
+                return se2d.matchingError(E);
             }, R""""(\
 Compute the error given a guess for E. This error is the result of the requirement that the found eigenfunctions are continues. The error expresses how 'discontinues' the corresponding eigenfunction would be.
 

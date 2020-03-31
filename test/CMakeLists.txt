@@ -3,15 +3,15 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 
 message("Matslise test")
-if(MSVC)
+if (MSVC)
     add_compile_options(
-	/wd4661 # no suitable definition provided for explicit template instantiation request
-	/wd4820 #'bytes' bytes padding added after construct 'member_name'
-	/wd4464  # relative include path contains '..'
-	/DNOMINMAX
-	/D_USE_MATH_DEFINES
-	/bigobj)
-else()
+            /wd4661 # no suitable definition provided for explicit template instantiation request
+            /wd4820 #'bytes' bytes padding added after construct 'member_name'
+            /wd4464  # relative include path contains '..'
+            /DNOMINMAX
+            /D_USE_MATH_DEFINES
+            /bigobj)
+else ()
     add_compile_options(-Wall -Wextra -Werror)
 
     OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
@@ -19,7 +19,7 @@ else()
         message("-- Using -O3 -march=native")
         add_compile_options(-O3 -march=native)
     ENDIF (OPTIMIZE)
-endif()
+endif ()
 
 if (DEFINED EMSCRIPTEN)
     add_custom_target(matslise_test_copy_files ALL
@@ -32,7 +32,7 @@ if (DEFINED EMSCRIPTEN)
             COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} ava --verbose
             DEPENDS matslise_test_copy_files
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test-js)
-else()
+else ()
     set(libraries matslise Eigen3::Eigen)
 
     OPTION(LONG_DOUBLE "Compile also for the 'long double' type." OFF)
@@ -57,16 +57,16 @@ else()
 
     add_executable(matslise_test EXCLUDE_FROM_ALL
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
-            matslise/hr_mathieu.cpp
+            matslise/hr_mathieu.cpp matslise/ixaru.cpp
             matscs/propagatePsi.cpp matscs/propagateTheta.cpp
             se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
             util/lobatto.cpp
             main.cpp)
 
     find_package(OpenMP)
-    if(OpenMP_CXX_FOUND)
+    if (OpenMP_CXX_FOUND)
         target_link_libraries(matslise_test PUBLIC OpenMP::OpenMP_CXX)
-    endif()
+    endif ()
 
     find_package(MKL)
     if (MKL_FOUND)

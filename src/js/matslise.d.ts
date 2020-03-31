@@ -67,6 +67,8 @@ declare class Matslise2D {
         }
     );
 
+    eigenvalues(emin: number, emax: number): number[];
+
     eigenvaluesByIndex(imin: number, imax: number): number[];
 
     delete(): void;
@@ -79,14 +81,9 @@ declare interface matslise {
 }
 
 export default class MatsliseModule {
-    /*
-    class HalfRange {
-      eigenvaluesByIndex(
-        imin: number,
-        imax: number,
-        right: [number, number]
-      ): [number, number][];
-    }*/
+    constructor(Module?: {
+        locateFile(path: string, prefix: string): string;
+    });
 
     then(resolve: (matslise: matslise) => void): void;
 }

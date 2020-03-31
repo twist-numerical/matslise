@@ -159,7 +159,8 @@ EMSCRIPTEN_BINDINGS(Matslise) {
 
     class_<Matslise2D<>>("Matslise2D")
             .constructor(optional_override(
-                    [](val f, double xmin, double xmax, double ymin, double ymax, const val &options) -> Matslise2D<> * {
+                    [](val f, double xmin, double xmax, double ymin, double ymax,
+                       const val &options) -> Matslise2D<> * {
                         Options2<> o2;
                         if (options["sectorCount"] != val::undefined())
                             o2.sectorCount(options["sectorCount"].as<int>());
@@ -182,6 +183,10 @@ EMSCRIPTEN_BINDINGS(Matslise) {
             .function("eigenvaluesByIndex", optional_override([](const Matslise2D<> &se2d, int imin, int imax) -> val {
                 return vector2val(se2d.eigenvaluesByIndex(imin, imax));
             }))
+            .function("eigenvalues",
+                      optional_override([](const Matslise2D<> &se2d, double emin, double emax) -> val {
+                          return vector2val(se2d.eigenvalues(emin, emax));
+                      }))
             .function("firstEigenvalue", &Matslise2D<double>::firstEigenvalue)
             .function("calculateError", optional_override([](Matslise2D<> &se2d, double E) -> pair<double, double> {
                 return se2d.matchingError(E);
