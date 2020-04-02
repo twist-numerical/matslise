@@ -41,7 +41,7 @@ declare class Matslise extends AbstractMatslise {
     );
 }
 
-declare class MatsliseHalfRange extends AbstractMatslise {
+declare class MatsliseHalf extends AbstractMatslise {
     constructor(
         potential: (x: number) => number,
         xmax: number,
@@ -63,9 +63,19 @@ declare class Matslise2D {
         ymin: number,
         ymax: number,
         options: {
-            tolerance: number;
+            tolerance?: number;
+            sectorCount?: number;
+            nested?: {
+                symmetric?: boolean;
+                tolerance?: number;
+                sectorCount?: number;
+            }
         }
     );
+
+    eigenvalue(E: number): number;
+
+    firstEigenvalue(): number;
 
     eigenvalues(emin: number, emax: number): number[];
 
@@ -76,7 +86,7 @@ declare class Matslise2D {
 
 declare interface matslise {
     Matslise: typeof Matslise;
-    MatsliseHalfRange: typeof MatsliseHalfRange;
+    MatsliseHalf: typeof MatsliseHalf;
     Matslise2D: typeof Matslise2D;
 }
 

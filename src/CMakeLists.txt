@@ -28,7 +28,7 @@ SET(MATSLISE_SRC
         util/legendre.cpp)
 
 if (DEFINED EMSCRIPTEN)
-    add_executable(matslise js/main.cpp ${MATSLISE_SRC})
+    add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_SRC})
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
