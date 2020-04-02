@@ -30,6 +30,7 @@ namespace matslise {
         int sectorCount;
         std::vector<Matscs::Sector *> sectors;
         Scalar match;
+        int matchIndex;
     public:
         static std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> UNIFORM(int sectorCount) {
             return std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>>(

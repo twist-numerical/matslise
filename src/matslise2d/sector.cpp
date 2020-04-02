@@ -52,6 +52,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                             p->sectors[i] = new typename Matscs<Scalar>::Sector(p, left, right, backward);
                             left = right;
                         }
+                        p->matchIndex = n - 2;
                         p->match = p->sectors[n - 1]->min;
                     })));
 }

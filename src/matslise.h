@@ -105,6 +105,7 @@ namespace matslise {
         Scalar xmin, xmax;
         int sectorCount;
         Scalar match;
+        int matchIndex;
         std::vector<Matslise::Sector *> sectors;
     public:
         static std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> UNIFORM(int sectorCount) {

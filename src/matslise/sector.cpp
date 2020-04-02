@@ -85,10 +85,11 @@ Scalar rescale(const Scalar &theta, const Scalar &sigma) {
 template<typename Scalar>
 Scalar Matslise<Scalar>::Sector::prufer(
         const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const {
-    Scalar ff = E - vs[0];
-    if (ff > 0) {
+    Scalar &v0Match = s->sectors[s->matchIndex]->vs[0];
+    Scalar scaling = E - v0Match > 1 ? sqrt(E - v0Match) : 1;
+    if (E > vs[0]) {
         // page 56 (PhD Ledoux)
-        Scalar omega = sqrt(ff);
+        Scalar omega = sqrt(E - vs[0]);
         Scalar theta0 = atan_safe(y0.y[0] * omega, y0.y[1]);
         Scalar phi_star = atan_safe(y1.y[0] * omega, y1.y[1]);
         Scalar phi_bar = omega * delta + theta0;
@@ -105,10 +106,10 @@ Scalar Matslise<Scalar>::Sector::prufer(
             theta1 += constants<Scalar>::PI;
         }
 
-        return rescale(theta1, 1 / omega) - rescale(theta0, 1 / omega);
+        return rescale(theta1, scaling / omega) - rescale(theta0, scaling / omega);
     } else {
-        Scalar theta0 = atan_safe(y0.y[0], y0.y[1]);
-        Scalar theta1 = atan_safe(y1.y[0], y1.y[1]);
+        Scalar theta0 = atan_safe(scaling * y0.y[0], y0.y[1]);
+        Scalar theta1 = atan_safe(scaling * y1.y[0], y1.y[1]);
         if (y0.y[0] * y1.y[0] >= 0) {
             if (theta0 > 0 && theta1 < 0)
                 theta1 += constants<Scalar>::PI;
@@ -195,7 +196,8 @@ Scalar Matslise<Scalar>::Sector::error() const {
                       0.0006 * abs(vs[1] * vs[13]) + 0.0005 * abs(vs[2] * vs[12]) + 0.0004 * abs(vs[3] * vs[11])) *
                      h12 * h * h;
     Scalar e_locv = 0.0002 * abs(vs[14]) * h12 * h * h + 1e-5 * vs[6] * vs[6] * h12;
-    
+
+
     return std::max(e_loc0, std::max(e_locu, std::max(e_locup, e_locv)));
 }
 

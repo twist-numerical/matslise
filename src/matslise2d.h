@@ -25,6 +25,7 @@ namespace matslise {
         ArrayXs grid;
         int N;
         Scalar match;
+        int matchIndex;
         Options2<Scalar> options;
         Y<Scalar, Eigen::Dynamic> y0Left;
         Y<Scalar, Eigen::Dynamic> y0Right;

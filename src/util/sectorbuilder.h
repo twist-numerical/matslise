@@ -49,6 +49,7 @@ void matslise::sectorbuilder::Uniform<Problem>::build(
     }
     int matchIndex = i;
 
+    ms->matchIndex = matchIndex;
     ms->match = ms->sectors[matchIndex]->max;
 }
 
@@ -75,6 +76,7 @@ void matslise::sectorbuilder::Auto<Problem>::build(
     }
 
     ms->match = forward.back()->max;
+    ms->matchIndex = forward.size()-1;
     ms->sectors.reserve(forward.size() + backward.size());
     for (typename Problem::Sector *const &s : forward)
         ms->sectors.push_back(s);
