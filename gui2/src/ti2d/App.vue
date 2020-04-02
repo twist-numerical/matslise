@@ -106,6 +106,8 @@ div.container
           @more-eigenvalues="() => controller.moreEigenvalues()")
       div(v-else)
         p Press 'Calculate' to compute the eigenvalues of this problem.
+      h3 History
+      history-list(:history="controller.problem.history")
 </template>
 
 <script lang="ts">
@@ -116,6 +118,7 @@ import EigenfunctionsGraph from "./EigenfunctionsGraph.vue";
 import FunctionGraph from "./FunctionGraph.vue";
 import ProblemSelector from "./ProblemSelector.vue";
 import ToggleSwitch from "../util/ToggleSwitch.vue";
+import HistoryList from "./HistoryList.vue";
 
 export default Vue.extend({
   data() {
@@ -130,7 +133,8 @@ export default Vue.extend({
     "eigenfunctions-graph": EigenfunctionsGraph,
     "function-graph": FunctionGraph,
     "problem-selector": ProblemSelector,
-    "toggle-switch": ToggleSwitch
+    "toggle-switch": ToggleSwitch,
+    "history-list": HistoryList
   },
   computed: {
     disabledSubmit() {

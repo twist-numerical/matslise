@@ -2,6 +2,7 @@ import Problem from "./Problem";
 import Color = require("color");
 
 export interface Eigenvalue {
+  index: number;
   value: number;
   error: number;
   visible: boolean;
@@ -30,15 +31,21 @@ export default class Controller {
   async moreEigenvalues() {
     let eigenvaluesFound;
     if (this.eigenvalues === null) {
-      eigenvaluesFound = [await this.problem.firstEigenvalue()];
+      eigenvaluesFound = await this.problem.eigenvaluesByIndex(0, 2);
       this.eigenvalues = [];
     } else {
-      eigenvaluesFound = await this.problem.eigenvalues(0, 10);
+      const max = this.eigenvalues.length - 1;
+      const min = Math.max(0, max - 5);
+      eigenvaluesFound = await this.problem.eigenvalues(
+        this.eigenvalues[max].value,
+        2 * this.eigenvalues[max].value - this.eigenvalues[min].value
+      );
     }
     const self = this;
     for (const value of eigenvaluesFound) {
-      const index = 0;
+      const index = this.eigenvalues!.length;
       this.eigenvalues!.push({
+        index,
         value,
         error: this.problem.eigenvalueError(value),
         visible: false,

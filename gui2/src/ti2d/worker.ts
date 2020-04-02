@@ -12,7 +12,7 @@ setTimeout(() => {
   new MatsliseModule({
     locateFile: (path: string) => {
       return path;
-    },
+    }
   }).then(matslise => {
     _Matslise2D = matslise.Matslise2D;
     for (const res of waitForMatslise) {
@@ -74,7 +74,8 @@ function parse(data: {
     {
       tolerance: parsed.tolerance,
       nested: {
-        tolerance: parsed.tolerance
+        tolerance: parsed.tolerance,
+        symmetric: data.xSymmetric
       }
     }
   );
@@ -83,6 +84,11 @@ function parse(data: {
 function eigenvalues(emin: number, emax: number): number[] {
   if (matslise === undefined) throw new Error("Problem not parsed");
   return matslise.eigenvalues(emin, emax);
+}
+
+function eigenvaluesByIndex(imin: number, imax: number): number[] {
+  if (matslise === undefined) throw new Error("Problem not parsed");
+  return matslise.eigenvaluesByIndex(imin, imax);
 }
 
 function firstEigenvalue(): number[] {
@@ -103,6 +109,8 @@ registerWebworker(async (message: { type: string; data: any }) => {
       return true;
     case "eigenvalues":
       return eigenvalues(message.data.emin, message.data.emax);
+    case "eigenvaluesByIndex":
+      return eigenvaluesByIndex(message.data.imin, message.data.imax);
     case "firstEigenvalue":
       return firstEigenvalue();
   }
