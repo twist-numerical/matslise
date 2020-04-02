@@ -5,7 +5,6 @@
 #include "../util/calculateEta.h"
 #include "../util/horner.h"
 #include "../util/constants.h"
-#include "../util/addTheta.h"
 
 #define EPS (1.e-12)
 
@@ -212,17 +211,26 @@ pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagate(
         const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar, Dynamic> y = y0;
     Scalar argdet = 0;
+    Scalar dTheta;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
-            if (a > min)
-                y = addTheta(propagateDelta(E, y, min - a, use_h), argdet);
-            if (b > min)
-                y = addTheta(propagateDelta(E, y, b - min, use_h), argdet);
+            if (a > min) {
+                tie(y, dTheta) = propagateDelta(E, y, min - a, use_h);
+                argdet += dTheta;
+            }
+            if (b > min) {
+                tie(y, dTheta) = propagateDelta(E, y, b - min, use_h);
+                argdet += dTheta;
+            }
         } else {
-            if (a < max)
-                y = addTheta(propagateDelta(E, y, max - a, use_h), argdet);
-            if (b < max)
-                y = addTheta(propagateDelta(E, y, b - max, use_h), argdet);
+            if (a < max) {
+                tie(y, dTheta) = propagateDelta(E, y, max - a, use_h);
+                argdet += dTheta;
+            }
+            if (b < max) {
+                tie(y, dTheta) = propagateDelta(E, y, b - max, use_h);
+                argdet += dTheta;
+            }
         }
     }
     return {y, argdet};

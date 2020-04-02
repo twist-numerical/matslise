@@ -12,6 +12,12 @@
 using namespace std;
 using namespace matslise;
 
+
+template<typename Scalar>
+int sign(const Scalar &s) {
+    return s > 0 ? 1 : s < 0 ? -1 : 0;
+}
+
 template<typename Scalar>
 Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
         : s(s), min(min), max(max), backward(backward) {
@@ -111,10 +117,10 @@ Scalar Matslise<Scalar>::Sector::prufer(
         Scalar theta0 = atan_safe(scaling * y0.y[0], y0.y[1]);
         Scalar theta1 = atan_safe(scaling * y1.y[0], y1.y[1]);
         if (y0.y[0] * y1.y[0] >= 0) {
-            if (theta0 > 0 && theta1 < 0)
-                theta1 += constants<Scalar>::PI;
-            else if (theta0 < 0 && theta1 > 0)
-                theta1 -= constants<Scalar>::PI;
+            int signTheta0 = theta0 == 0 ? sign(y0.y[1]) : sign(theta0);
+            int signTheta1 = theta1 == 0 ? -sign(y1.y[1]) : sign(theta1);
+            if (signTheta0 * signTheta1 < 0)
+                theta1 += signTheta0 * constants<Scalar>::PI;
         } else if (theta0 * theta1 > 0) {
             theta1 += constants<Scalar>::PI;
         }
@@ -128,9 +134,10 @@ pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagateDelta(
         const Scalar &E, const Y<Scalar> &y0, Scalar delta, bool use_h) const {
     if (backward)
         delta *= -1;
-    bool forward = delta >= 0;
-    if (!forward)
+    bool direction = delta >= 0;
+    if (!direction)
         delta = -delta;
+    bool forward = direction != backward;
     if (delta > h)
         delta = h;
 
@@ -138,16 +145,13 @@ pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagateDelta(
     Y<Scalar> y = y0;
     if (backward)
         y.reverse();
-    Y<Scalar> y1 = forward ? t * y : t / y;
+    Y<Scalar> y1 = direction ? t * y : t / y;
     if (backward)
         y1.reverse();
 
-    return {
-            y1,
-            forward != backward ?
-            prufer(E, delta, y0, y1) :
-            -prufer(E, delta, y1, y0)
-    };
+    Scalar theta = forward ? prufer(E, delta, y0, y1) : -prufer(E, delta, y1, y0);
+
+    return {y1, theta};
 }
 
 template<typename Scalar>

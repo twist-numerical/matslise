@@ -1,7 +1,6 @@
 #include <functional>
 #include "../matslise.h"
 #include "../util/find_sector.h"
-#include "../util/addTheta.h"
 
 #define EPS (1.e-12)
 
@@ -38,10 +37,12 @@ Matscs<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &_y,
     int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
+    Scalar dTheta;
     Scalar argdet = 0;
     do {
         sector = sectors[sectorIndex];
-        y = addTheta(sector->propagate(E, y, a, b, use_h), argdet);
+        tie(y, dTheta) = sector->propagate(E, y, a, b, use_h);
+        argdet += dTheta;
         sectorIndex += direction;
     } while (!sector->contains(b));
     return {y, argdet};

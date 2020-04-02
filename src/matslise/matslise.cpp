@@ -6,7 +6,6 @@
 #include "../util/theta.h"
 #include "../util/constants.h"
 #include "../util/find_sector.h"
-#include "../util/addTheta.h"
 
 #define EPS (1.e-12)
 
@@ -20,6 +19,7 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
     if (!contains(a) || !contains(b))
         throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<Scalar> y = _y;
+    Scalar dTheta;
     Scalar theta = matslise::theta(y);
     if (a == xmax && theta == 0)
         theta += constants<Scalar>::PI;
@@ -28,7 +28,8 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
     Sector *sector;
     do {
         sector = sectors[sectorIndex];
-        y = addTheta(sector->propagate(E, y, a, b, use_h), theta);
+        tie(y, dTheta) = sector->propagate(E, y, a, b, use_h);
+        theta += dTheta;
         sectorIndex += direction;
     } while (!sector->contains(b));
     return {y, theta};

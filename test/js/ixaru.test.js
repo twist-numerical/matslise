@@ -9,7 +9,7 @@ const correct = [
     test('ixaru', t => {
         const matslise = new Matslise2D(
             (x, y) => (1 + x * x) * (1 + y * y),
-            -5, 5, -5, 5,
+            -5.5, 5.5, -5.5, 5.5,
             {
                 tolerance: 1e-5,
                 nested: {
