@@ -89,6 +89,20 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu]
     }
 }
 
+TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary conditions)", "[matslise][mathieu][auto]") {
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, Matslise<double>::AUTO(1e-8));
+
+    Y<double> y0({0, -1}, {0, 0});
+    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
+    for (unsigned int i = 0; i < correct.size(); ++i) {
+        REQUIRE(i == eigenvalues[i].first);
+        double E = eigenvalues[i].second;
+        double error = ms.eigenvalueError(E, y0, y0);
+        REQUIRE(fabs(error) < 1e-6);
+        REQUIRE(Approx(correct[i]).margin(error) == E);
+    }
+}
+
 TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 8);
 

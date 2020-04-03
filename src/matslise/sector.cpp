@@ -117,8 +117,8 @@ Scalar Matslise<Scalar>::Sector::prufer(
         Scalar theta0 = atan_safe(scaling * y0.y[0], y0.y[1]);
         Scalar theta1 = atan_safe(scaling * y1.y[0], y1.y[1]);
         if (y0.y[0] * y1.y[0] >= 0) {
-            int signTheta0 = theta0 == 0 ? sign(y0.y[1]) : sign(theta0);
-            int signTheta1 = theta1 == 0 ? -sign(y1.y[1]) : sign(theta1);
+            int signTheta0 = theta0 == 0 ? 1 : sign(theta0);
+            int signTheta1 = theta1 == 0 ? -1 : sign(theta1);
             if (signTheta0 * signTheta1 < 0)
                 theta1 += signTheta0 * constants<Scalar>::PI;
         } else if (theta0 * theta1 > 0) {
