@@ -23,7 +23,7 @@ endif()
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp
-        matslise2d/halfrange.cpp matslise2d/se_eigenvalues.cpp matslise2d/se_eigenfunctions.cpp
+        matslise2d/halfrange.cpp matslise2d/eigenvalues.cpp matslise2d/eigenfunctions.cpp
         matslise2d/matslise2d.cpp matslise2d/sector.cpp schrodinger.h
         util/legendre.cpp)
 
