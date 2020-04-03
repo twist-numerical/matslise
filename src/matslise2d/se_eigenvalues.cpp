@@ -6,13 +6,16 @@ using namespace matslise;
 using namespace std;
 
 template<typename Scalar>
-Scalar Matslise2D<Scalar>::eigenvalue(
-        const Scalar &_E, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) const {
+Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scalar &_E) const {
+    const Scalar tolerance = 1e-9;
+    const Scalar minTolerance = 1e-5;
+    const int maxIterations = 30;
+
     Scalar E = _E;
     Scalar error, derror;
     int i = 0;
     do {
-        tie(error, derror) = matchingError(E);
+        tie(error, derror) = matchingError(left, E);
         E -= error / derror;
         ++i;
     } while (i < maxIterations && abs(error) > tolerance);
@@ -40,8 +43,10 @@ inline bool set_contains(const set<Scalar> &values, const Scalar &guess, const S
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const int &initialSteps) const {
+vector<Scalar> Matslise2D<Scalar>::eigenvalues(
+        const Y<Scalar, Dynamic> &left, const Scalar &Emin, const Scalar &Emax) const {
     typedef pair<Scalar, Scalar> Interval;
+    const int initialSteps = 16;
 
     const Scalar linear = 0.001;
     const Scalar minLength = 0.001;
@@ -69,10 +74,10 @@ vector<Scalar> Matslise2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar 
         intervals.pop_back();
 
         if (!set_contains(eigenvalues, guess, length)) {
-            for (const pair<Scalar, Scalar> &error : matchingErrors(guess)) {
+            for (const pair<Scalar, Scalar> &error : matchingErrors(left, guess)) {
                 Scalar d = error.first / error.second;
                 if (abs(d) < minLength) {
-                    Scalar E = eigenvalue(guess - d);
+                    Scalar E = eigenvalue(left, guess - d);
                     if (!isnan(E) && !set_contains(eigenvalues, E, minLength))
                         eigenvalues.insert(E);
                 } else if (abs(d) < 2 * length) {
@@ -86,7 +91,7 @@ vector<Scalar> Matslise2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar 
     vector<Scalar> result;
     for (const Scalar &E : eigenvalues) {
         long valueCount = static_cast<long>(result.size());
-        for (const auto &error : matchingErrors(E)) {
+        for (const auto &error : matchingErrors(left, E)) {
             const Scalar d = error.first / error.second;
             if (error.first < 1 && abs(d) < linear) {
                 result.push_back(E - d);
@@ -99,9 +104,10 @@ vector<Scalar> Matslise2D<Scalar>::eigenvalues(const Scalar &Emin, const Scalar 
 }
 
 template<typename Scalar>
-inline bool is_first_eigenvalue(const Matslise2D<Scalar> &se2d, const Scalar &E) {
+inline bool
+is_first_eigenvalue(const Matslise2D<Scalar> &se2d, const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) {
     vector<typename Matslise2D<Scalar>::ArrayXXs> eigenfunctions = se2d.eigenfunction(
-            E,
+            left, E,
             Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
             Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
     if (eigenfunctions.size() != 1)
@@ -120,13 +126,13 @@ constexpr Scalar fundamentalGap(const Rectangle<2, Scalar> &domain) {
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2D<Scalar>::firstEigenvalues(int n) const {
-    Scalar E0 = firstEigenvalue();
+vector<Scalar> Matslise2D<Scalar>::firstEigenvalues(const Y<Scalar, Dynamic> &left, int n) const {
+    Scalar E0 = firstEigenvalue(left);
     const Scalar step = max(Scalar(1), fundamentalGap(domain));
     vector<Scalar> values{E0};
     Scalar start = E0;
     while (values.size() < (unsigned long) n) {
-        for (auto E : eigenvalues(start, start + step, 16)) {
+        for (auto E : eigenvalues(left, start, start + step)) {
             auto lowerBound = lower_bound(values.begin(), values.end(), E);
             if (lowerBound == values.end()) {
                 if (abs(lowerBound[-1] - E) > 1e-5)
@@ -143,35 +149,54 @@ vector<Scalar> Matslise2D<Scalar>::firstEigenvalues(int n) const {
     return values;
 }
 
-
 template<typename Scalar>
-Scalar Matslise2D<Scalar>::firstEigenvalue() const {
-    Scalar E = sectors[0]->matslise->estimatePotentialMinimum();
+Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const {
+    Scalar potentialMinimum = sectors[0]->matslise->estimatePotentialMinimum();
     for (int i = 0; i < sectorCount; ++i)
-        E = min(E, sectors[i]->matslise->estimatePotentialMinimum());
-    E = eigenvalue(E);
+        potentialMinimum = min(potentialMinimum, sectors[i]->matslise->estimatePotentialMinimum());
 
-    const Scalar step = fundamentalGap(domain) / 8.;
+    const int maxDepth = 4;
+    vector<pair<Scalar, int>> guesses{{potentialMinimum, 0}};
+    function<bool(const pair<Scalar, int> &, const pair<Scalar, int> &)> comp
+            = [](const pair<Scalar, int> &a, const pair<Scalar, int> &b) -> bool {
+                return b.first < a.first;
+            };
 
-    while (!is_first_eigenvalue(*this, E)) {
+    int depth;
+    Scalar guess;
+    set<Scalar> seen;
 
-        Scalar estimate = E;
-        Scalar prevE = E;
-        int i = 0;
-        do {
-            estimate -= step;
-            E = eigenvalue(estimate);
-            if (++i > 30)
-                throw runtime_error("Could not find the first eigenvalue.");
-        } while (E > prevE - 1e-5);
+    while (!guesses.empty()) {
+        tie(guess, depth) = guesses.front();
+        pop_heap(guesses.begin(), guesses.end(), comp);
+        guesses.pop_back();
+
+        if (depth >= maxDepth) {
+            Scalar E = eigenvalue(left, guess);
+
+            if (!set_contains(seen, E, 1e-5) && is_first_eigenvalue(*this, left, E))
+                return E;
+            seen.insert(E);
+        } else {
+            auto errors = matchingErrors(left, guess);
+            sort(errors.begin(), errors.end(),
+                 [](const pair<Scalar, Scalar> &a, const pair<Scalar, Scalar> &b) -> bool {
+                     return a.first/a.second > b.first/b.second;
+                 });
+            for (auto it = errors.begin(); it != errors.end() && it != errors.begin() + 3; ++it) {
+                Scalar newGuess = guess - it->first / it->second;
+                guesses.emplace_back(newGuess, depth + 1);
+                push_heap(guesses.begin(), guesses.end(), comp);
+            }
+        }
     }
 
-    return E;
+    throw runtime_error("Could not find the first eigenvalue.");
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2D<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
-    vector<Scalar> eigenvalues = firstEigenvalues(Imax);
+vector<Scalar> Matslise2D<Scalar>::eigenvaluesByIndex(const Y<Scalar, Dynamic> &left, int Imin, int Imax) const {
+    vector<Scalar> eigenvalues = firstEigenvalues(left, Imax);
     eigenvalues.erase(eigenvalues.begin(), eigenvalues.begin() + Imin);
     return eigenvalues;
 }

@@ -23,8 +23,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(const Scalar &, const Scala
                                const Options2<Scalar> &_options) :
         V(V), domain(domain), N(_options._N),
         options(_options) {
-    y0Left = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
-    y0Right = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
+    dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
     grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     options._builder->build(this, domain.min, domain.max);
     sectorCount = sectors.size();
@@ -66,14 +65,14 @@ typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, D
 
 template<typename Scalar>
 pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
-Matslise2D<Scalar>::matchingErrorMatrix(const Scalar &E) const {
-    Y<Scalar, Dynamic> yl = y0Left;
+Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const {
+    Y<Scalar, Dynamic> yl = left;
     for (int i = 0; sectors[i]->max <= match; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
         conditionY(yl);
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
-            E, y0Right, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
+            E, dirichletBoundary, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     conditionY(yr);
     for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
         yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
@@ -94,9 +93,9 @@ Matslise2D<Scalar>::matchingErrorMatrix(const Scalar &E) const {
 
 template<typename Scalar>
 Y<Scalar, Dynamic>
-Matslise2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b,
-                              bool use_h) const {
-    if (!contains(a) || !contains(b))
+Matslise2D<Scalar>::propagate(
+        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
+    if (!domain.contains(1, a) || !domain.contains(1, b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic> y = y0;
     int sectorIndex = find_sector<Matslise2D<Scalar>>(this, a);
@@ -116,8 +115,9 @@ Matslise2D<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &y0, con
 }
 
 template<typename Scalar>
-vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(const Scalar &E) const {
-    pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(E);
+vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
+        const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E) const {
+    pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(yLeft, E);
     EigenSolver<MatrixXs> solver(N);
 
     solver.compute(error_matrix.first, true);
@@ -151,8 +151,8 @@ vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(const Scalar &E)
 }
 
 template<typename Scalar>
-pair<Scalar, Scalar> Matslise2D<Scalar>::matchingError(const Scalar &E) const {
-    vector<pair<Scalar, Scalar>> errors = matchingErrors(E);
+pair<Scalar, Scalar> Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E) const {
+    vector<pair<Scalar, Scalar>> errors = matchingErrors(yLeft, E);
     return *min_element(errors.begin(), errors.end(), [](
             const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {
         if (abs(a.first) > 100 || abs(b.first) > 100)

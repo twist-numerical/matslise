@@ -23,6 +23,12 @@ namespace matslise {
             return sub.getMax(axis);
         }
 
+        constexpr bool contains(int axis, const Scalar &v) const {
+            if (axis + 1 == n)
+                return min <= v && v <= max;
+            return sub.contains(axis, v);
+        }
+
         Scalar diameter() const {
             return hypot(max - min, sub.diameter());
         }
@@ -43,6 +49,12 @@ namespace matslise {
             assert(axis == 0);
             (void) (axis); // UNUSED
             return max;
+        }
+
+        constexpr bool contains(int axis, const Scalar &v) const {
+            assert(axis == 0);
+            (void) (axis); // UNUSED
+            return min <= v && v <= max;
         }
 
         Scalar diameter() const {

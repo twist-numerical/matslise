@@ -13,8 +13,8 @@ Matslise2DHalf<Scalar>::Matslise2DHalf(const function<Scalar(const Scalar &, con
                                        const matslise::Rectangle<2, Scalar> &domain,
                                        const Options2<Scalar> &options) : domain(domain) {
     se2d = new Matslise2D<Scalar>(V, {domain.sub, 0, domain.getMax(1)}, options);
-    evenBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Neumann(se2d->N);
-    oddBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Dirichlet(se2d->N);
+    neumannBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Neumann(se2d->N);
+    dirichletBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Dirichlet(se2d->N);
 }
 
 template<typename Scalar>
@@ -23,26 +23,14 @@ Matslise2DHalf<Scalar>::~Matslise2DHalf() {
 }
 
 template<typename Scalar>
-void Matslise2DHalf<Scalar>::setParity(bool even) {
-    se2d->y0Left = even ? evenBoundary : oddBoundary;
+Scalar Matslise2DHalf<Scalar>::firstEigenvalue() const {
+    return se2d->firstEigenvalue(neumannBoundary);
 }
 
 template<typename Scalar>
-pair<Scalar, Scalar> Matslise2DHalf<Scalar>::matchingError(const Scalar &E) {
-    setParity(true);
-    pair<Scalar, Scalar> errorEven = se2d->matchingError(E);
-    setParity(false);
-    pair<Scalar, Scalar> errorOdd = se2d->matchingError(E);
-    return abs(get<0>(errorEven)) <= abs(get<0>(errorOdd)) ? errorEven : errorOdd;
-}
-
-template<typename Scalar>
-Scalar Matslise2DHalf<Scalar>::eigenvalue(
-        const Scalar &guessE, const Scalar &tolerance, int maxIterations, const Scalar &minTolerance) {
-    setParity(true);
-    Scalar evenE = se2d->eigenvalue(guessE, tolerance, maxIterations, minTolerance);
-    setParity(false);
-    Scalar oddE = se2d->eigenvalue(guessE, tolerance, maxIterations, minTolerance);
+Scalar Matslise2DHalf<Scalar>::eigenvalue(const Scalar &guessE) const {
+    Scalar evenE = se2d->eigenvalue(neumannBoundary, guessE);
+    Scalar oddE = se2d->eigenvalue(dirichletBoundary, guessE);
     if (abs(evenE - guessE) < abs(oddE - guessE))
         return evenE;
     else
@@ -50,12 +38,9 @@ Scalar Matslise2DHalf<Scalar>::eigenvalue(
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(
-        const Scalar &Emin, const Scalar &Emax, const int &initialSteps) {
-    setParity(true);
-    vector<Scalar> eigenvalues = se2d->eigenvalues(Emin, Emax, initialSteps);
-    setParity(false);
-    vector<Scalar> eigenvaluesOdd = se2d->eigenvalues(Emin, Emax, initialSteps);
+vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax) const {
+    vector<Scalar> eigenvalues = se2d->eigenvalues(neumannBoundary, Emin, Emax);
+    vector<Scalar> eigenvaluesOdd = se2d->eigenvalues(dirichletBoundary, Emin, Emax);
     eigenvalues.insert(eigenvalues.end(),
                        make_move_iterator(eigenvaluesOdd.begin()),
                        make_move_iterator(eigenvaluesOdd.end()));
@@ -64,14 +49,8 @@ vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(
 }
 
 template<typename Scalar>
-Scalar Matslise2DHalf<Scalar>::firstEigenvalue() {
-    setParity(true);
-    return se2d->firstEigenvalue();
-}
-
-template<typename Scalar>
 vector<typename Matslise2DHalf<Scalar>::ArrayXXs>
-Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) {
+Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
     Eigen::Index n = y.size();
     for (Eigen::Index i = 1; i < n; ++i)
         if (y[i - 1] > y[i])
@@ -101,9 +80,9 @@ Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const A
 
     vector<ArrayXXs> result;
     for (bool even : {false, true}) {
-        setParity(even);
-        if (abs(E - se2d->eigenvalue(E)) < 1e-3) {
-            vector<ArrayXXs> sortedFs = se2d->eigenfunction(E, x, sortedY);
+        const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
+        if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-3) {
+            vector<ArrayXXs> sortedFs = se2d->eigenfunction(boundary, E, x, sortedY);
             for (auto sortedF : sortedFs) {
                 ArrayXXs f = ArrayXXs::Zero(x.size(), y.size());
                 Eigen::Index negativeIndex = 0;
@@ -130,19 +109,26 @@ Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const A
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2DHalf<Scalar>::eigenvaluesByIndex(int, int) {
-    throw std::logic_error("Function not yet implemented");
+vector<Scalar> Matslise2DHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
+    vector<Scalar> valuesNeumann = se2d->eigenvaluesByIndex(neumannBoundary, 0, Imax);
+    vector<Scalar> valuesDirichlet = se2d->eigenvaluesByIndex(dirichletBoundary, 0, Imax);
+    vector<Scalar> result;
+    merge(valuesNeumann.begin(), valuesNeumann.end(),
+          valuesDirichlet.begin(), valuesDirichlet.end(),
+          back_inserter(result));
+    result.erase(result.begin() + Imax, result.end());
+    result.erase(result.begin(), result.begin() + Imin);
+    return result;
 }
-// std::vector<double> *computeEigenvalues(double Emin, double Emax) const;
 
 template<typename Scalar>
-vector<function<Scalar(Scalar, Scalar)>> Matslise2DHalf<Scalar>::eigenfunctionCalculator(const Scalar &E) {
+vector<function<Scalar(Scalar, Scalar)>> Matslise2DHalf<Scalar>::eigenfunctionCalculator(const Scalar &E) const {
     const Scalar SQRT1_2 = sqrt(Scalar(.5));
     vector<function<Scalar(Scalar, Scalar)>> result;
     for (bool even : {false, true}) {
-        setParity(even);
-        if (abs(E - se2d->eigenvalue(E)) < 1e-5) {
-            for (const function<Scalar(Scalar, Scalar)> &f : se2d->eigenfunctionCalculator(E)) {
+        const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
+        if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-5) {
+            for (const function<Scalar(Scalar, Scalar)> &f : se2d->eigenfunctionCalculator(boundary, E)) {
                 result.push_back([f, even, SQRT1_2](const Scalar &x, const Scalar &y) -> Scalar {
                     Scalar r = f(x, y < 0 ? -y : y);
                     if (y < 0 && !even)
