@@ -39,7 +39,7 @@ void bind_matslise2d() {
                       optional_override([](const Matslise2D<> &se2d, double emin, double emax) -> val {
                           return vector2val(se2d.eigenvalues(emin, emax));
                       }))
-            .function("firstEigenvalue", &Matslise2D<double>::firstEigenvalue)
+            .function("firstEigenvalue", &AbstractMatslise2D<double>::firstEigenvalue)
             .function("matchingError", optional_override([](Matslise2D<> &se2d, double E) -> pair<double, double> {
                 return se2d.matchingError(E);
             }))

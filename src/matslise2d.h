@@ -79,7 +79,7 @@ namespace matslise {
         }
 
     public: // overrides
-        Scalar firstEigenvalue() const {
+        Scalar firstEigenvalue() const override {
             return firstEigenvalue(dirichletBoundary);
         }
 
