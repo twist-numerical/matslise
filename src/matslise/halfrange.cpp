@@ -11,7 +11,7 @@ using namespace Eigen;
 
 template<typename Scalar>
 MatsliseHalf<Scalar>::MatsliseHalf(
-        function<Scalar(Scalar)> V, const Scalar &xmax, shared_ptr<SectorBuilder<Matslise<Scalar>>> sectorBuilder) {
+        function<Scalar(Scalar)> V, const Scalar &xmax, SectorBuilder<Matslise<Scalar>> sectorBuilder) {
     ms = new Matslise<Scalar>(V, 0, xmax, sectorBuilder);
 }
 

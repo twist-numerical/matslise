@@ -1,13 +1,15 @@
 #ifndef MATSLISE_SCHRODINGER_H
 #define MATSLISE_SCHRODINGER_H
 
+#include "util/sectorbuilder.h"
+
 namespace matslise {
     template<typename Scalar=double>
     class Matslise2D;
 
     template<typename Scalar=double>
     struct Options1 {
-        std::shared_ptr<matslise::SectorBuilder<matslise::Matslise<Scalar>>> _builder = Matslise<Scalar>::UNIFORM(26);
+        SectorBuilder<matslise::Matslise<Scalar>, Scalar> _builder = matslise::sector_builder::uniform<Matslise<Scalar>>(26);
         bool _symmetric = false;
 
         Options1<Scalar> &symmetric(bool symmetric) {
@@ -16,12 +18,12 @@ namespace matslise {
         }
 
         Options1<Scalar> &sectorCount(int count) {
-            _builder = Matslise<Scalar>::UNIFORM(count);
+            _builder = matslise::sector_builder::uniform<Matslise<Scalar>>(count);
             return *this;
         }
 
         Options1<Scalar> &tolerance(Scalar tol) {
-            _builder = Matslise<Scalar>::AUTO(tol);
+            _builder = matslise::sector_builder::automatic<Matslise<Scalar>>(tol);
             return *this;
         }
     };
@@ -29,9 +31,7 @@ namespace matslise {
     template<typename Scalar=double>
     struct Options2 {
         Options1<Scalar> nestedOptions;
-        std::shared_ptr<matslise::SectorBuilder<matslise::Matslise2D<Scalar>>> _builder
-                = std::shared_ptr<matslise::SectorBuilder<matslise::Matslise2D<Scalar>>>(
-                        new matslise::sectorbuilder::Uniform<Matslise2D<Scalar>>(17));
+        matslise::SectorBuilder<matslise::Matslise2D<Scalar>, Scalar> _builder = matslise::sector_builder::uniform<Matslise2D<Scalar>>(17);
         int _stepsPerSector = 1;
         int _N = 12;
         int _gridPoints = 52;
@@ -42,12 +42,12 @@ namespace matslise {
         }
 
         Options2<Scalar> &sectorCount(int count) {
-            _builder.reset(new matslise::sectorbuilder::Uniform<Matslise2D<Scalar>>(count));
+            _builder = matslise::sector_builder::uniform<Matslise2D<Scalar>>(count);
             return *this;
         }
 
         Options2<Scalar> &tolerance(Scalar tol) {
-            _builder.reset(new matslise::sectorbuilder::Auto<Matslise2D<Scalar>>(tol));
+            _builder = matslise::sector_builder::automatic<Matslise2D<Scalar>>(tol);
             return *this;
         }
 

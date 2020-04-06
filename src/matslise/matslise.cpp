@@ -40,8 +40,8 @@ tuple<Scalar, Scalar, Scalar>
 Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, left, xmin, match, use_h);
-    tie(r, thetaR) = propagate(E, right, xmax, match, use_h);
+    tie(l, thetaL) = propagate(E, left, xmin, sectors[matchIndex]->max, use_h);
+    tie(r, thetaR) = propagate(E, right, xmax, sectors[matchIndex]->max, use_h);
     return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
                       l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
                       thetaL - thetaR);
@@ -187,10 +187,11 @@ template<typename Scalar>
 vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
                                    const Y<Scalar> &left, const Y<Scalar> &right) {
     auto n = static_cast<unsigned int>(ms.sectorCount);
+    const Scalar& match = ms.sectors[ms.matchIndex]->max;
     vector<Y<Scalar>> ys(n + 1);
     ys[0] = left;
     unsigned int m = 0;
-    for (unsigned int i = 1; ms.match > ms.sectors[i - 1]->min; ++i) {
+    for (unsigned int i = 1; match > ms.sectors[i - 1]->min; ++i) {
         ys[i] = ms.sectors[i - 1]->propagateForward(E, ys[i - 1]).first;
         m = i;
     }

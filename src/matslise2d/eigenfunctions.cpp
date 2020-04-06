@@ -18,22 +18,20 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &left, const Sca
     steps[sectorCount] = dirichletBoundary;
     auto *U = new MatrixXs[sectorCount + 1];
 
-    int matchIndex = 0;
-    for (int i = sectorCount - 1; i >= 0 && sectors[i]->min >= match; --i) {
+    for (int i = sectorCount - 1; i > matchIndex; --i) {
         const Y<Scalar, Dynamic> next
                 = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
         steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
         U[i + 1] = conditionY(steps[i]);
-        matchIndex = i;
     }
-    const Y<Scalar, Dynamic> matchRight = steps[matchIndex];
+    const Y<Scalar, Dynamic> matchRight = steps[matchIndex + 1];
 
     U[0] = MatrixXs::Identity(N, N);
-    for (int i = 0; i < matchIndex; ++i) {
+    for (int i = 0; i <= matchIndex; ++i) {
         steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
         U[i + 1] = conditionY(steps[i + 1]);
     }
-    const Y<Scalar, Dynamic> matchLeft = steps[matchIndex];
+    const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
 
     ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
     ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
@@ -60,7 +58,7 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &left, const Sca
         VectorXs normalizer = (cec_cce<>(matchLeft * left) - cec_cce<>(matchRight * right)).diagonal()
                 .unaryExpr([](Scalar s) { return s <= 0 ? Scalar(1) : Scalar(1) / sqrt(s); });
 
-        for (int i = matchIndex; i >= 0; --i) {
+        for (int i = matchIndex + 1; i >= 0; --i) {
             elements[static_cast<size_t>(i)] = steps[i] * left;
             if (i > 0) {
                 U[i].template triangularView<Upper>().
@@ -69,7 +67,7 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &left, const Sca
         }
 
         Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
-        for (int i = matchIndex + 1; i <= sectorCount; ++i) {
+        for (int i = matchIndex + 2; i <= sectorCount; ++i) {
             U[i].template triangularView<Upper>().
                     template solveInPlace<OnTheLeft>(right);
             elements[static_cast<size_t>(i)] = steps[i] * right;

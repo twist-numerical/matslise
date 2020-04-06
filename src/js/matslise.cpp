@@ -52,11 +52,11 @@ void bind_matslise() {
     class_<Matslise<>, base<AbstractMatslise<double>>>("Matslise")
             .constructor(optional_override(
                     [](val f, double min, double max, const val &options) -> Matslise<> * {
-                        std::shared_ptr<matslise::SectorBuilder<Matslise<>>> builder;
+                        matslise::SectorBuilder<Matslise<>> builder;
                         if (options["sectorCount"] != val::undefined())
-                            builder = Matslise<>::UNIFORM(options["sectorCount"].as<int>());
+                            builder = sector_builder::uniform<Matslise<>>(options["sectorCount"].as<int>());
                         else if (options["tolerance"] != val::undefined())
-                            builder = Matslise<>::AUTO(options["tolerance"].as<double>());
+                            builder = sector_builder::automatic<Matslise<>>(options["tolerance"].as<double>());
 
                         return new Matslise<>([f](double x) -> double { return f(x).as<double>(); }, min, max, builder);
                     }))
@@ -82,11 +82,11 @@ void bind_matslise() {
     class_<MatsliseHalf<>, base<AbstractMatslise<double>>>("MatsliseHalfRange")
             .constructor(optional_override(
                     [](val f, double max, const val &options) -> MatsliseHalf<> * {
-                        std::shared_ptr<matslise::SectorBuilder<Matslise<>>> builder;
+                        matslise::SectorBuilder<Matslise<>> builder;
                         if (options["sectorCount"] != val::undefined())
-                            builder = Matslise<>::UNIFORM(options["sectorCount"].as<int>());
+                            builder = sector_builder::uniform<Matslise<>>(options["sectorCount"].as<int>());
                         else if (options["tolerance"] != val::undefined())
-                            builder = Matslise<>::AUTO(options["tolerance"].as<double>());
+                            builder = sector_builder::automatic<Matslise<>>(options["tolerance"].as<double>());
 
                         return new MatsliseHalf<>([f](double x) -> double { return f(x).as<double>(); }, max, builder);
                     }))

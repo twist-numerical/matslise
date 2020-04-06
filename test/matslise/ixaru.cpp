@@ -37,7 +37,7 @@ TEST_CASE("ixaru 1d", "[matslise][coffey_evans]") {
     Matslise<double> ms([](double x) -> double {
         const double y = 0;
         return (1 + x * x) * (1 + y * y);
-    }, -5.5, 5.5, Matslise<double>::AUTO(1e-5));
+    }, -5.5, 5.5, sector_builder::automatic<Matslise<>>(1e-5));
 
     Y<double> y0({0, 1}, {0, 0});
     Y<double> y1({0, 1}, {0, 0});

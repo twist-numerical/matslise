@@ -25,7 +25,9 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(const Scalar &, const Scala
         options(_options) {
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
     grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
-    options._builder->build(this, domain.min, domain.max);
+    auto sectorsBuild = options._builder(this, domain.min, domain.max);
+    sectors = std::move(sectorsBuild.sectors);
+    matchIndex = sectorsBuild.matchIndex;
     sectorCount = sectors.size();
 
     M = new MatrixXs[sectorCount - 1];
@@ -67,14 +69,14 @@ template<typename Scalar>
 pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
 Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const {
     Y<Scalar, Dynamic> yl = left;
-    for (int i = 0; sectors[i]->max <= match; ++i) {
+    for (int i = 0; i <= matchIndex; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
         conditionY(yl);
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
             E, dirichletBoundary, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
     conditionY(yr);
-    for (int i = sectorCount - 2; sectors[i]->min >= match; --i) {
+    for (int i = sectorCount - 2; i > matchIndex; --i) {
         yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
         conditionY(yr);
     }

@@ -5,10 +5,10 @@
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
-using namespace matslise::sectorbuilder;
 
 template<typename Scalar>
-Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax, bool backward)
+Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
+                                   bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
     const Scalar ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->V(x, ybar); };
@@ -41,20 +41,20 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     matscs = new Matscs<Scalar>(
             [this](Scalar y) -> MatrixXs { return this->calculateDeltaV(y); },
             se2d->N, ymin, ymax,
-            std::shared_ptr<SectorBuilder<Matscs<Scalar>>>(
-                    new Custom<Matscs<Scalar>>([this, backward](Matscs<Scalar> *p, Scalar xmin, Scalar xmax) {
-                        int n = this->se2d->options._stepsPerSector;
-                        Scalar h = (xmax - xmin) / n;
-                        p->sectors.resize(n);
-                        Scalar left = xmin;
-                        for (int i = 0; i < n; ++i) {
-                            Scalar right = xmax - (n - i - 1) * h;
-                            p->sectors[i] = new typename Matscs<Scalar>::Sector(p, left, right, backward);
-                            left = right;
-                        }
-                        p->matchIndex = n - 2;
-                        p->match = p->sectors[n - 1]->min;
-                    })));
+            ([this, backward](const Matscs<Scalar> *p, Scalar xmin,
+                              Scalar xmax) -> SectorBuilderReturn<Matscs<Scalar>> {
+                int n = this->se2d->options._stepsPerSector;
+                Scalar h = (xmax - xmin) / n;
+                std::vector<typename Matscs<Scalar>::Sector *> scsSectors;
+                scsSectors.resize(n);
+                Scalar left = xmin;
+                for (int i = 0; i < n; ++i) {
+                    Scalar right = xmax - (n - i - 1) * h;
+                    scsSectors[i] = new typename Matscs<Scalar>::Sector(p, left, right, backward);
+                    left = right;
+                }
+                return {std::move(scsSectors), n - 2};
+            }));
 }
 
 template<typename Scalar>

@@ -47,7 +47,6 @@ namespace matslise {
         std::vector<typename Matslise2D<Scalar>::Sector *> sectors;
         ArrayXs grid;
         int N;
-        Scalar match;
         int matchIndex;
         Options2<Scalar> options;
         Y<Scalar, Eigen::Dynamic> dirichletBoundary;
@@ -140,7 +139,7 @@ namespace matslise {
         class Sector {
         public:
             const Matslise2D<Scalar> *se2d;
-            AbstractMatslise<Scalar> *matslise;
+            AbstractMatslise <Scalar> *matslise;
             matslise::Matscs<Scalar> *matscs;
             ArrayXs vbar;
             Scalar min, max;
@@ -166,6 +165,11 @@ namespace matslise {
             Scalar error() const;
 
             std::function<ArrayXs(Scalar)> basisCalculator() const;
+
+
+            static bool compare(const Sector &a, const Sector &b) {
+                return a.vbar.minCoeff() < b.vbar.minCoeff();
+            }
 
         public:
             MatrixXs calculateDeltaV(const Scalar &y) const;

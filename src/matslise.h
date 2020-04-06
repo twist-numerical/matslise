@@ -10,7 +10,7 @@
 #include <memory>
 #include "util/eigen.h"
 #include "util/y.h"
-#include "util/sectorbuilder_header.h"
+#include "util/sectorbuilder.h"
 
 #define MATSLISE_HMAX_delta 17
 #define MATSLISE_ETA_delta 8
@@ -104,29 +104,16 @@ namespace matslise {
         std::function<Scalar(Scalar)> V;
         Scalar xmin, xmax;
         int sectorCount;
-        Scalar match;
         int matchIndex;
         std::vector<Matslise::Sector *> sectors;
     public:
-        static std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> UNIFORM(int sectorCount) {
-            return std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>>(
-                    new matslise::sectorbuilder::Uniform<Matslise<Scalar>>(sectorCount));
-        }
-
-        static std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> AUTO(const Scalar &tolerance) {
-            return std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>>(
-                    new matslise::sectorbuilder::Auto<Matslise<Scalar>>(tolerance));
-        }
-
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
-                 std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder) : V(V), xmin(xmin),
-                                                                                             xmax(xmax) {
-            sectorBuilder->build(this, xmin, xmax);
+                 SectorBuilder<Matslise<Scalar>> sectorBuilder) : V(V), xmin(xmin), xmax(xmax) {
+            auto buildSectors = sectorBuilder(this, xmin, xmax);
+            sectors = std::move(buildSectors.sectors);
+            matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();
         }
-
-        Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax, int sectorCount)
-                : Matslise(V, xmin, xmax, UNIFORM(sectorCount)) {};
 
         bool contains(const Scalar &point) const {
             return point <= xmax && point >= xmin;
@@ -215,6 +202,10 @@ namespace matslise {
 
             virtual ~Sector();
 
+            static bool compare(const Sector &a, const Sector &b) {
+                return a.vs[0] < b.vs[0];
+            }
+
         private :
             std::pair<Y<Scalar>, Scalar>
             propagateDelta(
@@ -231,7 +222,7 @@ namespace matslise {
         const Matslise<Scalar> *ms;
     public:
         MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax,
-                     std::shared_ptr<matslise::SectorBuilder<Matslise<Scalar>>> sectorBuilder);
+                     matslise::SectorBuilder<Matslise<Scalar>> sectorBuilder);
 
         Scalar estimatePotentialMinimum() const override {
             return ms->estimatePotentialMinimum();
@@ -268,6 +259,5 @@ namespace matslise {
 
 #include "matscs.h"
 #include "matslise2d.h"
-#include "util/sectorbuilder.h"
 
 #endif //SCHRODINGER_MATSLISE_H

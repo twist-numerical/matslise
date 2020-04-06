@@ -29,30 +29,17 @@ namespace matslise {
         Scalar xmin, xmax;
         int sectorCount;
         std::vector<Matscs::Sector *> sectors;
-        Scalar match;
         int matchIndex;
     public:
-        static std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> UNIFORM(int sectorCount) {
-            return std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>>(
-                    new matslise::sectorbuilder::Uniform<Matscs<Scalar>>(sectorCount));
-        }
-
-        static std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> AUTO(const Scalar &tolerance) {
-            return std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>>(
-                    new matslise::sectorbuilder::Auto<Matscs<Scalar>>(tolerance));
-        }
-
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
                int n, const Scalar &xmin, const Scalar &xmax,
-               std::shared_ptr<matslise::SectorBuilder<Matscs<Scalar>>> sectorBuilder) :
+               SectorBuilder<Matscs<Scalar>> sectorBuilder) :
                 V(V), n(n), xmin(xmin), xmax(xmax) {
-            sectorBuilder->build(this, xmin, xmax);
+            auto sectorsBuild = sectorBuilder(this, xmin, xmax);
+            sectors = std::move(sectorsBuild.sectors);
+            matchIndex = std::move(sectorsBuild.matchIndex);
             sectorCount = sectors.size();
         }
-
-        Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
-               int n, const Scalar &xmin, const Scalar &xmax, int sectorCount)
-                : Matscs(V, n, xmin, xmax, UNIFORM(sectorCount)) {};
 
         bool contains(const Scalar &point) const {
             return point <= xmax && point >= xmin;
@@ -125,6 +112,10 @@ namespace matslise {
             Scalar error() const;
 
             ~Sector();
+
+            static bool compare(const Sector &a, const Sector &b) {
+                return (a.vs[0].diagonal() - b.vs[0].diagonal()).sum() < 0;
+            }
 
         private :
             MatrixXcs theta(const Y <Scalar, Eigen::Dynamic> &) const;

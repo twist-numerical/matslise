@@ -37,7 +37,7 @@ TEST_CASE("coffey_evans", "[matslise][coffey_evans]") {
     const double B = 20;
     Matslise<double> ms([B](double x) -> double {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, 0, constants<double>::PI/2, 31);
+    }, 0, constants<double>::PI / 2, sector_builder::uniform<Matslise<>>(31));
 
     Y<double> y0({0, 1}, {0, 0});
     Y<double> y1({1, 0}, {0, 0});
@@ -48,7 +48,7 @@ TEST_CASE("coffey_evans", "[matslise][coffey_evans]") {
 TEST_CASE("high potential", "[matslise][high]") {
     Matslise<double> ms([](double x) -> double {
         return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 31);
+    }, 0, 1, sector_builder::uniform<Matslise<>>(31));
 
     Y<double> y0({1, 0}, {0, 0});
     Y<double> y1({0, -1}, {0, 0});
@@ -58,7 +58,7 @@ TEST_CASE("high potential", "[matslise][high]") {
 TEST_CASE("high potential (auto)", "[matslise][high]") {
     Matslise<double> ms([](double x) -> double {
         return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, Matslise<double>::AUTO(1e-6));
+    }, 0, 1, sector_builder::automatic<Matslise<>>(1e-6));
 
     Y<double> y0({1, 0}, {0, 0});
     Y<double> y1({0, -1}, {0, 0});
