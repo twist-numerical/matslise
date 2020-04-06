@@ -14,9 +14,9 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->V(x, ybar); };
     vbar = se2d->grid.unaryExpr(vbar_fun);
     if (se2d->options.nestedOptions._symmetric)
-        matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, se2d->options.nestedOptions._builder);
+        matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
     else
-        matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max,
+        matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9,
                                         se2d->options.nestedOptions._builder);
 
     vector<pair<int, Scalar>> index_eigv = matslise->eigenvaluesByIndex(0, se2d->N, Y<Scalar>::Dirichlet());

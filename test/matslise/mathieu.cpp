@@ -62,7 +62,7 @@ vector<double> correct = {-0.110248816992, 3.917024772998, 9.047739259809, 16.03
                           40000.000012500299, 40401.000012376229};
 
 TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
 
     Y<double> y0({0, 1}, {0, 0});
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
@@ -76,7 +76,7 @@ TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, sector_builder::automatic<Matslise<>>(1e-8));
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8);
 
     Y<double> y0({0, 1}, {0, 0});
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
@@ -91,7 +91,7 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu]
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary conditions)",
           "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, sector_builder::automatic<Matslise<>>(1e-8));
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8);
 
     Y<double> y0({0, -1}, {0, 0});
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
@@ -105,7 +105,7 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary con
 }
 
 TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
 
     unsigned int offset = 100;
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(
@@ -118,7 +118,7 @@ TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
 }
 
 TEST_CASE("Mathieu normalized", "[mathieu][matslise][eigenfunctionCalculator]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, sector_builder::uniform<Matslise<>>(8));;
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));;
     Y<double> ystart({0, 1}, {0, 0});
 
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart, ystart);
@@ -176,7 +176,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -2.57141674375544, -3.13821749458430, -3.10573501735402, -2.51014152163740, -1.48587759669341,
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
     Y<double> ystart({0, 1}, {0, 0});
 
     {

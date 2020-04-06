@@ -7,8 +7,6 @@
 #include "../util/constants.h"
 #include "../util/find_sector.h"
 
-#define EPS (1.e-12)
-
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
@@ -49,17 +47,16 @@ Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<
 
 template<typename Scalar>
 pair<int, Scalar>
-newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, const Y<Scalar> &right, Scalar tol,
-                bool use_h) {
+newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) {
     Scalar adjust, error, derror, theta;
     int i = 0;
     do {
         tie(error, derror, theta) = ms->matchingError(E, left, right, use_h);
         adjust = error / derror;
         E -= adjust;
-    } while (++i < 20 && abs(adjust) > tol);
+    } while (++i < 20 && abs(adjust) > ms->tolerance);
 
-    if (i >= 20 && abs(adjust) > 1e-5) {
+    if (i >= 20 && abs(adjust) > 100*ms->tolerance) {
         cerr << "Newton-iteration did not converge for E=" << (double) E << endl;
     }
 
@@ -106,8 +103,8 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         c = ia + 1 < ib || tb - ta < 1e-5 || depth % 2 == 0
             ? .5 * (a + b)
             : ((tb - ia) * a - (ta - ia) * b) / (tb - ta);
-        if ((tb - ta < 0.05 && depth > 3) || depth > 20) {
-            eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
+        if ((tb - ta < 0.01 && depth > 3) || depth > 20) {
+            eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, true));
         } else {
             tc = get<2>(ms->matchingError(c, left, right)) / constants<Scalar>::PI;
             if (isnan(tc)) {
@@ -117,7 +114,7 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
                 toCheck.push(make_tuple(c, tc, b, tb, depth));
             } else {
                 if (abs(tc - ia) < 1e-8)
-                    eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, 1e-9, true));
+                    eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, true));
                 else if ((ta - ia) * (tc - ia) < 0)
                     toCheck.push(make_tuple(a, ta, c, tc, depth + 1));
                 else
@@ -174,7 +171,7 @@ Matslise<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const Y<Sc
 template<typename Scalar>
 Scalar
 Matslise<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
-    return abs(E - newtonIteration<Scalar>(this, E, left, right, 1e-9, false).second);
+    return abs(E - newtonIteration<Scalar>(this, E, left, right, false).second);
 }
 
 template<typename Scalar>
@@ -187,7 +184,7 @@ template<typename Scalar>
 vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
                                    const Y<Scalar> &left, const Y<Scalar> &right) {
     auto n = static_cast<unsigned int>(ms.sectorCount);
-    const Scalar& match = ms.sectors[ms.matchIndex]->max;
+    const Scalar &match = ms.sectors[ms.matchIndex]->max;
     vector<Y<Scalar>> ys(n + 1);
     ys[0] = left;
     unsigned int m = 0;

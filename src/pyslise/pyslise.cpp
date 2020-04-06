@@ -6,14 +6,8 @@
 void pySlise(py::module &m) {
 
     py::class_<Matslise<>>(m, "PySlise")
-            .def(py::init([](const function<double(double)> &V, double min, double max, int steps, double tolerance) {
-                if (steps != -1 && tolerance != -1)
-                    throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
-                if (steps == -1 && tolerance == -1)
-                    throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
-                return new Matslise<>(
-                        V, min, max,
-                        steps != -1 ? Matslise<>::UNIFORM(steps) : Matslise<>::AUTO(tolerance));
+            .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
+                return new Matslise<>(V, min, max, tolerance);
             }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
 
@@ -23,7 +17,7 @@ Note: only one of steps and tolerance have to be set.
 :param float min, max: the ends of the domain.
 :param int steps: the number of steps to take.
 :param int tolerance: automatically choose steps with at least the given accuracy.
-)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("steps") = -1, py::arg("tolerance") = -1)
+)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8)
             .def("propagate",
                  [](Matslise<> &m, double E, const Vector2d &y, double a, double b) ->
                          tuple<Vector2d, double> {
@@ -145,7 +139,7 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
                  },
                  py::arg("E"), py::arg("left"), py::arg("right"))
             .def_readonly("__sectorCount", &Matslise<>::sectorCount)
-            .def_readonly("__match", &Matslise<>::match)
+            .def_readonly("__matchIndex", &Matslise<>::matchIndex)
             .def_readonly("__min", &Matslise<>::xmin)
             .def_readonly("__max", &Matslise<>::xmax)
             .def("__sector", [](Matslise<> &p, int i) -> Matslise<>::Sector * {
@@ -153,13 +147,8 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
             }, py::return_value_policy::reference);
 
     py::class_<MatsliseHalf<>>(m, "PySliseHalf")
-            .def(py::init([](const function<double(double)> &V, double xmax, int steps, double tolerance) {
-                if (steps != -1 && tolerance != -1)
-                    throw invalid_argument("Not both 'steps' and 'tolerance' can be set.");
-                if (steps == -1 && tolerance == -1)
-                    throw invalid_argument("One of 'steps' and 'tolerance' must be set.");
-                return new MatsliseHalf<>(V, xmax,
-                                       steps != -1 ? Matslise<>::UNIFORM(steps) : Matslise<>::AUTO(tolerance));
+            .def(py::init([](const function<double(double)> &V, double xmax, double tolerance) {
+                return new MatsliseHalf<>(V, xmax, tolerance);
             }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
 
@@ -169,7 +158,7 @@ Note: only one of steps and tolerance have to be set.
 :param float min, max: the ends of the domain.
 :param int steps: the number of steps to take.
 :param int tolerance: automatically choose steps with at least the given accuracy.
-)"""", py::arg("V"), py::arg("xmax"), py::arg("steps") = -1, py::arg("tolerance") = -1)
+)"""", py::arg("V"), py::arg("xmax"), py::arg("tolerance") = 1e-8)
             .def("eigenvalues", [](MatsliseHalf<double> &m, double Emin, double Emax,
                                    const Vector2d &side) -> vector<pair<int, double>> {
                 return m.eigenvalues(Emin, Emax, make_y(side));

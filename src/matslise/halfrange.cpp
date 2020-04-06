@@ -10,9 +10,9 @@ using namespace Eigen;
 #define EPS (1e-12)
 
 template<typename Scalar>
-MatsliseHalf<Scalar>::MatsliseHalf(
-        function<Scalar(Scalar)> V, const Scalar &xmax, SectorBuilder<Matslise<Scalar>> sectorBuilder) {
-    ms = new Matslise<Scalar>(V, 0, xmax, sectorBuilder);
+MatsliseHalf<Scalar>::MatsliseHalf(function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance,
+                                   SectorBuilder<Matslise<Scalar>> sectorBuilder) {
+    ms = new Matslise<Scalar>(V, 0, xmax, tolerance, sectorBuilder);
 }
 
 template<typename Scalar>

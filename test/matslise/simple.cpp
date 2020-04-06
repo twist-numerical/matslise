@@ -13,7 +13,7 @@ TEST_CASE("V(x) = 0", "[matslise][simple]") {
     Matslise<double> ms([](double x) -> double {
         (void) x;
         return 0;
-    }, -constants<double>::PI / 2, constants<double>::PI / 2, sector_builder::uniform<Matslise<>>(11));
+    }, -constants<double>::PI / 2, constants<double>::PI / 2, 1e-8, sector_builder::uniform<Matslise<>>(11));
 
 
     Y<double> y0({0, 1}, {0, 0});
@@ -32,7 +32,7 @@ TEST_CASE("V(x) = 0 (auto)", "[matslise][simple][auto)") {
     Matslise<double> ms([](double x) -> double {
         (void) x;
         return 0;
-    }, -constants<double>::PI / 2, constants<double>::PI / 2, sector_builder::automatic<Matslise<>>(1e-8));
+    }, -constants<double>::PI / 2, constants<double>::PI / 2, 1e-8);
 
 
     Y<double> y0({0, 1}, {0, 0});

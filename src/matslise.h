@@ -106,9 +106,17 @@ namespace matslise {
         int sectorCount;
         int matchIndex;
         std::vector<Matslise::Sector *> sectors;
+
+        Scalar tolerance;
     public:
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
-                 SectorBuilder<Matslise<Scalar>> sectorBuilder) : V(V), xmin(xmin), xmax(xmax) {
+                 const Scalar &tolerance = 1e-8)
+                : Matslise(V, xmin, xmax, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {
+        }
+
+        Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
+                 const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
+                : V(V), xmin(xmin), xmax(xmax), tolerance(tolerance) {
             auto buildSectors = sectorBuilder(this, xmin, xmax);
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
@@ -221,7 +229,10 @@ namespace matslise {
     public:
         const Matslise<Scalar> *ms;
     public:
-        MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax,
+        MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance)
+                : MatsliseHalf(V, xmax, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {}
+
+        MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance,
                      matslise::SectorBuilder<Matslise<Scalar>> sectorBuilder);
 
         Scalar estimatePotentialMinimum() const override {
