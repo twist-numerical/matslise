@@ -16,8 +16,9 @@ const correct = [
                     tolerance: 1e-5,
                 }
             });
-        const eigenvalue = matslise.firstEigenvalue();
-        t.true(Math.abs(correct[0] - eigenvalue) < 1e-5);
+        const eigenvalues = matslise.eigenvaluesByIndex(0,1);
+        for(let i = 0; i < eigenvalues.length; ++i)
+            t.true(Math.abs(correct[i] - eigenvalues[i]) < 1e-5);
 /*
         for (let i = 0; i < correct.length; ++i) {
             t.true(Math.abs(correct[i] - eigenvalues[i]) < 1e-5,

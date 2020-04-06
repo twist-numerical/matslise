@@ -51,14 +51,9 @@ void bind_matslise() {
 
     class_<Matslise<>, base<AbstractMatslise<double>>>("Matslise")
             .constructor(optional_override(
-                    [](val f, double min, double max, const val &options) -> Matslise<> * {
-                        matslise::SectorBuilder<Matslise<>> builder;
-                        if (options["sectorCount"] != val::undefined())
-                            builder = sector_builder::uniform<Matslise<>>(options["sectorCount"].as<int>());
-                        else if (options["tolerance"] != val::undefined())
-                            builder = sector_builder::automatic<Matslise<>>(options["tolerance"].as<double>());
-
-                        return new Matslise<>([f](double x) -> double { return f(x).as<double>(); }, min, max, builder);
+                    [](val f, double min, double max, double tolerance) -> Matslise<> * {
+                        return new Matslise<>([f](double x) -> double { return f(x).as<double>(); },
+                                              min, max, tolerance);
                     }))
             .function("propagate", optional_override(
                     [](const Matslise<> &m, double E, const Vector2d &y, double a, double b) ->
@@ -81,14 +76,9 @@ void bind_matslise() {
 
     class_<MatsliseHalf<>, base<AbstractMatslise<double>>>("MatsliseHalfRange")
             .constructor(optional_override(
-                    [](val f, double max, const val &options) -> MatsliseHalf<> * {
-                        matslise::SectorBuilder<Matslise<>> builder;
-                        if (options["sectorCount"] != val::undefined())
-                            builder = sector_builder::uniform<Matslise<>>(options["sectorCount"].as<int>());
-                        else if (options["tolerance"] != val::undefined())
-                            builder = sector_builder::automatic<Matslise<>>(options["tolerance"].as<double>());
-
-                        return new MatsliseHalf<>([f](double x) -> double { return f(x).as<double>(); }, max, builder);
+                    [](val f, double max, double tolerance) -> MatsliseHalf<> * {
+                        return new MatsliseHalf<>([f](double x) -> double { return f(x).as<double>(); }, max,
+                                                  tolerance);
                     }))
             .function("sectorPoints", optional_override(
                     [](const MatsliseHalf<> &m) -> val {

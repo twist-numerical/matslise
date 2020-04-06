@@ -50,7 +50,7 @@ const correct = [-0.110248816992, 3.917024772998, 9.047739259809, 16.03297008140
 
 (new Module()).then(({Matslise}) => {
     test('mathieu', t => {
-        const matslise = new Matslise((x) => 2 * Math.cos(2 * x), 0, Math.PI, {tolerance: 1e-5});
+        const matslise = new Matslise((x) => 2 * Math.cos(2 * x), 0, Math.PI, 1e-5);
         const eigenvalues = matslise.eigenvaluesByIndex(0, correct.length, [0, 1], [0, 1]);
         t.is(correct.length, eigenvalues.length);
         for (let i = 0; i < correct.length; ++i) {
