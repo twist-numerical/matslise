@@ -11,6 +11,7 @@
 
 using namespace std;
 using namespace matslise;
+using namespace Eigen;
 
 
 template<typename Scalar>

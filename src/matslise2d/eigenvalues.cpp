@@ -174,7 +174,7 @@ Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left
         if (depth >= maxDepth) {
             Scalar E = eigenvalue(left, guess);
 
-            if (!set_contains(seen, E, 1e-5) && is_first_eigenvalue(*this, left, E))
+            if (!set_contains(seen, E, Scalar(1e-5)) && is_first_eigenvalue(*this, left, E))
                 return E;
             seen.insert(E);
         } else {

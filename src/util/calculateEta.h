@@ -3,25 +3,23 @@
 
 #include "eigen.h"
 
+template<typename Scalar>
+struct CalculateEtaData {
+    static const int taylor_degree;
+    static const Scalar taylor_eta8[];
+    static const Scalar taylor_eta9[];
+};
 
-using namespace Eigen;
 
 template<typename Scalar>
 Scalar *calculateEta(Scalar Z, int etaCount) {
     Scalar *eta;
     if (abs(Z) < 0.5) {
-        static Scalar eta9[] = {1.527349308567059e-009, 0.36365459727787e-10, 0.00395276736172e-10,
-                                0.00002635178241e-10, 0.00000012199899e-10, 0.00000000042069e-10,
-                                0.00000000000113e-10, 0};
-        static Scalar eta8[] = {2.901963686277412e-008, 0.76367465428353e-9, 0.00909136493195e-9,
-                                0.00006587945603e-9, 0.00000032939728e-9, 0.00000000121999e-9,
-                                0.00000000000351e-9, 0.00000000000001e-9};
-
         Scalar e9 = 0, e8 = 0;
         Scalar z = 1;
-        for (int i = 0; i < 8; ++i, z *= Z) {
-            e9 += z * eta9[i];
-            e8 += z * eta8[i];
+        for (int i = 0; i <= CalculateEtaData<Scalar>::taylor_degree; ++i, z *= Z) {
+            e8 += z * CalculateEtaData<Scalar>::taylor_eta8[i];
+            e9 += z * CalculateEtaData<Scalar>::taylor_eta9[i];
         }
 
         eta = new Scalar[11]{0, 0, 0, 0, 0, 0, 0, 0, 0, e8, e9};
@@ -53,8 +51,8 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
 }
 
 template<typename Scalar>
-Array<Scalar, Dynamic, 1> *calculateEta(const Array<Scalar, Dynamic, 1> &Z, int etaCount) {
-    auto *eta = new Array<Scalar, Dynamic, 1>[etaCount];
+Eigen::Array<Scalar, Eigen::Dynamic, 1> *calculateEta(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &Z, int etaCount) {
+    auto *eta = new Eigen::Array<Scalar, Eigen::Dynamic, 1>[etaCount];
     for (int j = 0; j < etaCount; ++j)
         eta[j].resize(Z.size(), 1);
 
