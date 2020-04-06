@@ -6,7 +6,7 @@ using namespace matslise;
 using namespace std;
 
 template<typename Scalar>
-Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scalar &_E) const {
+Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scalar &_E, bool use_h) const {
     const Scalar tolerance = 1e-9;
     const Scalar minTolerance = 1e-5;
     const int maxIterations = 30;
@@ -15,7 +15,7 @@ Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scal
     Scalar error, derror;
     int i = 0;
     do {
-        tie(error, derror) = matchingError(left, E);
+        tie(error, derror) = matchingError(left, E, use_h);
         E -= error / derror;
         ++i;
     } while (i < maxIterations && abs(error) > tolerance);
@@ -23,6 +23,11 @@ Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scal
     if (abs(error) > minTolerance)
         return NAN;
     return E;
+}
+
+template<typename Scalar>
+Scalar Matslise2D<Scalar>::eigenvalueError(const Y<Scalar, Dynamic> &left, const Scalar &E) const {
+    return abs(E - eigenvalue(left, E, false));
 }
 
 template<typename Scalar, typename I>
@@ -181,7 +186,7 @@ Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left
             auto errors = matchingErrors(left, guess);
             sort(errors.begin(), errors.end(),
                  [](const pair<Scalar, Scalar> &a, const pair<Scalar, Scalar> &b) -> bool {
-                     return a.first/a.second > b.first/b.second;
+                     return a.first / a.second > b.first / b.second;
                  });
             for (auto it = errors.begin(); it != errors.end() && it != errors.begin() + 3; ++it) {
                 Scalar newGuess = guess - it->first / it->second;

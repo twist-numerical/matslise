@@ -1,7 +1,7 @@
 import Module, {
   AbstractMatslise,
-  MatsliseHalfRange,
-  Matslise
+  MatsliseHalf,
+  Matslise,
 } from "../util/matsliseLoader";
 import math from "mathjs-expression-parser";
 
@@ -11,7 +11,7 @@ const evaluatePair = ([a, b]: [string, string]): [number, number] => {
 
 export default class Problem {
   public Matslise: typeof Matslise | null = null;
-  public HalfRange: typeof MatsliseHalfRange | null = null;
+  public MatsliseHalf: typeof MatsliseHalf | null = null;
   public matslise: AbstractMatslise | null = null;
   public parsed: {
     potential: (x: number) => number;
@@ -37,14 +37,14 @@ export default class Problem {
   }
 
   initMatslise() {
-    new Module().then(module => {
+    new Module().then((module) => {
       this.Matslise = module.Matslise;
-      this.HalfRange = module.MatsliseHalfRange;
+      this.MatsliseHalf = module.MatsliseHalf;
     });
   }
 
   parse() {
-    if (this.Matslise === null || this.HalfRange === null)
+    if (this.Matslise === null || this.MatsliseHalf === null)
       throw new Error("Wait until problem.Matslise !== null");
     if (this.matslise !== undefined) this.reset();
     const compiledPotential = math.compile(this.potential);
@@ -61,15 +61,20 @@ export default class Problem {
       left: this.symmetric ? [ymax[1], -ymax[0]] : [ymin[1], -ymin[0]],
       right: [ymax[1], -ymax[0]],
       tolerance: math.eval(this.tolerance),
-      symmetric: this.symmetric
+      symmetric: this.symmetric,
     };
     this.matslise = this.parsed.symmetric
-      ? new this.HalfRange(potential, this.parsed.x[1], {
-          tolerance: this.parsed.tolerance
-        })
-      : new this.Matslise(potential, this.parsed.x[0], this.parsed.x[1], {
-          tolerance: this.parsed.tolerance
-        });
+      ? new this.MatsliseHalf(
+          potential,
+          this.parsed.x[1],
+          this.parsed.tolerance
+        )
+      : new this.Matslise(
+          potential,
+          this.parsed.x[0],
+          this.parsed.x[1],
+          this.parsed.tolerance
+        );
     this.toDelete.push(this.matslise!);
   }
 

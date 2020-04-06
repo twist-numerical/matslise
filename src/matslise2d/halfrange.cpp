@@ -38,6 +38,11 @@ Scalar Matslise2DHalf<Scalar>::eigenvalue(const Scalar &guessE) const {
 }
 
 template<typename Scalar>
+Scalar Matslise2DHalf<Scalar>::eigenvalueError(const Scalar &E) const {
+    return std::min(se2d->eigenvalueError(neumannBoundary, E), se2d->eigenvalueError(dirichletBoundary, E));
+}
+
+template<typename Scalar>
 vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax) const {
     vector<Scalar> eigenvalues = se2d->eigenvalues(neumannBoundary, Emin, Emax);
     vector<Scalar> eigenvaluesOdd = se2d->eigenvalues(dirichletBoundary, Emin, Emax);

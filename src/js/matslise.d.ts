@@ -31,13 +31,7 @@ declare class Matslise extends AbstractMatslise {
         potential: (x: number) => number,
         xmin: number,
         xmax: number,
-        options:
-            | {
-            sectorCount: number;
-        }
-            | {
-            tolerance: number;
-        }
+        tolerance: number
     );
 }
 
@@ -45,17 +39,26 @@ declare class MatsliseHalf extends AbstractMatslise {
     constructor(
         potential: (x: number) => number,
         xmax: number,
-        options:
-            | {
-            sectorCount: number;
-        }
-            | {
-            tolerance: number;
-        }
+        tolerance: number
     );
 }
 
-declare class Matslise2D {
+declare class AbstractMatslise2D {
+
+    firstEigenvalue(): number;
+
+    eigenvalue(E: number): number;
+
+    eigenvalues(emin: number, emax: number): number[];
+
+    eigenvaluesByIndex(imin: number, imax: number): number[];
+
+    eigenvalueError(E: number): number;
+
+    delete(): void;
+}
+
+declare class Matslise2D extends AbstractMatslise2D {
     constructor(
         potential: (x: number, y: number) => number,
         xmin: number,
@@ -72,22 +75,31 @@ declare class Matslise2D {
             }
         }
     );
+}
 
-    eigenvalue(E: number): number;
-
-    firstEigenvalue(): number;
-
-    eigenvalues(emin: number, emax: number): number[];
-
-    eigenvaluesByIndex(imin: number, imax: number): number[];
-
-    delete(): void;
+declare class Matslise2DHalf extends AbstractMatslise2D {
+    constructor(
+        potential: (x: number, y: number) => number,
+        xmin: number,
+        xmax: number,
+        ymax: number,
+        options: {
+            tolerance?: number;
+            sectorCount?: number;
+            nested?: {
+                symmetric?: boolean;
+                tolerance?: number;
+                sectorCount?: number;
+            }
+        }
+    );
 }
 
 declare interface matslise {
     Matslise: typeof Matslise;
     MatsliseHalf: typeof MatsliseHalf;
     Matslise2D: typeof Matslise2D;
+    Matslise2DHalf: typeof Matslise2DHalf;
 }
 
 export default class MatsliseModule {

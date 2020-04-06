@@ -6,7 +6,43 @@ using namespace std;
 using namespace Eigen;
 
 void bind_matslise2d() {
-    class_<Matslise2D<>>("Matslise2D")
+    class_<AbstractMatslise2D<double>>("AbstractMatslise2D")
+            .function("firstEigenvalue", &AbstractMatslise2D<double>::firstEigenvalue)
+            .function("eigenvalue", &AbstractMatslise2D<double>::eigenvalue)
+            .function("eigenvalueError", &AbstractMatslise2D<double>::eigenvalueError)
+            .function("eigenvalues", optional_override([](
+                    const AbstractMatslise2D<double> &se2d, double emin, double emax) -> val {
+                return vector2val(se2d.eigenvalues(emin, emax));
+            }))
+            .function("eigenvaluesByIndex",
+                      optional_override([](const AbstractMatslise2D<double> &se2d, int imin, int imax) -> val {
+                          return vector2val(se2d.eigenvaluesByIndex(imin, imax));
+                      }))
+            .function("computeEigenfunction",
+                      optional_override(
+                              [](const AbstractMatslise2D<double> &se2d, double E, const val &x, const val &y) -> val {
+                                  vector<ArrayXXd> result = se2d.eigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
+                                  val r = val::array();
+                                  for (ArrayXXd &eigenfunction : result)
+                                      r.call<val>("push", ArrayXXd2val(eigenfunction));
+                                  return r;
+                              }))
+            .function("eigenfunction", optional_override(
+                    [](const AbstractMatslise2D<double> &se2d, double E) -> val {
+                        std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunctionCalculator(
+                                E);
+                        val r = val::array();
+                        for (const auto &f : calculators)
+                            r.call<val>("push", val::global("Function")
+                                    .new_(string("calculator"), string(
+                                            "var f = function(x, y) { return calculator.eval(x, y); };"
+                                            "f.delete = function() { calculator.delete(); };"
+                                            "return f;")
+                                    )(f));
+                        return r;
+                    }));
+
+    class_<Matslise2D<>, base<AbstractMatslise2D<double>>>("Matslise2D")
             .constructor(optional_override(
                     [](val f, double xmin, double xmax, double ymin, double ymax,
                        const val &options) -> Matslise2D<> * {
@@ -32,14 +68,12 @@ void bind_matslise2d() {
                         return new Matslise2D<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
                                                 {{xmin, xmax}, ymin, ymax}, o2);
                     }))
-            .function("eigenvaluesByIndex", optional_override([](const Matslise2D<> &se2d, int imin, int imax) -> val {
-                return vector2val(se2d.eigenvaluesByIndex(imin, imax));
+            .function("sectorPoints", optional_override([](const Matslise2D<> &se2d) -> val {
+                val r = val::array();
+                for (int i = 1; i < se2d.sectorCount; ++i)
+                    r.call<val>("push", se2d.sectors[i]->min);
+                return r;
             }))
-            .function("eigenvalues",
-                      optional_override([](const Matslise2D<> &se2d, double emin, double emax) -> val {
-                          return vector2val(se2d.eigenvalues(emin, emax));
-                      }))
-            .function("firstEigenvalue", &AbstractMatslise2D<double>::firstEigenvalue)
             .function("matchingError", optional_override([](Matslise2D<> &se2d, double E) -> pair<double, double> {
                 return se2d.matchingError(E);
             }))
@@ -49,38 +83,7 @@ void bind_matslise2d() {
                 for (pair<double, double> &eigenvalue  :result)
                     r.call<val>("push", eigenvalue);
                 return r;
-            }))
-            .function("eigenvalue", optional_override([](Matslise2D<> &se2d, double E) -> double {
-                return se2d.eigenvalue(E);
-            }))
-            .function("sectorPoints", optional_override([](const Matslise2D<> &se2d) -> val {
-                val r = val::array();
-                for (int i = 1; i < se2d.sectorCount; ++i)
-                    r.call<val>("push", se2d.sectors[i]->min);
-                return r;
-            }))
-            .function("computeEigenfunction",
-                      optional_override([](Matslise2D<> &se2d, double E, const val &x, const val &y) -> val {
-                          vector<ArrayXXd> result = se2d.eigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
-                          val r = val::array();
-                          for (ArrayXXd &eigenfunction : result)
-                              r.call<val>("push", ArrayXXd2val(eigenfunction));
-                          return r;
-                      }))
-            .function("eigenfunction", optional_override(
-                    [](const Matslise2D<> &se2d, double E) -> val {
-                        std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunctionCalculator(
-                                E);
-                        val r = val::array();
-                        for (const auto &f : calculators)
-                            r.call<val>("push", val::global("Function")
-                                    .new_(string("calculator"), string(
-                                            "var f = function(x, y) { return calculator.eval(x, y); };"
-                                            "f.delete = function() { calculator.delete(); };"
-                                            "return f;")
-                                    )(f));
-                        return r;
-                    }));
+            }));
 
     class_<Matslise2DHalf<>>("Matslise2DHalf")
             .constructor(optional_override(

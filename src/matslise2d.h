@@ -17,6 +17,8 @@ namespace matslise {
 
         virtual Scalar eigenvalue(const Scalar &Eguess) const = 0;
 
+        virtual Scalar eigenvalueError(const Scalar &E) const = 0;
+
         virtual std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax) const = 0;
 
         virtual std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const = 0;
@@ -86,6 +88,10 @@ namespace matslise {
             return eigenvalue(dirichletBoundary, Eguess);
         }
 
+        Scalar eigenvalueError(const Scalar &E) const override {
+            return eigenvalueError(dirichletBoundary, E);
+        }
+
         std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax) const override {
             return eigenvalues(dirichletBoundary, Emin, Emax);
         }
@@ -103,18 +109,22 @@ namespace matslise {
         }
 
     public: // left boundary conditions
-        std::pair<MatrixXs, MatrixXs> matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
+        std::pair<MatrixXs, MatrixXs> matchingErrorMatrix(
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h = true) const;
 
         std::vector<std::pair<Scalar, Scalar>> matchingErrors(
-                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h = true) const;
 
-        std::pair<Scalar, Scalar> matchingError(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
+        std::pair<Scalar, Scalar> matchingError(
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h = true) const;
 
         std::vector<Scalar> firstEigenvalues(const Y<Scalar, Eigen::Dynamic> &left, int n) const;
 
         Scalar firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const;
 
-        Scalar eigenvalue(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Eguess) const;
+        Scalar eigenvalue(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Eguess, bool use_h = true) const;
+
+        Scalar eigenvalueError(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
 
         std::vector<Scalar> eigenvalues(
                 const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Emin, const Scalar &Emax) const;
@@ -139,7 +149,7 @@ namespace matslise {
         class Sector {
         public:
             const Matslise2D<Scalar> *se2d;
-            AbstractMatslise <Scalar> *matslise;
+            AbstractMatslise<Scalar> *matslise;
             matslise::Matscs<Scalar> *matscs;
             ArrayXs vbar;
             Scalar min, max;
@@ -201,6 +211,8 @@ namespace matslise {
         Scalar firstEigenvalue() const override;
 
         Scalar eigenvalue(const Scalar &Eguess) const override;
+
+        Scalar eigenvalueError(const Scalar &E) const override;
 
         std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax) const override;
 

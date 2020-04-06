@@ -52,6 +52,7 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
         eigenvalues_simple.push_back(E);
         const pair<double, double> &error = p2.matchingError(E);
         CHECK(abs(error.first) < 1e-3);
+        CHECK(p2.eigenvalueError(E) < 1e-5);
 
         if (E < 6) {
             double El = p2.eigenvalue(E - 0.01);
@@ -111,6 +112,8 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
             double Em = p2.eigenvalue(E + 0.01);
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
+            CHECK(p2.eigenvalueError(El) < 1e-5);
+            CHECK(p2.eigenvalueError(Em) < 1e-5);
         }
 
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
@@ -161,6 +164,8 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
             double Em = p2.eigenvalue(E + 0.01);
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
+            CHECK(p2.eigenvalueError(El) < 1e-5);
+            CHECK(p2.eigenvalueError(Em) < 1e-5);
         }
 
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
@@ -211,6 +216,8 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
             double Em = p2.eigenvalue(E + 0.01);
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
+            CHECK(p2.eigenvalueError(El) < 1e-5);
+            CHECK(p2.eigenvalueError(Em) < 1e-5);
         }
 
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);

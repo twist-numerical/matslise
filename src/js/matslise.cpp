@@ -74,7 +74,7 @@ void bind_matslise() {
                         return r;
                     }));
 
-    class_<MatsliseHalf<>, base<AbstractMatslise<double>>>("MatsliseHalfRange")
+    class_<MatsliseHalf<>, base<AbstractMatslise<double>>>("MatsliseHalf")
             .constructor(optional_override(
                     [](val f, double max, double tolerance) -> MatsliseHalf<> * {
                         return new MatsliseHalf<>([f](double x) -> double { return f(x).as<double>(); }, max,

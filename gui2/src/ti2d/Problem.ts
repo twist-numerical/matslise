@@ -1,3 +1,4 @@
+// @ts-ignore
 import WorkerPromise from "webworker-promise";
 
 interface HistoryEntry {
@@ -54,8 +55,8 @@ export default class Problem {
           y: this.y,
           tolerance: this.tolerance,
           xSymmetric: this.xSymmetric,
-          ySymmetric: this.ySymmetric
-        }
+          ySymmetric: this.ySymmetric,
+        },
       })
     );
     this.parsed = true;
@@ -69,7 +70,7 @@ export default class Problem {
   async addToHistory(name: string, action: Promise<any>): Promise<any> {
     const entry: HistoryEntry = {
       name,
-      time: null
+      time: null,
     };
     this.history.push(entry);
     const start = +new Date();
@@ -83,7 +84,7 @@ export default class Problem {
       `Eigenvalues in [${emin.toPrecision(3)}, ${emax.toPrecision(3)}]`,
       this.worker.postMessage({
         type: "eigenvalues",
-        data: { emin, emax }
+        data: { emin, emax },
       })
     );
   }
@@ -93,16 +94,27 @@ export default class Problem {
       `Eigenvalues`,
       this.worker.postMessage({
         type: "eigenvaluesByIndex",
-        data: { imin, imax }
+        data: { imin, imax },
       })
     );
   }
 
   async firstEigenvalue(): Promise<number> {
-    return await this.worker.postMessage({
-      type: "firstEigenvalue"
-    });
+    return await this.addToHistory(
+      `First eigenvalues`,
+      await this.worker.postMessage({
+        type: "firstEigenvalue",
+      })
+    );
   }
 
-  eigenvalueError(E: number): number {}
+  async eigenvalueError(E: number): Promise<number> {
+    return await this.addToHistory(
+      `EigenvalueError ${E.toPrecision(4)}`,
+      await this.worker.postMessage({
+        type: "eigenvalueError",
+        data: { E },
+      })
+    );
+  }
 }

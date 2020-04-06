@@ -1,3 +1,4 @@
+// @ts-ignore
 import registerWebworker from "webworker-promise/lib/register";
 import MatsliseModule, { Matslise2D } from "../util/matsliseLoader";
 import math from "mathjs-expression-parser";
@@ -12,8 +13,8 @@ setTimeout(() => {
   new MatsliseModule({
     locateFile: (path: string) => {
       return path;
-    }
-  }).then(matslise => {
+    },
+  }).then((matslise) => {
     _Matslise2D = matslise.Matslise2D;
     for (const res of waitForMatslise) {
       res(true);
@@ -62,7 +63,7 @@ function parse(data: {
     y: data.ySymmetric ? [-y[1], y[1]] : y,
     tolerance: math.eval(data.tolerance),
     xSymmetric: data.xSymmetric,
-    ySymmetric: data.ySymmetric
+    ySymmetric: data.ySymmetric,
   };
 
   matslise = new _Matslise2D(
@@ -75,8 +76,8 @@ function parse(data: {
       tolerance: parsed.tolerance,
       nested: {
         tolerance: parsed.tolerance,
-        symmetric: data.xSymmetric
-      }
+        symmetric: data.xSymmetric,
+      },
     }
   );
 }
@@ -91,9 +92,14 @@ function eigenvaluesByIndex(imin: number, imax: number): number[] {
   return matslise.eigenvaluesByIndex(imin, imax);
 }
 
-function firstEigenvalue(): number[] {
+function firstEigenvalue(): number {
   if (matslise === undefined) throw new Error("Problem not parsed");
   return matslise.firstEigenvalue();
+}
+
+function eigenvalueError(E: number): number {
+  if (matslise === undefined) throw new Error("Problem not parsed");
+  return matslise.eigenvalueError(E);
 }
 
 registerWebworker(async (message: { type: string; data: any }) => {
@@ -113,5 +119,7 @@ registerWebworker(async (message: { type: string; data: any }) => {
       return eigenvaluesByIndex(message.data.imin, message.data.imax);
     case "firstEigenvalue":
       return firstEigenvalue();
+    case "eigenvalueError":
+      return eigenvalueError(message.data.E);
   }
 });

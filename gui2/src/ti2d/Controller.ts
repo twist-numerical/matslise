@@ -4,7 +4,7 @@ import Color = require("color");
 export interface Eigenvalue {
   index: number;
   value: number;
-  error: number;
+  error: number | null;
   visible: boolean;
   color: string;
   readonly eigenfunction: number[];
@@ -44,10 +44,10 @@ export default class Controller {
     const self = this;
     for (const value of eigenvaluesFound) {
       const index = this.eigenvalues!.length;
-      this.eigenvalues!.push({
+      const obj : Eigenvalue = {
         index,
         value,
-        error: this.problem.eigenvalueError(value),
+        error: null,
         visible: false,
         color: Color.hsv(1.61803398875 * index * 100, 100, 80).string(),
         get eigenfunction(): number[] {
@@ -56,8 +56,12 @@ export default class Controller {
           const f: number[] = []; // self.problem.eigenfunction(index, value, self.xValues);
           //self.eigenfunctions.set(index, f);
           return f;
-        }
+        },
+      };
+      this.problem.eigenvalueError(value).then((error) => {
+        obj.error = error;
       });
+      this.eigenvalues!.push(obj);
     }
   }
 }

@@ -67,17 +67,17 @@ typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, D
 
 template<typename Scalar>
 pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
-Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const {
+Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h) const {
     Y<Scalar, Dynamic> yl = left;
     for (int i = 0; i <= matchIndex; ++i) {
-        yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, true);
+        yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, use_h);
         conditionY(yl);
     }
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
-            E, dirichletBoundary, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, true);
+            E, dirichletBoundary, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, use_h);
     conditionY(yr);
     for (int i = sectorCount - 2; i > matchIndex; --i) {
-        yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, true);
+        yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, use_h);
         conditionY(yr);
     }
 
@@ -118,8 +118,8 @@ Matslise2D<Scalar>::propagate(
 
 template<typename Scalar>
 vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
-        const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E) const {
-    pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(yLeft, E);
+        const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
+    pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(yLeft, E, use_h);
     EigenSolver<MatrixXs> solver(N);
 
     solver.compute(error_matrix.first, true);
@@ -153,8 +153,8 @@ vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
 }
 
 template<typename Scalar>
-pair<Scalar, Scalar> Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E) const {
-    vector<pair<Scalar, Scalar>> errors = matchingErrors(yLeft, E);
+pair<Scalar, Scalar> Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
+    vector<pair<Scalar, Scalar>> errors = matchingErrors(yLeft, E, use_h);
     return *min_element(errors.begin(), errors.end(), [](
             const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {
         if (abs(a.first) > 100 || abs(b.first) > 100)

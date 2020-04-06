@@ -16,7 +16,7 @@ div
               :style="`background:${eigenvalue.color}`")
         td {{ eigenvalue.index }}
         td {{ eigenvalue.value.toPrecision(13) }}
-        td {{ eigenvalue.error === undefined ? '' : eigenvalue.error == 0 ? 0 : eigenvalue.error.toExponential(2) }}
+        td {{ eigenvalue.error === null ? '' : eigenvalue.error == 0 ? 0 : eigenvalue.error.toExponential(2) }}
   div.mb-4.text-center(v-if="eigenvalues !== null")
     a(
         @click="(e)=>{$emit('more-eigenvalues');e.preventDefault();}"
