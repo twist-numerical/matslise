@@ -55,6 +55,8 @@ declare class AbstractMatslise2D {
 
     eigenvalueError(E: number): number;
 
+    computeEigenfunction(E: number, x: number[], y: number[]): number[][][];
+
     delete(): void;
 }
 

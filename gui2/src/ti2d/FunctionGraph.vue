@@ -6,113 +6,237 @@
 import Vue from "vue";
 import Chart from "chart.js";
 import math from "mathjs-expression-parser";
+import Color from "color";
 
-function ensureLength<T>(arr: T[], length: number, newElement: () => T) {
-  while (arr.length < length) arr.push(newElement());
-  while (arr.length > length) arr.pop();
+interface DataPoint {
+  x: number;
+  y: number;
+  f: number;
 }
 
-export default Vue.extend({
-  props: ["f", "x", "n", "symmetric"],
-  data() {
-    const canvas = document.createElement("canvas");
+const red = Color("rgb(255,99,132)");
+const blue = Color("rgb(54,162,235)");
+const white = Color("rgb(255,255,255)");
 
+export default Vue.extend({
+  props: {
+    x: Array,
+    y: Array,
+    f: Array,
+    xLimit: Array,
+    yLimit: Array,
+    symmetric: {
+      type: Boolean,
+      default: false
+    },
+    colors: {
+      type: Array,
+      default() {
+        return [blue, white, red];
+      }
+    }
+  },
+  canvas: null,
+  chart: null,
+
+  data() {
+    const chart = this.$options.chart;
     return {
-      canvas,
-      chart: new Chart(canvas, {
-        type: "line",
-        data: {
-          datasets: [
+      xPixelsPerUnit: 1,
+      yPixelsPerUnit: 1
+    };
+  },
+
+  beforeCreate() {
+    const onAxisUpdate = () => {
+      if (!this.$options.chart || this.$options.updatingRadius)
+        return;
+
+      const scales = this.$options.chart.scales;
+
+      this.xPixelsPerUnit =
+        scales.xAxis.getPixelForValue(1) - scales.xAxis.getPixelForValue(0);
+
+      this.yPixelsPerUnit =
+        scales.yAxis.getPixelForValue(1) - scales.yAxis.getPixelForValue(0);
+    };
+
+    this.$options.updatingRadius = false;
+    this.$options.canvas = document.createElement("canvas");
+    this.$options.chart = new Chart(this.$options.canvas, <any>{
+      type: "scatter",
+      data: {
+        datasets: [
+          {
+            data: []
+          }
+        ]
+      },
+      options: {
+        aspectRatio: 1,
+        tooltips: {
+          enabled: false
+        },
+        hover: false,
+        legend: {
+          display: false
+        },
+        elements: {
+          point: {
+            pointStyle: "rect",
+            radius: 6,
+            hoverRadius: 0,
+            hitRadius: 0,
+            backgroundColor: "white"
+          }
+        },
+        scales: {
+          xAxes: [
             {
-              data: [],
-              fill: false,
-              borderColor: "#007bff"
+              id: "xAxis",
+              type: "linear",
+              position: "bottom",
+              ticks: {},
+              afterUpdate: onAxisUpdate
+            }
+          ],
+          yAxes: [
+            {
+              id: "yAxis",
+              type: "linear",
+              position: "left",
+              ticks: {},
+              afterUpdate: onAxisUpdate
             }
           ]
-        },
-        options: {
-          tooltips: {
-            enabled: false
-          },
-          legend: {
-            display: false
-          },
-          elements: {
-            point: {
-              radius: 0,
-              hoverRadius: 0,
-              hitRadius: 0
-            }
-          },
-          scales: {
-            xAxes: [
-              {
-                type: "linear",
-                position: "bottom"
-              }
-            ]
-          }
         }
-      })
-    };
+      }
+    });
+    (window as any).chart = this.$options.chart;
   },
   mounted() {
     const container = this.$refs["graph-container"];
-    container.appendChild(this.canvas);
+    container.appendChild(this.$options.canvas);
+    this.updateAspectRatio();
     this.updateCanvas();
   },
   computed: {
-    xValues() {
-      const n = this.n || 50;
-      const values = [0];
-      for (let i = 0.5; i + 1 < n; ++i) values.push((i + Math.random()) / n);
-      values.push(1);
-      return values;
+    toWatchAspect() {
+      return [this.xLimit, this.yLimit];
     },
-    xmin() {
-      return this.symmetric ? -this.xmax : math.eval(this.x[0]);
+    toWatchGraph() {
+      return [this.dataPoints, this.f];
     },
-    xmax() {
-      return math.eval(this.x[1]);
+    fMin() {
+      return Math.min(...this.f.map((r: number[]) => Math.min(...r)));
     },
-    fFunction() {
-      const compiled = math.compile(this.f);
-      return (x: number): number => compiled.eval({ x });
+    fMax() {
+      return Math.max(...this.f.map((r: number[]) => Math.max(...r)));
+    },
+    radius() {
+      const r = Math.ceil(
+        0.5 *
+        1.5 * // 1.5 ~= sqrt(2)
+          Math.max(
+            this.xStep * this.xPixelsPerUnit,
+            this.yStep * this.yPixelsPerUnit
+          )
+      );
+      return r;
+    },
+    xStep() {
+      return Math.max(
+        ...this.x.map((v: number, i: number) =>
+          i == 0 ? 0 : Math.abs(v - this.x[i - 1])
+        )
+      );
+    },
+    yStep() {
+      return Math.max(
+        ...this.y.map((v: number, i: number) =>
+          i == 0 ? 0 : Math.abs(v - this.y[i - 1])
+        )
+      );
+    },
+    dataPoints() {
+      const data: DataPoint[] = (this.$options.chart.data.datasets[0].data = []);
+
+      for (const y of this.y)
+        for (const x of this.x) {
+          data.push({ x, y, f: 0 });
+        }
+
+      return data;
     }
   },
   watch: {
-    f() {
-      this.updateCanvas();
+    toWatchAspect: {
+      handler: function() {
+        this.updateAspectRatio();
+      },
+      deep: true
     },
-    x() {
-      this.updateCanvas();
+    toWatchGraph: {
+      handler: function() {
+        this.updateCanvas();
+      },
+      deep: true
     },
-    n() {
-      this.updateCanvas();
-    },
-    symmetric() {
-      this.updateCanvas();
+    radius: function() {
+      const chart = this.$options.chart;
+      chart.options.elements.point.radius = this.radius;
+      this.$options.updatingRadius = true;
+      chart.update();
+      this.$options.updatingRadius = false;
     }
   },
   methods: {
+    updateAspectRatio() {
+      const chart = this.$options.chart;
+
+      const x = this.xLimit;
+      const y = this.yLimit;
+
+      const xAxis = chart.options.scales.xAxes[0];
+      const yAxis = chart.options.scales.yAxes[0];
+
+      xAxis.ticks.min = x[0];
+      xAxis.ticks.max = x[1];
+      yAxis.ticks.min = y[0];
+      yAxis.ticks.max = y[1];
+
+      chart.aspectRatio =
+        (this.xLimit[1] - this.xLimit[0]) / (this.yLimit[1] - this.yLimit[0]);
+      chart.update();
+    },
+    getColor(value: number) {
+      const n = this.colors.length;
+      value *= n - 1;
+      for (let i = 1; i < n; ++i, value -= 1)
+        if (value < 1 || i + 1 == n)
+          return this.colors[i - 1].mix(this.colors[i], value);
+    },
     updateCanvas() {
-      const xmin = this.xmin;
-      const xmax = this.xmax;
-      this.chart.options.scales.xAxes[0].ticks.min = xmin;
-      this.chart.options.scales.xAxes[0].ticks.max = xmax;
+      const chart = this.$options.chart;
 
-      const data = this.chart.data.datasets[0].data;
-      ensureLength(data, this.xValues.length, () => ({}));
+      const max = this.symmetric ? Math.max(this.fMax, -this.fMin) : this.fMax;
+      const min = this.symmetric ? -max : this.fMin;
+      chart.options.elements.point.backgroundColor = ({
+        dataset,
+        dataIndex
+      }: any) => {
+        const value = dataset.data[dataIndex].f;
+        return this.getColor((value - min) / (max - min));
+      };
 
-      const f = this.fFunction;
-      this.xValues.map((t: number, i: number) => {
-        const x = xmin + (xmax - xmin) * t;
-        data[i].x = x;
-        data[i].y = f(this.symmetric ? Math.abs(x) : x);
-      });
-
-      this.chart.update();
+      const data: DataPoint[] = this.dataPoints;
+      let i = 0;
+      for (const row of this.f)
+        for (const value of row) {
+          data[i++].f = value;
+        }
+      chart.update();
     }
   }
-});
+} as any);
 </script>

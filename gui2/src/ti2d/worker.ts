@@ -27,6 +27,8 @@ let parsed:
       potential: (x: number, y: number) => number;
       x: [number, number];
       y: [number, number];
+      xPoints: number[];
+      yPoints: number[];
       tolerance: number;
       xSymmetric: boolean;
       ySymmetric: boolean;
@@ -64,7 +66,19 @@ function parse(data: {
     tolerance: math.eval(data.tolerance),
     xSymmetric: data.xSymmetric,
     ySymmetric: data.ySymmetric,
+    xPoints: [],
+    yPoints: [],
   };
+
+  const n = 40;
+  const step = Math.max(
+    (parsed.x[1] - parsed.x[0]) / n,
+    (parsed.y[1] - parsed.y[0]) / n
+  );
+  for (let x = parsed.x[0] + step / 2; x < parsed.x[1]; x += step)
+    parsed.xPoints.push(x);
+  for (let y = parsed.y[0] + step / 2; y < parsed.y[1]; y += step)
+    parsed.yPoints.push(y);
 
   matslise = new _Matslise2D(
     potential,
@@ -80,26 +94,53 @@ function parse(data: {
       },
     }
   );
+
+  const { potential: _, ...parsedValues } = parsed;
+  return parsedValues;
 }
 
-function eigenvalues(emin: number, emax: number): number[] {
-  if (matslise === undefined) throw new Error("Problem not parsed");
-  return matslise.eigenvalues(emin, emax);
+function addEigenvalueErrors(eigs: number[]): [number, number][] {
+  return eigs.map((E) => [E, matslise!.eigenvalueError(E)]);
 }
 
-function eigenvaluesByIndex(imin: number, imax: number): number[] {
+function eigenvalues(emin: number, emax: number): [number, number][] {
   if (matslise === undefined) throw new Error("Problem not parsed");
-  return matslise.eigenvaluesByIndex(imin, imax);
+  return addEigenvalueErrors(matslise.eigenvalues(emin, emax));
 }
 
-function firstEigenvalue(): number {
+function eigenvaluesByIndex(imin: number, imax: number): [number, number][] {
   if (matslise === undefined) throw new Error("Problem not parsed");
-  return matslise.firstEigenvalue();
+  return addEigenvalueErrors(matslise.eigenvaluesByIndex(imin, imax));
 }
 
-function eigenvalueError(E: number): number {
+function firstEigenvalue(): [number, number] {
   if (matslise === undefined) throw new Error("Problem not parsed");
-  return matslise.eigenvalueError(E);
+  return addEigenvalueErrors([matslise.firstEigenvalue()])[0];
+}
+
+function evaluatePotential(): number[][] {
+  if (parsed === undefined) throw new Error("Problem not parsed");
+  const potential: number[][] = [];
+  for (const y of parsed.yPoints) {
+    const row: number[] = [];
+    for (const x of parsed.xPoints) {
+      row.push(parsed.potential(x, y));
+    }
+    potential.push(row);
+  }
+  return potential;
+}
+
+function eigenfunction(E: number): number[][][] {
+  if (matslise === undefined || parsed === undefined)
+    throw new Error("Problem not parsed");
+  const result = matslise.computeEigenfunction(
+    E,
+    parsed.xPoints,
+    parsed.yPoints
+  );
+  console.log(result);
+  return result;
 }
 
 registerWebworker(async (message: { type: string; data: any }) => {
@@ -111,15 +152,16 @@ registerWebworker(async (message: { type: string; data: any }) => {
         waitForMatslise.push(res);
       });
     case "parse":
-      parse(message.data);
-      return true;
+      return parse(message.data);
     case "eigenvalues":
       return eigenvalues(message.data.emin, message.data.emax);
     case "eigenvaluesByIndex":
       return eigenvaluesByIndex(message.data.imin, message.data.imax);
     case "firstEigenvalue":
       return firstEigenvalue();
-    case "eigenvalueError":
-      return eigenvalueError(message.data.E);
+    case "evaluatePotential":
+      return evaluatePotential();
+    case "eigenfunction":
+      return eigenfunction(message.data.E);
   }
 });

@@ -7,17 +7,26 @@ interface HistoryEntry {
 }
 
 export default class Problem {
-  public potential = "(1+x*x)*(1+y*y)";
-  public x: [string, string] = ["-3", "3"];
-  public y: [string, string] = ["-3", "3"];
+  public potential = "(1+x^2)*(1+y^2)";
+  public x: [string, string] = ["-5.5", "5.5"];
+  public y: [string, string] = ["-5.5", "5.5"];
   public tolerance = "1e-5";
-  public xSymmetric = false;
+  public xSymmetric = true;
   public ySymmetric = false;
   public worker: WorkerPromise;
+  public potentialData: number[][];
 
   public ready: boolean = false;
   public calculating: boolean = false;
-  public parsed: boolean = false;
+  public parsed: null | {
+    tolerance: number;
+    x: [number, number];
+    y: [number, number];
+    xPoints: number[];
+    yPoints: number[];
+    xSymmetric: boolean;
+    ySymmetric: boolean;
+  } = null;
   public history: HistoryEntry[] = [];
 
   constructor() {
@@ -40,12 +49,12 @@ export default class Problem {
     this.worker = undefined;
     this.ready = false;
     this.calculating = false;
-    this.parsed = false;
+    this.parsed = null;
     this.startWorker();
   }
 
   async parse() {
-    await this.addToHistory(
+    this.parsed = await this.addToHistory(
       `Initialising problem`,
       this.worker.postMessage({
         type: "parse",
@@ -59,12 +68,14 @@ export default class Problem {
         },
       })
     );
-    this.parsed = true;
+    this.potentialData = await this.worker.postMessage({
+      type: "evaluatePotential",
+    });
   }
 
   reset() {
     if (this.calculating) this.terminate();
-    this.parsed = false;
+    this.parsed = null;
   }
 
   async addToHistory(name: string, action: Promise<any>): Promise<any> {
@@ -79,7 +90,7 @@ export default class Problem {
     return result;
   }
 
-  async eigenvalues(emin: number, emax: number): Promise<number[]> {
+  async eigenvalues(emin: number, emax: number): Promise<[number, number][]> {
     return await this.addToHistory(
       `Eigenvalues in [${emin.toPrecision(3)}, ${emax.toPrecision(3)}]`,
       this.worker.postMessage({
@@ -89,7 +100,10 @@ export default class Problem {
     );
   }
 
-  async eigenvaluesByIndex(imin: number, imax: number): Promise<number[]> {
+  async eigenvaluesByIndex(
+    imin: number,
+    imax: number
+  ): Promise<[number, number][]> {
     return await this.addToHistory(
       `Eigenvalues`,
       this.worker.postMessage({
@@ -99,7 +113,7 @@ export default class Problem {
     );
   }
 
-  async firstEigenvalue(): Promise<number> {
+  async firstEigenvalue(): Promise<[number, number]> {
     return await this.addToHistory(
       `First eigenvalues`,
       await this.worker.postMessage({
@@ -108,11 +122,11 @@ export default class Problem {
     );
   }
 
-  async eigenvalueError(E: number): Promise<number> {
+  async eigenfunction(E: number): Promise<number[][][]> {
     return await this.addToHistory(
-      `EigenvalueError ${E.toPrecision(4)}`,
+      `Eigenfunction of ${E.toPrecision(4)}`,
       await this.worker.postMessage({
-        type: "eigenvalueError",
+        type: "eigenfunction",
         data: { E },
       })
     );

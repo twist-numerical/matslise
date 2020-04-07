@@ -12,8 +12,7 @@ div
         th.legend-label
           input(:id="`eigenvalue-${eigenvalue.index}`",type="checkbox",v-model:checked="eigenvalue.visible")
           label(
-              :for="`eigenvalue-${eigenvalue.index}`",
-              :style="`background:${eigenvalue.color}`")
+              :for="`eigenvalue-${eigenvalue.index}`")
         td {{ eigenvalue.index }}
         td {{ eigenvalue.value.toPrecision(13) }}
         td {{ eigenvalue.error === null ? '' : eigenvalue.error == 0 ? 0 : eigenvalue.error.toExponential(2) }}
@@ -37,6 +36,7 @@ export default Vue.extend({
     padding: 3px;
     margin: 0;
     cursor: pointer;
+      background: #6c757d;
 
     &:before {
       display: block;

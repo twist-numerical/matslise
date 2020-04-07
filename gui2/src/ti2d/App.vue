@@ -2,61 +2,61 @@
 div.container
   problem-selector(
       v-model="selectProblem",
-      :problem="controller.problem",
-      @problem-updated="controller.calculate()")
+      :problem="problem",
+      @problem-updated="calculate()")
   .row
     .col-12
       h1 Matslise
   .row
     .col-6
       h2 Problem
-      form(action="" @submit.prevent="controller.calculate")
+      form(action="" @submit.prevent="calculate")
         .form-row
           label.input-group.col-12
             .input-group-prepend 
               .input-group-text V(x) =
             input.form-control(
-                @input="controller.reset()",
-                v-model="controller.problem.potential")
+                @input="reset()",
+                v-model="problem.potential")
             .input-group-append
               .input-group-text
                 label.m-0(for="toggle-show-potential") show&nbsp;
-                toggle-switch(v-model="showPotential" name="toggle-show-potential")
+                toggle-switch(v-model="showPotentialSwitch" name="toggle-show-potential")
         .form-row
           label.input-group.col-6
             .input-group-prepend
               .input-group-text x<sub>min</sub>&nbsp;=
             input.form-control(
-                v-bind:disabled="controller.problem.xSymmetric",
-                @input="controller.reset()",
-                v-model="controller.problem.xSymmetric?`-(${controller.problem.x[1]})`:controller.problem.x[0]")
+                v-bind:disabled="problem.xSymmetric",
+                @input="reset()",
+                v-model="problem.xSymmetric?`-(${problem.x[1]})`:problem.x[0]")
           label.input-group.col-6
             .input-group-prepend
               .input-group-text x<sub>max</sub>&nbsp;=
             input.form-control(
-                @input="controller.reset()",
-                v-model="controller.problem.x[1]")
+                @input="reset()",
+                v-model="problem.x[1]")
         .form-row
           label.input-group.col-6
             .input-group-prepend
               .input-group-text y<sub>min</sub>&nbsp;=
             input.form-control(
-                v-bind:disabled="controller.problem.ySymmetric",
-                @input="controller.reset()",
-                v-model="controller.problem.ySymmetric?`-(${controller.problem.y[1]})`:controller.problem.y[0]")
+                v-bind:disabled="problem.ySymmetric",
+                @input="reset()",
+                v-model="problem.ySymmetric?`-(${problem.y[1]})`:problem.y[0]")
           label.input-group.col-6
             .input-group-prepend
               .input-group-text y<sub>max</sub>&nbsp;=
             input.form-control(
-                @input="controller.reset()",
-                v-model="controller.problem.y[1]")
+                @input="reset()",
+                v-model="problem.y[1]")
         .form-row
           label.input-group.col-12.col-lg-6
             .input-group-prepend
               .input-group-text Tolerance
             input.form-control(
-                @input="controller.reset()",
-                v-model="controller.problem.tolerance")
+                @input="reset()",
+                v-model="problem.tolerance")
         .form-row
           label.input-group.col-12.col-lg-6.justify-content-end
             .input-group-prepend
@@ -64,16 +64,17 @@ div.container
             .input-group-append
               .input-group-text
                 toggle-switch(
-                    v-model="controller.problem.xSymmetric" 
-                    @change="controller.reset()")
+                    v-model="problem.xSymmetric" 
+                    @change="reset()")
+        //-
           label.input-group.col-12.col-lg-6.justify-content-end
             .input-group-prepend
               .input-group-text y-symmetric
             .input-group-append
               .input-group-text
                 toggle-switch(
-                    v-model="controller.problem.ySymmetric" 
-                    @change="controller.reset()")
+                    v-model="problem.ySymmetric" 
+                    @change="reset()")
         .form-row
           .col-6
             a.btn.btn-link(
@@ -88,49 +89,59 @@ div.container
       div(v-if="showPotential")
         h2 Potential
         function-graph(
-            :f="controller.problem.potential"
-            :x="controller.problem.x",
-            n="210"
-            :symmetric="controller.problem.symmetric")
+            v-if="showPotential"
+            :f="problem.potentialData"
+            :x="problem.parsed.xPoints"
+            :y="problem.parsed.yPoints"
+            :xLimit="problem.parsed.x"
+            :yLimit="problem.parsed.y")
 
-      div(v-if="controller.eigenvalues !== null")
+      div(v-if="eigenvalues !== null")
         h2 Eigenfunctions
-        eigenfunctions-graph(      
-            :eigenvalues="visibleEigenvalues"
-            :x="controller.xValues")
+        div(v-for="eigenvalue of visibleEigenvalues")
+          function-graph(
+            v-if="eigenvalue.eigenfunctions !== null"
+            v-for="eigenfunction of eigenvalue.eigenfunctions"
+            :f="eigenfunction"
+            :x="problem.parsed.xPoints"
+            :y="problem.parsed.yPoints"
+            :xLimit="problem.parsed.x"
+            :yLimit="problem.parsed.y"
+            :symmetric="true")
     .col-6
       h2 Eigenvalues
       eigenvalues-table(
-          v-if="controller.eigenvalues !== null"
-          :eigenvalues="controller.eigenvalues"
-          @more-eigenvalues="() => controller.moreEigenvalues()")
+          v-if="eigenvalues !== null"
+          :eigenvalues="eigenvalues"
+          @more-eigenvalues="() => moreEigenvalues()")
       div(v-else)
         p Press 'Calculate' to compute the eigenvalues of this problem.
       h3 History
-      history-list(:history="controller.problem.history")
+      history-list(:history="problem.history")
 </template>
 
 <script lang="ts">
 import Vue from "vue";
-import Controller from "./Controller";
+import Color from "color";
 import EigenvaluesTable from "./EigenvaluesTable.vue";
-import EigenfunctionsGraph from "./EigenfunctionsGraph.vue";
 import FunctionGraph from "./FunctionGraph.vue";
 import ProblemSelector from "./ProblemSelector.vue";
 import ToggleSwitch from "../util/ToggleSwitch.vue";
 import HistoryList from "./HistoryList.vue";
+import Problem from "./Problem";
+import Eigenvalue from "./Eigenvalue";
 
 export default Vue.extend({
   data() {
     return {
-      controller: new Controller(),
+      eigenvalues: null,
+      problem: new Problem(),
       selectProblem: false,
-      showPotential: false
+      showPotentialSwitch: false
     };
   },
   components: {
     "eigenvalues-table": EigenvaluesTable,
-    "eigenfunctions-graph": EigenfunctionsGraph,
     "function-graph": FunctionGraph,
     "problem-selector": ProblemSelector,
     "toggle-switch": ToggleSwitch,
@@ -138,12 +149,62 @@ export default Vue.extend({
   },
   computed: {
     disabledSubmit() {
-      return !this.controller.problem.ready;
+      return !this.problem.ready;
     },
     visibleEigenvalues() {
-      const eigenvalues = (this.controller as Controller).eigenvalues;
+      const eigenvalues = this.eigenvalues;
       if (eigenvalues === null) return [];
-      return eigenvalues.filter(e => e.visible);
+      return eigenvalues
+        .filter((e: any) => e.visible)
+        .map((e: Eigenvalue) => {
+          e.ensureEigenfunctions();
+          return e;
+        });
+    },
+    showPotential() {
+      return this.showPotentialSwitch && this.problem.parsed !== null;
+    }
+  },
+  methods: {
+    reset() {
+      this.problem.reset();
+      this.eigenvalues = null;
+    },
+    async calculate() {
+      this.reset();
+      await this.problem.parse();
+      await this.moreEigenvalues();
+    },
+    containsEigenvalue(E: number) {
+      if (this.eigenvalues === null) return false;
+      for (const { value } of this.eigenvalues) {
+        if (Math.abs(E - value) < 10 * this.problem.parsed!.tolerance)
+          return true;
+      }
+      return false;
+    },
+    async moreEigenvalues() {
+      let eigenvaluesFound;
+      if (this.eigenvalues === null) {
+        eigenvaluesFound = await this.problem.eigenvaluesByIndex(0, 2);
+        this.eigenvalues = [];
+      } else {
+        const max = this.eigenvalues.length - 1;
+        const min = Math.max(0, max - 5);
+        eigenvaluesFound = await this.problem.eigenvalues(
+          this.eigenvalues[max].value,
+          2 * this.eigenvalues[max].value - this.eigenvalues[min].value
+        );
+      }
+      const self = this;
+      for (const [value, error] of eigenvaluesFound) {
+        if (!this.containsEigenvalue(value)) {
+          const index = this.eigenvalues!.length;
+          this.eigenvalues.push(
+            new Eigenvalue(index, value, error, this.problem)
+          );
+        }
+      }
     }
   }
 });
