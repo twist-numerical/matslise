@@ -16,7 +16,7 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5, 5}, -5, 5},
-            Options2<>().tolerance(1e-5).nested(Options1<>().tolerance(1e-5)));
+            Options2<>().tolerance(1e-7).nested(Options1<>().tolerance(1e-7)));
     //Options2<>().sectorCount(23).stepsPerSector(4).N(10).nested(Options1<>().sectorCount(26)));
     pair<double, int> eigenvalues[] = {
             {3.1959181,  1},

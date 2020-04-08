@@ -89,15 +89,21 @@ namespace matslise {
             if (steps == 0) {
                 while (error < tolerance / 2 && steps < 10 && h != right - left) {
                     ++steps;
-                    h *= pow(tolerance / error, 1. / (Problem::order - 1));
-                    if (forward) {
-                        xmax = xmin + h;
-                        if (xmax > right)
-                            xmax = right;
+                    if (error <= 0) {
+                        // rare edge cases
+                        xmin = left;
+                        xmax = right;
                     } else {
-                        xmin = xmax - h;
-                        if (xmin < left)
-                            xmin = left;
+                        h *= pow(tolerance / error, 1. / (Problem::order - 1));
+                        if (forward) {
+                            xmax = xmin + h;
+                            if (xmax > right)
+                                xmax = right;
+                        } else {
+                            xmin = xmax - h;
+                            if (xmin < left)
+                                xmin = left;
+                        }
                     }
                     h = xmax - xmin;
                     auto *newSector = new Sector(ms, xmin, xmax, !forward);
@@ -125,9 +131,8 @@ namespace matslise {
                 std::vector<typename Problem::Sector *> forward;
                 std::vector<typename Problem::Sector *> backward;
                 // It shouldn't be the true middle
-                //  so just dividing by something ~= 2
-                typename Problem::Scalar mid = (max + min) / 2.11803398875;
-                typename Problem::Scalar h = mid - min;
+                typename Problem::Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
+                typename Problem::Scalar h = .33*(max - min);
                 forward.push_back(automaticNextSector(problem, h, min, mid, tolerance, true));
                 backward.push_back(automaticNextSector(problem, h, mid, max, tolerance, false));
 

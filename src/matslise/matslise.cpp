@@ -56,7 +56,7 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
         E -= adjust;
     } while (++i < 20 && abs(adjust) > ms->tolerance);
 
-    if (i >= 20 && abs(adjust) > 100*ms->tolerance) {
+    if (i >= 20 && abs(adjust) > 100 * ms->tolerance) {
         cerr << "Newton-iteration did not converge for E=" << (double) E << endl;
     }
 
@@ -183,20 +183,18 @@ Matslise<Scalar>::~Matslise() {
 template<typename Scalar>
 vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
                                    const Y<Scalar> &left, const Y<Scalar> &right) {
-    auto n = static_cast<unsigned int>(ms.sectorCount);
-    const Scalar &match = ms.sectors[ms.matchIndex]->max;
-    vector<Y<Scalar>> ys(n + 1);
+    vector<Y<Scalar>> ys(ms.sectorCount + 1);
     ys[0] = left;
-    unsigned int m = 0;
-    for (unsigned int i = 1; match > ms.sectors[i - 1]->min; ++i) {
-        ys[i] = ms.sectors[i - 1]->propagateForward(E, ys[i - 1]).first;
-        m = i;
+    for (int i = 0; i <= ms.matchIndex; ++i) {
+        ys[i + 1] = ms.sectors[i]->propagateForward(E, ys[i]).first;
     }
-    ys[n] = right;
-    for (unsigned int i = n - 1; i > m; --i)
+    Y<Scalar> yl = ys[ms.matchIndex + 1];
+
+    ys[ms.sectorCount] = right;
+    for (int i = ms.sectorCount - 1; i > ms.matchIndex; --i)
         ys[i] = ms.sectors[i]->propagateBackward(E, ys[i + 1]).first;
-    Y<Scalar> yr = ms.sectors[m]->propagateBackward(E, ys[m + 1]).first;
-    Y<Scalar> &yl = ys[m];
+    Y<Scalar> &yr = ys[ms.matchIndex + 1];
+
     Scalar s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
     Scalar norm = yl.dy[0] * yl.y[1] - yl.dy[1] * yl.y[0];
     norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
@@ -206,10 +204,10 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
         cerr << "There are problems with the normalization." << endl;
         norm = 1;
     }
-    unsigned int i = 0;
-    for (; i <= m; ++i)
+    int i = 0;
+    for (; i <= ms.matchIndex; ++i)
         ys[i] *= ((Scalar) 1.) / norm;
-    for (; i <= n; ++i)
+    for (; i <= ms.sectorCount; ++i)
         ys[i] *= s / norm;
     return ys;
 }
