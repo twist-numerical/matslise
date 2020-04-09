@@ -43,7 +43,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon]") {
 
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
         REQUIRE(f.size() == multiplicity);
-        vector<function<double(double, double)>> funcs = p2.eigenfunctionCalculator(E);
+        vector<function<double(double, double)>> funcs = p2.eigenfunction(E);
         REQUIRE(funcs.size() == multiplicity);
 
         for (int k = 0; k < multiplicity; ++k) {

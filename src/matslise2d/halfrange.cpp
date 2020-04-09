@@ -54,8 +54,22 @@ vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(const Scalar &Emin, const Sca
 }
 
 template<typename Scalar>
-vector<typename Matslise2DHalf<Scalar>::ArrayXXs>
-Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+vector<Scalar> Matslise2DHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
+    vector<Scalar> valuesNeumann = se2d->eigenvaluesByIndex(neumannBoundary, 0, Imax);
+    vector<Scalar> valuesDirichlet = se2d->eigenvaluesByIndex(dirichletBoundary, 0, Imax);
+    vector<Scalar> result;
+    merge(valuesNeumann.begin(), valuesNeumann.end(),
+          valuesDirichlet.begin(), valuesDirichlet.end(),
+          back_inserter(result));
+    result.erase(result.begin() + Imax, result.end());
+    result.erase(result.begin(), result.begin() + Imin);
+    return result;
+}
+
+
+template<typename Scalar>
+template<bool withDerivative, typename returnType>
+returnType Matslise2DHalf<Scalar>::eigenfunctionHelper(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
     Eigen::Index n = y.size();
     for (Eigen::Index i = 1; i < n; ++i)
         if (y[i - 1] > y[i])
@@ -83,28 +97,31 @@ Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const A
 
     const Scalar SQRT1_2 = sqrt(Scalar(.5));
 
-    vector<ArrayXXs> result;
+    returnType result;
     for (bool even : {false, true}) {
         const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
         if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-3) {
-            vector<ArrayXXs> sortedFs = se2d->eigenfunction(boundary, E, x, sortedY);
+            auto sortedFs = se2d->template eigenfunctionHelper<withDerivative>(boundary, E, x, sortedY);
             for (auto sortedF : sortedFs) {
-                ArrayXXs f = ArrayXXs::Zero(x.size(), y.size());
+                typename std::conditional<withDerivative, std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>, ArrayXXs>::type f;
+                if constexpr(withDerivative)
+                    f = {ArrayXXs::Zero(x.size(), y.size()), ArrayXXs::Zero(x.size(), y.size()),
+                         ArrayXXs::Zero(x.size(), y.size())};
+                else
+                    f = ArrayXXs::Zero(x.size(), y.size());
                 Eigen::Index negativeIndex = 0;
                 Eigen::Index positiveIndex = n;
                 for (Eigen::Index i = n - 1; i >= 0; --i) {
-                    if (isNegative[i]) {
-                        if (even)
-                            f.col(negativeIndex) = sortedF.col(i);
-                        else
-                            f.col(negativeIndex) = -sortedF.col(i);
-                        negativeIndex += 1;
+                    Eigen::Index index = isNegative[i] ? negativeIndex++ : --positiveIndex;
+                    Scalar scale = !isNegative[i] || even ? SQRT1_2 : -SQRT1_2;
+                    if constexpr(withDerivative) {
+                        get<0>(f).col(index) = scale * get<0>(sortedF).col(i);
+                        get<1>(f).col(index) = scale * get<1>(sortedF).col(i);
+                        get<2>(f).col(index) = scale * get<2>(sortedF).col(i);
                     } else {
-                        positiveIndex -= 1;
-                        f.col(positiveIndex) = sortedF.col(i);
+                        f.col(index) = scale * sortedF.col(i);
                     }
                 }
-                f *= SQRT1_2;
                 result.push_back(f);
             }
 
@@ -114,31 +131,24 @@ Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E, const ArrayXs &x, const A
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2DHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
-    vector<Scalar> valuesNeumann = se2d->eigenvaluesByIndex(neumannBoundary, 0, Imax);
-    vector<Scalar> valuesDirichlet = se2d->eigenvaluesByIndex(dirichletBoundary, 0, Imax);
-    vector<Scalar> result;
-    merge(valuesNeumann.begin(), valuesNeumann.end(),
-          valuesDirichlet.begin(), valuesDirichlet.end(),
-          back_inserter(result));
-    result.erase(result.begin() + Imax, result.end());
-    result.erase(result.begin(), result.begin() + Imin);
-    return result;
-}
-
-template<typename Scalar>
-vector<function<Scalar(Scalar, Scalar)>> Matslise2DHalf<Scalar>::eigenfunctionCalculator(const Scalar &E) const {
+template<bool withDerivative, typename returnType>
+returnType Matslise2DHalf<Scalar>::eigenfunctionHelper(const Scalar &E) const {
     const Scalar SQRT1_2 = sqrt(Scalar(.5));
-    vector<function<Scalar(Scalar, Scalar)>> result;
+    returnType result;
     for (bool even : {false, true}) {
         const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
         if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-5) {
-            for (const function<Scalar(Scalar, Scalar)> &f : se2d->eigenfunctionCalculator(boundary, E)) {
-                result.push_back([f, even, SQRT1_2](const Scalar &x, const Scalar &y) -> Scalar {
-                    Scalar r = f(x, y < 0 ? -y : y);
-                    if (y < 0 && !even)
-                        r = -r;
-                    r *= SQRT1_2;
+            for (const auto &f : se2d->template eigenfunctionHelper<withDerivative>(boundary, E)) {
+                result.push_back([f, even, SQRT1_2](const Scalar &x, const Scalar &y) -> auto {
+                    auto r = f(x, y < 0 ? -y : y);
+                    Scalar scale = y < 0 && !even ? -SQRT1_2 : SQRT1_2;
+                    if constexpr(withDerivative) {
+                        get<0>(r) *= scale;
+                        get<1>(r) *= scale;
+                        get<2>(r) *= scale;
+                    } else {
+                        r *= scale;
+                    }
                     return r;
                 });
             }

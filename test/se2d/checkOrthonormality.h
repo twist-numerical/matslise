@@ -12,7 +12,7 @@ using namespace matslise;
 template<typename Problem, typename doubleIterator>
 void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIterator &end) {
     typedef typename Problem::Scalar Scalar;
-    int n = 101;
+    int n = 201;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
             Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));
     Array<Scalar, Dynamic, 1> y = lobatto::grid<Scalar>(
@@ -25,20 +25,15 @@ void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIt
             eigenfunctions.push_back(f);
     }
 
-    for (auto i = eigenfunctions.begin(); i != eigenfunctions.end(); ++i)
-        for (auto j = eigenfunctions.begin(); j != eigenfunctions.end(); ++j) {
+    auto eigenfunctionsBegin = eigenfunctions.begin();
+    for (auto i = eigenfunctionsBegin; i != eigenfunctions.end(); ++i)
+        for (auto j = eigenfunctionsBegin; j != eigenfunctions.end(); ++j) {
             // TODO: an issue with normalisation
             if (i == j) continue;
 
-            CHECKED_ELSE(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-1) == (i == j ? 1 : 0)) {
-                auto l = begin;
-                for (auto k = eigenfunctions.begin(); k != eigenfunctions.end(); ++k) {
-                    if (k == i)
-                        break;
-                    ++l;
-                }
-                FAIL(*l);
-            }
+            INFO("Orthonormality of eigenfunction "
+                         << std::distance(eigenfunctionsBegin, i) << " and " << std::distance(eigenfunctionsBegin, j));
+            CHECK(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-1) == (i == j ? 1 : 0));
         }
 
 }

@@ -100,40 +100,81 @@ typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::Sector::calculateDelta
 }
 
 template<typename Scalar>
-typename Matslise2D<Scalar>::ArrayXs
-Matslise2D<Scalar>::Sector::eigenfunction(int index, const typename Matslise2D<Scalar>::ArrayXs &x) const {
+template<bool withDerivative, typename diffType>
+diffType Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::ArrayXs &x) const {
     const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
     Eigen::Index size = x.size();
 
-    Array<matslise::Y<Scalar>, Dynamic, 1> raw = matslise->eigenfunction(eigenvalues[index], y0, x, index);
-    ArrayXs result(size);
-    for (Eigen::Index i = 0; i < size; ++i)
-        result(i) = raw(i).y[0];
-    return result;
+    ArrayXXs b(size, se2d->N);
+    ArrayXXs b_x(size, se2d->N);
+    for (int i = 0; i < se2d->N; ++i) {
+        auto ys = matslise->eigenfunction(eigenvalues[i], y0, x, i);
+        b.col(i) = ys.unaryExpr(
+                [](const Y<Scalar> &y) -> Scalar {
+                    return y.y[0];
+                });
+        if constexpr(withDerivative)
+            b_x.col(i) = ys.unaryExpr(
+                    [](const Y<Scalar> &y) -> Scalar {
+                        return y.y[1];
+                    });
+    }
+    if constexpr(withDerivative)
+        return {b, b_x};
+    else
+        return b;
 }
 
 template<typename Scalar>
-function<typename Matslise2D<Scalar>::ArrayXs(Scalar)> Matslise2D<Scalar>::Sector::basisCalculator() const {
+template<bool withDerivative, typename diffType>
+function<diffType(Scalar)> Matslise2D<Scalar>::Sector::basis() const {
     const Y<Scalar> y0 = Y<Scalar>::Dirichlet(1);
     vector<function<Y<Scalar>(Scalar)>> basis(static_cast<size_t>(se2d->N));
     for (int index = 0; index < se2d->N; ++index) {
         basis[static_cast<size_t>(index)] = matslise->eigenfunctionCalculator(eigenvalues[index], y0, index);
     }
-    return [basis](const Scalar &x) -> ArrayXs {
-        ArrayXs result(basis.size());
-        for (int i = 0; i < static_cast<int>(basis.size()); ++i)
-            result[i] = basis[static_cast<size_t>(i)](x).y(0, 0);
-        return result;
+    return [basis](const Scalar &x) -> diffType {
+        ArrayXs b(basis.size());
+        ArrayXs b_x(basis.size());
+
+        for (int i = 0; i < static_cast<int>(basis.size()); ++i) {
+            Y<Scalar> y = basis[static_cast<size_t>(i)](x);
+            b[i] = y.y[0];
+            if constexpr (withDerivative)
+                b_x[i] = y.y[1];
+        }
+        if constexpr (withDerivative)
+            return {b, b_x};
+        else
+            return b;
     };
 }
 
-#define INSTANTIATE_PROPAGATE(Scalar, r)\
-template Y<Scalar, Dynamic, r>\
-Matslise2D<Scalar>::Sector::propagate<r>(\
+#define INSTANTIATE_PROPAGATE(Scalar, r) \
+template Y<Scalar, Dynamic, r> \
+Matslise2D<Scalar>::Sector::propagate<r>( \
         const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
+
+#define INSTANTIATE_BASIS(Scalar, r) \
+template function<std::conditional<r, \
+        std::pair<Matslise2D<Scalar>::ArrayXs, Matslise2D<Scalar>::ArrayXs>, \
+        Matslise2D<Scalar>::ArrayXs>::type(Scalar)> \
+Matslise2D<Scalar>::Sector::basis<r, std::conditional<r, \
+    std::pair<Matslise2D<Scalar>::ArrayXs, Matslise2D<Scalar>::ArrayXs>, \
+    Matslise2D<Scalar>::ArrayXs>::type>() const; \
+template std::conditional<r, \
+        pair<Matslise2D<Scalar>::ArrayXXs, Matslise2D<Scalar>::ArrayXXs>, \
+        Matslise2D<Scalar>::ArrayXXs \
+    >::type \
+Matslise2D<Scalar>::Sector::basis<r, std::conditional<r, \
+        pair<Matslise2D<Scalar>::ArrayXXs, Matslise2D<Scalar>::ArrayXXs>, \
+        Matslise2D<Scalar>::ArrayXXs \
+    >::type>(const Matslise2D<Scalar>::ArrayXs &x) const;
 
 #define INSTANTIATE_MORE(Scalar)\
 INSTANTIATE_PROPAGATE(Scalar, 1)\
-INSTANTIATE_PROPAGATE(Scalar, -1)
+INSTANTIATE_PROPAGATE(Scalar, -1)\
+INSTANTIATE_BASIS(Scalar, false)\
+INSTANTIATE_BASIS(Scalar, true)
 
 #include "../util/instantiate.h"

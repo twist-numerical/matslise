@@ -5,16 +5,16 @@ using namespace matslise;
 using namespace std;
 
 template<typename Scalar>
-Matrix<Scalar, Dynamic, Dynamic> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
-    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1));
+Matrix<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
+    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1)).diagonal();
 }
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>>
-Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &left, const Scalar &E) const {
+Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Scalar &E) const {
     auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
 
-    steps[0] = left;
+    steps[0] = yLeft;
     steps[sectorCount] = dirichletBoundary;
     auto *U = new MatrixXs[sectorCount + 1];
 
@@ -83,8 +83,8 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &left, const Sca
 }
 
 template<typename Scalar>
-std::vector<typename Matslise2D<Scalar>::ArrayXXs>
-Matslise2D<Scalar>::eigenfunction(
+template<bool withDerivative, typename returnType>
+returnType Matslise2D<Scalar>::eigenfunctionHelper(
         const Y<Scalar, Dynamic> &left, const Scalar &E,
         const typename Matslise2D<Scalar>::ArrayXs &x, const typename Matslise2D<Scalar>::ArrayXs &y) const {
 
@@ -102,12 +102,16 @@ Matslise2D<Scalar>::eigenfunction(
         throw runtime_error("SE2D::computeEigenfunction(): y is out of range");
 
 
-    vector<ArrayXXs> result;
+    returnType result;
     vector<Y<Scalar, Dynamic>> steps = eigenfunctionSteps(left, E);
     if (!steps.empty()) {
         Eigen::Index cols = steps[0].getY(0).cols();
-        for (Eigen::Index i = 0; i < cols; ++i)
-            result.push_back(ArrayXXs::Zero(nx, ny));
+        for (Eigen::Index i = 0; i < cols; ++i) {
+            if constexpr(withDerivative)
+                result.push_back({ArrayXXs::Zero(nx, ny), ArrayXXs::Zero(nx, ny), ArrayXXs::Zero(nx, ny)});
+            else
+                result.push_back(ArrayXXs::Zero(nx, ny));
+        }
 
         Eigen::Index nextY = 0;
         int sector = 0;
@@ -119,14 +123,32 @@ Matslise2D<Scalar>::eigenfunction(
             }
 
             MatrixXs B(nx, N);
-            for (int j = 0; j < N; ++j)
-                B.col(j) = sectors[sector]->eigenfunction(j, x);
+            MatrixXs Bdiff(nx, N);
+            if constexpr(withDerivative)
+                tie(B, Bdiff) = sectors[sector]->template basis<true>(x);
+            else
+                B = sectors[sector]->template basis<false>(x);
 
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
-                MatrixXs prod = B * sectors[sector]->propagate(
-                        E, steps[static_cast<size_t>(sector)], sectors[sector]->min, y[nextY], true).getY(0);
-                for (Eigen::Index i = 0; i < cols; ++i)
-                    result[i].col(nextY) = prod.col(i);
+                Y<Scalar, Dynamic> c = sectors[sector]->propagate(
+                        E, steps[static_cast<size_t>(sector)], sectors[sector]->min, y[nextY], true);
+
+                MatrixXs phi = B * c.getY(0);
+
+                if constexpr (withDerivative) {
+                    MatrixXs phi_x = Bdiff * c.getY(0);
+                    MatrixXs phi_y = B * c.getY(1);
+                    for (Eigen::Index i = 0; i < cols; ++i) {
+                        get<0>(result[i]).col(nextY) = phi.col(i);
+                        get<1>(result[i]).col(nextY) = phi_x.col(i);
+                        get<2>(result[i]).col(nextY) = phi_y.col(i);
+                    }
+                } else {
+                    for (Eigen::Index i = 0; i < cols; ++i) {
+                        result[i].col(nextY) = phi.col(i);
+                    }
+                }
+
                 ++nextY;
             }
         }
@@ -136,39 +158,55 @@ Matslise2D<Scalar>::eigenfunction(
 }
 
 template<typename Scalar>
-vector<function<Scalar(Scalar, Scalar)>> Matslise2D<Scalar>::eigenfunctionCalculator(
+template<bool withDerivative, typename returnType>
+returnType Matslise2D<Scalar>::eigenfunctionHelper(
         const Y<Scalar, Dynamic> &left, const Scalar &E) const {
     shared_ptr<vector<Y<Scalar, Dynamic>>> steps
             = make_shared<vector<Y<Scalar, Dynamic>>>(move(eigenfunctionSteps(left, E)));
-    vector<function<Scalar(Scalar, Scalar)>> result;
-    auto bases = make_shared<vector<function<ArrayXs(Scalar)>>>(sectorCount);
+    returnType result;
+    auto bases = make_shared<vector<function<
+            typename std::conditional<withDerivative, std::pair<ArrayXs, ArrayXs>, ArrayXs>::type(Scalar)>>>(
+            sectorCount);
     for (int i = 0; i < sectorCount; ++i)
-        (*bases)[static_cast<size_t>(i)] = sectors[i]->basisCalculator();
+        (*bases)[static_cast<size_t>(i)] = sectors[i]->template basis<withDerivative>();
 
     if (!steps->empty()) {
         int cols = (int) steps->at(0).getY(0).cols();
         for (int column = 0; column < cols; ++column) {
-            result.push_back([this, steps, E, column, bases](Scalar x, Scalar y) -> Scalar {
-                Eigen::Index sectorIndex;
-                {
-                    Eigen::Index a = 0;
-                    Eigen::Index b = this->sectorCount;
-                    while (a + 1 < b) {
-                        Eigen::Index c = (a + b) / 2;
-                        if (y < this->sectors[c]->min)
-                            b = c;
-                        else
-                            a = c;
-                    }
-                    sectorIndex = a;
-                }
-                const Matslise2D<Scalar>::Sector *sector = this->sectors[sectorIndex];
+            result.push_back(
+                    [this, steps, E, column, bases](Scalar x, Scalar y) -> typename
+                    std::conditional<withDerivative, std::tuple<Scalar, Scalar, Scalar>, Scalar>::type {
+                        Eigen::Index sectorIndex;
+                        {
+                            Eigen::Index a = 0;
+                            Eigen::Index b = this->sectorCount;
+                            while (a + 1 < b) {
+                                Eigen::Index c = (a + b) / 2;
+                                if (y < this->sectors[c]->min)
+                                    b = c;
+                                else
+                                    a = c;
+                            }
+                            sectorIndex = a;
+                        }
+                        const Matslise2D<Scalar>::Sector *sector = this->sectors[sectorIndex];
 
-                return sector->propagate(
-                        E, (*steps)[sectorIndex].col(column), sector->min, y, true).getY(0).dot(
-                        (*bases)[sectorIndex](x).matrix()
-                );
-            });
+                        Y<Scalar, Dynamic, 1> c = sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min,
+                                                                    y, true);
+
+                        if constexpr (withDerivative) {
+                            ArrayXs b, b_x;
+                            tie(b, b_x) = (*bases)[sectorIndex](x);
+                            return {
+                                    c.getY(0).dot(b.matrix()),
+                                    c.getY(0).dot(b_x.matrix()),
+                                    c.getY(1).dot(b.matrix())
+                            };
+                        } else {
+                            return c.getY(0).dot((*bases)[sectorIndex](x).matrix());
+                        }
+                    }
+            );
         }
     }
     return result;

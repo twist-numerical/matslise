@@ -59,7 +59,7 @@ else ()
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp matslise/ixaru.cpp
             matscs/propagatePsi.cpp matscs/propagateTheta.cpp
-            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp
+            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp se2d/derivatives.cpp
             util/lobatto.cpp util/calculateEta.cpp
             main.cpp)
 

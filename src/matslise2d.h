@@ -25,7 +25,13 @@ namespace matslise {
 
         virtual std::vector<ArrayXXs> eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const = 0;
 
-        virtual std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E) const = 0;
+        virtual std::vector<std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>>
+        eigenfunctionDerivatives(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const = 0;
+
+        virtual std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunction(const Scalar &E) const = 0;
+
+        virtual std::vector<std::function<std::tuple<Scalar, Scalar, Scalar>(Scalar, Scalar)>>
+        eigenfunctionDerivatives(const Scalar &E) const = 0;
 
         virtual ~AbstractMatslise2D() = default;
     };
@@ -104,8 +110,18 @@ namespace matslise {
             return eigenfunction(dirichletBoundary, E, x, y);
         }
 
-        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E) const override {
-            return eigenfunctionCalculator(dirichletBoundary, E);
+        std::vector<std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>>
+        eigenfunctionDerivatives(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const override {
+            return eigenfunctionDerivatives(dirichletBoundary, E, x, y);
+        }
+
+        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunction(const Scalar &E) const override {
+            return eigenfunction(dirichletBoundary, E);
+        }
+
+        std::vector<std::function<std::tuple<Scalar, Scalar, Scalar>(Scalar, Scalar)>>
+        eigenfunctionDerivatives(const Scalar &E) const override {
+            return eigenfunctionDerivatives(dirichletBoundary, E);
         }
 
     public: // left boundary conditions
@@ -132,10 +148,34 @@ namespace matslise {
         std::vector<Scalar> eigenvaluesByIndex(const Y<Scalar, Eigen::Dynamic> &left, int Imin, int Imax) const;
 
         std::vector<ArrayXXs> eigenfunction(
-                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+            return eigenfunctionHelper<false>(left, E, x, y);
+        }
 
-        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(
-                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
+        std::vector<std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>> eigenfunctionDerivatives(
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+            return eigenfunctionHelper<true>(left, E, x, y);
+        }
+
+        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunction(
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const {
+            return eigenfunctionHelper<false>(left, E);
+        }
+
+        std::vector<std::function<std::tuple<Scalar, Scalar, Scalar>(Scalar, Scalar)>> eigenfunctionDerivatives(
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const {
+            return eigenfunctionHelper<true>(left, E);
+        }
+
+        template<bool withDerivative, typename returnType=std::vector<std::function<
+                typename std::conditional<withDerivative, std::tuple<Scalar, Scalar, Scalar>, Scalar>::type
+                        (Scalar, Scalar)>>>
+        returnType eigenfunctionHelper(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
+
+        template<bool withDerivative, typename returnType=std::vector<
+                typename std::conditional<withDerivative, std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>, ArrayXXs>::type>>
+        returnType eigenfunctionHelper(
+                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
 
     protected:
         std::vector<Y<Scalar, Eigen::Dynamic>> eigenfunctionSteps(
@@ -170,12 +210,15 @@ namespace matslise {
                 return point <= max && point >= min;
             }
 
-            ArrayXs eigenfunction(int index, const ArrayXs &x) const;
+            template<bool withDerivative, typename diffType=typename std::conditional<
+                    withDerivative, std::pair<ArrayXXs, ArrayXXs>, ArrayXXs>::type>
+            diffType basis(const ArrayXs &x) const;
+
+            template<bool withDerivative, typename diffType=typename std::conditional<
+                    withDerivative, std::pair<ArrayXs, ArrayXs>, ArrayXs>::type>
+            std::function<diffType(Scalar)> basis() const;
 
             Scalar error() const;
-
-            std::function<ArrayXs(Scalar)> basisCalculator() const;
-
 
             static bool compare(const Sector &a, const Sector &b) {
                 return a.vbar.minCoeff() < b.vbar.minCoeff();
@@ -218,9 +261,32 @@ namespace matslise {
 
         std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const override;
 
-        std::vector<ArrayXXs> eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const override;
+        std::vector<ArrayXXs> eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+            return eigenfunctionHelper<false>(E, x, y);
+        }
 
-        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunctionCalculator(const Scalar &E) const override;
+        std::vector<std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>>
+        eigenfunctionDerivatives(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+            return eigenfunctionHelper<true>(E, x, y);
+        }
+
+        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunction(const Scalar &E) const {
+            return eigenfunctionHelper<false>(E);
+        }
+
+        std::vector<std::function<std::tuple<Scalar, Scalar, Scalar>(Scalar, Scalar)>>
+        eigenfunctionDerivatives(const Scalar &E) const {
+            return eigenfunctionHelper<true>(E);
+        }
+
+        template<bool withDerivative, typename returnType=std::vector<std::function<
+                typename std::conditional<withDerivative, std::tuple<Scalar, Scalar, Scalar>, Scalar>::type
+                        (Scalar, Scalar)>>>
+        returnType eigenfunctionHelper(const Scalar &E) const;
+
+        template<bool withDerivative, typename returnType=std::vector<
+                typename std::conditional<withDerivative, std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>, ArrayXXs>::type>>
+        returnType eigenfunctionHelper(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const;
     };
 }
 
