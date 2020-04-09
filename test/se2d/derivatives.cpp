@@ -21,10 +21,10 @@ TEST_CASE("E derivative of matchingErrorMatrix", "[matslise2d][derivatives][e_de
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5, 5}, -5, 5},
-            Options2<>().N(12).tolerance(1e-7).nested(Options1<>().tolerance(1e-7)));
+            Options2<>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options1<>().tolerance(1e-7)));
 
     MatrixXd mat, diff;
-    for (double E = 0.05; E < 20; E += 0.1) {
+    for (double E = 0.1; E < 20; E += 0.2) {
         INFO("E: " << E);
         tie(mat, diff) = p.matchingErrorMatrix(E);
         MatrixXd adiff = approxDiff<MatrixXd>([&](double E) -> MatrixXd { return p.matchingErrorMatrix(E).first; }, E,
@@ -39,9 +39,9 @@ TEST_CASE("Derivatives of eigenfunctions", "[matslise2d][y_derivative][derivativ
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5, 5}, -5, 5},
-            Options2<>().N(12).tolerance(1e-7).nested(Options1<>().tolerance(1e-7)));
+            Options2<>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options1<>().tolerance(1e-7)));
 
-    double step = .2;
+    double step = .4;
     double phi, phi_x, phi_y, a_phi_x, a_phi_y;
     for (double E : {3.19, 5.5, 7.55, 8., 8.45, 9.9, 11.3, 12.1, 12.2, 13.9}) {
         E = p.eigenvalue(E);
@@ -56,7 +56,7 @@ TEST_CASE("Derivatives of eigenfunctions", "[matslise2d][y_derivative][derivativ
                     }, x, 1e-6);
                     a_phi_y = approxDiff<double>([&](double y) -> double {
                         return get<0>(f(x, y));
-                    }, y, 1e-6);
+                    }, y, 1e-7);
 
                     CHECK(Approx(phi_x).margin(1e-4) == a_phi_x);
                     CHECK(Approx(phi_y).margin(1e-4) == a_phi_y);

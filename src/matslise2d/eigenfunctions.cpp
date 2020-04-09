@@ -5,30 +5,31 @@ using namespace matslise;
 using namespace std;
 
 template<typename Scalar>
-Matrix<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
-    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1)).diagonal();
+Array<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
+    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1)).diagonal().array();
 }
 
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>>
 Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Scalar &E) const {
     auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
+    auto *endSteps = new Y<Scalar, Dynamic>[sectorCount];
 
     steps[0] = yLeft;
     steps[sectorCount] = dirichletBoundary;
     auto *U = new MatrixXs[sectorCount + 1];
 
     for (int i = sectorCount - 1; i > matchIndex; --i) {
-        const Y<Scalar, Dynamic> next
-                = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
-        steps[i] = sectors[i]->propagate(E, next, sectors[i]->max, sectors[i]->min, true);
+        endSteps[i] = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
+        steps[i] = sectors[i]->propagate(E, endSteps[i], sectors[i]->max, sectors[i]->min, true);
         U[i + 1] = conditionY(steps[i]);
     }
     const Y<Scalar, Dynamic> matchRight = steps[matchIndex + 1];
 
     U[0] = MatrixXs::Identity(N, N);
     for (int i = 0; i <= matchIndex; ++i) {
-        steps[i + 1] = M[i] * sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
+        endSteps[i] = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
+        steps[i + 1] = M[i] * endSteps[i];
         U[i + 1] = conditionY(steps[i + 1]);
     }
     const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
@@ -47,37 +48,38 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
 
         MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
         MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-        /*
-         MatrixXs scaling = (left.transpose() * normLeft * left
-                            + right.transpose() * normRight * right).diagonal();
-        scaling = scaling.unaryExpr([](Scalar s) { return s < 0 ? 1 : 1. / sqrt(s); });
-        left *= scaling.asDiagonal();
-        right *= scaling.asDiagonal();
-        */
 
-        VectorXs normalizer = (cec_cce<>(matchLeft * left) - cec_cce<>(matchRight * right)).diagonal()
-                .unaryExpr([](Scalar s) { return s <= 0 ? Scalar(1) : Scalar(1) / sqrt(s); });
+        Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
 
+        ArrayXs normalizer = ArrayXs::Zero(left.cols(), 1);
         for (int i = matchIndex + 1; i >= 0; --i) {
-            elements[static_cast<size_t>(i)] = steps[i] * left;
+            elements[i] = steps[i] * left;
+            if (i <= matchIndex)
+                normalizer += cec_cce(endSteps[i] * left) - cec_cce(elements[i]);
             if (i > 0) {
                 U[i].template triangularView<Upper>().
                         template solveInPlace<OnTheLeft>(left);
             }
         }
 
-        Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
         for (int i = matchIndex + 2; i <= sectorCount; ++i) {
             U[i].template triangularView<Upper>().
                     template solveInPlace<OnTheLeft>(right);
             elements[static_cast<size_t>(i)] = steps[i] * right;
+            normalizer += cec_cce(endSteps[i - 1] * right) -
+                          cec_cce(i > matchIndex + 2 ? elements[i - 1] : elementMatchRight);
         }
 
+        normalizer = normalizer.unaryExpr([](const Scalar &s) -> Scalar {
+            return s <= 0 ? 1 : Scalar(1.) / sqrt(s);
+        });
+
         for (int i = 0; i <= sectorCount; ++i) {
-            elements[static_cast<size_t>(i)] *= normalizer.asDiagonal();
+            elements[static_cast<size_t>(i)] *= normalizer.matrix().asDiagonal();
         }
     }
     delete[] steps;
+    delete[] endSteps;
     delete[] U;
     return elements;
 }

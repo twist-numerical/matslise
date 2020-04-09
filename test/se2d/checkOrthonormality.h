@@ -27,9 +27,6 @@ void checkOrthonormality(const AbstractMatslise2D<Scalar> *p, const doubleIterat
     auto eigenfunctionsBegin = eigenfunctions.begin();
     for (auto i = eigenfunctionsBegin; i != eigenfunctions.end(); ++i)
         for (auto j = eigenfunctionsBegin; j != eigenfunctions.end(); ++j) {
-            // TODO: an issue with normalisation
-            if (i == j) continue;
-
             INFO("Orthonormality of eigenfunction "
                          << std::distance(eigenfunctionsBegin, i) << " and " << std::distance(eigenfunctionsBegin, j));
             CHECK(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-1) == (i == j ? 1 : 0));
