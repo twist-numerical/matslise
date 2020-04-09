@@ -80,5 +80,5 @@ TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
     }
 
     vector<double> eigenvalues_v(eigenvalues.begin(), eigenvalues.end());
-    checkOrthonormality(p, eigenvalues_v.begin(), eigenvalues_v.end());
+    checkOrthonormality(&p, eigenvalues_v.begin(), eigenvalues_v.end());
 }

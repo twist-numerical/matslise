@@ -18,7 +18,7 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
             {{-5, 5}, -5, 5},
             Options2<>().tolerance(1e-7).nested(Options1<>().tolerance(1e-7)));
     //Options2<>().sectorCount(23).stepsPerSector(4).N(10).nested(Options1<>().sectorCount(26)));
-    pair<double, int> eigenvalues[] = {
+    pair<double, unsigned int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
             {7.5578033,  1},
@@ -41,7 +41,7 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
     ArrayXd x(3);
     x << -1, 0, 1;
     double E;
-    int multiplicity;
+    unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
         double error = get<0>(p2.matchingError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
         CHECK(abs(error) > 1e-3);
@@ -64,7 +64,7 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
         CHECK(f.size() == multiplicity);
     }
-    checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
+    checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
 TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru][halfrange]") {
@@ -119,7 +119,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
         CHECK(static_cast<long>(f.size()) == multiplicity);
     }
-    checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
+    checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
 TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto]") {
@@ -129,7 +129,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
             },
             {{-5.5, 5.5}, -5.5, 5.5},
             Options2<>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options1<>().tolerance(1e-7)));
-    pair<double, int> eigenvalues[] = {
+    pair<double, unsigned int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
             {7.5578033,  1},
@@ -147,7 +147,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
     ArrayXd x(3);
     x << -1, 0, 1;
     double E;
-    int multiplicity;
+    unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
         double error = get<0>(p2.matchingError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
         CHECK(abs(error) > 1e-3);
@@ -171,7 +171,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
         CHECK(f.size() == multiplicity);
     }
-    checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
+    checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }
 
 TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixaru][auto][slow]") {
@@ -181,7 +181,7 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
             },
             {{-5.5, 5.5}, -5.5, 5.5},
             Options2<>().tolerance(1e-5).stepsPerSector(1).N(20).nested(Options1<>().tolerance(1e-7)));
-    pair<double, int> eigenvalues[] = {
+    pair<double, unsigned int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
             {7.5578033,  1},
@@ -199,7 +199,7 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
     ArrayXd x(3);
     x << -1, 0, 1;
     double E;
-    int multiplicity;
+    unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
         double error = get<0>(p2.matchingError((get<0>(eigenvalues[i]) + get<0>(eigenvalues[i + 1])) / 2));
         CHECK(abs(error) > 1e-3);
@@ -223,5 +223,5 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
         const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
         CHECK(f.size() == multiplicity);
     }
-    checkOrthonormality(p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
+    checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
 }

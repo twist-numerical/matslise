@@ -11,7 +11,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                                    bool backward)
         : se2d(se2d), min(ymin), max(ymax) {
     const Scalar ybar = (ymax + ymin) / 2;
-    function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->V(x, ybar); };
+    function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
     vbar = se2d->grid.unaryExpr(vbar_fun);
     if (se2d->options.nestedOptions._symmetric)
         matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
@@ -86,7 +86,7 @@ template<typename Scalar>
 typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::Sector::calculateDeltaV(const Scalar &y) const {
     MatrixXs dV(se2d->N, se2d->N);
 
-    ArrayXs vDiff = se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->V(x, y); }) - vbar;
+    ArrayXs vDiff = se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->potential(x, y); }) - vbar;
 
     for (int i = 0; i < se2d->N; ++i) {
         for (int j = 0; j <= i; ++j) {

@@ -13,6 +13,13 @@ namespace matslise {
         typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
 
+        const std::function<Scalar(Scalar, Scalar)> potential;
+        const Rectangle<2, Scalar> domain;
+
+        AbstractMatslise2D(const std::function<Scalar(Scalar, Scalar)> &potential, const Rectangle<2, Scalar> &domain)
+                : potential(potential), domain(domain) {
+        }
+
         virtual Scalar firstEigenvalue() const = 0;
 
         virtual Scalar eigenvalue(const Scalar &Eguess) const = 0;
@@ -48,9 +55,9 @@ namespace matslise {
 
         class Sector;
 
-        std::function<Scalar(const Scalar &, const Scalar &)> V;
+        using AbstractMatslise2D<Scalar>::domain;
+        using AbstractMatslise2D<Scalar>::potential;
         MatrixXs *M;
-        Rectangle<2, Scalar> domain;
         int sectorCount;
         std::vector<typename Matslise2D<Scalar>::Sector *> sectors;
         ArrayXs grid;
@@ -59,7 +66,7 @@ namespace matslise {
         Options2<Scalar> options;
         Y<Scalar, Eigen::Dynamic> dirichletBoundary;
     public:
-        Matslise2D(const std::function<Scalar(const Scalar &, const Scalar &)> &V,
+        Matslise2D(const std::function<Scalar(Scalar, Scalar)> &potential,
                    const matslise::Rectangle<2, Scalar> &domain,
                    const Options2<Scalar> &options);
 
@@ -242,10 +249,12 @@ namespace matslise {
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> dirichletBoundary;
     public:
         Matslise2D<Scalar> *se2d;
-        Rectangle<2, Scalar> domain;
+
+        using AbstractMatslise2D<Scalar>::domain;
+        using AbstractMatslise2D<Scalar>::potential;
 
     public:
-        Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &V,
+        Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &potential,
                        const Rectangle<2, Scalar> &domain,
                        const Options2<Scalar> &options);
 

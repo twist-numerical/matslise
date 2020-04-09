@@ -11,7 +11,7 @@ using namespace std;
 template<typename Scalar>
 Matslise2DHalf<Scalar>::Matslise2DHalf(const function<Scalar(const Scalar &, const Scalar &)> &V,
                                        const matslise::Rectangle<2, Scalar> &domain,
-                                       const Options2<Scalar> &options) : domain(domain) {
+                                       const Options2<Scalar> &options) : AbstractMatslise2D<Scalar>(V, domain) {
     se2d = new Matslise2D<Scalar>(V, {domain.sub, 0, domain.getMax(1)}, options);
     neumannBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Neumann(se2d->N);
     dirichletBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Dirichlet(se2d->N);

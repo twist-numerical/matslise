@@ -9,18 +9,17 @@ using namespace std;
 using namespace Eigen;
 using namespace matslise;
 
-template<typename Problem, typename doubleIterator>
-void checkOrthonormality(Problem &p, const doubleIterator &begin, const doubleIterator &end) {
-    typedef typename Problem::Scalar Scalar;
+template<typename Scalar=double, typename doubleIterator>
+void checkOrthonormality(const AbstractMatslise2D<Scalar> *p, const doubleIterator &begin, const doubleIterator &end) {
     int n = 201;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
-            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));
+            Array<Scalar, Dynamic, 1>::LinSpaced(n, p->domain.getMin(0), p->domain.getMax(0)));
     Array<Scalar, Dynamic, 1> y = lobatto::grid<Scalar>(
-            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(1), p.domain.getMax(1)));
+            Array<Scalar, Dynamic, 1>::LinSpaced(n, p->domain.getMin(1), p->domain.getMax(1)));
 
     vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctions;
     for (auto i = begin; i < end; ++i) {
-        vector<Array<Scalar, Dynamic, Dynamic>> fs = p.eigenfunction(*i, x, y);
+        vector<Array<Scalar, Dynamic, Dynamic>> fs = p->eigenfunction(*i, x, y);
         for (const Array<Scalar, Dynamic, Dynamic> &f : fs)
             eigenfunctions.push_back(f);
     }

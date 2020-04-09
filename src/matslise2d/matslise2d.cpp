@@ -18,11 +18,10 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 }
 
 template<typename Scalar>
-Matslise2D<Scalar>::Matslise2D(const function<Scalar(const Scalar &, const Scalar &)> &V,
+Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential,
                                const matslise::Rectangle<2, Scalar> &domain,
-                               const Options2<Scalar> &_options) :
-        V(V), domain(domain), N(_options._N),
-        options(_options) {
+                               const Options2<Scalar> &_options):
+        AbstractMatslise2D<Scalar>(potential, domain), N(_options._N), options(_options) {
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
     grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     auto sectorsBuild = options._builder(this, domain.min, domain.max);
@@ -67,8 +66,8 @@ typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, D
 
 template<typename Scalar>
 pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
-Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h) const {
-    Y<Scalar, Dynamic> yl = left;
+Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
+    Y<Scalar, Dynamic> yl = yLeft;
     for (int i = 0; i <= matchIndex; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, use_h);
         conditionY(yl);
@@ -153,7 +152,8 @@ vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
 }
 
 template<typename Scalar>
-pair<Scalar, Scalar> Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
+pair<Scalar, Scalar>
+Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
     vector<pair<Scalar, Scalar>> errors = matchingErrors(yLeft, E, use_h);
     return *min_element(errors.begin(), errors.end(), [](
             const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {
