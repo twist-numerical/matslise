@@ -86,14 +86,20 @@ Just like PySE2d::calculateError(E) computes this function the discontinuity of 
 :param float E: the guessed eigenvalue.
 :returns: A list of tuples with each of the computed errors and its derivative with respect to E.
 )"""", py::arg("E"))
-            .def("eigenfunction", &AbstractMatslise2D<double>::eigenfunction, R""""(\
+            .def("eigenfunction",
+                 [](const Matslise2D<> &se2d, double E, const ArrayXd &x, const ArrayXd &y) -> vector<ArrayXXd> {
+                     return se2d.eigenfunction(E, x, y);
+                 }, R""""(\
 Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
 
 :param float E: the eigenvalue to compute eigenfunctions for.
 :param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
 :returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
 )"""", py::arg("E"), py::arg("x"), py::arg("y"))
-            .def("eigenfunction", &AbstractMatslise2D<double>::eigenfunctionCalculator, R""""(\
+            .def("eigenfunction",
+                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<double(double, double)>> {
+                     return se2d.eigenfunction(E);
+                 }, R""""(\
 Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
 
 :param float E: the eigenvalue.
@@ -236,14 +242,20 @@ It is not a good idea to make the number of initial values large. This will incr
 :returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
 )"""", py::arg("Emin"), py::arg("Emax"))
             .def("firstEigenvalue", &Matslise2DHalf<>::firstEigenvalue)
-            .def("eigenfunction", &Matslise2DHalf<>::eigenfunction, R""""(\
+            .def("eigenfunction",
+                 [](const Matslise2DHalf<> &se2d, double E, const ArrayXd &x, const ArrayXd &y) -> vector<ArrayXXd> {
+                     return se2d.eigenfunction(E, x, y);
+                 }, R""""(\
 Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
 
 :param float E: the eigenvalue to compute eigenfunctions for.
 :param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
 :returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
 )"""", py::arg("E"), py::arg("x"), py::arg("y"))
-            .def("eigenfunction", &Matslise2DHalf<>::eigenfunctionCalculator, R""""(\
+            .def("eigenfunction",
+                 [](const Matslise2DHalf<> &se2d, double E) -> vector<std::function<double(double, double)>> {
+                     return se2d.eigenfunction(E);
+                 }, R""""(\
 Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
 
 :param float E: the eigenvalue.

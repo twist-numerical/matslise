@@ -29,8 +29,7 @@ void bind_matslise2d() {
                               }))
             .function("eigenfunction", optional_override(
                     [](const AbstractMatslise2D<double> &se2d, double E) -> val {
-                        std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunctionCalculator(
-                                E);
+                        std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunction(E);
                         val r = val::array();
                         for (const auto &f : calculators)
                             r.call<val>("push", val::global("Function")

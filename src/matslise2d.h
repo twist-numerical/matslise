@@ -270,21 +270,21 @@ namespace matslise {
 
         std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const override;
 
-        std::vector<ArrayXXs> eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+        std::vector<ArrayXXs> eigenfunction(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const override {
             return eigenfunctionHelper<false>(E, x, y);
         }
 
         std::vector<std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>>
-        eigenfunctionDerivatives(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
+        eigenfunctionDerivatives(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const override {
             return eigenfunctionHelper<true>(E, x, y);
         }
 
-        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunction(const Scalar &E) const {
+        std::vector<std::function<Scalar(Scalar, Scalar)>> eigenfunction(const Scalar &E) const override {
             return eigenfunctionHelper<false>(E);
         }
 
         std::vector<std::function<std::tuple<Scalar, Scalar, Scalar>(Scalar, Scalar)>>
-        eigenfunctionDerivatives(const Scalar &E) const {
+        eigenfunctionDerivatives(const Scalar &E) const override {
             return eigenfunctionHelper<true>(E);
         }
 
