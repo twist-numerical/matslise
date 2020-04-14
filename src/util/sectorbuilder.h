@@ -1,9 +1,6 @@
 #ifndef MATSLISE_SECTORBUILDER_H
 #define MATSLISE_SECTORBUILDER_H
 
-#include "constants.h"
-#include <stdexcept>
-
 namespace matslise {
     template<typename Problem>
     struct SectorBuilderReturn {
@@ -74,7 +71,7 @@ namespace matslise {
             do {
                 if (s != nullptr) {
                     ++steps;
-                    h *= std::max(Scalar(.1), pow(tolerance / error, 1. / (Problem::order - 1)));
+                    h *= std::max(Scalar(.1), Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
                     if (forward) {
                         xmax = xmin + h;
                     } else {

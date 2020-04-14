@@ -1,4 +1,5 @@
 #include "../matslise.h"
+#include "../util/constants.h"
 #include <set>
 
 using namespace Eigen;

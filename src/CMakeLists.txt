@@ -46,6 +46,13 @@ else ()
             pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyse2d.cpp)
 
     add_library(matslise ${MATSLISE_SRC})
+    install(TARGETS matslise
+            ARCHIVE DESTINATION lib
+            LIBRARY DESTINATION lib)
+    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
+    install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
 
     OPTION(LONG_DOUBLE "Option description" OFF)
     IF (LONG_DOUBLE)
@@ -115,8 +122,5 @@ else ()
             ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(pyslise_install pyslise)
-
-    install(FILES matslise.h Array2D.h matscs.h matslise2d.h schrodinger.h DESTINATION include/matslise/)
-    install(FILES util/lobatto.h util/y.h util/eigen.h util/sectorbuilder.h DESTINATION include/matslise/util)
 
 endif (DEFINED EMSCRIPTEN)
