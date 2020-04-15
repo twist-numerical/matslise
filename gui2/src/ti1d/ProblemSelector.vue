@@ -29,33 +29,68 @@ type Problem = {
   tolerance: string;
 };
 
+const dirichlet = {
+  ymin: ["1", "0"],
+  ymax: ["1", "0"]
+};
+
 const problems: Problem[] = [
-  {
-    name: "Mathieu",
+  <Problem>{
+    name: "Airy",
     symmetric: false,
-    potential: "2*cos(2*x)",
-    x: ["0", "pi"],
-    ymin: ["1", "0"],
-    ymax: ["1", "0"],
-    tolerance: "1e-5"
+    potential: "x",
+    x: ["0", "20"],
+    tolerance: "1e-6",
+    ...dirichlet
   },
-  {
-    name: "Hydrogen",
-    symmetric: false,
-    potential: "-1/x + 2/x^2",
-    x: ["0", "300"],
-    ymin: ["1", "0"],
-    ymax: ["1", "0"],
-    tolerance: "1e-5"
-  },
-  {
+  <Problem>{
     name: "Coffey Evans",
     symmetric: true,
     potential: "-2*20*cos(2*x)+20^2*sin(2*x)^2",
     x: ["-pi/2", "pi/2"],
-    ymin: ["1", "0"],
-    ymax: ["1", "0"],
-    tolerance: "1e-5"
+    tolerance: "1e-5",
+    ...dirichlet
+  },
+  <Problem>{
+    name: "Bessel",
+    symmetric: false,
+    potential: ".25/x^2",
+    x: ["0", "1"],
+    tolerance: "1e-6",
+    ...dirichlet
+  },
+  <Problem>{
+    name: "Hydrogen",
+    symmetric: false,
+    potential: "-1/x+2/x^2",
+    x: ["0", "200"],
+    tolerance: "1e-6",
+    ...dirichlet
+  },
+  <Problem>{
+    name: "Marletta",
+    symmetric: false,
+    potential: "3*(x-31)/(4*(x+1)*(x+4)^2)",
+    x: ["0", "12"],
+    tolerance: "1e-6",
+    ymin: ["5", "8"],
+    ymax: ["1", "0"]
+  },
+  <Problem>{
+    name: "Mathieu",
+    symmetric: false,
+    potential: "2*cos(2*x)",
+    x: ["0", "pi"],
+    tolerance: "1e-5",
+    ...dirichlet
+  },
+  <Problem>{
+    name: "Quartic Anharm. Osc.",
+    symmetric: true,
+    potential: "x^4+x^2",
+    x: ["-7", "7"],
+    tolerance: "1e-6",
+    ...dirichlet
   }
 ];
 

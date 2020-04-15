@@ -5,7 +5,9 @@
   "scripts": {
     "ti1d": "parcel ti1d.html",
     "ti2d": "parcel ti2d.html",
-    "start": "parcel ti1d.html ti2d.html"
+    "start": "parcel ti1d.html ti2d.html",
+    "build_ti1d": "parcel build ti1d.html --public-url . --out-dir build/ti1d --out-file index.html",
+    "build_ti2d": "parcel build ti2d.html --public-url . --out-dir build/ti2d --out-file index.html"
   },
   "author": "Toon Baeyens",
   "license": "MIT",

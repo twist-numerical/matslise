@@ -20,19 +20,19 @@ div.container
                 v-model="controller.problem.potential")
             .input-group-append
               .input-group-text
-                label.m-0(for="toggle-show-potential") show&nbsp;
+                label.m-0.pr-1(for="toggle-show-potential") show
                 toggle-switch(v-model="showPotential" name="toggle-show-potential")
         .form-row
           label.input-group.col-6
             .input-group-prepend
-              .input-group-text x<sub>min</sub>&nbsp;=
+              .input-group-text x<sub class="pr-1">min</sub>=
             input.form-control(
                 v-bind:disabled="controller.problem.symmetric",
                 @input="controller.reset()",
                 v-model="controller.problem.symmetric?`-(${controller.problem.x[1]})`:controller.problem.x[0]")
           label.input-group.col-6
             .input-group-prepend
-              .input-group-text x<sub>max</sub>&nbsp;=
+              .input-group-text x<sub class="pr-1">max</sub>=
             input.form-control(
                 @input="controller.reset()",
                 v-model="controller.problem.x[1]")
