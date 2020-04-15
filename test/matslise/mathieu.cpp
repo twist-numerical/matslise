@@ -4,6 +4,7 @@
 #include "../catch.hpp"
 #include "../../src/matslise.h"
 #include "../../src/util/eigen.h"
+#include "../../src/util/constants.h"
 
 
 using namespace matslise;

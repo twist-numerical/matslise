@@ -5,6 +5,7 @@
 #include "../../src/matslise.h"
 #include "../../src/util/lobatto.h"
 #include "checkOrthonormality.h"
+#include "../../src/util/constants.h"
 
 
 using namespace matslise;
