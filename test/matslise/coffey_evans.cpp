@@ -4,67 +4,44 @@
 #include "../catch.hpp"
 #include "../../src/matslise.h"
 #include "../../src/util/constants.h"
-
+#include "test_problem.h"
 
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
 
-template<typename Scalar>
-void test_eigenfunctions(const Matslise<Scalar> &ms, const Y<Scalar> &y0, const Y<Scalar> &y1,
-                         const vector<pair<int, Scalar>> &eigenvalues, const Scalar &tolerance = Scalar(1e-7)) {
-    Array<Scalar, Dynamic, 1> xs(100);
-    int scalePoint = 39;
-    for (int j = 0; j < xs.size(); ++j)
-        xs[j] = ms.xmin + static_cast<Scalar>(j + .5) / static_cast<Scalar>(xs.size()) * (ms.xmax - ms.xmin);
 
-    for (pair<int, Scalar> p : eigenvalues) {
-        int i;
-        Scalar E;
-        tie(i, E) = p;
-        std::function<Y<Scalar>(Scalar)> f = ms.eigenfunctionCalculator(E, y0, y1);
-        Array<Y<Scalar>, Dynamic, 1> ys = ms.eigenfunction(E, y0, y1, xs);
-
-        Scalar scale = ys[scalePoint].y[0] / f(xs[scalePoint]).y[0];
-        for (int j = 0; j < xs.size(); ++j) {
-            Y<Scalar> fx = f(xs[j]);
-            REQUIRE(Approx(fx.y[0] * scale).margin(tolerance) == ys[j].y[0]);
-            REQUIRE(Approx(fx.y[1] * scale).margin(tolerance) == ys[j].y[1]);
-        }
-    }
-}
-
-TEST_CASE("coffey_evans", "[matslise][coffey_evans]") {
+TEST_CASE("coffey_evans beta=20", "[matslise][coffey_evans]") {
     const double B = 20;
-    Matslise<double> ms([B](double x) -> double {
+    MatsliseHalf<double> ms([B](double x) -> double {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, 0, constants<double>::PI / 2, 1e-9, sector_builder::uniform<Matslise<>>(31));
+    }, constants<double>::PI / 2, 1e-8);
 
-    Y<double> y0({0, 1}, {0, 0});
-    Y<double> y1({1, 0}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), {
+            -8.639369922249e-14, 77.91619567714, 151.4627783465, 151.4632236577, 151.4636689884, 220.1542298353,
+            283.0948146954, 283.2507437431, 283.4087354034, 339.3706656525, 380.0949155509, 385.6447796090,
+            394.1303198988, 426.5246237841, 452.6311747507, 477.7105126091, 507.5356903666, 540.6338227685,
+            575.8375904214, 613.2813295704, 652.9904570847, 694.8904368843, 738.9381495539, 785.1084322837,
+            833.3807330072, 883.7384298621, 936.1683286674, 990.6597832611, 1047.204086284, 1105.794050195,
+    }, 1e-6);
 }
 
-TEST_CASE("high potential", "[matslise][high]") {
-    Matslise<double> ms([](double x) -> double {
-        return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 1e-8);
 
-    Y<double> y0({1, 0}, {0, 0});
-    Y<double> y1({0, -1}, {0, 0});
-    test_eigenfunctions(ms, y0, y1, ms.eigenvaluesByIndex(0, 20, y0, y1));
+TEST_CASE("coffey_evans beta=30", "[matslise][coffey_evans]") {
+    const double B = 30;
+    MatsliseHalf<double> ms([B](double x) -> double {
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, constants<double>::PI / 2, 1e-14);
+
+    testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), {
+            -2.629219539841e-14, 117.9463076621, 231.6649292371, 231.6649293130, 231.6649293888, 340.8882998096,
+            445.2830895824, 445.2831723067, 445.2832550313, 544.4183851494, 637.6822498740, 637.7043623417,
+            637.7265023185, 724.2576813500, 800.8313121817, 802.4787986926, 804.2793051689, 868.9602228708,
+            909.4810465074, 925.9773098347, 951.8788067966, 992.5372967308, 1032.302482638, 1073.450031436,
+            1118.144724204, 1165.668024705, 1215.559092002, 1267.808726318, 1322.384891028, 1379.228026450
+    }, 1e-12, 1e-6);
 }
 
-TEST_CASE("high potential (auto)", "[matslise][high]") {
-    Matslise<double> ms([](double x) -> double {
-        return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 1e-6);
-
-    Y<double> y0({1, 0}, {0, 0});
-    Y<double> y1({0, -1}, {0, 0});
-    test_eigenfunctions(ms, y0, y1, ms.eigenvaluesByIndex(0, 20, y0, y1));
-}
 
 #ifdef MATSLISE_long_double
 

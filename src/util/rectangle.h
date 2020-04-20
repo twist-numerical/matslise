@@ -54,6 +54,10 @@ namespace matslise {
         constexpr bool contains(int axis, const Scalar &v) const {
             assert(axis == 0);
             (void) (axis); // UNUSED
+            return contains(v);
+        }
+
+        constexpr bool contains(const Scalar &v) const {
             return min <= v && v <= max;
         }
 

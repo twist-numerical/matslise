@@ -11,6 +11,7 @@
 #include "util/eigen.h"
 #include "util/y.h"
 #include "util/sectorbuilder.h"
+#include "util/rectangle.h"
 
 #define MATSLISE_HMAX_delta 17
 #define MATSLISE_ETA_delta 8
@@ -27,6 +28,15 @@ namespace matslise {
         }
 
     public:
+        const std::function<Scalar(Scalar)> potential;
+        const Rectangle<1, Scalar> domain;
+
+        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Rectangle<1, Scalar> &domain)
+                : potential(potential), domain(domain) {
+        }
+
+    public:
+
         virtual Scalar estimatePotentialMinimum() const = 0;
 
         virtual std::vector<std::pair<int, Scalar>>
@@ -101,8 +111,9 @@ namespace matslise {
 
         class Sector;
 
-        std::function<Scalar(Scalar)> V;
-        Scalar xmin, xmax;
+        using AbstractMatslise<Scalar>::domain;
+        using AbstractMatslise<Scalar>::potential;
+
         int sectorCount;
         int matchIndex;
         std::vector<Matslise::Sector *> sectors;
@@ -116,15 +127,11 @@ namespace matslise {
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                  const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
-                : V(V), xmin(xmin), xmax(xmax), tolerance(tolerance) {
-            auto buildSectors = sectorBuilder(this, xmin, xmax);
+                : AbstractMatslise<Scalar>(V, {xmin, xmax}), tolerance(tolerance) {
+            auto buildSectors = sectorBuilder(this, domain.min, domain.max);
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();
-        }
-
-        bool contains(const Scalar &point) const {
-            return point <= xmax && point >= xmin;
         }
 
         std::pair<matslise::Y<Scalar>, Scalar>

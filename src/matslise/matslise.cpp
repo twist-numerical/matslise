@@ -14,12 +14,12 @@ using namespace Eigen;
 template<typename Scalar>
 pair<Y<Scalar>, Scalar>
 Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &a, const Scalar &b, bool use_h) const {
-    if (!contains(a) || !contains(b))
+    if (!domain.contains(a) || !domain.contains(b))
         throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<Scalar> y = _y;
     Scalar dTheta;
     Scalar theta = matslise::theta(y);
-    if (a == xmax && theta == 0)
+    if (a == domain.max && theta == 0)
         theta += constants<Scalar>::PI;
     int sectorIndex = find_sector<Matslise<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
@@ -38,8 +38,8 @@ tuple<Scalar, Scalar, Scalar>
 Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, left, xmin, sectors[matchIndex]->max, use_h);
-    tie(r, thetaR) = propagate(E, right, xmax, sectors[matchIndex]->max, use_h);
+    tie(l, thetaL) = propagate(E, left, domain.min, sectors[matchIndex]->max, use_h);
+    tie(r, thetaR) = propagate(E, right, domain.max, sectors[matchIndex]->max, use_h);
     return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
                       l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
                       thetaL - thetaR);
@@ -221,7 +221,7 @@ Matslise<Scalar>::eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left
     for (Eigen::Index i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
-    if (x[0] < xmin || x[n - 1] > xmax)
+    if (x[0] < domain.min || x[n - 1] > domain.max)
         throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
 
     vector<Y<Scalar>> steps = propagationSteps(*this, E, left, right);

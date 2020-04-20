@@ -5,6 +5,7 @@
 #include "../../src/matslise.h"
 #include "../../src/util/eigen.h"
 #include "../../src/util/constants.h"
+#include "test_problem.h"
 
 
 using namespace matslise;
@@ -65,29 +66,13 @@ vector<double> correct = {-0.110248816992, 3.917024772998, 9.047739259809, 16.03
 TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
 
-    Y<double> y0({0, 1}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
-    for (unsigned int i = 0; i < correct.size(); ++i) {
-        REQUIRE((signed int) i == eigenvalues[i].first);
-        double E = eigenvalues[i].second;
-        double error = ms.eigenvalueError(E, y0, y0);
-        REQUIRE(fabs(error) < 1e-6);
-        REQUIRE(Approx(correct[i]).margin(error) == E);
-    }
+    testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu][auto]") {
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8);
 
-    Y<double> y0({0, 1}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
-    for (unsigned int i = 0; i < correct.size(); ++i) {
-        REQUIRE((signed int) i == eigenvalues[i].first);
-        double E = eigenvalues[i].second;
-        double error = ms.eigenvalueError(E, y0, y0);
-        REQUIRE(fabs(error) < 1e-6);
-        REQUIRE(Approx(correct[i]).margin(error) == E);
-    }
+    testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary conditions)",
@@ -95,47 +80,7 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary con
     Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8);
 
     Y<double> y0({0, -1}, {0, 0});
-    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
-    for (unsigned int i = 0; i < correct.size(); ++i) {
-        REQUIRE(i == eigenvalues[i].first);
-        double E = eigenvalues[i].second;
-        double error = ms.eigenvalueError(E, y0, y0);
-        REQUIRE(fabs(error) < 1e-6);
-        REQUIRE(Approx(correct[i]).margin(error) == E);
-    }
-}
-
-TEST_CASE("Solving the mathieu problem (skip 100)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
-
-    unsigned int offset = 100;
-    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(
-            offset, (unsigned int) correct.size(), Y<double>({0, 1}, {0, 0}), Y<double>({0, 1}, {0, 0}));
-
-    for (unsigned int i = offset; i < correct.size(); ++i) {
-        REQUIRE((signed int) i == eigenvalues[i - offset].first);
-        REQUIRE(Approx(correct[i]).margin(1e-12) == eigenvalues[i - offset].second);
-    }
-}
-
-TEST_CASE("Mathieu normalized", "[mathieu][matslise][eigenfunctionCalculator]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));;
-    Y<double> ystart({0, 1}, {0, 0});
-
-    vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart, ystart);
-    for (pair<int, double> ie : eigenvalues) {
-        double e = ie.second;
-        function<Y<double>(double)> f = ms.eigenfunctionCalculator(e, ystart, ystart);
-
-        int n = 61;
-        double v = 0;
-        for (int i = 0; i < n; ++i) {
-            double q = f((i + .5) / n * constants<double>::PI).y[0];
-            v += q * q;
-        }
-        v *= constants<double>::PI / n;
-        REQUIRE(Approx(v).margin(1e-7) == 1);
-    }
+    testProblem(ms, y0, y0, correct, 1e-7);
 }
 
 TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]") {

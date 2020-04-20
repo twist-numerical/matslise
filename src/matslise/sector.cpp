@@ -23,7 +23,7 @@ template<typename Scalar>
 Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
         : s(s), min(min), max(max), backward(backward) {
     h = max - min;
-    vs = legendre::getCoefficients(MATSLISE_N, s->V, min, max);
+    vs = legendre::getCoefficients(MATSLISE_N, s->potential, min, max);
     if (backward) {
         for (int i = 1; i < MATSLISE_N; i += 2)
             vs[i] *= -1;
