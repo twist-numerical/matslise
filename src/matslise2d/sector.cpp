@@ -109,12 +109,12 @@ diffType Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::Ar
     ArrayXXs b_x(size, se2d->N);
     for (int i = 0; i < se2d->N; ++i) {
         auto ys = matslise->eigenfunction(eigenvalues[i], y0, x, i);
-        b.col(i) = ys.unaryExpr(
+        b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                 [](const Y<Scalar> &y) -> Scalar {
                     return y.y[0];
                 });
         if constexpr(withDerivative)
-            b_x.col(i) = ys.unaryExpr(
+            b_x.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                     [](const Y<Scalar> &y) -> Scalar {
                         return y.y[1];
                     });

@@ -18,7 +18,6 @@ ForEach ($line in $($pythons -split "`r`n")) {
 		md -Force $buildDir
 		cd $buildDir
 		iex ("cmake "+
-			"-DLONG_DOUBLE=OFF "+
 			"-DPYTHON_EXECUTABLE=$($pythonPath) "+
 			"-DCMAKE_BUILD_TYPE=Release " +
 			"-DCMAKE_SYSTEM_VERSION=7 " +

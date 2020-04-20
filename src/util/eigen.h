@@ -12,7 +12,8 @@
 
 #elif _MSC_VER
 #pragma warning(push, 0)
-MATSLISE_EIGEN_INCLUDE
+#include <Eigen/Dense>
+#include <unsupported/Eigen/KroneckerProduct>
 #pragma warning(pop)
 
 #else
