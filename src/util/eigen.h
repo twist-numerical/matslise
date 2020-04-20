@@ -10,7 +10,7 @@
 #include <unsupported/Eigen/KroneckerProduct>
 #pragma GCC diagnostic pop
 
-#elifdef _MSC_VER
+#elif _MSC_VER
 #pragma warning(push, 0)
 MATSLISE_EIGEN_INCLUDE
 #pragma warning(pop)
