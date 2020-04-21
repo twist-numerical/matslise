@@ -211,6 +211,8 @@ namespace matslise {
                 return propagate(E, y, max, min, use_h);
             }
 
+            Scalar theta0(const Scalar &E, const Y<Scalar> &y0) const;
+
             Scalar prufer(const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const;
 
             Scalar error() const;

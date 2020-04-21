@@ -18,17 +18,16 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
         throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<Scalar> y = _y;
     Scalar dTheta;
-    Scalar theta = matslise::theta(y);
-    if (a == domain.max && theta == 0)
-        theta += constants<Scalar>::PI;
     int sectorIndex = find_sector<Matslise<Scalar>>(this, a);
-    int direction = a < b ? 1 : -1;
+    Scalar theta = sectors[sectorIndex]->theta0(E, y);
+    if (theta < 0 || (a > b && theta == 0))
+        theta += constants<Scalar>::PI;
     Sector *sector;
     do {
         sector = sectors[sectorIndex];
         tie(y, dTheta) = sector->propagate(E, y, a, b, use_h);
         theta += dTheta;
-        sectorIndex += direction;
+        sectorIndex += a < b ? 1 : -1;
     } while (!sector->contains(b));
     return {y, theta};
 }
