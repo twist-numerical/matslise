@@ -12,7 +12,7 @@ if(MSVC)
     /D_USE_MATH_DEFINES
     /bigobj)
 else()
-    add_compile_options(-Wall -Wextra)
+    add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
     OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
     IF (OPTIMIZE)
         message("-- Using -O3 -march=native")
@@ -119,7 +119,7 @@ else ()
             COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR}
             ${PYTHON_EXECUTABLE} -m pip uninstall --verbose pyslise -y
             COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_BINARY_DIR}/dist
-            ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*.whl
+            ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*${PYSLISE_VERSION}*.whl
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(pyslise_install pyslise)
 
