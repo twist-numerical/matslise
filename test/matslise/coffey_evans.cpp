@@ -45,38 +45,34 @@ TEST_CASE("coffey_evans beta=30", "[matslise][coffey_evans]") {
 
 #ifdef MATSLISE_long_double
 
-TEST_CASE("coffey_evans (long)", "[matslise][coffey_evans][long]") {
-    const long double B = 20;
-    Matslise<long double> ms([B](long double x) -> long double {
+TEST_CASE("coffey_evans beta=20 (long)", "[matslise][coffey_evans][long]") {
+    const long double B = 20.l;
+    MatsliseHalf<long double> ms([B](long double x) -> long double {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, 0, constants<long double>::PI / 2, 1e-9, sector_builder::uniform<Matslise<long double>>(31));
+    }, constants<long double>::PI / 2, 1e-12l);
 
-    Y<long double> y0({0, 1}, {0, 0});
-    Y<long double> y1({1, 0}, {0, 0});
-    vector<pair<int, long double>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    testProblem<long double>(ms, Y<long double>::Dirichlet(), Y<long double>::Dirichlet(), {
+            -0.00000000000002l, 77.91619567714397l, 151.46277834645664l, 151.46322365765860l, 151.46366898835166l,
+            220.15422983525997l, 283.09481469540145l, 283.25074374311265l, 283.40873540342932l, 339.37066565252246l,
+            380.09491555093172l, 385.64477960900808l, 394.13031989879846l, 426.52462378409643l, 452.63117475070641l,
+            477.71051260907672l, 507.53569036662458l, 540.63382276850348l, 575.83759042140582l, 613.28132957039725l,
+            652.99045708465667l
+    }, 1e-10l, 1e-6l);
 }
 
-TEST_CASE("high potential (long)", "[matslise][high][long]") {
-    Matslise<long double> ms([](long double x) -> long double {
-        return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 1e-9, sector_builder::uniform<Matslise<long double>>(31));
+TEST_CASE("coffey_evans beta=30 (long)", "[matslise][coffey_evans][long]") {
+    const long double B = 30;
+    MatsliseHalf<long double> ms([B](long double x) -> long double {
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, constants<long double>::PI / 2, 1e-16l);
 
-    Y<long double> y0({1, 0}, {0, 0});
-    Y<long double> y1({0, -1}, {0, 0});
-    vector<pair<int, long double>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
-}
-
-TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
-    Matslise<long double> ms([](double x) -> double {
-        return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 1e-11l);
-
-    Y<long double> y0({1, 0}, {0, 0});
-    Y<long double> y1({0, -1}, {0, 0});
-    vector<pair<int, long double>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    testProblem<long double>(ms, Y<long double>::Dirichlet(), Y<long double>::Dirichlet(), {
+            0.0l, 117.94630766207001l, 231.66492923712826l, 231.66492931296196l, 231.66492938879651l,
+            340.88829980961299l, 445.28308958243815l, 445.28317230667329l, 445.28325503133368l, 544.41838514936001l,
+            637.68224987405006l, 637.70436234165697l, 637.72650231851446l, 724.25768135002033l, 800.83131218170922l,
+            802.47879869262465l, 804.27930516886272l, 868.96022287077210l, 909.48104650741504l, 925.97730983473230l,
+            951.87880679659270l
+    }, 1e-12l, 1e-6l);
 }
 
 #endif
@@ -87,38 +83,34 @@ TEST_CASE("high potential (auto) (long)", "[matslise][high][long]") {
 
 using boost::multiprecision::float128;
 
-TEST_CASE("coffey_evans (uniform)(float128)", "[matslise][coffey_evans][float128]") {
+TEST_CASE("coffey_evans beta=20 (float128)", "[matslise][coffey_evans][float128]") {
     const float128 B = 20;
-    Matslise<float128> ms([B](float128 x) -> float128 {
+    MatsliseHalf<float128> ms([B](float128 x) -> float128 {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, 0, constants<double>::PI, 1e-9q, sector_builder::uniform<Matslise<float128>>(31));
+    }, constants<float128>::PI / 2, 1e-14q);
 
-    Y<float128> y0({0, 1}, {0, 0});
-    Y<float128> y1({1, 0}, {0, 0});
-    vector<pair<int, float128>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    testProblem<float128>(ms, Y<float128>::Dirichlet(), Y<float128>::Dirichlet(), {
+            -0.00000000000002q, 77.91619567714397q, 151.46277834645664q, 151.46322365765860q, 151.46366898835166q,
+            220.15422983525997q, 283.09481469540145q, 283.25074374311265q, 283.40873540342932q, 339.37066565252246q,
+            380.09491555093172q, 385.64477960900808q, 394.13031989879846q, 426.52462378409643q, 452.63117475070641q,
+            477.71051260907672q, 507.53569036662458q, 540.63382276850348q, 575.83759042140582q, 613.28132957039725q,
+            652.99045708465667q
+    }, 1e-12q, 1e-6q);
 }
 
-TEST_CASE("high potential (float128)", "[matslise][high][float128]") {
-    Matslise<float128> ms([](float128 x) -> float128 {
-        return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 1e-16q, sector_builder::uniform<Matslise<float128>>(31));
+TEST_CASE("coffey_evans beta=30 (float128)", "[matslise][coffey_evans][float128]") {
+    const float128 B = 30;
+    MatsliseHalf<float128> ms([B](float128 x) -> float128 {
+        return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
+    }, constants<float128>::PI / 2, 1e-16q);
 
-    Y<float128> y0({1, 0}, {0, 0});
-    Y<float128> y1({0, -1}, {0, 0});
-    vector<pair<int, float128>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
-}
-
-TEST_CASE("high potential (auto) (float128)", "[matslise][high][float128]") {
-    Matslise<float128> ms([](float128 x) -> float128 {
-        return (1 - cos(2 * constants<double>::PI * x)) / 2 * 1000;
-    }, 0, 1, 1e-20q);
-
-    Y<float128> y0({1, 0}, {0, 0});
-    Y<float128> y1({0, -1}, {0, 0});
-    vector<pair<int, float128>> eigenvalues = ms.eigenvaluesByIndex(0, 20, y0, y1);
-    test_eigenfunctions(ms, y0, y1, eigenvalues);
+    testProblem<float128>(ms, Y<float128>::Dirichlet(), Y<float128>::Dirichlet(), {
+            0.0q, 117.94630766207001q, 231.66492923712826q, 231.66492931296196q, 231.66492938879651q,
+            340.88829980961299q, 445.28308958243815q, 445.28317230667329q, 445.28325503133368q, 544.41838514936001q,
+            637.68224987405006q, 637.70436234165697q, 637.72650231851446q, 724.25768135002033q, 800.83131218170922q,
+            802.47879869262465q, 804.27930516886272q, 868.96022287077210q, 909.48104650741504q, 925.97730983473230q,
+            951.87880679659270q
+    }, 1e-12q, 1e-6q);
 }
 
 #endif
