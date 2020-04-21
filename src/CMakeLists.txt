@@ -43,7 +43,7 @@ else ()
 
     add_subdirectory(../cmake/pybind11 pybind11)
     pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
-            pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyse2d.cpp)
+            pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp)
 
     add_library(matslise ${MATSLISE_SRC})
     install(TARGETS matslise

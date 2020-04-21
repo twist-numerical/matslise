@@ -3,8 +3,8 @@
 
 #include "module.h"
 
-void pySlise(py::module &m) {
-    py::class_<AbstractMatslise<double>>(m, "AbstractPySlise")
+void pyslise(py::module &m) {
+    py::class_<AbstractMatslise<double>>(m, "AbstractPyslise")
             .def("eigenvalues",
                  [](AbstractMatslise<double> &m, double Emin, double Emax, const Vector2d &left,
                     const optional<Vector2d> &_right)
@@ -99,7 +99,7 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
             });
 
 
-    py::class_<Matslise<>, AbstractMatslise<double>>(m, "PySlise")
+    py::class_<Matslise<>, AbstractMatslise<double>>(m, "Pyslise")
             .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
                 return new Matslise<>(V, min, max, tolerance);
             }), R""""(\
@@ -160,7 +160,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                 return p.sectors[i];
             }, py::return_value_policy::reference);
 
-    py::class_<MatsliseHalf<>, AbstractMatslise<double>>(m, "PySliseHalf")
+    py::class_<MatsliseHalf<>, AbstractMatslise<double>>(m, "PysliseHalf")
             .def(py::init([](const function<double(double)> &V, double xmax, double tolerance) {
                 return new MatsliseHalf<>(V, xmax, tolerance);
             }), R""""(\
@@ -174,7 +174,7 @@ Note: only one of steps and tolerance have to be set.
 :param int tolerance: automatically choose steps with at least the given accuracy.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("tolerance") = 1e-8);
 
-    py::class_<Matslise<>::Sector>(m, "PySliseSector")
+    py::class_<Matslise<>::Sector>(m, "PysliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
             .def_readonly("max", &Matslise<>::Sector::max)
             .def_readonly("backward", &Matslise<>::Sector::backward)

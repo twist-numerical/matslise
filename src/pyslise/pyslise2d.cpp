@@ -1,7 +1,60 @@
 #include "module.h"
 
-void pySE2d(py::module &m) {
-    py::class_<Matslise2D<>>(m, "PySE2d")
+void pyslise2d(py::module &m) {
+    py::class_<AbstractMatslise2D<double>>(m, "AbstractPyslise2D")
+            .def("firstEigenvalue", [](const Matslise2D<> &se2d) -> double {
+                return se2d.firstEigenvalue();
+            })
+            .def("eigenfunction",
+                 [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
+                         -> vector<ArrayXXd> {
+                     return se2d.eigenfunction(E, x, y);
+                 }, R""""(\
+Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
+
+:param float E: the eigenvalue to compute eigenfunctions for.
+:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
+:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
+)"""", py::arg("E"), py::arg("x"), py::arg("y"))
+            .def("eigenfunction",
+                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<double(double, double)>> {
+                     return se2d.eigenfunction(E);
+                 }, R""""(\
+Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
+
+:param float E: the eigenvalue.
+
+:returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
+)"""", py::arg("E"))
+            .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
+By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
+
+:param float start: the initial guess.
+:param float tolerance: one of the stopping conditions. Defaults to 1e-9.
+:param int iterations: the other stopping conditions. Defaults to 30.
+:param float min_tolerance: if the maximum number of iterations is reached and the error is smaller than ``min_tolerance`` then the found value will be counted is eigenvalue. Defaults to 1e-5.
+:returns: the eigenvalue found starting with ``guess``. Note that the found eigenvalue doesn't necessarily is the closest .
+)"""", py::arg("start"))
+            .def("eigenvalues", &AbstractMatslise2D<double>::eigenvalues, R""""(\
+This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algorithm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
+
+It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
+
+:param float Emin Emax: the start and end point of the range that will be searched.
+:param int initial_values: the number of starting guesses that will be used. Defaults to 16.
+:returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
+)"""", py::arg("Emin"), py::arg("Emax"))
+            .def("eigenvaluesByIndex", &AbstractMatslise2D<double>::eigenvaluesByIndex, R""""(\
+Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
+
+:param int Imin: the first eigenvalue to find, by index.
+:param int Imax: only the first Imax eigenvalues will be considered.
+
+:returns: a list of eigenvalues.
+)"""", py::arg("Imin"), py::arg("Imax"));
+
+
+    py::class_<Matslise2D<>, AbstractMatslise2D<double>>(m, "Pyslise2D")
             .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax,
                              bool symmetric,
@@ -67,10 +120,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
                  py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
-            .def("firstEigenvalue", [](const Matslise2D<> &se2d) -> double {
-                return se2d.firstEigenvalue();
-            })
-            .def("error", [](const Matslise2D<> &se2d, double const &E) -> pair<double, double> {
+            .def("matchingError", [](const Matslise2D<> &se2d, double const &E) -> pair<double, double> {
                 return se2d.matchingError(E);
             }, R""""(\
 Compute the error given a guess for E. This error is the result of the requirement that the found eigenfunctions are continues. The error expresses how 'discontinues' the corresponding eigenfunction would be.
@@ -78,62 +128,14 @@ Compute the error given a guess for E. This error is the result of the requireme
 :param float E: the guessed eigenvalue.
 :returns: A tuple with the computed error and the derivative of that error with respect to E.
 )"""", py::arg("E"))
-            .def("errors", [](const Matslise2D<> &se2d, double E) -> vector<pair<double, double>> {
+            .def("matchingErrors", [](const Matslise2D<> &se2d, double E) -> vector<pair<double, double>> {
                 return se2d.matchingErrors(E);
             }, R""""(\
-Just like PySE2d::calculateError(E) computes this function the discontinuity of the eigenfunction. The corresponding eigenfunction will be continuous once any of the N returned values is zero.
+Just like Pyslise2D::calculateError(E) computes this function the discontinuity of the eigenfunction. The corresponding eigenfunction will be continuous once any of the N returned values is zero.
 
 :param float E: the guessed eigenvalue.
 :returns: A list of tuples with each of the computed errors and its derivative with respect to E.
 )"""", py::arg("E"))
-            .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E, const ArrayXd &x, const ArrayXd &y) -> vector<ArrayXXd> {
-                     return se2d.eigenfunction(E, x, y);
-                 }, R""""(\
-Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
-
-:param float E: the eigenvalue to compute eigenfunctions for.
-:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
-:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
-)"""", py::arg("E"), py::arg("x"), py::arg("y"))
-            .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<double(double, double)>> {
-                     return se2d.eigenfunction(E);
-                 }, R""""(\
-Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
-
-:param float E: the eigenvalue.
-
-:returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
-)"""",
-                 py::arg("E"))
-            .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
-By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
-
-:param float start: the initial guess.
-:param float tolerance: one of the stopping conditions. Defaults to 1e-9.
-:param int iterations: the other stopping conditions. Defaults to 30.
-:param float min_tolerance: if the maximum number of iterations is reached and the error is smaller than ``min_tolerance`` then the found value will be counted is eigenvalue. Defaults to 1e-5.
-:returns: the eigenvalue found starting with ``guess``. Note that the found eigenvalue doesn't necessarily is the closest .
-)"""", py::arg("start"))
-            .def("eigenvalues", &AbstractMatslise2D<double>::eigenvalues, R""""(\
-This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algorithm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
-
-It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
-
-:param float Emin Emax: the start and end point of the range that will be searched.
-:param int initial_values: the number of starting guesses that will be used. Defaults to 16.
-:returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
-)"""", py::arg("Emin"), py::arg("Emax"))
-            .def("eigenvaluesByIndex", &AbstractMatslise2D<double>::eigenvaluesByIndex, R""""(\
-Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
-
-:param int Imin: the first eigenvalue to find, by index.
-:param int Imax: only the first Imax eigenvalues will be considered.
-
-:returns: a list of eigenvalues.
-)"""",
-                 py::arg("Imin"), py::arg("Imax"))
             .def("__propagate",
                  [](const Matslise2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
                          pair<MatrixXd, MatrixXd> {
@@ -157,7 +159,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
                 return l;
             });
 
-    py::class_<Matslise2DHalf<>>(m, "PySE2dHalf")
+    py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>>(m, "Pyslise2DHalf")
             .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymax,
                              bool symmetric,
@@ -222,49 +224,9 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
-                 py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
-            .def("eigenvalue", &Matslise2DHalf<>::eigenvalue, R""""(\
-By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
+                 py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60);
 
-:param float start: the initial guess.
-:param float tolerance: one of the stopping conditions. Defaults to 1e-9.
-:param int iterations: the other stopping conditions. Defaults to 30.
-:param float min_tolerance: if the maximum number of iterations is reached and the error is smaller than ``min_tolerance`` then the found value will be counted is eigenvalue. Defaults to 1e-5.
-:returns: the eigenvalue found starting with ``guess``. Note that the found eigenvalue doesn't necessarily is the closest .
-)"""", py::arg("start"))
-            .def("eigenvalues", &Matslise2DHalf<>::eigenvalues, R""""(\
-This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algortihm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
-
-It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
-
-:param float Emin Emax: the start and end point of the range that will be searched.
-:param int inital_values: the number of starting guesses that will be used. Defaults to 16.
-:returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
-)"""", py::arg("Emin"), py::arg("Emax"))
-            .def("firstEigenvalue", &Matslise2DHalf<>::firstEigenvalue)
-            .def("eigenfunction",
-                 [](const Matslise2DHalf<> &se2d, double E, const ArrayXd &x, const ArrayXd &y) -> vector<ArrayXXd> {
-                     return se2d.eigenfunction(E, x, y);
-                 }, R""""(\
-Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
-
-:param float E: the eigenvalue to compute eigenfunctions for.
-:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
-:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
-)"""", py::arg("E"), py::arg("x"), py::arg("y"))
-            .def("eigenfunction",
-                 [](const Matslise2DHalf<> &se2d, double E) -> vector<std::function<double(double, double)>> {
-                     return se2d.eigenfunction(E);
-                 }, R""""(\
-Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
-
-:param float E: the eigenvalue.
-
-:returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
-)"""",
-                 py::arg("E"));
-
-    py::class_<Matslise2D<>::Sector, std::unique_ptr<Matslise2D<>::Sector, py::nodelete>>(m, "PySE2dSector")
+    py::class_<Matslise2D<>::Sector, std::unique_ptr<Matslise2D<>::Sector, py::nodelete>>(m, "Pyslise2DSector")
             .def_property_readonly("eigenvalues", [](Matslise2D<>::Sector &s) -> vector<double> * {
                 auto l = new vector<double>(s.se2d->N);
                 for (unsigned long i = 0; i < l->size(); ++i)

@@ -1,11 +1,11 @@
 #include "module.h"
 
-void pyScs(py::module &m) {
-    py::class_<Matscs<>::Sector>(m, "PyScsSector")
+void pyscs(py::module &m) {
+    py::class_<Matscs<>::Sector>(m, "PyscsSector")
             .def_readonly("min", &Matscs<>::Sector::min)
             .def_readonly("max", &Matscs<>::Sector::max)
             .def_readonly("backward", &Matscs<>::Sector::backward);
-    py::class_<Matscs<>>(m, "PyScs")
+    py::class_<Matscs<>>(m, "Pyscs")
             .def(py::init(
                     [](const function<MatrixXd(double)> &V, int N, double xmin, double xmax, int steps,
                        double tolerance) {
@@ -17,7 +17,7 @@ void pyScs(py::module &m) {
                                 V, N, xmin, xmax,
                                 steps != -1 ? sector_builder::uniform<Matscs<double>>(steps)
                                             : sector_builder::automatic<Matscs<double>>(tolerance));
-                    }), "PyScs", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"),
+                    }), "Pyscs", py::arg("V"), py::arg("dimensions"), py::arg("xmin"), py::arg("xmax"),
                  py::arg("steps") = -1,
                  py::arg("tolerance") = -1)
             .def_readonly("__sectorCount", &Matscs<>::sectorCount)

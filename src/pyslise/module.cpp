@@ -1,15 +1,15 @@
 #include "module.h"
 
-void pySlise(py::module &);
+void pyslise(py::module &);
 
-void pyScs(py::module &);
+void pyscs(py::module &);
 
-void pySE2d(py::module &);
+void pyslise2d(py::module &);
 
 PYBIND11_MODULE(pyslise, m) {
-    pySlise(m);
+    pyslise(m);
 
-    pyScs(m);
+    pyscs(m);
 
-    pySE2d(m);
+    pyslise2d(m);
 }
