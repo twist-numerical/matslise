@@ -106,6 +106,7 @@ div.container
       eigenvalues-table(
           v-if="controller.eigenvalues !== null"
           :eigenvalues="controller.eigenvalues"
+          :errors="controller.errors"
           @more-eigenvalues="() => controller.moreEigenvalues()")
       div(v-else)
         p Press 'Calculate' to compute the eigenvalues of this problem.

@@ -36,6 +36,13 @@ export default class Problem {
     this.initMatslise();
   }
 
+  hardReset() {
+    this.reset();
+    this.Matslise = null;
+    this.MatsliseHalf = null;
+    this.initMatslise();
+  }
+
   initMatslise() {
     new Module().then((module) => {
       this.Matslise = module.Matslise;

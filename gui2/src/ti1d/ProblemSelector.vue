@@ -48,7 +48,7 @@ const problems: Problem[] = [
     symmetric: true,
     potential: "-2*20*cos(2*x)+20^2*sin(2*x)^2",
     x: ["-pi/2", "pi/2"],
-    tolerance: "1e-5",
+    tolerance: "1e-8",
     ...dirichlet
   },
   <Problem>{

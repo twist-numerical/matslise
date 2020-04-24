@@ -1,5 +1,10 @@
 <template lang="pug">
 div
+  div.alert.alert-danger(v-if="errors.length > 0")
+    p Some errors were encountered.
+    ul
+      li(v-for="error of errors") {{ error }}
+    p A possible solution could be to change the tolerance.
   table.table.table-striped
     thead
       tr
@@ -8,11 +13,11 @@ div
         th Eigenvalue
         th Error
     tbody
-      tr(v-for="eigenvalue of eigenvalues")
+      tr(v-for="(eigenvalue, index) of eigenvalues")
         th.legend-label
-          input(:id="`eigenvalue-${eigenvalue.index}`",type="checkbox",v-model:checked="eigenvalue.visible")
+          input(:id="`eigenvalue-${index}`",type="checkbox",v-model:checked="eigenvalue.visible")
           label(
-              :for="`eigenvalue-${eigenvalue.index}`",
+              :for="`eigenvalue-${index}`",
               :style="`background:${eigenvalue.color}`")
         td {{ eigenvalue.index }}
         td {{ eigenvalue.value.toPrecision(13) }}
@@ -27,7 +32,7 @@ div
 import Vue from "vue";
 
 export default Vue.extend({
-  props: ["eigenvalues"]
+  props: ["eigenvalues", "errors"]
 });
 </script>
 
