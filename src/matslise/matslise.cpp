@@ -220,7 +220,7 @@ Matslise<Scalar>::eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left
     for (Eigen::Index i = 1; i < n; ++i)
         if (x[i - 1] > x[i])
             throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
-    if (x[0] < domain.min || x[n - 1] > domain.max)
+    if (n != 0 && (x[0] < domain.min || x[n - 1] > domain.max))
         throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
 
     vector<Y<Scalar>> steps = propagationSteps(*this, E, left, right);
