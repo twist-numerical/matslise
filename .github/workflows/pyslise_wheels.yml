@@ -56,7 +56,7 @@ jobs:
           cmake --build . --target build_wheel --config Release
         working-directory: ./build
         env:
-          CXXFLAGS: "-DMS_WIN64=1 -static-libgcc -static"
+          CXXFLAGS: "-DMS_WIN64=1 -D_hypot=hypot -static-libgcc -static"
           LDFLAGS: "-static"
       - if: ${{!startsWith(matrix.os, 'windows')}}
         name: CMake (not Windows)

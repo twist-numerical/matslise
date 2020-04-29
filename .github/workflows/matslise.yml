@@ -106,7 +106,7 @@ jobs:
           cmake --build . --target pyslise_install --config Release
         working-directory: ./build
         env:
-          CXXFLAGS: "-DMS_WIN64=1 -static-libgcc -static"
+          CXXFLAGS: "-DMS_WIN64=1 -D_hypot=hypot -static-libgcc -static"
           LDFLAGS: "-static"
       - if: ${{!startsWith(matrix.os, 'windows')}}
         name: CMake (not Windows)
@@ -116,10 +116,6 @@ jobs:
             -DPYTHON_EXECUTABLE=$(which python)
           cmake --build . --target pyslise_install --config Release -- -j 3
         working-directory: ./build
-      - uses: actions/upload-artifact@v2-preview
-        with:
-          name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
-          path: ./build/src/dist/*.whl
       - name: test pyslise
         run: |
           python test/pyslise/test_docs.py --verbose
@@ -149,7 +145,6 @@ jobs:
       - name: Install emscripten
         uses: mymindstorm/setup-emsdk@v4
         with:
-          actions-cache-folder: emsdk-cache
           version: 1.39.13
       - name: NPM install ava
         run: |
