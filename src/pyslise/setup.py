@@ -7,13 +7,8 @@ assert 'PYSLISE_LIBRARY' in os.environ, "pyslise_library environment variable ha
 library = os.environ['PYSLISE_LIBRARY']
 print("Using: '%s'" % library)
 
-move = None
-if 'PYSLISE_MOVE' in os.environ:
-    move = os.environ['PYSLISE_MOVE']
-
 with open('description.md', 'rb') as f:
     long_description = f.read().decode('UTF-8')
-
 
 class CMakeExtension(Extension):
     def __init__(self, name):
@@ -48,19 +43,3 @@ setup(
     zip_safe=False,
     install_requires=['numpy']
 )
-
-if move:
-    from glob import glob
-    import subprocess
-
-    for w in glob('dist/*.whl'):
-        plat = '${AUDITWHEEL_repair_plat}'
-        if plat != '':
-            try:
-                subprocess.call(["auditwheel", "repair", w, '--plat', plat, '-w', move])
-            except:
-                pass
-        else:
-            to = os.path.join(move, w[5:])
-            shutil.move(w, to)
-            print("Moved wheel '%s' to '%s'" % (w, to))

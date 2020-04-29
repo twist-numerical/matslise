@@ -1,3 +1,4 @@
+set(CMAKE_CXX_STANDARD 17)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
@@ -12,7 +13,7 @@ if (MSVC)
             /D_USE_MATH_DEFINES
             /bigobj)
 else ()
-    add_compile_options(-Wall -Wextra -Werror)
+    add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
 
     OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
     IF (OPTIMIZE)
@@ -68,31 +69,28 @@ else ()
         target_link_libraries(matslise_test PUBLIC OpenMP::OpenMP_CXX)
     endif ()
 
-    find_package(MKL)
-    if (MKL_FOUND)
-        set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
-        set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
-        set(BLA_DEFINITIONS USE_MKL)
-        target_compile_definitions(matslise_test PUBLIC ${BLA_DEFINITIONS})
-        target_include_directories(matslise_test PUBLIC ${BLA_INCLUDE_DIR})
+    OPTION(USE_MKL "Use the Intel's MKL if available" OFF)
+    if (USE_MKL)
+        find_package(MKL)
+        if (MKL_FOUND)
+            set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
+            set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
+            set(BLA_DEFINITIONS USE_MKL)
+            target_compile_definitions(matslise_test PUBLIC ${BLA_DEFINITIONS})
+            target_include_directories(matslise_test PUBLIC ${BLA_INCLUDE_DIR})
 
-        set(THREADS_PREFER_PTHREAD_FLAG ON)
-        find_package(Threads REQUIRED)
-        target_link_libraries(matslise_test PUBLIC
-                m
-                Threads::Threads
-                ${CMAKE_DL_LIBS}
-                ${BLAS_LIBRARIES})
-        add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
+            set(THREADS_PREFER_PTHREAD_FLAG ON)
+            find_package(Threads REQUIRED)
+            target_link_libraries(matslise_test PUBLIC
+                    m
+                    Threads::Threads
+                    ${CMAKE_DL_LIBS}
+                    ${BLAS_LIBRARIES})
+            add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
+        endif ()
     endif ()
 
     target_link_libraries(matslise_test PRIVATE ${libraries})
 
-
-    configure_file(benchmark.py benchmark.py)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/benchmark.txt" benchmark_results)
-    add_custom_target(benchmark_tests
-            COMMAND ${CMAKE_COMMAND} -E env MATSLISE_TEST_EXECUTABLE="$<TARGET_FILE:matslise_test>" MATSLISE_BENCHMARK_RESULTS="${benchmark_results}" ${PYTHON_EXECUTABLE} benchmark.py
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
     add_dependencies(matslise_test matslise)
 endif ()
