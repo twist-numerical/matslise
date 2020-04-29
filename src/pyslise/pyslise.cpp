@@ -99,7 +99,13 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
             });
 
 
-    py::class_<Matslise<>, AbstractMatslise<double>>(m, "Pyslise")
+    py::class_<Matslise<>, AbstractMatslise<double>>(m, "Pyslise", R""""(\
+>>> from math import pi, cos
+>>> p = Pyslise(lambda x: 2*cos(2*x), 0, pi, 1e-8)
+>>> i, E = p.eigenvaluesByIndex(0, 1, (0,1))[0]
+>>> abs(E - -0.1102488054219) < 1e-6
+True
+)"""")
             .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
                 return new Matslise<>(V, min, max, tolerance);
             }), R""""(\

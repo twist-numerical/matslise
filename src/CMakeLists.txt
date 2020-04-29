@@ -1,10 +1,12 @@
 set(CMAKE_CXX_STANDARD 17)
-set(PYSLISE_VERSION 0.0.5)
+set(PYSLISE_VERSION 0.0.6)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 message("Matslise")
-if(MSVC)
+if (MSVC)
     add_compile_options(
+    /wd4267 # possible loss of data size_t -> int
+    /wd4244 # possible loss of data size_t -> int
     /wd4661 # no suitable definition provided for explicit template instantiation request
     /wd4820 #'bytes' bytes padding added after construct 'member_name'
     /wd4464  # relative include path contains '..'
@@ -18,7 +20,7 @@ else()
         message("-- Using -O3 -march=native")
         add_compile_options(-O3 -march=native)
     ENDIF (OPTIMIZE)
-endif()
+endif ()
 
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
@@ -40,10 +42,6 @@ if (DEFINED EMSCRIPTEN)
 else ()
     set(targets matslise pyslise)
     set(libraries Eigen3::Eigen)
-
-    add_subdirectory(../cmake/pybind11 pybind11)
-    pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
-            pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp)
 
     add_library(matslise ${MATSLISE_SRC})
     install(TARGETS matslise
@@ -100,27 +98,29 @@ else ()
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     message("-- Eigen3 version ${Eigen3_VERSION}")
     target_link_libraries(matslise PUBLIC ${libraries})
-    target_link_libraries(pyslise PRIVATE ${libraries})
 
-    message("-- python: ${PYTHON_EXECUTABLE}")
-    message("-- auditwheel: ${AUDITWHEEL_repair_plat}")
-    configure_file(pyslise/setup.py setup.py)
-    configure_file(pyslise/description.md description.md)
-    file(TO_NATIVE_PATH "${CMAKE_SOURCE_DIR}/wheelhouse" WHEEL_COPY_TO)
-    add_custom_target(build_wheel
-            COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>" PYSLISE_MOVE="${WHEEL_COPY_TO}"
-            ${PYTHON_EXECUTABLE} setup.py bdist_wheel
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    add_dependencies(build_wheel pyslise)
+    if (EXISTS ../cmake/pybind11/CMakeLists.txt)
+        add_subdirectory(../cmake/pybind11 pybind11)
+        message("-- python: ${PYTHON_EXECUTABLE}")
+        pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
+                pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp)
+        target_link_libraries(pyslise PRIVATE ${libraries})
 
-    add_custom_target(pyslise_install
-            COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-            ${PYTHON_EXECUTABLE} setup.py bdist_wheel
-            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_BINARY_DIR}
-            ${PYTHON_EXECUTABLE} -m pip uninstall --verbose pyslise -y
-            COMMAND ${CMAKE_COMMAND} -E chdir ${CMAKE_CURRENT_BINARY_DIR}/dist
-            ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed ${CMAKE_CURRENT_BINARY_DIR}/dist/*${PYSLISE_VERSION}*.whl
-            WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-    add_dependencies(pyslise_install pyslise)
+        configure_file(pyslise/setup.py setup.py)
+        configure_file(pyslise/description.md description.md)
+        add_custom_target(build_wheel
+                COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
+                ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        add_dependencies(build_wheel pyslise)
 
+        add_custom_target(pyslise_install
+                # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
+                COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
+                ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed --verbose .
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+        add_dependencies(pyslise_install pyslise)
+    else ()
+        message("To enable for python make sure pybind11 is available in /cmake/pybind11.")
+    endif ()
 endif (DEFINED EMSCRIPTEN)

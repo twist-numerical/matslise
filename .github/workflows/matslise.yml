@@ -1,0 +1,173 @@
+name: Build and test
+
+on: [push]
+
+jobs:
+  matslise_test:
+    name: Test matslise
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2019, ubuntu-18.04, macos-10.15]
+    steps:
+      - name: Cache Eigen3
+        id: cache-eigen3_3
+        uses: actions/cache@v1
+        with:
+          path: ../eigen
+          key: ${{ runner.os }}-eigen3_3
+      - name: Download Eigen3
+        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
+        run: |
+          git clone https://gitlab.com/libeigen/eigen.git ../eigen
+          cd ../eigen
+          git checkout 3.3
+          mkdir ../eigen/build
+      - if: ${{startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
+        name: Build Eigen3 (Windows)
+        run: cmake -G "MinGW Makefiles" ..
+        working-directory: ../eigen/build
+      - if: ${{!startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
+        name: Build Eigen3 (not Windows)
+        run: cmake ..
+        working-directory: ../eigen/build
+
+      - uses: actions/checkout@v2
+      - run: mkdir build
+      - if: ${{startsWith(matrix.os, 'windows')}}
+        name: CMake (Windows)
+        run: |
+          cmake -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DEigen3_DIR="$(resolve-path ../../eigen/build)" ..
+          cmake --build . --target matslise_test --config Release
+        working-directory: ./build
+      - if: ${{!startsWith(matrix.os, 'windows')}}
+        name: CMake (not Windows)
+        run: |
+          cmake .. -DCMAKE_BUILD_TYPE=Release \
+            -DEigen3_DIR="$(pwd)/../../eigen/build"
+          cmake --build . --target matslise_test --config Release -- -j 3
+        working-directory: ./build
+      - name: Run tests
+        run: |
+          ./matslise_test
+        working-directory: ./build/test
+
+  pyslise_test:
+    name: Test pyslise
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2019, ubuntu-18.04, macos-10.15]
+        python-version: [2.7, 3.7]
+    steps:
+      - name: Cache Eigen3
+        id: cache-eigen3_3
+        uses: actions/cache@v1
+        with:
+          path: ../eigen
+          key: ${{ runner.os }}-eigen3_3
+      - name: Download Eigen3
+        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
+        run: |
+          git clone https://gitlab.com/libeigen/eigen.git ../eigen
+          cd ../eigen
+          git checkout 3.3
+          mkdir ../eigen/build
+      - if: ${{startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
+        name: Build Eigen3 (Windows)
+        run: cmake -G "MinGW Makefiles" ..
+        working-directory: ../eigen/build
+      - if: ${{!startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
+        name: Build Eigen3 (not Windows)
+        run: cmake ..
+        working-directory: ../eigen/build
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install setuptools wheel
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: "pybind/pybind11"
+          path: "cmake/pybind11"
+      - run: mkdir build
+      - if: ${{startsWith(matrix.os, 'windows')}}
+        name: CMake (Windows)
+        run: |
+          cmake -G "MinGW Makefiles" `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DEigen3_DIR="$(resolve-path ../../eigen/build)" `
+            -DPYBIND11_LTO_CXX_FLAGS="" ..
+          cmake --build . --target pyslise_install --config Release
+        working-directory: ./build
+        env:
+          CXXFLAGS: "-DMS_WIN64=1 -static-libgcc -static"
+          LDFLAGS: "-static"
+      - if: ${{!startsWith(matrix.os, 'windows')}}
+        name: CMake (not Windows)
+        run: |
+          cmake .. -DCMAKE_BUILD_TYPE=Release \
+            -DEigen3_DIR="$(pwd)/../../eigen/build" \
+            -DPYTHON_EXECUTABLE=$(which python)
+          cmake --build . --target pyslise_install --config Release -- -j 3
+        working-directory: ./build
+      - uses: actions/upload-artifact@v2-preview
+        with:
+          name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
+          path: ./build/src/dist/*.whl
+      - name: test pyslise
+        run: |
+          python test/pyslise/test_docs.py --verbose
+
+  matslise_wasm_test:
+    name: Test matslise.wasm
+    runs-on: ubuntu-latest
+    steps:
+      - name: Cache Eigen3
+        id: cache-eigen3_3
+        uses: actions/cache@v1
+        with:
+          path: ../eigen
+          key: ${{ runner.os }}-eigen3_3
+      - name: Download Eigen3
+        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
+        run: |
+          git clone https://gitlab.com/libeigen/eigen.git ../eigen
+          mkdir ../eigen/build
+          cd ../eigen/build
+          git checkout 3.3
+          cmake ..
+      - name: Set up Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10
+      - name: Install emscripten
+        uses: mymindstorm/setup-emsdk@v4
+        with:
+          actions-cache-folder: emsdk-cache
+          version: 1.39.13
+      - name: NPM install ava
+        run: |
+          npm install -g ava
+      - uses: actions/checkout@v2
+      - run: mkdir build
+      - name: CMake
+        run: |
+          emcmake cmake ..  \
+            -DEigen3_DIR=$(pwd)/../../eigen/build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DPYTHON_EXECUTABLE=$(which python)
+        working-directory: ./build
+      - name: Make matslise
+        run: |
+          emmake cmake --build . --target matslise_test --config Release -- -j 3
+        working-directory: ./build
+      - uses: actions/upload-artifact@v2-preview
+        with:
+          name: matslise_wasm
+          path: ./build/src/matslise.*
