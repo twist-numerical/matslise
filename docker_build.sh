@@ -9,18 +9,18 @@ mkdir /opt/eigen/build
 cd /opt/eigen/build
 git checkout 3.3
 /opt/python/cp37-cp37m/bin/cmake ..
-make
 
 # pyslise
-pythons=(cp27-cp27mu cp35-cp35m cp36-cp36m  cp37-cp37m cp38-cp38)
+pythons=(cp27-cp27mu cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38)
 for py in ${pythons[@]}; do
     mkdir /opt/matslise-build-${py}
     cd /opt/matslise-build-${py}
     /opt/python/cp37-cp37m/bin/cmake /opt/matslise/ \
         -DCMAKE_BUILD_TYPE=Release \
         -DEigen3_DIR=/opt/eigen/build \
-        -DPYTHON_EXECUTABLE=/opt/python/${py}/bin/python \
-        -DAUDITWHEEL_repair_plat=manylinux2010_x86_64
+        -DPYTHON_EXECUTABLE=/opt/python/${py}/bin/python
 
     /opt/python/cp37-cp37m/bin/cmake --build . --target build_wheel --config Release -- -j 6
+
+    auditwheel repair src/dist/*$(py)*.whl --plat manylinux2010_x86_64 -w /opt/matslise/wheelhouse
 done

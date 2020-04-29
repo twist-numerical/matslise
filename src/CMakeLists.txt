@@ -1,5 +1,5 @@
 set(CMAKE_CXX_STANDARD 17)
-set(PYSLISE_VERSION 3.0.0-alpha.1)
+set(PYSLISE_VERSION "3.0.0a1")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 message("Matslise")
@@ -99,15 +99,15 @@ else ()
     message("-- Eigen3 version ${Eigen3_VERSION}")
     target_link_libraries(matslise PUBLIC ${libraries})
 
-    if (EXISTS ../cmake/pybind11/CMakeLists.txt)
+    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/pybind11/CMakeLists.txt)
         add_subdirectory(../cmake/pybind11 pybind11)
         message("-- python: ${PYTHON_EXECUTABLE}")
         pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
                 pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp)
         target_link_libraries(pyslise PRIVATE ${libraries})
 
-        configure_file(pyslise/setup.py setup.py)
-        configure_file(pyslise/description.md description.md)
+        configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
+        configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)
         add_custom_target(build_wheel
                 COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
                 ${PYTHON_EXECUTABLE} setup.py bdist_wheel
@@ -117,7 +117,7 @@ else ()
         add_custom_target(pyslise_install
                 # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
                 COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed --verbose .
+                ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed .
                 WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
         add_dependencies(pyslise_install pyslise)
     else ()
