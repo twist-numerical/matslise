@@ -1,6 +1,6 @@
 
-Welcome to PySlise's documentation!
-###################################
+Welcome to the documentation of Pyslise
+######################################
 
 PySlise is a Python package (written in C++) to solve
 Schrödinger equations. In general the time-independent
@@ -15,6 +15,20 @@ efficiently solve the one-dimensional Schrödinger equation:
 .. math::
   -\frac{d^2}{dx^2}\varphi(x) + V(x) \varphi(x) = E \varphi(x)
 
+
+And also the two-dimensional Schrödinger equation (experimental):
+
+.. math::
+  -\frac{\partial^2}{\partial x^2}\varphi(x, y) -\frac{\partial^2}{\partial y^2}\varphi(x, y) + V(x, y) \varphi(x, y) = E \varphi(x, y)
+
+Besides a python package there is also an interactive web based GUI (compiled with WebAssembly):
+
+- `1D GUI <./ti1d>`_
+- `2D GUI <./ti2d>`_
+
+(Tested in a recent version of Firefox and Chrome)
+
+
 Installation
 ------------
 
@@ -25,7 +39,7 @@ Installing PySlise is as easy as:
   pip install pyslise
 
 Make sure you are using a recent 64 bit version of python on a
-Linux, Windows or Mac.
+Linux, Windows or macOS (10.15).
 
 Documentation
 -------------
@@ -43,7 +57,7 @@ Contact
 
 This package is still in it's infancy and under active development.
 So naturally it will not be perfect. When you have questions about
-the software, come across bugs or have suggestions for imrovements,
+the software, come across bugs or have suggestions for improvements,
 you can always contact us:
 
 | Toon Baeyens

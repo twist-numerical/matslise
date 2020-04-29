@@ -5,4 +5,4 @@ Usage examples
 .. toctree::
 
   pyslise
-  pyse2d
+  pyslise2d

@@ -6,6 +6,6 @@ An overview of all the available classes
 .. toctree::
    :maxdepth: 2
 
-    One dimensional (PySlise) <pyslise>
-    Coupled system (PyScs) <pyscs>
-    Two dimensional (PySE2d) <pyse2d>
+    One dimensional (Pyslise) <pyslise>
+    Coupled system (Pyscs) <pyscs>
+    Two dimensional (Pyslise2D) <pyslise2d>

@@ -1,4 +1,4 @@
-Using PySlise
+Using Pyslise
 =============
 
 This document contains a few examples illustrating the usage of
@@ -25,10 +25,10 @@ This can be transformed to a Schrödinger equation with
 
 .. code:: python
 
-  from pyslise import PySlise
+  from pyslise import Pyslise
   from math import pi, cos
 
-  problem = PySlise(lambda x: 2*cos(2*x), 0, pi, tolerance=1e-5)
+  problem = Pyslise(lambda x: 2*cos(2*x), 0, pi, tolerance=1e-5)
   left = (0, 1)
   right = (0, 1)
   eigenvalues = problem.eigenvaluesByIndex(0, 10, left, right)
@@ -107,20 +107,20 @@ The Coffey Evans problem is given by the potential:
   V(x) = -2\beta\cos(2 x)+\beta^2\sin(2 x)^2
 
 and the domain :math:`[-\frac{\pi}{2}, \frac{\pi}{2}]` with
-Dirichlet zero boundary conditions.
+Dirichlet boundary conditions.
 
 For rising :math:`\beta`, it is a well known hard problem, because there are
 triplets of close eigenvalues. On the other hand, the problem is symmetric and
-a few optimizations can be made. PySlise implements this as ``PySliseHalf``,
+a few optimizations can be made. Pyslise implements this as ``PysliseHalf``,
 indicating half range reduction is applied, because of the symmetry.
 
 .. code:: python
 
-  from pyslise import PySliseHalf
+  from pyslise import PysliseHalf
   from math import pi, cos, sin
 
   B = 20
-  problem = PySliseHalf(lambda x: -2*B*cos(2*x)+B**2*sin(2*x)**2,
+  problem = PysliseHalf(lambda x: -2*B*cos(2*x)+B**2*sin(2*x)**2,
                         pi/2, tolerance=1e-5)
   side = (0, 1)
   eigenvalues = problem.computeEigenvaluesByIndex(0, 10, side)

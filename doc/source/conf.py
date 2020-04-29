@@ -19,7 +19,7 @@
 
 # -- Project information -----------------------------------------------------
 
-project = 'PySlise'
+project = 'Pyslise'
 copyright = '2019, Toon Baeyens, Marnix Van Daele'
 author = 'Toon Baeyens, Marnix Van Daele'
 

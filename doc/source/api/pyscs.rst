@@ -1,8 +1,8 @@
-PyScs
+Pyscs
 =====
 
 This class is not yet documented.
 
-.. autoclass:: pyslise.PyScs
+.. autoclass:: pyslise.Pyscs
    :members:
    :undoc-members:

@@ -1,7 +1,7 @@
-PySE2d
-======
+Pyslise2D
+=========
 
-.. autoclass:: pyslise.PySE2d
+.. autoclass:: pyslise.Pyslise2D
    :members:
    :undoc-members:
 

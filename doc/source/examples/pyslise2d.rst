@@ -1,5 +1,5 @@
-Using PySE2d
-============
+Using Pyslise2D
+===============
 
 Ixaru's problem
 ***************
@@ -15,14 +15,14 @@ Using ``pyslise`` this problem can be easily worked on:
 
 .. code:: python
 
-  from pyslise import PySE2d
+  from pyslise import Pyslise2D
 
   def V(x, y):
       return (1 + x**2) * (1 + y**2)
 
-  problem = PySE2d(V, -5.5,5.5, -5.5,5.5, x_tolerance=1e-6, y_count=25)
+  problem = Pyslise2D(V, -5.5,5.5, -5.5,5.5, x_tolerance=1e-6, y_count=25)
 
-To find the closest eigenvalue in the neighborhood of ``5`` one can use:
+To find the closest eigenvalue in the neighbourhood of ``5`` one can use:
 
 .. code:: python
 

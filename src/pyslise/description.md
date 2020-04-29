@@ -1,8 +1,8 @@
-# PySlise ${PYSLISE_VERSION}
+# Pyslise ${PYSLISE_VERSION}
 
-PySlise is a collection of algorithms to solve the one and two dimensional time-independent Schrödinger equations. These algorithms are based upon constant perturbation methods to efficiently solve these eigenvalue problems.
+Pyslise is a collection of algorithms to solve the one and two dimensional time-independent Schrödinger equations. These algorithms are based upon constant perturbation methods to efficiently solve these eigenvalue problems.
 
-The code (and name) is based on Matslise [1]. This is a feature-rich matlab library for solving the one dimensional time independent Schrödinger equation.
+The code (and name) is based on Matslise [1]. This is a feature-rich MATLAB library for solving the one dimensional time independent Schrödinger equation.
 
 To solve the two dimensional problem an algorithm is developed on the basis of a method proposed by Ixaru [2].
 
@@ -20,21 +20,21 @@ On the same page an interactive version is available.
 
 One dimensional problems can be tackled with:
 ```python
-from pyslise import PySlise
+from pyslise import Pyslise
 from math import pi, cos
 
-problem = PySlise(lambda x: 2*cos(2*x), 0, pi, tolerance=1e-5)
+problem = Pyslise(lambda x: 2*cos(2*x), 0, pi, tolerance=1e-6)
 problem.eigenvaluesByIndex(0, 10, (0, 1), (0, 1))
 ```
 
 Also two dimensional problems are possible:
 ```python
-from pyslise import PySE2d
+from pyslise import Pyslise2D
 
 def V(x, y):
     return (1 + x**2) * (1 + y**2)
 
-problem = PySE2d(V, -5.5,5.5, -5.5,5.5, tolerance=1e-5)
+problem = Pyslise2D(V, -5.5,5.5, -5.5,5.5, tolerance=1e-6)
 problem.eigenvalues(0,13)
 ```
 
