@@ -1,8 +1,8 @@
 
 Welcome to the documentation of Pyslise
-######################################
+#######################################
 
-PySlise is a Python package (written in C++) to solve
+Pyslise is a Python package (written in C++) to solve
 Schrödinger equations. In general the time-independent
 Schrödinger equation is given by:
 
@@ -23,8 +23,7 @@ And also the two-dimensional Schrödinger equation (experimental):
 
 Besides a python package there is also an interactive web based GUI (compiled with WebAssembly):
 
-- `1D GUI <./ti1d>`_
-- `2D GUI <./ti2d>`_
+- `GUI for the one-dimensional problem <./ti1d>`_
 
 (Tested in a recent version of Firefox and Chrome)
 
