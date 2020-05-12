@@ -20,7 +20,7 @@ namespace matslise {
         typedef Eigen::Matrix<std::complex<Scalar>, Eigen::Dynamic, Eigen::Dynamic> MatrixXcs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
-        static const int order = 12;
+        static const int order = 10;
 
         class Sector;
 
