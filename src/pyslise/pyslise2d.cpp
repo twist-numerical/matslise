@@ -5,27 +5,6 @@ void pyslise2d(py::module &m) {
             .def("firstEigenvalue", [](const Matslise2D<> &se2d) -> double {
                 return se2d.firstEigenvalue();
             })
-            .def("eigenfunction",
-                 [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
-                         -> vector<ArrayXXd> {
-                     return se2d.eigenfunction(E, x, y);
-                 }, R""""(\
-Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
-
-:param float E: the eigenvalue to compute eigenfunctions for.
-:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
-:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
-)"""", py::arg("E"), py::arg("x"), py::arg("y"))
-            .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<double(double, double)>> {
-                     return se2d.eigenfunction(E);
-                 }, R""""(\
-Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
-
-:param float E: the eigenvalue.
-
-:returns: a list of function that takes a x-value and a y-value and returns the value of the eigenfunction in (x, y).
-)"""", py::arg("E"))
             .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 
@@ -51,7 +30,56 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
 :param int Imax: only the first Imax eigenvalues will be considered.
 
 :returns: a list of eigenvalues.
-)"""", py::arg("Imin"), py::arg("Imax"));
+)"""", py::arg("Imin"), py::arg("Imax"))
+            .def("eigenvalueError", &AbstractMatslise2D<double>::eigenvalueError, R""""(\
+Estimate an error of a given eigenvalue by using a lower order method.
+
+:param float E: an eigenvalue to estimate an error for.
+:returns: the estimated error for the given eigenvalue.
+)"""", py::arg("E"))
+            .def("eigenfunction",
+                 [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
+                         -> vector<ArrayXXd> {
+                     return se2d.eigenfunction(E, x, y);
+                 }, R""""(\
+Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
+
+:param float E: the eigenvalue to compute eigenfunctions for.
+:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
+:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
+)"""", py::arg("E"), py::arg("x"), py::arg("y"))
+            .def("eigenfunction",
+                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<double(double, double)>> {
+                     return se2d.eigenfunction(E);
+                 }, R""""(\
+Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
+
+:param float E: the eigenvalue.
+
+:returns: a list of functions (depending on multiplicity) each taking a x-value and a y-value and returning the value of that eigenfunction in (x, y).
+)"""", py::arg("E"))
+            .def("eigenfunctionDerivatives",
+                 [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
+                         -> vector<std::tuple<ArrayXXd, ArrayXXd, ArrayXXd>> {
+                     return se2d.eigenfunctionDerivatives(E, x, y);
+                 }, R""""(\
+Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
+
+:param float E: the eigenvalue to compute eigenfunctions for.
+:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
+:returns: a list of three len(x) by len(y) grids of values. For each triplet of grids, position i, j contains the value (resp. x-derivative and y-derivative) of that eigenfunction evaluated in the point x[i], y[j].
+)"""", py::arg("E"), py::arg("x"), py::arg("y"))
+            .def("eigenfunctionDerivatives",
+                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<
+                         std::tuple<double, double, double>(double, double)>> {
+                     return se2d.eigenfunctionDerivatives(E);
+                 }, R""""(\
+Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
+
+:param float E: the eigenvalue.
+
+:returns: a list of functions (depending on multiplicity) each taking a x-value and a y-value and returning the value, the x-derivative and the y-derivative of that eigenfunction in (x, y).
+)"""", py::arg("E"));
 
 
     py::class_<Matslise2D<>, AbstractMatslise2D<double>>(m, "Pyslise2D")
