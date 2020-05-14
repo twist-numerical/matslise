@@ -56,7 +56,7 @@ newtonIteration(const Matslise<Scalar> *ms, Scalar E, const Y<Scalar> &left, con
     } while (++i < 20 && abs(adjust) > ms->tolerance);
 
     if (i >= 20 && abs(adjust) > 100 * ms->tolerance) {
-        cerr << "Newton-iteration did not converge for E=" << (double) E << endl;
+        // cerr << "Newton-iteration did not converge for E=" << (double) E << endl;
     }
 
     int index = (int) round(theta / constants<Scalar>::PI);
@@ -107,7 +107,7 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         } else {
             tc = get<2>(ms->matchingError(c, left, right)) / constants<Scalar>::PI;
             if (isnan(tc)) {
-                cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
+                // cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
             } else if (ia + 1 < ib) {
                 toCheck.push(make_tuple(a, ta, c, tc, depth));
                 toCheck.push(make_tuple(c, tc, b, tb, depth));

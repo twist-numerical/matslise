@@ -26,5 +26,4 @@ TEST_CASE("Test propagateTheta", "[matscs][propagateTheta]") {
     REQUIRE(Approx(
             scs.propagate(E, Y<double, Dynamic>::Dirichlet(4), 0.1, 1, theta).first
                     .getY(0).determinant()).margin(1e-3) == 0);
-    cout << theta << endl;
 }

@@ -31,7 +31,8 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
 
         if (Z > 0) {
             if (Z > 500) {
-                std::cerr << ("Z > 500") << std::endl;
+                // The calculated results will probably be inaccurate
+                // std::cerr << ("Z > 500") << std::endl;
             }
             Scalar sZ = sqrt(Z);
             eta[0] = cosh(sZ);
