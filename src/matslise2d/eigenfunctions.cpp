@@ -17,12 +17,13 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
 
     steps[0] = yLeft;
     steps[sectorCount] = dirichletBoundary;
-    auto *U = new MatrixXs[sectorCount + 1];
+    auto *U = new MatrixXs[sectorCount];
 
     for (int i = sectorCount - 1; i > matchIndex; --i) {
         endSteps[i] = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
+        if(i + 1 < sectorCount)
+            U[i + 1] = conditionY(endSteps[i]);
         steps[i] = sectors[i]->propagate(E, endSteps[i], sectors[i]->max, sectors[i]->min, true);
-        U[i + 1] = conditionY(steps[i]);
     }
     const Y<Scalar, Dynamic> matchRight = steps[matchIndex + 1];
 
@@ -62,12 +63,14 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
             }
         }
 
-        for (int i = matchIndex + 2; i <= sectorCount; ++i) {
-            U[i].template triangularView<Upper>().
-                    template solveInPlace<OnTheLeft>(right);
-            elements[static_cast<size_t>(i)] = steps[i] * right;
-            normalizer += cec_cce(endSteps[i - 1] * right) -
-                          cec_cce(i > matchIndex + 2 ? elements[i - 1] : elementMatchRight);
+        for (int i = matchIndex + 1; i < sectorCount; ++i) {
+            elements[static_cast<size_t>(i+1)] = endSteps[i] * right;
+            normalizer += cec_cce(elements[i+1]) -
+                          cec_cce(i > matchIndex + 1 ? steps[i]*right : elementMatchRight);
+            if(i + 1 < sectorCount) {
+                U[i + 1].template triangularView<Upper>().
+                        template solveInPlace<OnTheLeft>(right);
+            }
         }
 
         normalizer = normalizer.unaryExpr([](const Scalar &s) -> Scalar {
@@ -131,9 +134,15 @@ returnType Matslise2D<Scalar>::eigenfunctionHelper(
             else
                 B = sectors[sector]->template basis<false>(x);
 
+            Y<Scalar, Dynamic> c;
             while (nextY < ny && y[nextY] <= sectors[sector]->max) {
-                Y<Scalar, Dynamic> c = sectors[sector]->propagate(
-                        E, steps[static_cast<size_t>(sector)], sectors[sector]->min, y[nextY], true);
+                if (sectors[sector]->backward) {
+                    c = sectors[sector]->propagate(
+                            E, steps[static_cast<size_t>(sector + 1)], sectors[sector]->max, y[nextY], true);
+                } else {
+                    c = sectors[sector]->propagate(
+                            E, steps[static_cast<size_t>(sector)], sectors[sector]->min, y[nextY], true);
+                }
 
                 MatrixXs phi = B * c.getY(0);
 
@@ -193,8 +202,10 @@ returnType Matslise2D<Scalar>::eigenfunctionHelper(
                         }
                         const Matslise2D<Scalar>::Sector *sector = this->sectors[sectorIndex];
 
-                        Y<Scalar, Dynamic, 1> c = sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min,
-                                                                    y, true);
+                        Y<Scalar, Dynamic, 1> c =
+                                sector->backward
+                                ? sector->propagate(E, (*steps)[sectorIndex + 1].col(column), sector->max, y, true)
+                                : sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y, true);
 
                         if constexpr (withDerivative) {
                             ArrayXs b, b_x;

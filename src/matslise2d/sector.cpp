@@ -10,7 +10,7 @@ using namespace Eigen;
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
                                    bool backward)
-        : se2d(se2d), min(ymin), max(ymax) {
+        : se2d(se2d), min(ymin), max(ymax), backward(backward) {
     const Scalar ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
     vbar = se2d->grid.unaryExpr(vbar_fun);
