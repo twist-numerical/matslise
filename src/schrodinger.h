@@ -32,7 +32,6 @@ namespace matslise {
     struct Options2 {
         Options1<Scalar> nestedOptions;
         matslise::SectorBuilder<matslise::Matslise2D<Scalar>, Scalar> _builder = matslise::sector_builder::uniform<Matslise2D<Scalar>>(17);
-        int _stepsPerSector = 1;
         int _N = 12;
         int _gridPoints = 52;
 
@@ -48,11 +47,6 @@ namespace matslise {
 
         Options2<Scalar> &tolerance(Scalar tol) {
             _builder = matslise::sector_builder::automatic<Matslise2D<Scalar>>(tol);
-            return *this;
-        }
-
-        Options2<Scalar> &stepsPerSector(int count) {
-            _stepsPerSector = count;
             return *this;
         }
 

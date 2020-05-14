@@ -45,7 +45,7 @@ TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
                 return 0;
             },
             {{0, constants<double>::PI}, 0, constants<double>::PI},
-            Options2<>().tolerance(1e-5).stepsPerSector(4).N(12).nested(Options1<>().tolerance(1e-5)));
+            Options2<>().tolerance(1e-6).N(12).nested(Options1<>().tolerance(1e-5)));
 
     set<double> eigenvalues;
     vector<double> eigenvaluesList;

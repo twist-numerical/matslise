@@ -15,7 +15,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon]") {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },
             {{-6, 6}, -6, 6},
-            Options2<>().sectorCount(15).stepsPerSector(4).nested(Options1<>().sectorCount(16)));
+            Options2<>().sectorCount(21).nested(Options1<>().sectorCount(16)));
     pair<double, int> eigenvalues[] = {
             {0.998594690530479, 1},
             {1.99007660445524,  2},

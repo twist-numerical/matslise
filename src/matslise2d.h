@@ -197,7 +197,7 @@ namespace matslise {
         public:
             const Matslise2D<Scalar> *se2d;
             AbstractMatslise<Scalar> *matslise;
-            matslise::Matscs<Scalar> *matscs;
+            typename matslise::Matscs<Scalar>::Sector *matscs;
             ArrayXs vbar;
             Scalar min, max;
 

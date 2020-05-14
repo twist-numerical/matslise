@@ -1,6 +1,7 @@
 #include <iostream>
 #include "../matslise.h"
 #include "../util/lobatto.h"
+#include "../util/legendre.h"
 
 using namespace matslise;
 using namespace std;
@@ -38,23 +39,10 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
             eigenfunctions[i][j] = func[j].y[0];
     }
 
-    matscs = new Matscs<Scalar>(
-            [this](Scalar y) -> MatrixXs { return this->calculateDeltaV(y); },
-            se2d->N, ymin, ymax,
-            ([this, backward](const Matscs<Scalar> *p, Scalar xmin,
-                              Scalar xmax) -> SectorBuilderReturn<Matscs<Scalar>> {
-                int n = this->se2d->options._stepsPerSector;
-                Scalar h = (xmax - xmin) / n;
-                std::vector<typename Matscs<Scalar>::Sector *> scsSectors;
-                scsSectors.resize(n);
-                Scalar left = xmin;
-                for (int i = 0; i < n; ++i) {
-                    Scalar right = xmax - (n - i - 1) * h;
-                    scsSectors[i] = new typename Matscs<Scalar>::Sector(p, left, right, backward);
-                    left = right;
-                }
-                return {std::move(scsSectors), n - 2};
-            }));
+    matscs = new typename Matscs<Scalar>::Sector(
+            legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([this](Scalar y) -> MatrixXs {
+                return this->calculateDeltaV(y); }, min, max),
+                ymin, ymax, backward);
 }
 
 template<typename Scalar>
@@ -76,10 +64,7 @@ Matslise2D<Scalar>::Sector::propagate(
 
 template<typename Scalar>
 Scalar Matslise2D<Scalar>::Sector::error() const {
-    Scalar error = 0;
-    for (int i = 0; i < matscs->sectorCount; ++i)
-        error += matscs->sectors[i]->error();
-    return error;
+    return matscs->error();
 }
 
 template<typename Scalar>

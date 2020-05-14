@@ -73,7 +73,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options2<>().sectorCount(23).stepsPerSector(4).N(10).nested(Options1<>().sectorCount(26)));
+            Options2<>().tolerance(1e-6).N(10).nested(Options1<>().sectorCount(26)));
     pair<double, int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
@@ -128,7 +128,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options2<>().tolerance(1e-5).stepsPerSector(3).N(10).nested(Options1<>().tolerance(1e-7)));
+            Options2<>().tolerance(1e-6).N(10).nested(Options1<>().tolerance(1e-7)));
     pair<double, unsigned int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},
@@ -180,7 +180,7 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
                 return (1 + x * x) * (1 + y * y);
             },
             {{-5.5, 5.5}, -5.5, 5.5},
-            Options2<>().tolerance(1e-5).stepsPerSector(1).N(20).nested(Options1<>().tolerance(1e-7)));
+            Options2<>().tolerance(1e-5).N(20).nested(Options1<>().tolerance(1e-7)));
     pair<double, unsigned int> eigenvalues[] = {
             {3.1959181,  1},
             {5.5267439,  2},

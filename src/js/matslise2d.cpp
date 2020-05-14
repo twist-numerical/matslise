@@ -61,8 +61,6 @@ void bind_matslise2d() {
                                 o1.symmetric(options["nested"]["symmetric"].as<bool>());
                         }
                         o2.nested(o1);
-                        if (options["stepsPerSector"] != val::undefined())
-                            o2.stepsPerSector(options["stepsPerSector"].as<int>());
 
                         return new Matslise2D<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
                                                 {{xmin, xmax}, ymin, ymax}, o2);
@@ -104,8 +102,6 @@ void bind_matslise2d() {
                                 o1.symmetric(options["nested"]["symmetric"].as<bool>());
                         }
                         o2.nested(o1);
-                        if (options["stepsPerSector"] != val::undefined())
-                            o2.stepsPerSector(options["stepsPerSector"].as<int>());
 
                         return new Matslise2DHalf<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
                                                     {{xmin, xmax}, ymin, ymax}, o2);

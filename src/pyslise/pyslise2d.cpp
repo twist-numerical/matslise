@@ -89,7 +89,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                              int x_count, double x_tol,
                              int y_count, double y_tol,
                              double tol,
-                             int N, int in_sector_count, int grid_points) {
+                             int N, int grid_points) {
                      if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
                      }
@@ -115,7 +115,6 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                          o1.tolerance(x_tol);
                      Options2<> o2;
                      o2.N(N)
-                             .stepsPerSector(in_sector_count)
                              .gridPoints(grid_points)
                              .nested(o1.symmetric(symmetric));
                      if (y_count != -1)
@@ -147,7 +146,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
-                 py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60)
+                 py::arg("N") = 12, py::arg("grid_points") = 60)
             .def("matchingError", [](const Matslise2D<> &se2d, double const &E) -> pair<double, double> {
                 return se2d.matchingError(E);
             }, R""""(\
@@ -194,7 +193,7 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                              int x_count, double x_tol,
                              int y_count, double y_tol,
                              double tol,
-                             int N, int in_sector_count, int grid_points) {
+                             int N, int grid_points) {
                      if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
                      }
@@ -220,7 +219,6 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                          o1.tolerance(x_tol);
                      Options2<> o2;
                      o2.N(N)
-                             .stepsPerSector(in_sector_count)
                              .gridPoints(grid_points)
                              .nested(o1.symmetric(symmetric));
                      if (y_count != -1)
@@ -252,7 +250,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("tolerance") = -1,
-                 py::arg("N") = 12, py::arg("in_sector_count") = 2, py::arg("grid_points") = 60);
+                 py::arg("N") = 12, py::arg("grid_points") = 60);
 
     py::class_<Matslise2D<>::Sector, std::unique_ptr<Matslise2D<>::Sector, py::nodelete>>(m, "Pyslise2DSector")
             .def_property_readonly("eigenvalues", [](Matslise2D<>::Sector &s) -> vector<double> * {
