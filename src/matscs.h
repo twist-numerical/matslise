@@ -32,8 +32,7 @@ namespace matslise {
         int matchIndex;
     public:
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
-               int n, const Scalar &xmin, const Scalar &xmax,
-               SectorBuilder<Matscs<Scalar>> sectorBuilder) :
+               int n, const Scalar &xmin, const Scalar &xmax, SectorBuilder<Matscs<Scalar>> sectorBuilder) :
                 V(V), n(n), xmin(xmin), xmax(xmax) {
             auto sectorsBuild = sectorBuilder(this, xmin, xmax);
             sectors = std::move(sectorsBuild.sectors);
@@ -68,22 +67,24 @@ namespace matslise {
 
         ~Matscs();
 
-
     public:
 
         class Sector {
         private:
-            const Matscs *s;
+            int n;
         public:
             Eigen::Array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_delta, MATSCS_HMAX_delta>
                     t_coeff;
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> t_coeff_h[MATSCS_ETA_h];
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> diagonalize;
-            Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> *vs;
+            std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> vs;
             Scalar min, max, h;
             bool backward;
 
             Sector(const Matscs *problem, const Scalar &min, const Scalar &max, bool backward = false);
+
+            Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
+                   const Scalar &min, const Scalar &max, bool backward = false);
 
             void calculateTCoeffs();
 
@@ -111,7 +112,7 @@ namespace matslise {
 
             Scalar error() const;
 
-            ~Sector();
+            ~Sector() = default;
 
             static bool compare(const Sector &a, const Sector &b) {
                 return (a.vs[0].diagonal() - b.vs[0].diagonal()).sum() < 0;

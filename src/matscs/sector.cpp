@@ -14,21 +14,28 @@ using namespace Eigen;
 
 template<typename Scalar>
 Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar &max, bool backward)
-        : s(s), min(min), max(max), backward(backward) {
+        : Sector(legendre::getCoefficients<MATSCS_N>(s->V, min, max), min, max, backward) {
+}
+
+
+template<typename Scalar>
+Matscs<Scalar>::Sector::Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
+        const Scalar &min, const Scalar &max, bool backward)
+        : vs(vs), min(min), max(max), backward(backward) {
     h = max - min;
-    vs = legendre::getCoefficients(MATSCS_N, s->V, min, max);
     SelfAdjointEigenSolver<Matrix<Scalar, Dynamic, Dynamic>> es(vs[0]);
+    n = vs[0].rows();
     diagonalize = es.eigenvectors();
 
     for (int i = 0; i < MATSCS_N; ++i)
-        vs[i] = (backward && i % 2 == 1 ? -1 : 1) * diagonalize.transpose() * vs[i] * diagonalize;
+        this->vs[i] = (backward && i % 2 == 1 ? -1 : 1) * diagonalize.transpose() * vs[i] * diagonalize;
 
     calculateTCoeffs();
 }
 
 template<typename Scalar>
 void Matscs<Scalar>::Sector::calculateTCoeffs() {
-    calculate_tcoeff_matrix(s->n, h, vs, t_coeff, t_coeff_h);
+    calculate_tcoeff_matrix(n, h, vs, t_coeff, t_coeff_h);
 }
 
 template<typename Scalar, typename T>
@@ -38,18 +45,18 @@ Matrix<Scalar, Dynamic, Dynamic> diagonalMatrix(const T &arr) {
 
 template<typename Scalar>
 T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &delta, bool use_h) const {
-    MatrixXs zero = MatrixXs::Zero(s->n, s->n);
-    MatrixXs one = MatrixXs::Identity(s->n, s->n);
+    MatrixXs zero = MatrixXs::Zero(n, n);
+    MatrixXs one = MatrixXs::Identity(n, n);
 
     if (abs(delta) <= EPS) {
-        return T<Scalar, Dynamic>(s->n);
+        return T<Scalar, Dynamic>(n);
     }
     if (use_h && abs(delta - h) <= EPS)
         return calculateT(E);
 
-    ArrayXs VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(s->n, E)) * delta;
+    ArrayXs VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(n, E)) * delta;
     ArrayXs *eta = calculateEta<Scalar>(VEd * delta, MATSCS_ETA_delta);
-    T<Scalar, Dynamic> t(s->n);
+    T<Scalar, Dynamic> t(n);
     t.t << zero, zero, diagonalMatrix<Scalar>(eta[1] * VEd), zero;
     t.dt << zero, zero, diagonalMatrix<Scalar>(-delta * eta[1] - (delta * delta / 2) * eta[2] * VEd), zero;
 
@@ -77,7 +84,7 @@ template<typename Scalar>
 T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
-    int N = s->n;
+    int N = n;
     MatrixXs zero = MatrixXs::Zero(N, N);
     MatrixXs one = MatrixXs::Identity(N, N);
 
@@ -155,11 +162,11 @@ pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagateDelta(
 
     Scalar d = (delta > h ? h : delta < -h ? -h : delta);
 
-    ArrayXs Z = d * d * (vs[0].diagonal().array() - ArrayXs::Constant(s->n, E));
+    ArrayXs Z = d * d * (vs[0].diagonal().array() - ArrayXs::Constant(n, E));
 
     ArrayXs *eta = calculateEta(Z, 2);
     Scalar argdet = 0;
-    for (int i = 0; i < s->n; ++i) {
+    for (int i = 0; i < n; ++i) {
         if (Z[i] < 0) {
             Scalar sZ = (d < 0 ? -1 : 1) * sqrt(-Z[i]);
             argdet += (sZ + atan2(
@@ -295,11 +302,6 @@ Scalar Matscs<Scalar>::Sector::error() const {
     if (isnan(error))
         return numeric_limits<Scalar>::infinity();
     return error;
-}
-
-template<typename Scalar>
-Matscs<Scalar>::Sector::~Sector() {
-    delete[]vs;
 }
 
 #define INSTANTIATE_PROPAGATE(Scalar, r)\

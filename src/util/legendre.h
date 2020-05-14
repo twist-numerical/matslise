@@ -19,14 +19,14 @@ namespace legendre {
     };
 
 
-    template<class D, class Scalar=double>
-    D *getCoefficients(int n, const std::function<D(Scalar)> &V, const Scalar &a, const Scalar &b) {
+    template<int n, class D, class Scalar=double>
+    std::array<D, n> getCoefficients(const std::function<D(Scalar)> &V, const Scalar &a, const Scalar &b) {
         const LegendreData<Scalar> *data = LegendreData<Scalar>::getData(n);
 
         Scalar m = (a + b) / 2;
         Scalar h = (b - a) / 2;
         Eigen::Array<D, Eigen::Dynamic, 1> result = (m + data->nodes * h).unaryExpr(V);
-        D *coeffs = new D[n];
+        std::array<D, n> coeffs;
         Scalar H(1);
         for (int i = 0; i < n; ++i) {
             coeffs[i] = data->weights(i, 0) * result[0];

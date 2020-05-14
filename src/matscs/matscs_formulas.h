@@ -4,20 +4,20 @@ template<typename D>
 void calculate_tcoeff_matrix(
         int n,
         D h,
-        Eigen::Matrix<D, -1, -1> *vs,
+        const std::array<Eigen::Matrix<D, -1, -1>, MATSCS_N> &vs,
         Eigen::Array<Eigen::Matrix<D, -1, -1>, MATSCS_ETA_delta, MATSCS_HMAX_delta> &tDelta,
         Eigen::Matrix<D, -1, -1> *tH) {
     Eigen::Matrix<D, -1, -1> zero = Eigen::Matrix<D, -1, -1>::Zero(n, n);
     Eigen::Matrix<D, -1, -1> I = Eigen::Matrix<D, -1, -1>::Identity(n, n);
-    Eigen::Matrix<D, -1, -1> &v0 = vs[0];
-    Eigen::Matrix<D, -1, -1> &v1 = vs[1];
-    Eigen::Matrix<D, -1, -1> &v2 = vs[2];
-    Eigen::Matrix<D, -1, -1> &v3 = vs[3];
-    Eigen::Matrix<D, -1, -1> &v4 = vs[4];
-    Eigen::Matrix<D, -1, -1> &v5 = vs[5];
-    Eigen::Matrix<D, -1, -1> &v6 = vs[6];
-    Eigen::Matrix<D, -1, -1> &v7 = vs[7];
-    Eigen::Matrix<D, -1, -1> &v8 = vs[8];
+    const Eigen::Matrix<D, -1, -1> &v0 = vs[0];
+    const Eigen::Matrix<D, -1, -1> &v1 = vs[1];
+    const Eigen::Matrix<D, -1, -1> &v2 = vs[2];
+    const Eigen::Matrix<D, -1, -1> &v3 = vs[3];
+    const Eigen::Matrix<D, -1, -1> &v4 = vs[4];
+    const Eigen::Matrix<D, -1, -1> &v5 = vs[5];
+    const Eigen::Matrix<D, -1, -1> &v6 = vs[6];
+    const Eigen::Matrix<D, -1, -1> &v7 = vs[7];
+    const Eigen::Matrix<D, -1, -1> &v8 = vs[8];
     Eigen::Matrix<D, -1, -1> v0_v0 = v0 * v0;
     Eigen::Matrix<D, -1, -1> v0_v1 = v0 * v1;
     Eigen::Matrix<D, -1, -1> v0_v2 = v0 * v2;

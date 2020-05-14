@@ -23,7 +23,7 @@ template<typename Scalar>
 Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
         : s(s), min(min), max(max), backward(backward) {
     h = max - min;
-    vs = legendre::getCoefficients(MATSLISE_N, s->potential, min, max);
+    vs = legendre::getCoefficients<MATSLISE_N>(s->potential, min, max);
     if (backward) {
         for (int i = 1; i < MATSLISE_N; i += 2)
             vs[i] *= -1;
@@ -217,11 +217,6 @@ Scalar Matslise<Scalar>::Sector::error() const {
 
 
     return std::max(e_loc0, std::max(e_locu, std::max(e_locup, e_locv)));
-}
-
-template<typename Scalar>
-Matslise<Scalar>::Sector::~Sector() {
-    delete[]vs;
 }
 
 #include "../util/instantiate.h"
