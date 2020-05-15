@@ -18,7 +18,7 @@ void bind_matslise() {
                        int index = -1) ->
                             val {
                         std::function<Y<>(double)> calculator =
-                                m.eigenfunctionCalculator(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index);
+                                m.eigenfunction(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index);
                         return val::global("Function")
                                 .new_(string("calculator"), string(
                                         "var f = function(x) { return calculator.eval(x); };"
@@ -31,7 +31,7 @@ void bind_matslise() {
                        const val &x, int index = -1) ->
                             val {
                         Array<Y<double>, Dynamic, 1> array = m.eigenfunction(
-                                E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), val2ArrayXd(x), index);
+                                E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index)(val2ArrayXd(x));
                         return ArrayXd2val(array.unaryExpr([](const Y<double> &y) -> double {
                             return y.y(0);
                         }));

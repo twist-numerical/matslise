@@ -33,7 +33,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
         eigenvalues[i] = E;
         // TODO: check i == index
         Array<Y<Scalar>, Dynamic, 1> func = matslise->eigenfunction(
-                E, Y<Scalar>::Dirichlet(), se2d->grid, index);
+                E, Y<Scalar>::Dirichlet(), index)(se2d->grid);
         eigenfunctions[i] = ArrayXs(func.size());
         for (Eigen::Index j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
@@ -93,7 +93,7 @@ diffType Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::Ar
     ArrayXXs b(size, se2d->N);
     ArrayXXs b_x(size, se2d->N);
     for (int i = 0; i < se2d->N; ++i) {
-        auto ys = matslise->eigenfunction(eigenvalues[i], y0, x, i);
+        Array<Y<Scalar>, Dynamic, 1> ys = matslise->eigenfunction(eigenvalues[i], y0, i)(x);
         b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                 [](const Y<Scalar> &y) -> Scalar {
                     return y.y[0];
@@ -116,7 +116,7 @@ function<diffType(Scalar)> Matslise2D<Scalar>::Sector::basis() const {
     const Y<Scalar> y0 = Y<Scalar>::Dirichlet(1);
     vector<function<Y<Scalar>(Scalar)>> basis(static_cast<size_t>(se2d->N));
     for (int index = 0; index < se2d->N; ++index) {
-        basis[static_cast<size_t>(index)] = matslise->eigenfunctionCalculator(eigenvalues[index], y0, index);
+        basis[static_cast<size_t>(index)] = matslise->eigenfunction(eigenvalues[index], y0, index);
     }
     return [basis](const Scalar &x) -> diffType {
         ArrayXs b(basis.size());

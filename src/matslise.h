@@ -35,6 +35,22 @@ namespace matslise {
                 : potential(potential), domain(domain) {
         }
 
+        struct Eigenfunction {
+        public:
+            std::function<Y<Scalar>(const Scalar &)> f_scalar;
+            std::function<Eigen::Array<Y<Scalar>, Eigen::Dynamic, 1>(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &)>
+                    f_array;
+
+            Y<Scalar> operator()(const Scalar &x) const {
+                return f_scalar(x);
+            }
+
+            Eigen::Array<Y<Scalar>, Eigen::Dynamic, 1>
+            operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const {
+                return f_array(x);
+            }
+        };
+
     public:
 
         virtual Scalar estimatePotentialMinimum() const = 0;
@@ -75,29 +91,16 @@ namespace matslise {
             return eigenvalueError(E, left, left, index);
         };
 
-        virtual Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
-                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const {
-            checkSymmetry(left, right);
-            return eigenfunction(E, right, x, index);
-        }
-
-        virtual Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
-                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const {
-            return eigenfunction(E, side, side, x, index);
-        }
-
-        virtual std::function<Y<Scalar>(Scalar)> eigenfunctionCalculator(
+        virtual Eigenfunction eigenfunction(
                 const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
                 int index = -1) const {
             checkSymmetry(left, right);
-            return eigenfunctionCalculator(E, right, index);
+            return eigenfunction(E, right, index);
         };
 
-        virtual std::function<Y<Scalar>(Scalar)> eigenfunctionCalculator(
+        virtual Eigenfunction eigenfunction(
                 const Scalar &E, const matslise::Y<Scalar> &left, int index = -1) const {
-            return eigenfunctionCalculator(E, left, left, index);
+            return eigenfunction(E, left, left, index);
         };
 
         virtual ~AbstractMatslise() = default;
@@ -113,6 +116,7 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::domain;
         using AbstractMatslise<Scalar>::potential;
+        typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
 
         int sectorCount;
         int matchIndex;
@@ -164,15 +168,8 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::eigenfunction;
 
-        Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
-                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const override;
-
-        using AbstractMatslise<Scalar>::eigenfunctionCalculator;
-
-        std::function<Y<Scalar>(Scalar)>
-        eigenfunctionCalculator(const Scalar &E, const matslise::Y<Scalar> &left,
-                                const matslise::Y<Scalar> &right, int index = -1) const override;
+        Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
+                                    const matslise::Y<Scalar> &right, int index = -1) const override;
 
         virtual ~Matslise();
 
@@ -234,6 +231,7 @@ namespace matslise {
     template<typename _Scalar = double>
     class MatsliseHalf : public AbstractMatslise<_Scalar> {
         typedef _Scalar Scalar;
+        typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
 
     public:
         const Matslise<Scalar> *ms;
@@ -264,14 +262,7 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::eigenfunction;
 
-        Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1>
-        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side,
-                      const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x, int index = -1) const override;
-
-        using AbstractMatslise<Scalar>::eigenfunctionCalculator;
-
-        std::function<Y<Scalar>(Scalar)>
-        eigenfunctionCalculator(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
+        Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
 
         virtual ~MatsliseHalf();
     };

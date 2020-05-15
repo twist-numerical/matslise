@@ -132,7 +132,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         double e = eigenvalues[0].second;
 
         REQUIRE(Approx(-0.11024881635796).margin(1e-12) == e);
-        Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart, x);
+        Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart)(x);
         REQUIRE(((unsigned long) result.size()) == y0.size());
         for (Eigen::Index i = result.size() - 1; i >= 0; --i)
             result[i] *= dy0[0] / result[0].y[1];
@@ -149,7 +149,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         double e = eigenvalues.at(0).second;
 
         REQUIRE(Approx(16.03297008140580).margin(1e-12) == e);
-        Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart, x);
+        Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart)(x);
         REQUIRE(result.size() == static_cast<long>(y0.size()));
         for (Eigen::Index i = result.size() - 1; i >= 0; --i)
             result[i] *= dy3[0] / result[0].y[1];
