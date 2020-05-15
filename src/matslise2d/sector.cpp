@@ -1,11 +1,12 @@
 #include <iostream>
 #include "../matslise.h"
-#include "../util/lobatto.h"
+#include "../util/quadrature.h"
 #include "../util/legendre.h"
 
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
+using namespace quadrature;
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,

@@ -6,8 +6,10 @@
 #define MATSLISE_TEST_PROBLEM_H
 
 #include "../../src/matslise.h"
-#include "../../src/util/lobatto.h"
+#include "../../src/util/quadrature.h"
 #include "../catch.hpp"
+
+using namespace quadrature;
 
 template<typename Scalar>
 void testEigenvaluesByIndex(

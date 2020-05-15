@@ -1,12 +1,13 @@
 #include <iostream>
 #include <map>
 #include "../matslise.h"
-#include "../util/lobatto.h"
+#include "../util/quadrature.h"
 #include "../util/find_sector.h"
 
 using namespace Eigen;
 using namespace matslise;
 using namespace std;
+using namespace quadrature;
 
 
 template<typename Scalar>
