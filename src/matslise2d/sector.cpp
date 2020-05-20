@@ -14,7 +14,7 @@ using namespace quadrature;
 
 
 template<typename Scalar>
-Array<Scalar, MATSLISE_HMAX_delta, 2> getDeltaForEta(
+Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2> getDeltaForEta(
         const typename Matslise<Scalar>::Sector *sector, const Scalar &E, const Y<Scalar> &y0) {
     Scalar Zd = sector->vs[0] - E;
     Array<Scalar, MATSLISE_HMAX_delta, MATSLISE_ETA_delta> u = sector->t_coeff.unaryExpr(
@@ -33,30 +33,33 @@ Array<Scalar, MATSLISE_HMAX_delta, 2> getDeltaForEta(
                 -= v.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() * (Scalar(2 * i - 3) / Zd);
     }
 
+    std::complex<Scalar> theta = sqrt(std::complex(Zd));
+    Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2> uve;
+    uve.col(0) = uve.col(1) = (y0.y(0) * u + y0.y(1) * v).col(0) / Scalar(2);
+    Array<std::complex<Scalar>, MATSLISE_HMAX_delta - 1, 1> uve1
+            = ((y0.y(0) * u + y0.y(1) * v).col(1) / Scalar(2) / theta).template bottomRows<MATSLISE_HMAX_delta - 1>();
+    uve.col(0).template topRows<MATSLISE_HMAX_delta - 1>() += uve1;
+    uve.col(1).template topRows<MATSLISE_HMAX_delta - 1>() -= uve1;
 
-
-    Scalar h = sector->h*.33;
+/*
+    Scalar h = sector->h * .33;
     Scalar *eta = calculateEta(Zd * h * h, 2);
 
     T<Scalar> t = sector->calculateT(E, h, true);
     cout << "\n --- " << endl;
-    cout << "\n" << u.col(0).transpose() << endl;
-    cout << u.col(1).transpose() << endl;
-    cout << "\n" << v.col(0).transpose() << endl;
-    cout << v.col(1).transpose() << endl;
+    cout << "\n " << y0.y << endl;
+    cout << "\n " << t.t << endl;
+    cout << "\n" << uve.transpose() << endl;
     cout << "\n" << (
-            horner<Scalar>(u.col(0), h, MATSLISE_HMAX_delta) * eta[0]
-            + horner<Scalar>(u.col(1), h, MATSLISE_HMAX_delta) * eta[1]
-    ) << ", " << (
-                 horner<Scalar>(v.col(0), h, MATSLISE_HMAX_delta) * eta[0]
-                 + horner<Scalar>(v.col(1), h, MATSLISE_HMAX_delta) * eta[1]
-         ) << endl;
-    cout << "\n" << t.t << endl;
+            horner<std::complex<Scalar>>(uve.col(0), h, MATSLISE_HMAX_delta) * exp(theta*h)
+            + horner<std::complex<Scalar>>(uve.col(1), h, MATSLISE_HMAX_delta) * exp(-theta*h)
+    )  << endl;
+    cout << "\n" << sector->propagate(E, y0, sector->min, sector->min+h).first.y << endl;
 
 
     delete[] eta;
-
-    return (y0.y(0) * u + y0.y(1) * v).template leftCols<2>();
+*/
+    return uve;
 };
 
 template<typename Scalar>
@@ -93,7 +96,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     }
 
     if (auto m = dynamic_cast<Matslise<Scalar> *>(matslise)) {
-        vector<vector<Array<Scalar, MATSLISE_HMAX_delta, 2>>> polynomials(m->sectors.size());
+        vector<vector<Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2>>> polynomials(m->sectors.size());
         auto polyIt = polynomials.begin();
         for (auto &sector : m->sectors) {
             polyIt->resize(se2d->N);
@@ -113,7 +116,8 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                 ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
                 for (int i = 0; i < se2d->N; ++i)
                     for (int j = 0; j < se2d->N; ++j) {
-                        Array<Scalar, MATSLISE_N, 1> quad = vbar_formulas((*polyIt)[i], (*polyIt)[j], sector->h,
+                        // remove .real()
+                        Array<Scalar, MATSLISE_N, 1> quad = vbar_formulas<Scalar>((*polyIt)[i], (*polyIt)[j], sector->h,
                                                                           sector->vs[0] - eigenvalues[i],
                                                                           sector->vs[0] - eigenvalues[j]);
 

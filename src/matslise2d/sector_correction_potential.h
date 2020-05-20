@@ -55,11 +55,36 @@ eta_integrals(const Scalar &delta, const std::complex<Scalar> theta) {
     return integrals;
 }
 
+template<typename Scalar>
+Eigen::Array<std::complex<Scalar>, MATSLISE_HMAX_delta * 2 - 1, 1>
+exp_integrals(const Scalar &delta, const std::complex<Scalar> theta) {
+    Eigen::Array<std::complex<Scalar>, MATSLISE_HMAX_delta * 2 - 1, 1> integrals
+            = Eigen::Array<Scalar, MATSLISE_HMAX_delta * 2 - 1, 1>::Zero();
+
+    std::cout << "θδ(" << theta << ", " << delta << ")" << std::endl;
+    if (abs(theta) < Scalar(5) || true) {
+        Scalar d = std::pow(delta, MATSLISE_HMAX_delta * 2 - 2);
+        for (int i = MATSLISE_HMAX_delta * 2 - 2; i > 0; --i) {
+            // d = delta**i
+            integrals(i - 1) = d / Scalar(i) * exp(theta * delta) - theta / Scalar(i) * integrals(i);
+            d /= delta;
+        }
+    } else {
+        integrals(0) = (exp(theta * delta) - Scalar(1)) / theta;
+        Scalar d = 1;
+        for (int i = 1; i < MATSLISE_HMAX_delta - 1; ++i) {
+            d *= delta;
+            integrals(i) = d / theta * exp(theta * delta) - Scalar(i) / theta * integrals(i - 1);
+        }
+    }
+    return integrals;
+}
+
 
 template<typename Scalar>
 Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
-        Eigen::Array<Scalar, MATSLISE_HMAX_delta, 2> y1,
-        Eigen::Array<Scalar, MATSLISE_HMAX_delta, 2> y2,
+        Eigen::Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2> y1,
+        Eigen::Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2> y2,
         const Scalar delta, const Scalar dZ1, const Scalar dZ2) {
     typedef Eigen::Matrix<Scalar, MATSLISE_HMAX_delta, MATSLISE_HMAX_delta> MatrixHs;
     typedef Eigen::Array<std::complex<Scalar>, (MATSLISE_HMAX_delta - 1) * 2 + 1, 1> Array2Hs;
@@ -68,40 +93,36 @@ Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
 
     std::complex<Scalar> theta1 = sqrt(std::complex(dZ1));
 
-    for (auto theta2 : std::array<std::complex<Scalar>, 2>{-sqrt(std::complex(dZ2)), sqrt(std::complex(dZ2))}) {
-        std::complex<Scalar> theta = theta1 + theta2;
-        Array2Hs xi = Array2Hs::Zero(); //eta_-1
-        Array2Hs eta = Array2Hs::Zero(); //eta_0
-        for (int i = 0; i < MATSLISE_HMAX_delta; ++i) {
-            for (int j = 0; j < MATSLISE_HMAX_delta; ++j) {
-                xi[i + j] += y1(i, 0) * y2(j, 0) / Scalar(2);
-                if (i > 1 && j > 1) {
-                    xi[i + j - 2] += y1(i, 1) * y2(j, 1) / Scalar(2) / (theta1 * theta2);
+    int t1 = 0;
+    for (auto theta1 : std::array<std::complex<Scalar>, 2>{sqrt(std::complex(dZ1)), -sqrt(std::complex(dZ1))}) {
+        int t2 = 0;
+        for (auto theta2 : std::array<std::complex<Scalar>, 2>{sqrt(std::complex(dZ2)), -sqrt(std::complex(dZ2))}) {
+            std::complex<Scalar> theta = theta1 + theta2;
+
+            Array2Hs exp12 = Array2Hs::Zero(); //eta_0
+            for (int i = 0; i < MATSLISE_HMAX_delta; ++i) {
+                for (int j = 0; j < MATSLISE_HMAX_delta; ++j) {
+                    exp12(i + j) += y1(i, t1) * y2(j, t2);
                 }
-
-                if (j > 0)
-                    eta[i + j] += y1(i, 0) * y2(j, 1) / Scalar(2) * (theta / theta2);
-                if (i > 0)
-                    eta[i + j] += y1(i, 1) * y2(j, 0) / Scalar(2) * (theta / theta1);
             }
-        }
-        Eigen::Array<std::complex<Scalar>, 2 * MATSLISE_HMAX_delta - 1, 2> integrals = eta_integrals(delta, theta);
+            Eigen::Array<std::complex<Scalar>, 2 * MATSLISE_HMAX_delta - 1, 1> integrals = exp_integrals(delta, theta);
 
-        for (int i = 0; i < MATSLISE_N; ++i) {
-            for (int j = 0; i + j < 2 * MATSLISE_HMAX_delta - 1; ++j) {
-                quadratures[i] += (integrals(i + j, 0) * xi[j]);
-                if (j > 0)
-                    quadratures[i] += (integrals(i + j, 1) * eta[j]);
+            for (int i = 0; i < MATSLISE_N; ++i) {
+                for (int j = 0; i + j < 2 * MATSLISE_HMAX_delta - 1; ++j) {
+                    quadratures[i] += (integrals(i + j, 0) * exp12[j]);
+                }
             }
-        }
 
-        std::cout << "\n --- y1, y2 " << theta * delta << std::endl;
-        std::cout << "\n" << y1.transpose() << std::endl;
-        std::cout << "\n" << y2.transpose() << std::endl;
-        std::cout << "\n --- xi, eta " << theta * delta << std::endl;
-        std::cout << "\n" << integrals.transpose() << std::endl;
-        std::cout << "\n" << xi.transpose() << std::endl;
-        std::cout << "\n" << eta.transpose() << std::endl;
+            std::cout << "\n --- y1, y2 " << theta * delta << std::endl;
+            std::cout << "\n" << y1.transpose() << std::endl;
+            std::cout << "\n" << y2.transpose() << std::endl;
+            std::cout << "\n --- xi, eta " << theta * delta << std::endl;
+            std::cout << "\n" << integrals.transpose() << std::endl;
+            std::cout << "\n" << exp12.transpose() << std::endl;
+
+            ++t2;
+        }
+        ++t1;
     }
 
     std::cout << "\n --- quad " << std::endl;
