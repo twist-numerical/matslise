@@ -1,12 +1,63 @@
 #include <iostream>
+#include <complex>
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/legendre.h"
+#include "../util/calculateEta.h"
+#include "../util/horner.h"
+#include "./sector_correction_potential.h"
 
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
 using namespace quadrature;
+
+
+template<typename Scalar>
+Array<Scalar, MATSLISE_HMAX_delta, 2> getDeltaForEta(
+        const typename Matslise<Scalar>::Sector *sector, const Scalar &E, const Y<Scalar> &y0) {
+    Scalar Zd = sector->vs[0] - E;
+    Array<Scalar, MATSLISE_HMAX_delta, MATSLISE_ETA_delta> u = sector->t_coeff.unaryExpr(
+            [](const Matrix<Scalar, 2, 2> &m) -> Scalar { return m(0, 0); }).transpose();
+    Array<Scalar, MATSLISE_HMAX_delta, MATSLISE_ETA_delta> v = sector->t_coeff.unaryExpr(
+            [](const Matrix<Scalar, 2, 2> &m) -> Scalar { return m(0, 1); }).transpose();
+    for (int i = MATSLISE_ETA_delta - 1; i >= 2; --i) {
+        u.col(i - 2).template topRows<MATSLISE_HMAX_delta - 2>()
+                += u.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() / Zd;
+        u.col(i - 1).template topRows<MATSLISE_HMAX_delta - 2>()
+                -= u.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() * (Scalar(2 * i - 3) / Zd);
+
+        v.col(i - 2).template topRows<MATSLISE_HMAX_delta - 2>()
+                += v.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() / Zd;
+        v.col(i - 1).template topRows<MATSLISE_HMAX_delta - 2>()
+                -= v.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() * (Scalar(2 * i - 3) / Zd);
+    }
+
+
+
+    Scalar h = sector->h*.33;
+    Scalar *eta = calculateEta(Zd * h * h, 2);
+
+    T<Scalar> t = sector->calculateT(E, h, true);
+    cout << "\n --- " << endl;
+    cout << "\n" << u.col(0).transpose() << endl;
+    cout << u.col(1).transpose() << endl;
+    cout << "\n" << v.col(0).transpose() << endl;
+    cout << v.col(1).transpose() << endl;
+    cout << "\n" << (
+            horner<Scalar>(u.col(0), h, MATSLISE_HMAX_delta) * eta[0]
+            + horner<Scalar>(u.col(1), h, MATSLISE_HMAX_delta) * eta[1]
+    ) << ", " << (
+                 horner<Scalar>(v.col(0), h, MATSLISE_HMAX_delta) * eta[0]
+                 + horner<Scalar>(v.col(1), h, MATSLISE_HMAX_delta) * eta[1]
+         ) << endl;
+    cout << "\n" << t.t << endl;
+
+
+    delete[] eta;
+
+    return (y0.y(0) * u + y0.y(1) * v).template leftCols<2>();
+};
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
@@ -27,23 +78,66 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     }
     eigenvalues = new Scalar[se2d->N];
     eigenfunctions = new ArrayXs[se2d->N];
+    vector<typename Matslise<Scalar>::Eigenfunction> func_eigenfunctions(se2d->N);
     Scalar E;
     int index;
     for (int i = 0; i < se2d->N; ++i) {
         tie(index, E) = index_eigv[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
         // TODO: check i == index
-        Array<Y<Scalar>, Dynamic, 1> func = matslise->eigenfunction(
-                E, Y<Scalar>::Dirichlet(), index)(se2d->grid);
+        func_eigenfunctions[i] = matslise->eigenfunction(E, Y<Scalar>::Dirichlet(), index);
+        Array<Y<Scalar>, Dynamic, 1> func = func_eigenfunctions[i](se2d->grid);
         eigenfunctions[i] = ArrayXs(func.size());
         for (Eigen::Index j = 0; j < func.size(); ++j)
             eigenfunctions[i][j] = func[j].y[0];
     }
 
+    if (auto m = dynamic_cast<Matslise<Scalar> *>(matslise)) {
+        vector<vector<Array<Scalar, MATSLISE_HMAX_delta, 2>>> polynomials(m->sectors.size());
+        auto polyIt = polynomials.begin();
+        for (auto &sector : m->sectors) {
+            polyIt->resize(se2d->N);
+            auto nestedPolyIt = polyIt->begin();
+            for (int i = 0; i < se2d->N; ++i) {
+                if (!sector->backward) {
+                    *nestedPolyIt = getDeltaForEta(sector, eigenvalues[i], func_eigenfunctions[i](sector->min));
+                }
+                ++nestedPolyIt;
+            }
+            ++polyIt;
+        }
+
+        polyIt = polynomials.begin();
+        for (auto &sector : m->sectors) {
+            if (!sector->backward) {
+                ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
+                for (int i = 0; i < se2d->N; ++i)
+                    for (int j = 0; j < se2d->N; ++j) {
+                        Array<Scalar, MATSLISE_N, 1> quad = vbar_formulas((*polyIt)[i], (*polyIt)[j], sector->h,
+                                                                          sector->vs[0] - eigenvalues[i],
+                                                                          sector->vs[0] - eigenvalues[j]);
+
+                        cout << "\n *** quad <-> lobatto" << endl;
+                        cout << "\n" << quad.transpose() << endl;
+                        Array<Scalar, Dynamic, 1> fi = func_eigenfunctions[i](grid).unaryExpr(
+                                [](const Y<Scalar> &y) { return y.y[0]; });
+                        Array<Scalar, Dynamic, 1> fj = func_eigenfunctions[j](grid).unaryExpr(
+                                [](const Y<Scalar> &y) { return y.y[0]; });
+                        cout << "\n" << lobatto::quadrature<Scalar>(grid, fi * fj) << endl;
+                        cout << "\n" << lobatto::quadrature<Scalar>(grid, fi * fj * (grid - sector->min)) << endl;
+                        cout << endl;
+                    }
+
+            }
+            ++polyIt;
+        }
+    }
+
     matscs = new typename Matscs<Scalar>::Sector(
             legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([this](Scalar y) -> MatrixXs {
-                return this->calculateDeltaV(y); }, min, max),
-                ymin, ymax, backward);
+                return this->calculateDeltaV(y);
+            }, min, max),
+            ymin, ymax, backward);
 }
 
 template<typename Scalar>
@@ -72,7 +166,8 @@ template<typename Scalar>
 typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::Sector::calculateDeltaV(const Scalar &y) const {
     MatrixXs dV(se2d->N, se2d->N);
 
-    ArrayXs vDiff = se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->potential(x, y); }) - vbar;
+    ArrayXs vDiff =
+            se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->potential(x, y); }) - vbar;
 
     for (int i = 0; i < se2d->N; ++i) {
         for (int j = 0; j <= i; ++j) {
@@ -83,6 +178,14 @@ typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::Sector::calculateDelta
     }
 
     return dV;
+/*
+    std::function<ArrayXs(Scalar)> phi = this->template basis<false>();
+    return trapezoidal::adaptive<Scalar, MatrixXs>([this, &phi, &y](const Scalar &x) -> MatrixXs {
+                                                       ArrayXs f = phi(x);
+                                                       return (se2d->potential(x, y) - matslise->potential(x)) * f.matrix() * f.matrix().transpose();
+                                                   }, se2d->domain.sub.min, se2d->domain.sub.max, 1e-3,
+                                                   [](const MatrixXs &m) -> Scalar { return m.cwiseAbs().maxCoeff(); });
+                                                   */
 }
 
 template<typename Scalar>
