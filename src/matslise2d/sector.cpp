@@ -3,7 +3,6 @@
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/legendre.h"
-#include "../util/calculateEta.h"
 #include "../util/horner.h"
 #include "./sector_correction_potential.h"
 
@@ -12,55 +11,6 @@ using namespace std;
 using namespace Eigen;
 using namespace quadrature;
 
-
-template<typename Scalar>
-Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2> getDeltaForEta(
-        const typename Matslise<Scalar>::Sector *sector, const Scalar &E, const Y<Scalar> &y0) {
-    Scalar Zd = sector->vs[0] - E;
-    Array<Scalar, MATSLISE_HMAX_delta, MATSLISE_ETA_delta> u = sector->t_coeff.unaryExpr(
-            [](const Matrix<Scalar, 2, 2> &m) -> Scalar { return m(0, 0); }).transpose();
-    Array<Scalar, MATSLISE_HMAX_delta, MATSLISE_ETA_delta> v = sector->t_coeff.unaryExpr(
-            [](const Matrix<Scalar, 2, 2> &m) -> Scalar { return m(0, 1); }).transpose();
-    for (int i = MATSLISE_ETA_delta - 1; i >= 2; --i) {
-        u.col(i - 2).template topRows<MATSLISE_HMAX_delta - 2>()
-                += u.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() / Zd;
-        u.col(i - 1).template topRows<MATSLISE_HMAX_delta - 2>()
-                -= u.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() * (Scalar(2 * i - 3) / Zd);
-
-        v.col(i - 2).template topRows<MATSLISE_HMAX_delta - 2>()
-                += v.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() / Zd;
-        v.col(i - 1).template topRows<MATSLISE_HMAX_delta - 2>()
-                -= v.col(i).template bottomRows<MATSLISE_HMAX_delta - 2>() * (Scalar(2 * i - 3) / Zd);
-    }
-
-    std::complex<Scalar> theta = sqrt(std::complex(Zd));
-    Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2> uve;
-    uve.col(0) = uve.col(1) = (y0.y(0) * u + y0.y(1) * v).col(0) / Scalar(2);
-    Array<std::complex<Scalar>, MATSLISE_HMAX_delta - 1, 1> uve1
-            = ((y0.y(0) * u + y0.y(1) * v).col(1) / Scalar(2) / theta).template bottomRows<MATSLISE_HMAX_delta - 1>();
-    uve.col(0).template topRows<MATSLISE_HMAX_delta - 1>() += uve1;
-    uve.col(1).template topRows<MATSLISE_HMAX_delta - 1>() -= uve1;
-
-/*
-    Scalar h = sector->h * .33;
-    Scalar *eta = calculateEta(Zd * h * h, 2);
-
-    T<Scalar> t = sector->calculateT(E, h, true);
-    cout << "\n --- " << endl;
-    cout << "\n " << y0.y << endl;
-    cout << "\n " << t.t << endl;
-    cout << "\n" << uve.transpose() << endl;
-    cout << "\n" << (
-            horner<std::complex<Scalar>>(uve.col(0), h, MATSLISE_HMAX_delta) * exp(theta*h)
-            + horner<std::complex<Scalar>>(uve.col(1), h, MATSLISE_HMAX_delta) * exp(-theta*h)
-    )  << endl;
-    cout << "\n" << sector->propagate(E, y0, sector->min, sector->min+h).first.y << endl;
-
-
-    delete[] eta;
-*/
-    return uve;
-};
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
@@ -96,52 +46,126 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     }
 
     if (auto m = dynamic_cast<Matslise<Scalar> *>(matslise)) {
-        vector<vector<Array<std::complex<Scalar>, MATSLISE_HMAX_delta, 2>>> polynomials(m->sectors.size());
-        auto polyIt = polynomials.begin();
+        vector<Array<Scalar, MATSLISE_N, 1>> quadData;
+        quadData.reserve(se2d->N * (se2d->N + 1) / 2 * m->sectors.size());
+
         for (auto &sector : m->sectors) {
-            polyIt->resize(se2d->N);
-            auto nestedPolyIt = polyIt->begin();
-            for (int i = 0; i < se2d->N; ++i) {
-                if (!sector->backward) {
-                    *nestedPolyIt = getDeltaForEta(sector, eigenvalues[i], func_eigenfunctions[i](sector->min));
+            std::vector<Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta>> t_coeff;
+            {
+                for (auto &f : func_eigenfunctions) {
+                    Y<> y0 = f(sector->min);
+
+                    t_coeff.emplace_back(
+                            sector->t_coeff.unaryExpr([&y0](const Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
+                                return y0.y(0) * T(0, 0) + y0.y(1) * T(0, 1);
+                            }));
                 }
-                ++nestedPolyIt;
             }
-            ++polyIt;
-        }
 
-        polyIt = polynomials.begin();
-        for (auto &sector : m->sectors) {
-            if (!sector->backward) {
-                ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
-                for (int i = 0; i < se2d->N; ++i)
-                    for (int j = 0; j < se2d->N; ++j) {
-                        // remove .real()
-                        Array<Scalar, MATSLISE_N, 1> quad = vbar_formulas<Scalar>((*polyIt)[i], (*polyIt)[j], sector->h,
-                                                                          sector->vs[0] - eigenvalues[i],
-                                                                          sector->vs[0] - eigenvalues[j]);
+            ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
+            for (int i = 0; i < se2d->N; ++i)
+                for (int j = 0; j <= i; ++j) {
+                    quadData.push_back(std::move(vbar_formulas<Scalar>(
+                            t_coeff[i], t_coeff[j], sector->h,
+                            sector->vs[0] - eigenvalues[i], sector->vs[0] - eigenvalues[j])));
 
-                        cout << "\n *** quad <-> lobatto" << endl;
-                        cout << "\n" << quad.transpose() << endl;
-                        Array<Scalar, Dynamic, 1> fi = func_eigenfunctions[i](grid).unaryExpr(
-                                [](const Y<Scalar> &y) { return y.y[0]; });
-                        Array<Scalar, Dynamic, 1> fj = func_eigenfunctions[j](grid).unaryExpr(
-                                [](const Y<Scalar> &y) { return y.y[0]; });
-                        cout << "\n" << lobatto::quadrature<Scalar>(grid, fi * fj) << endl;
-                        cout << "\n" << lobatto::quadrature<Scalar>(grid, fi * fj * (grid - sector->min)) << endl;
-                        cout << endl;
+                    if (i == 5 && j == 5 && sector->h == 0.75)
+                        cout << "alert!" << endl;
+
+                    if (sector->backward) {
+                        auto &quad = quadData.back();
+                        for (Eigen::Index k = 1; k < MATSLISE_N; k += 2)
+                            quad(k) *= -1;
                     }
 
-            }
-            ++polyIt;
-        }
-    }
 
-    matscs = new typename Matscs<Scalar>::Sector(
-            legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([this](Scalar y) -> MatrixXs {
-                return this->calculateDeltaV(y);
-            }, min, max),
-            ymin, ymax, backward);
+                    auto &quad = quadData.back();
+                    cout << "\n *** quad <-> lobatto" << endl;
+                    cout << "\n" << quad.transpose() << endl;
+                    Array<Scalar, Dynamic, 1> fi = func_eigenfunctions[i](grid).unaryExpr(
+                            [](const Y<Scalar> &y) { return y.y[0]; });
+                    Array<Scalar, Dynamic, 1> fj = func_eigenfunctions[j](grid).unaryExpr(
+                            [](const Y<Scalar> &y) { return y.y[0]; });
+                    cout << "\n" << lobatto::quadrature<Scalar>(grid, fi * fj) << endl;
+                    cout << "\n"
+                         << lobatto::quadrature<Scalar>(grid, fi * fj * (2 * (grid - sector->min) / sector->h - 1))
+                         << endl;
+
+                    if(abs(lobatto::quadrature<Scalar>(grid, fi * fj) - quad(0)) > 1e-3)
+                        cout << "wrong" << endl;
+                    cout << endl;
+
+
+                }
+        }
+
+        matscs = new typename Matscs<Scalar>::Sector(
+                legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([&, this, m](Scalar y) -> MatrixXs {
+                    MatrixXs dV = MatrixXs::Zero(this->se2d->N, this->se2d->N);
+                    for (int i = 0; i < this->se2d->N; ++i) {
+                        dV(i, i) = this->eigenvalues[i];
+                    }
+
+                    auto quadIt = quadData.begin();
+                    for (auto &sector : m->sectors) {
+                        ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(30, sector->min, sector->max));
+                        Array<Scalar, MATSLISE_N, 1> vDiff = -Array<Scalar, MATSLISE_N, 1>::Map(sector->vs.data());
+
+                        if (sector->backward) {
+                            for (int i = 1; i < MATSLISE_N; i += 2)
+                                vDiff(i) *= -1;
+                        }
+
+                        vDiff += Array<Scalar, MATSLISE_N, 1>::Map(
+                                legendre::getCoefficients<MATSLISE_N, Scalar, Scalar>(
+                                        [this, y](const Scalar &x) -> Scalar { return this->se2d->potential(x, y); },
+                                        sector->min, sector->max
+                                ).data());
+
+                        Scalar h = 1;
+                        for (int i = 0; i < MATSLISE_N; ++i, h *= sector->h)
+                            vDiff(i) *= h;
+
+                        for (int i = 0; i < this->se2d->N; ++i)
+                            for (int j = 0; j <= i; ++j) {
+                                Scalar v = ((*quadIt) * vDiff).sum();
+                                dV(i, j) += v;
+                                if (i != j)
+                                    dV(j, i) += v;
+
+
+                                cout << "\n" << lobatto::quadrature<Scalar>(grid, grid.unaryExpr([&](const Scalar &x) {
+                                    return func_eigenfunctions[i](x).y(0) * func_eigenfunctions[j](x).y(0) *
+                                           (this->se2d->potential(x, y) - m->potential(x));
+                                })) << endl;
+
+                                cout << v << endl;
+
+                                cout << sector->backward << endl;
+
+                                cout << quadIt->transpose() << endl;
+
+                                if (i == 5 && j == 5)
+                                    cout << "???" << endl;
+                                ++quadIt;
+                            }
+                    }
+
+                    cout << "\n ---" << endl;
+                    cout << "\n" << dV << endl;
+                    cout << "\n" << this->calculateDeltaV(y) << endl;
+                    cout << "\n" << (dV - this->calculateDeltaV(y)) << endl;
+
+                    return dV;
+                }, min, max),
+                ymin, ymax, backward);
+    } else {
+        matscs = new typename Matscs<Scalar>::Sector(
+                legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([this](Scalar y) -> MatrixXs {
+                    return this->calculateDeltaV(y);
+                }, min, max),
+                ymin, ymax, backward);
+    }
 }
 
 template<typename Scalar>
