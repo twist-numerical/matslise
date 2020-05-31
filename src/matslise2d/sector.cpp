@@ -52,8 +52,14 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
         for (auto &sector : m->sectors) {
             std::vector<Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta>> t_coeff;
             {
+                Y<> y0;
                 for (auto &f : func_eigenfunctions) {
-                    Y<> y0 = f(sector->min);
+                    if (sector->backward) {
+                        y0 = f(sector->max);
+                        y0.reverse();
+                    } else {
+                        y0 = f(sector->min);
+                    }
 
                     t_coeff.emplace_back(
                             sector->t_coeff.unaryExpr([&y0](const Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
@@ -69,16 +75,13 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                             t_coeff[i], t_coeff[j], sector->h,
                             sector->vs[0] - eigenvalues[i], sector->vs[0] - eigenvalues[j])));
 
-                    if (i == 5 && j == 5 && sector->h == 0.75)
-                        cout << "alert!" << endl;
-
                     if (sector->backward) {
                         auto &quad = quadData.back();
                         for (Eigen::Index k = 1; k < MATSLISE_N; k += 2)
                             quad(k) *= -1;
                     }
 
-
+/*
                     auto &quad = quadData.back();
                     cout << "\n *** quad <-> lobatto" << endl;
                     cout << "\n" << quad.transpose() << endl;
@@ -90,12 +93,15 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                     cout << "\n"
                          << lobatto::quadrature<Scalar>(grid, fi * fj * (2 * (grid - sector->min) / sector->h - 1))
                          << endl;
+                    cout << "\n"
+                         << lobatto::quadrature<Scalar>(grid, fi * fj * (6 * (grid - sector->min) / sector->h *
+                                                                         (grid - sector->min) / sector->h -
+                                                                         6 * (grid - sector->min) / sector->h + 1))
+                         << endl;
 
-                    if(abs(lobatto::quadrature<Scalar>(grid, fi * fj) - quad(0)) > 1e-3)
+                    if (abs(lobatto::quadrature<Scalar>(grid, fi * fj) - quad(0)) > 1e-3)
                         cout << "wrong" << endl;
-                    cout << endl;
-
-
+                        */
                 }
         }
 
@@ -145,7 +151,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
 
                                 cout << quadIt->transpose() << endl;
 
-                                if (i == 5 && j == 5)
+                                if (sector->backward)
                                     cout << "???" << endl;
                                 ++quadIt;
                             }

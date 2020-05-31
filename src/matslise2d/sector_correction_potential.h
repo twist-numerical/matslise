@@ -7,6 +7,8 @@
 
 #include "../util/calculateEta.h"
 
+#define MATSLISE_2HMAX_delta (MATSLISE_HMAX_delta*2-1)
+
 template<typename Scalar>
 std::complex<Scalar> sinhc(const std::complex<Scalar> &x) {
     if (abs(x) < .5) {
@@ -54,60 +56,109 @@ eta_integrals(const Scalar &delta, const Scalar &dZ) {
 }
 
 template<typename Scalar>
-Eigen::Array<Eigen::Array<Scalar, MATSLISE_HMAX_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
+Eigen::Array<Eigen::Array<Scalar, MATSLISE_2HMAX_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
 eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
-    const int M = MATSLISE_HMAX_delta;
-    Eigen::Array<Eigen::Array<Scalar, M, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> I;
+    Eigen::Array<Eigen::Array<Scalar, MATSLISE_2HMAX_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> I;
     for (int i = 0; i < MATSLISE_ETA_delta; ++i)
         for (int j = 0; j < MATSLISE_ETA_delta; ++j)
-            I(i, j) = Eigen::Array<Scalar, M, 1>::Zero();
+            I(i, j) = Eigen::Array<Scalar, MATSLISE_2HMAX_delta, 1>::Zero();
 
     Scalar Z1 = delta * delta * dZ1;
     Scalar Z2 = delta * delta * dZ2;
     Scalar *eta1 = calculateEta<Scalar>(Z1, 2);
     Scalar *eta2 = calculateEta<Scalar>(Z2, 2);
+/*
+    std::cout << "\n****\n" << delta << ", " << dZ1 << ", " << dZ2 << std::endl;
+    std::cout << "\n****\n" << delta << ", " << dZ1 << ", " << dZ2 << std::endl;
 
-    Scalar denominator = 1 / (dZ1 - dZ2);
-    I(0, 0)(0) = denominator * delta * (dZ1 * eta1[1] * eta2[0] - dZ2 * eta1[0] * eta2[1]);
-    I(1, 0)(1) = denominator * (eta1[0] * eta2[0] - Z2 * eta1[1] * eta2[1] - 1);
-    I(0, 1)(1) = -denominator * (eta1[0] * eta2[0] - Z1 * eta1[1] * eta2[1] - 1);
-    I(1, 1)(2) = denominator * delta * (eta1[0] * eta2[1] - eta1[1] * eta2[0]);
+    {
+        Scalar denominator = 1 / (dZ1 - dZ2);
+        I(0, 0)(0) = denominator * delta * (dZ1 * eta1[1] * eta2[0] - dZ2 * eta1[0] * eta2[1]);
+        I(1, 0)(1) = denominator * (eta1[0] * eta2[0] - Z2 * eta1[1] * eta2[1] - 1);
+        I(0, 1)(1) = -denominator * (eta1[0] * eta2[0] - Z1 * eta1[1] * eta2[1] - 1);
+        I(1, 1)(2) = denominator * delta * (eta1[0] * eta2[1] - eta1[1] * eta2[0]);
 
-    Scalar dn = 1;
-    for (int n = 1; n < M; ++n) {
-        if (n > 2) {
-            I(1, 1)(n) = dn / delta * I(1, 1)(2) - denominator * (n - 2) * (I(0, 1)(n - 2) - I(1, 0)(n - 2));
+        Scalar dn = 1;
+        for (int n = 1; n < MATSLISE_2HMAX_delta; ++n) {
+            if (n > 2) {
+                I(1, 1)(n) = dn / delta * I(1, 1)(2) - denominator * (n - 2) * (I(0, 1)(n - 2) - I(1, 0)(n - 2));
+            }
+            if (n > 1) {
+                I(1, 0)(n) =
+                        dn * I(1, 0)(1) - denominator * (n - 1) * (I(0, 0)(n - 2) - dZ2 * I(1, 1)(n) - dn / (n - 1));
+                I(0, 1)(n) =
+                        dn * I(0, 1)(1) + denominator * (n - 1) * (I(0, 0)(n - 2) - dZ1 * I(1, 1)(n) - dn / (n - 1));
+            }
+            dn *= delta;
+            I(0, 0)(n) = dn * I(0, 0)(0) - denominator * n * (dZ1 * I(1, 0)(n) - dZ2 * I(0, 1)(n));
         }
-        if (n > 1) {
-            I(1, 0)(n) = dn * I(1, 0)(1) - denominator * (n - 1) * (I(0, 0)(n - 2) - dZ2 * I(1, 1)(n) - dn / (n - 1));
-            I(0, 1)(n) = dn * I(0, 1)(1) + denominator * (n - 1) * (I(0, 0)(n - 2) - dZ1 * I(1, 1)(n) - dn / (n - 1));
+
+        Eigen::Array<Scalar, 4, MATSLISE_2HMAX_delta> coutI;
+        for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+                coutI.row(i * 2 + j) = I(i, j);
+        std::cout << coutI << "\n" << std::endl;
+
+        for (int i = 0; i < MATSLISE_ETA_delta; ++i)
+            for (int j = 0; j < MATSLISE_ETA_delta; ++j)
+                I(i, j) = Eigen::Array<Scalar, MATSLISE_2HMAX_delta, 1>::Zero();
+    }*/
+
+
+    {
+        Scalar denominator = 1 / (dZ1 - dZ2);
+        Scalar &I000 = I(0, 0)(0) = denominator * delta * (dZ1 * eta1[1] * eta2[0] - dZ2 * eta1[0] * eta2[1]);
+        Scalar &I101 = I(1, 0)(1) = denominator * (eta1[0] * eta2[0] - Z2 * eta1[1] * eta2[1] - 1);
+        Scalar &I011 = I(0, 1)(1) = -denominator * (eta1[0] * eta2[0] - Z1 * eta1[1] * eta2[1] - 1);
+        Scalar &I112 = I(1, 1)(2) = denominator * delta * (eta1[0] * eta2[1] - eta1[1] * eta2[0]);
+
+        int lastN = MATSLISE_2HMAX_delta - 3;
+        Scalar dn = std::pow(delta, lastN);
+        for (int n = lastN; n > 1; --n) {
+            Scalar x1 = (I101 * dn - I(1, 0)(n + 1));
+            Scalar x2 = (I011 * dn - I(0, 1)(n + 1));
+            I(0, 0)(n - 1) = (x1 * dZ1 + x2 * dZ2 + dn) / n;
+            I(1, 1)(n + 1) = (x1 + x2) / n;
+
+            Scalar y1 = I000 * dn - I(0, 0)(n);
+            Scalar y2 = I112 * dn - I(1, 1)(n + 2);
+            I(0, 1)(n) = (y1 + y2 * dZ1) / n;
+            I(1, 0)(n) = (y1 + y2 * dZ2) / n;
+
+            dn /= delta;
         }
-        dn *= delta;
-        I(0, 0)(n) = dn * I(0, 0)(0) - denominator * n * (dZ1 * I(1, 0)(n) - dZ2 * I(0, 1)(n));
+
+        /*
+        Eigen::Array<Scalar, 4, MATSLISE_2HMAX_delta> coutI;
+        for (int i = 0; i < 2; ++i)
+            for (int j = 0; j < 2; ++j)
+                coutI.row(i * 2 + j) = I(i, j);
+        std::cout << coutI << "\n" << std::endl;
+         */
     }
+
 
     for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
         if (i > 1) {
             for (int j = 0; j < 2; ++j)
-                I(i, j).bottomRows(M - 2)
+                I(i, j).template bottomRows<MATSLISE_2HMAX_delta - 2>()
                         = ((I(i - 2, j) - (2 * i - 3) * I(i - 1, j)) / dZ1)
-                        .topRows(M - 2);
+                        .template topRows<MATSLISE_2HMAX_delta - 2>();
         }
         for (int j = 2; j < MATSLISE_ETA_delta; ++j) {
-            I(i, j).bottomRows(M - 2)
+            I(i, j).template bottomRows<MATSLISE_2HMAX_delta - 2>()
                     = ((I(i, j - 2) - (2 * j - 3) * I(i, j - 1)) / dZ2)
-                    .topRows(M - 2);
+                    .template topRows<MATSLISE_2HMAX_delta - 2>();
         }
     }
 
-
-    std::cout << "\n****\n" << delta << ", " << dZ1 << ", " << dZ2 << std::endl;
-    std::cout << "\n****\n" << delta << ", " << dZ1 << ", " << dZ2 << std::endl;
-    Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, M> coutI;
-    for (int i = 0; i < MATSLISE_ETA_delta; ++i)
-        for (int j = 0; j < MATSLISE_ETA_delta; ++j)
-            coutI.row(i * MATSLISE_ETA_delta + j) = I(i, j);
-    std::cout << coutI << std::endl;
+    /*{
+        Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_2HMAX_delta> coutI;
+        for (int i = 0; i < MATSLISE_ETA_delta; ++i)
+            for (int j = 0; j < MATSLISE_ETA_delta; ++j)
+                coutI.row(i * MATSLISE_ETA_delta + j) = I(i, j);
+        std::cout << coutI << std::endl;
+    }*/
 
 
     return I;
@@ -187,17 +238,21 @@ Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
         const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &y2,
         const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
 
-    const int M = MATSLISE_HMAX_delta;
-    Eigen::Array<Eigen::Array<Scalar, M, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
+    Eigen::Array<Eigen::Array<Scalar, MATSLISE_2HMAX_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
             eta = eta_integrals<Scalar>(delta, dZ1, dZ2);
 
     Eigen::Array<Scalar, MATSLISE_N, 1> quadratures = Eigen::Array<Scalar, MATSLISE_N, 1>::Zero();
-
+/*
+    std::cout << "\ny1: " << std::endl;
+    std::cout << y1 << std::endl;
+    std::cout << "\ny2: " << std::endl;
+    std::cout << y2 << std::endl;
+*/
     for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
         for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
             for (int ni = 0; ni < MATSLISE_HMAX_delta; ++ni) {
                 for (int nj = 0; nj < MATSLISE_HMAX_delta; ++nj) {
-                    for (int k = 0; k < MATSLISE_N && ni + nj + k < M; ++k) {
+                    for (int k = 0; k < MATSLISE_N && ni + nj + k < MATSLISE_2HMAX_delta; ++k) {
                         quadratures(k) += eta(i, j)(ni + nj + k) * y1(i, ni) * y2(j, nj);
                         /*if (eta(i, j)(ni + nj + k) != 0 || y1(i, ni) != 0 || y2(j, nj) != 0) {
                             if (eta(i, j)(ni + nj + k) * y1(i, ni) * y2(j, nj) == 0) {
@@ -211,10 +266,10 @@ Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
             }
         }
     }
-
+/*
     std::cout << "\n --- quad " << std::endl;
     std::cout << "\n" << quadratures.transpose() << std::endl;
-
+*/
     static Eigen::Matrix<Scalar, MATSLISE_N, MATSLISE_N> legendrePolynomials = (
             Eigen::Matrix<Scalar, MATSLISE_N, MATSLISE_N>()
                     << 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
