@@ -7,7 +7,26 @@
 
 #include "../util/calculateEta.h"
 
-#define MATSLISE_INTEGRATE_delta (MATSLISE_HMAX_delta+6)
+#define MATSLISE_INTEGRATE_delta (2*MATSLISE_HMAX_delta)
+
+
+template<typename Scalar, Eigen::Index N>
+Eigen::Array<Eigen::Array<Scalar, N, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> etaProduct(
+        Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> u,
+        Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> v) {
+
+    Eigen::Array<Eigen::Array<Scalar, N, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> uv;
+
+    for (int i = 0; i < MATSLISE_ETA_delta; ++i)
+        for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
+            uv(i, j) = Eigen::Array<Scalar, N, 1>::Zero();
+
+            for (int ni = 0; ni < MATSLISE_HMAX_delta; ++ni)
+                for (int nj = 0; nj < MATSLISE_HMAX_delta && ni + nj < N; ++nj)
+                    uv(i, j)(ni + nj) += u(i, ni) * v(j, nj);
+        }
+    return uv;
+}
 
 template<typename Scalar>
 Scalar powInt(Scalar x, unsigned int n) {
@@ -189,40 +208,9 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
     return I;
 }
 
-template<typename Scalar, bool equal = false>
-Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
-        const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &y1,
-        const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &y2,
-        const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
-
-    Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
-            eta = eta_integrals<Scalar, equal>(delta, dZ1, dZ2);
-
-    Eigen::Array<Scalar, MATSLISE_N, 1> quadratures = Eigen::Array<Scalar, MATSLISE_N, 1>::Zero();
-/*
-    std::cout << "\ny1: " << std::endl;
-    std::cout << y1 << std::endl;
-    std::cout << "\ny2: " << std::endl;
-    std::cout << y2 << std::endl;
-*/
-
-    for (int i = 0; i < 12; ++i) {
-        for (int ni = (i == 0 ? 0 : 2 * i - 1); ni < (i == 0 ? 1 : 10); ++ni) {
-            for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
-                for (int nj = (j == 0 ? 0 : 2 * j - 1);
-                     (j == 0 ? nj < 1 : nj < 12) && ni + nj < 12; ++nj) {
-                    Scalar s = y1(i, ni) * y2(j, nj);
-                    int count = std::min(MATSLISE_N, MATSLISE_INTEGRATE_delta - ni - nj);
-                    quadratures.segment(0, count) += s * eta(i, j).segment(ni + nj, count);
-                }
-            }
-        }
-    }
-/*
-    std::cout << "\n --- quad " << std::endl;
-    std::cout << "\n" << quadratures.transpose() << std::endl;
-*/
-    static Eigen::Matrix<Scalar, MATSLISE_N, MATSLISE_N> legendrePolynomials = (
+template<typename Scalar, int N = MATSLISE_N>
+void legendreTransform(const Scalar &delta, Eigen::Array<Scalar, N, 1> &quadratures) {
+    static Eigen::Matrix<Scalar, N, N> legendrePolynomials = (
             Eigen::Matrix<Scalar, MATSLISE_N, MATSLISE_N>()
                     << 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     -1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -240,13 +228,48 @@ Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
                     -1, 182, -8190, 160160, -1701700, 11027016, -46558512, 133024320, -261891630, 355655300, -327202876, 194699232, -67603900, 10400600, 0, 0,
                     1, -210, 10920, -247520, 3063060, -23279256, 116396280, -399072960, 960269310, -1636014380, 1963217256, -1622493600, 878850700, -280816200, 40116600, 0,
                     -1, 240, -14280, 371280, -5290740, 46558512, -271591320, 1097450640, -3155170590, 6544057520, -9816086280, 10546208400, -7909656300, 3931426800, -1163381400, 155117520
-    ).finished();
+    ).finished().template topLeftCorner<N, N>();
 
-    Eigen::Matrix<Scalar, MATSLISE_N, 1> legendreScaling;
     Scalar d = 1;
-    for (int i = 0; i < MATSLISE_N; ++i, d /= delta)
-        legendreScaling(i) = d;
-    return (legendrePolynomials * legendreScaling.asDiagonal() * quadratures.matrix()).array();
+    for (int i = 0; i < N; ++i, d /= delta)
+        quadratures(i) *= d;
+    quadratures = (legendrePolynomials * quadratures.matrix()).array();
+}
+
+template<typename Scalar, bool equal = false>
+Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
+        const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &y1,
+        const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &y2,
+        const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
+
+    Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
+            eta = eta_integrals<Scalar, equal>(delta, dZ1, dZ2);
+
+    Eigen::Array<Scalar, MATSLISE_N, 1> quadratures = Eigen::Array<Scalar, MATSLISE_N, 1>::Zero();
+/*
+    std::cout << "\ny1: " << std::endl;
+    std::cout << y1 << std::endl;
+    std::cout << "\ny2: " << std::endl;
+    std::cout << y2 << std::endl;
+*/
+
+    for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
+        for (int ni = (i == 0 ? 0 : 2 * i - 1); ni < (i == 0 ? 1 : MATSLISE_HMAX_delta); ++ni) {
+            for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
+                for (int nj = (j == 0 ? 0 : 2 * j - 1);
+                     (j == 0 ? nj < 1 : nj < MATSLISE_HMAX_delta) && ni + nj < MATSLISE_INTEGRATE_delta; ++nj) {
+                    Scalar s = y1(i, ni) * y2(j, nj);
+                    int count = std::min(MATSLISE_N, MATSLISE_INTEGRATE_delta - ni - nj);
+                    quadratures.segment(0, count) += s * eta(i, j).segment(ni + nj, count);
+                }
+            }
+        }
+    }
+
+    //std::cout << quadratures.transpose() << std::endl;
+
+    legendreTransform(delta, quadratures);
+    return quadratures;
 }
 
 template<typename Scalar>

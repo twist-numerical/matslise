@@ -46,43 +46,71 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     }
 
     if (auto m = dynamic_cast<Matslise<Scalar> *>(matslise)) {
-        vector<Array<Scalar, MATSLISE_N, 1>> quadData;
+#define MATSLISE_N_integrate 12
+#define MATSLISE_INTEGRATE_hmax 12
+        vector<Array<Scalar, MATSLISE_N_integrate, 1>> quadData;
         quadData.reserve(se2d->N * (se2d->N + 1) / 2 * m->sectors.size());
 
         for (auto &sector : m->sectors) {
-            std::vector<Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta>> t_coeff;
-            {
-                Y<> y0;
-                for (auto &f : func_eigenfunctions) {
-                    if (sector->backward) {
-                        y0 = f(sector->max);
-                        y0.reverse();
-                    } else {
-                        y0 = f(sector->min);
-                    }
+            Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> u = sector->t_coeff.unaryExpr(
+                    [](const Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
+                        return T(0, 0);
+                    });
+            Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> v = sector->t_coeff.unaryExpr(
+                    [](const Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
+                        return T(0, 1);
+                    });
 
-                    t_coeff.emplace_back(
-                            sector->t_coeff.unaryExpr([&y0](const Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
-                                return y0.y(0) * T(0, 0) + y0.y(1) * T(0, 1);
-                            }));
+            Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_hmax, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> uu
+                    = etaProduct<Scalar, MATSLISE_INTEGRATE_hmax>(u, u);
+            Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_hmax, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> uv
+                    = etaProduct<Scalar, MATSLISE_INTEGRATE_hmax>(u, v);
+            Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_hmax, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> vv
+                    = etaProduct<Scalar, MATSLISE_INTEGRATE_hmax>(v, v);
+
+            std::vector<Y<Scalar>> y0;
+            for (auto &f : func_eigenfunctions) {
+                if (sector->backward) {
+                    y0.emplace_back(f(sector->max));
+                    y0.back().reverse();
+                } else {
+                    y0.emplace_back(f(sector->min));
                 }
             }
 
-            // ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
+           // ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
             for (int i = 0; i < se2d->N; ++i)
                 for (int j = 0; j <= i; ++j) {
-                    if (i == j) {
-                        quadData.push_back(std::move(vbar_formulas<Scalar>(
-                                t_coeff[i], sector->h, sector->vs[0] - eigenvalues[i])));
-                    } else {
-                        quadData.push_back(std::move(vbar_formulas<Scalar>(
-                                t_coeff[i], t_coeff[j], sector->h,
-                                sector->vs[0] - eigenvalues[i], sector->vs[0] - eigenvalues[j])));
+                    Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
+                            eta = (i == j
+                                   ? eta_integrals<Scalar, true>(sector->h, sector->vs[0] - eigenvalues[i],
+                                                                 sector->vs[0] - eigenvalues[j])
+                                   : eta_integrals<Scalar, false>(sector->h, sector->vs[0] - eigenvalues[i],
+                                                                  sector->vs[0] - eigenvalues[j]));
+
+                    Eigen::Array<Scalar, MATSLISE_N_integrate, 1> quadratures = Eigen::Array<Scalar, MATSLISE_N_integrate, 1>::Zero();
+                    {
+                        Scalar suu = y0[i].y(0) * y0[j].y(0);
+                        Scalar suv = y0[i].y(0) * y0[j].y(1);
+                        Scalar svu = y0[i].y(1) * y0[j].y(0);
+                        Scalar svv = y0[i].y(1) * y0[j].y(1);
+                        for (int l = 0; l < MATSLISE_ETA_delta; ++l)
+                            for (int m = 0; m < MATSLISE_ETA_delta; ++m) {
+                                Eigen::Array<Scalar, MATSLISE_INTEGRATE_hmax, 1> s =
+                                        (suu * uu(l, m) + suv * uv(l, m) + svu * uv(m, l) +
+                                         svv * vv(l, m)).template head<MATSLISE_INTEGRATE_hmax>();
+                                for (int n = std::max(0, 2 * l - 1 + 2 * m - 1); n < MATSLISE_INTEGRATE_hmax; ++n) {
+                                    int count = std::min(MATSLISE_N_integrate, MATSLISE_INTEGRATE_delta - n);
+                                    quadratures.segment(0, count) += s(n) * eta(l, m).segment(n, count);
+                                }
+                            }
                     }
+                    legendreTransform<Scalar>(sector->h, quadratures);
+                    quadData.push_back(quadratures);
 
                     if (sector->backward) {
                         auto &quad = quadData.back();
-                        for (Eigen::Index k = 1; k < MATSLISE_N; k += 2)
+                        for (Eigen::Index k = 1; k < MATSLISE_N_integrate; k += 2)
                             quad(k) *= -1;
                     }
 
@@ -107,6 +135,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                     if (abs(lobatto::quadrature<Scalar>(grid, fi * fj) - quad(0)) > 1e-3)
                         cout << "wrong" << endl;
                     */
+
                 }
         }
 
@@ -116,16 +145,18 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                     for (int i = 0; i < this->se2d->N; ++i) {
                         dV(i, i) = this->eigenvalues[i];
                     }
-#define MATSLISE_N_integrate 8
 
                     auto quadIt = quadData.begin();
                     for (auto &sector : m->sectors) {
                         //ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(30, sector->min, sector->max));
-                        Array<Scalar, MATSLISE_N_integrate, 1> vDiff = -Array<Scalar, MATSLISE_N_integrate, 1>::Map(sector->vs.data());
+                        Array<Scalar, MATSLISE_N_integrate, 1> vDiff;
 
                         if (sector->backward) {
-                            for (int i = 1; i < MATSLISE_N; i += 2)
+                            vDiff = Array<Scalar, MATSLISE_N_integrate, 1>::Map(sector->vs.data());
+                            for (int i = 0; i < MATSLISE_N_integrate; i += 2)
                                 vDiff(i) *= -1;
+                        } else {
+                            vDiff = -Array<Scalar, MATSLISE_N_integrate, 1>::Map(sector->vs.data());
                         }
 
                         vDiff += Array<Scalar, MATSLISE_N_integrate, 1>::Map(
@@ -167,7 +198,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                     cout << "\n ---" << endl;
                     cout << "\n" << dV << endl;
                     cout << "\n" << this->calculateDeltaV(y) << endl;
-*/                   // cout << "\n" << (dV - this->calculateDeltaV(y)) << endl;
+*/                 // cout << "\n" << (dV - this->calculateDeltaV(y)) << endl << endl;
 
                     return dV;
                 }, min, max),
