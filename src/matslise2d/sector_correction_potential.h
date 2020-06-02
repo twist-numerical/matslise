@@ -7,7 +7,21 @@
 
 #include "../util/calculateEta.h"
 
-#define MATSLISE_INTEGRATE_delta (2*MATSLISE_HMAX_delta)
+#define MATSLISE_INTEGRATE_delta (MATSLISE_HMAX_delta+6)
+
+template<typename Scalar>
+Scalar powInt(Scalar x, unsigned int n) {
+    if (n == 0)
+        return 1;
+    Scalar y = 1;
+    for (; n > 1; n >>= 1) {
+        if (n & 1)
+            y *= x;
+        x *= x;
+    }
+    return x * y;
+}
+
 
 template<typename Scalar>
 Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1> integrateTaylorEta(
@@ -23,7 +37,7 @@ Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1> integrateTaylorEta(
         Scalar x2n = 1;
         for (int j = 0; j <= degree; ++j) {
             for (int k = 0; k < MATSLISE_INTEGRATE_delta; ++k)
-                result(k) += eta1[i] * x1n * eta2[j] * x2n * std::pow(delta, 2 * i + 2 * j + k + 1) /
+                result(k) += eta1[i] * x1n * eta2[j] * x2n * powInt(delta, 2 * i + 2 * j + k + 1) /
                              (2 * i + 2 * j + k + 1);
             x2n *= dZ2;
         }
@@ -191,22 +205,19 @@ Eigen::Array<Scalar, MATSLISE_N, 1> vbar_formulas(
     std::cout << "\ny2: " << std::endl;
     std::cout << y2 << std::endl;
 */
-    for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
-        for (int ni = 0; ni < MATSLISE_HMAX_delta; ++ni) {
+
+    for (int i = 0; i < 12; ++i) {
+        for (int ni = (i == 0 ? 0 : 2 * i - 1); ni < (i == 0 ? 1 : 10); ++ni) {
             for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
-                for (int nj = 0; nj < MATSLISE_HMAX_delta && ni + nj < MATSLISE_INTEGRATE_delta; ++nj) {
-                    for (int k = 0; k < MATSLISE_N && ni + nj + k < MATSLISE_INTEGRATE_delta; ++k) {
-                        quadratures(k) += eta(i, j)(ni + nj + k) * y1(i, ni) * y2(j, nj);
-                        /* if (y1(i, ni) != 0 && y2(j, nj) != 0) {
-                             std::cout << eta(i, j)(ni + nj + k) << ", "
-                                       << y1(i, ni) << ", " << y2(j, nj) << std::endl;
-                         }*/
-                    }
+                for (int nj = (j == 0 ? 0 : 2 * j - 1);
+                     (j == 0 ? nj < 1 : nj < 12) && ni + nj < 12; ++nj) {
+                    Scalar s = y1(i, ni) * y2(j, nj);
+                    int count = std::min(MATSLISE_N, MATSLISE_INTEGRATE_delta - ni - nj);
+                    quadratures.segment(0, count) += s * eta(i, j).segment(ni + nj, count);
                 }
             }
         }
     }
-
 /*
     std::cout << "\n --- quad " << std::endl;
     std::cout << "\n" << quadratures.transpose() << std::endl;

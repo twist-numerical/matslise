@@ -68,7 +68,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                 }
             }
 
-            ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
+            // ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
             for (int i = 0; i < se2d->N; ++i)
                 for (int j = 0; j <= i; ++j) {
                     if (i == j) {
@@ -116,30 +116,31 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                     for (int i = 0; i < this->se2d->N; ++i) {
                         dV(i, i) = this->eigenvalues[i];
                     }
+#define MATSLISE_N_integrate 8
 
                     auto quadIt = quadData.begin();
                     for (auto &sector : m->sectors) {
                         //ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(30, sector->min, sector->max));
-                        Array<Scalar, MATSLISE_N, 1> vDiff = -Array<Scalar, MATSLISE_N, 1>::Map(sector->vs.data());
+                        Array<Scalar, MATSLISE_N_integrate, 1> vDiff = -Array<Scalar, MATSLISE_N_integrate, 1>::Map(sector->vs.data());
 
                         if (sector->backward) {
                             for (int i = 1; i < MATSLISE_N; i += 2)
                                 vDiff(i) *= -1;
                         }
 
-                        vDiff += Array<Scalar, MATSLISE_N, 1>::Map(
-                                legendre::getCoefficients<MATSLISE_N, Scalar, Scalar>(
+                        vDiff += Array<Scalar, MATSLISE_N_integrate, 1>::Map(
+                                legendre::getCoefficients<MATSLISE_N_integrate, Scalar, Scalar>(
                                         [this, y](const Scalar &x) -> Scalar { return this->se2d->potential(x, y); },
                                         sector->min, sector->max
                                 ).data());
 
                         Scalar h = 1;
-                        for (int i = 0; i < MATSLISE_N; ++i, h *= sector->h)
+                        for (int i = 0; i < MATSLISE_N_integrate; ++i, h *= sector->h)
                             vDiff(i) *= h;
 
                         for (int i = 0; i < this->se2d->N; ++i)
                             for (int j = 0; j <= i; ++j) {
-                                Scalar v = ((*quadIt) * vDiff).sum();
+                                Scalar v = (quadIt->template head<MATSLISE_N_integrate>() * vDiff).sum();
                                 dV(i, j) += v;
                                 if (i != j)
                                     dV(j, i) += v;
