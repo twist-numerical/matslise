@@ -71,9 +71,14 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
             ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector->min, sector->max));
             for (int i = 0; i < se2d->N; ++i)
                 for (int j = 0; j <= i; ++j) {
-                    quadData.push_back(std::move(vbar_formulas<Scalar>(
-                            t_coeff[i], t_coeff[j], sector->h,
-                            sector->vs[0] - eigenvalues[i], sector->vs[0] - eigenvalues[j])));
+                    if (i == j) {
+                        quadData.push_back(std::move(vbar_formulas<Scalar>(
+                                t_coeff[i], sector->h, sector->vs[0] - eigenvalues[i])));
+                    } else {
+                        quadData.push_back(std::move(vbar_formulas<Scalar>(
+                                t_coeff[i], t_coeff[j], sector->h,
+                                sector->vs[0] - eigenvalues[i], sector->vs[0] - eigenvalues[j])));
+                    }
 
                     if (sector->backward) {
                         auto &quad = quadData.back();
@@ -101,7 +106,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
 
                     if (abs(lobatto::quadrature<Scalar>(grid, fi * fj) - quad(0)) > 1e-3)
                         cout << "wrong" << endl;
-                        */
+                    */
                 }
         }
 
@@ -114,7 +119,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
 
                     auto quadIt = quadData.begin();
                     for (auto &sector : m->sectors) {
-                        ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(30, sector->min, sector->max));
+                        //ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(30, sector->min, sector->max));
                         Array<Scalar, MATSLISE_N, 1> vDiff = -Array<Scalar, MATSLISE_N, 1>::Map(sector->vs.data());
 
                         if (sector->backward) {
@@ -139,7 +144,7 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
                                 if (i != j)
                                     dV(j, i) += v;
 
-
+/*
                                 cout << "\n" << lobatto::quadrature<Scalar>(grid, grid.unaryExpr([&](const Scalar &x) {
                                     return func_eigenfunctions[i](x).y(0) * func_eigenfunctions[j](x).y(0) *
                                            (this->se2d->potential(x, y) - m->potential(x));
@@ -153,14 +158,15 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
 
                                 if (sector->backward)
                                     cout << "???" << endl;
+                                */
                                 ++quadIt;
                             }
                     }
-
+/*
                     cout << "\n ---" << endl;
                     cout << "\n" << dV << endl;
                     cout << "\n" << this->calculateDeltaV(y) << endl;
-                    cout << "\n" << (dV - this->calculateDeltaV(y)) << endl;
+*/                   // cout << "\n" << (dV - this->calculateDeltaV(y)) << endl;
 
                     return dV;
                 }, min, max),
