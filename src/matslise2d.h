@@ -203,6 +203,7 @@ namespace matslise {
 
             Scalar *eigenvalues;
             ArrayXs *eigenfunctions;
+            std::vector<typename Matslise<Scalar>::Eigenfunction> func_eigenfunctions;;
             bool backward;
 
             Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);

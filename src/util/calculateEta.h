@@ -10,6 +10,21 @@ struct CalculateEtaData {
     static const Scalar taylor_eta9[];
 };
 
+template<>
+inline const int CalculateEtaData<double>::taylor_degree = 7;
+
+#ifdef MATSLISE_long_double
+template<>
+inline const int CalculateEtaData<long double>::taylor_degree = 11;
+#endif
+
+
+#ifdef MATSLISE_float128
+#include <boost/multiprecision/float128.hpp>
+
+template<>
+inline const int CalculateEtaData<boost::multiprecision::float128>::taylor_degree = 15;
+#endif
 
 template<typename Scalar>
 Scalar *calculateEta(Scalar Z, int etaCount) {
