@@ -103,7 +103,7 @@ private:
                     = etaProduct<Scalar, hmax2>(v, v);
 
             std::vector<matslise::Y<Scalar>> y0;
-            for (auto &f : sector2d->func_eigenfunctions) {
+            for (auto &f : sector2d->eigenfunctions) {
                 if (sector1d->backward) {
                     y0.emplace_back(f(sector1d->max));
                     y0.back().reverse();

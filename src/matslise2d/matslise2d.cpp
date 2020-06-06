@@ -24,34 +24,31 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                                const Options2<Scalar> &_options):
         AbstractMatslise2D<Scalar>(potential, domain), N(_options._N), options(_options) {
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
-    grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     auto sectorsBuild = options._builder(this, domain.min, domain.max);
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     sectorCount = sectors.size();
 
-    M = new MatrixXs[sectorCount - 1];
-    for (int i = 0; i < sectorCount - 1; ++i)
-        M[i] = calculateM(i);
-}
 
-template<typename Scalar>
-typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::calculateM(int k) const {
-    MatrixXs result(N, N);
+    ArrayXs grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
+    M.reserve(sectorCount - 1);
+    ArrayXXs basis[2]{ArrayXXs(), sectors[0]->template basis<false>(grid)};
+    for (int k = 0; k < sectorCount - 1; ++k) {
+        basis[k & 1] = sectors[k + 1]->template basis<false>(grid);
 
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < N; ++j)
-            result(i, j) = lobatto::quadrature<Scalar>(
-                    grid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
+        M.emplace_back(N, N);
 
-    return result;
+        for (int i = 0; i < N; ++i)
+            for (int j = 0; j < N; ++j)
+                M.back()(i, j) = lobatto::quadrature<Scalar>(
+                        grid, basis[k & 1].col(i) * basis[1 - (k & 1)].col(j));
+    }
 }
 
 template<typename Scalar>
 Matslise2D<Scalar>::~Matslise2D() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
-    delete[] M;
 }
 
 template<typename Scalar>
