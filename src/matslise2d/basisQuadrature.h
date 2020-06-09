@@ -5,11 +5,35 @@
 #ifndef MATSLISE_BASISQUADRATURE_H
 #define MATSLISE_BASISQUADRATURE_H
 
+#include "./etaIntegrals.h"
 
-using namespace std;
-using namespace Eigen;
-using namespace matslise;
-using namespace quadrature;
+template<typename Scalar, int N = MATSLISE_N>
+void legendreTransform(const Scalar &delta, Eigen::Array<Scalar, N, 1> &quadratures) {
+    static Eigen::Matrix<Scalar, N, N> legendrePolynomials = (
+            Eigen::Matrix<Scalar, MATSLISE_N, MATSLISE_N>()
+                    << 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    -1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    1, -6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    -1, 12, -30, 20, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    1, -20, 90, -140, 70, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    -1, 30, -210, 560, -630, 252, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    1, -42, 420, -1680, 3150, -2772, 924, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                    -1, 56, -756, 4200, -11550, 16632, -12012, 3432, 0, 0, 0, 0, 0, 0, 0, 0,
+                    1, -72, 1260, -9240, 34650, -72072, 84084, -51480, 12870, 0, 0, 0, 0, 0, 0, 0,
+                    -1, 90, -1980, 18480, -90090, 252252, -420420, 411840, -218790, 48620, 0, 0, 0, 0, 0, 0,
+                    1, -110, 2970, -34320, 210210, -756756, 1681680, -2333760, 1969110, -923780, 184756, 0, 0, 0, 0, 0,
+                    -1, 132, -4290, 60060, -450450, 2018016, -5717712, 10501920, -12471030, 9237800, -3879876, 705432, 0, 0, 0, 0,
+                    1, -156, 6006, -100100, 900900, -4900896, 17153136, -39907296, 62355150, -64664600, 42678636, -16224936, 2704156, 0, 0, 0,
+                    -1, 182, -8190, 160160, -1701700, 11027016, -46558512, 133024320, -261891630, 355655300, -327202876, 194699232, -67603900, 10400600, 0, 0,
+                    1, -210, 10920, -247520, 3063060, -23279256, 116396280, -399072960, 960269310, -1636014380, 1963217256, -1622493600, 878850700, -280816200, 40116600, 0,
+                    -1, 240, -14280, 371280, -5290740, 46558512, -271591320, 1097450640, -3155170590, 6544057520, -9816086280, 10546208400, -7909656300, 3931426800, -1163381400, 155117520
+    ).finished().template topLeftCorner<N, N>();
+
+    Scalar d = 1 / delta;
+    for (int i = 1; i < N; ++i, d /= delta)
+        quadratures(i) *= d;
+    quadratures = (legendrePolynomials * quadratures.matrix()).array();
+}
 
 template<typename Scalar>
 class AbstractBasisQuadrature {
@@ -17,7 +41,7 @@ public:
     virtual Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(const Scalar &y) = 0;
 };
 
-template<typename Scalar, int hmax, bool skipOdd = false>
+template<typename Scalar, int hmax, bool halfrange = false>
 class BasisQuadrature : public AbstractBasisQuadrature<Scalar> {
 public:
     const typename matslise::Matslise2D<Scalar>::Sector *sector2d;
@@ -63,21 +87,25 @@ public:
                             sector1d->min, sector1d->max
                     ).data());
 
-            Scalar h = 1;
-            for (int i = 0; i < hmax; ++i, h *= sector1d->h)
+            Scalar h = sector1d->h;
+            for (int i = 1; i < hmax; ++i, h *= sector1d->h)
                 vDiff(i) *= h;
 
             for (int i = 0; i < N; ++i)
                 for (int j = 0; j <= i; ++j) {
-                    if (skipOdd && (i & 1) != (j & 1))
+                    if (halfrange && (i & 1) != (j & 1))
                         continue;
                     Scalar v = ((*quadIt) * vDiff).sum();
+                    if constexpr (halfrange)
+                        v += v;
                     dV(i, j) += v;
-                    if (i != j)
-                        dV(j, i) += v;
                     ++quadIt;
                 }
         }
+        for (int i = 0; i < N; ++i)
+            for (int j = 0; j < i; ++j) {
+                dV(j, i) = dV(i, j);
+            }
         return dV;
     }
 
@@ -103,6 +131,7 @@ private:
                     = etaProduct<Scalar, hmax2>(v, v);
 
             std::vector<matslise::Y<Scalar>> y0;
+            y0.reserve(N);
             for (auto &f : sector2d->eigenfunctions) {
                 if (sector1d->backward) {
                     y0.emplace_back(f(sector1d->max));
@@ -112,11 +141,9 @@ private:
                 }
             }
 
-            typedef Array<Scalar, Dynamic, 1> ArrayXs;
-            ArrayXs grid = lobatto::grid<Scalar>(ArrayXs::LinSpaced(20, sector1d->min, sector1d->max));
             for (int i = 0; i < N; ++i)
                 for (int j = 0; j <= i; ++j) {
-                    if (skipOdd && (i & 1) != (j & 1))
+                    if (halfrange && (i & 1) != (j & 1))
                         continue;
                     Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
                             eta = (i == j
@@ -127,21 +154,6 @@ private:
                                                                   sector1d->vs[0] - sector2d->eigenvalues[i],
                                                                   sector1d->vs[0] - sector2d->eigenvalues[j]));
 
-                    /*
-                    if (i == 9 && j == 9) {
-                        std::cout << "\n****\n" << sector1d->h << ", "
-                                  << sector1d->vs[0] - sector2d->eigenvalues[i] << ", "
-                                  << sector1d->vs[0] - sector2d->eigenvalues[j] << std::endl;
-
-                        Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_INTEGRATE_delta> coutI;
-                        for (int i = 0; i < MATSLISE_ETA_delta; ++i)
-                            for (int j = 0; j < MATSLISE_ETA_delta; ++j)
-                                coutI.row(i * MATSLISE_ETA_delta + j) = eta(i, j);
-                        std::cout << coutI << std::endl;
-                        std::cout << std::endl;
-                    }
-                    */
-
                     Eigen::Array<Scalar, hmax, 1> quadratures = Eigen::Array<Scalar, hmax, 1>::Zero();
                     {
                         Scalar suu = y0[i].y(0) * y0[j].y(0);
@@ -151,8 +163,7 @@ private:
                         for (int l = 0; l < MATSLISE_ETA_delta; ++l)
                             for (int m = 0; m < MATSLISE_ETA_delta; ++m) {
                                 Eigen::Array<Scalar, hmax2, 1> s =
-                                        (suu * uu(l, m) + suv * uv(l, m) + svu * uv(m, l) +
-                                         svv * vv(l, m)).template head<hmax2>();
+                                        (suu * uu(l, m) + suv * uv(l, m) + svu * uv(m, l) + svv * vv(l, m));
                                 for (int n = std::max(0, 2 * l - 1 + 2 * m - 1);
                                      n < hmax2 && n < MATSLISE_INTEGRATE_delta; ++n) {
                                     int count = std::min(hmax, MATSLISE_INTEGRATE_delta - n);
@@ -168,58 +179,8 @@ private:
                         for (Eigen::Index k = 1; k < hmax; k += 2)
                             quad(k) *= -1;
                     }
-
-                    /*
-                    auto &quad = quadData.back();
-                    Array<Scalar, Dynamic, 1> fi = sector2d->func_eigenfunctions[i](grid).unaryExpr(
-                            [](const Y<Scalar> &y) { return y.y[0]; });
-                    Array<Scalar, Dynamic, 1> fj = sector2d->func_eigenfunctions[j](grid).unaryExpr(
-                            [](const Y<Scalar> &y) { return y.y[0]; });
-
-                    if (abs(lobatto::quadrature<Scalar>(grid, fi * fj) - quad(0)) > 1e-3) {
-                        cout << "u:\n" << u << endl;
-                        cout << "\n *** quad <-> lobatto" << endl;
-                        cout << "\n" << quad.transpose() << endl;
-                        cout << "\n" << lobatto::quadrature<Scalar>(grid, fi * fj) << endl;
-                        cout << "\n"
-                             << lobatto::quadrature<Scalar>(grid,
-                                                            fi * fj * (2 * (grid - sector1d->min) / sector1d->h - 1))
-                             << endl;
-                        cout << "\n"
-                             << lobatto::quadrature<Scalar>(grid, fi * fj * (6 * (grid - sector1d->min) / sector1d->h *
-                                                                             (grid - sector1d->min) / sector1d->h -
-                                                                             6 * (grid - sector1d->min) / sector1d->h +
-                                                                             1))
-                             << endl;
-                        cout << "wrong" << endl;
-                    }
-                    */
-
                 }
         }
-    }
-};
-
-template<typename Scalar, int hmax>
-class BasisQuadratureHalf : public AbstractBasisQuadrature<Scalar> {
-public:
-    BasisQuadrature<Scalar, hmax, true> half;
-
-    BasisQuadratureHalf(
-            const typename matslise::Matslise2D<Scalar>::Sector *sector2d,
-            const matslise::MatsliseHalf<Scalar> *matslise) {
-        half = BasisQuadrature<Scalar, hmax, true>(sector2d, matslise->ms);
-    }
-
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(const Scalar &y) override {
-        Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV = half.dV(y);
-        dV *= 2;
-
-        Eigen::Index N = half.sector2d->se2d->N;
-        for (int i = 0; i < N; ++i)
-            dV(i, i) -= half.sector2d->eigenvalues[i];
-
-        return dV;
     }
 };
 

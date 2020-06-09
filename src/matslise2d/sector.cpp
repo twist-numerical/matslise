@@ -4,7 +4,6 @@
 #include "../util/quadrature.h"
 #include "../util/legendre.h"
 #include "../util/horner.h"
-#include "./sector_correction_potential.h"
 #include "./basisQuadrature.h"
 
 using namespace matslise;
@@ -23,12 +22,12 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     unique_ptr<AbstractBasisQuadrature<Scalar>> quadrature;
     if (se2d->options.nestedOptions._symmetric) {
         matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
-        quadrature = std::make_unique<BasisQuadratureHalf<Scalar, 8>>(
-                this, static_cast<const MatsliseHalf<Scalar> *>(matslise));
+        quadrature = std::make_unique<BasisQuadrature<Scalar, 8, true>>(
+                this, static_cast<const MatsliseHalf<Scalar> *>(matslise)->ms);
     } else {
         matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9,
                                         se2d->options.nestedOptions._builder);
-        quadrature = std::make_unique<BasisQuadrature<Scalar, 8>>(
+        quadrature = std::make_unique<BasisQuadrature<Scalar, 8, false>>(
                 this, static_cast<const Matslise<Scalar> *>(matslise));
     }
 
