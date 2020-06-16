@@ -3,6 +3,7 @@
 
 #include "schrodinger.h"
 #include "util/rectangle.h"
+#include "matslise2d/basisQuadrature.h"
 
 namespace matslise {
     template<typename Scalar>
@@ -193,13 +194,17 @@ namespace matslise {
         class Sector {
         public:
             const Matslise2D<Scalar> *se2d;
-            AbstractMatslise<Scalar> *matslise;
+            std::shared_ptr<AbstractMatslise<Scalar>> matslise;
+            std::shared_ptr<AbstractBasisQuadrature<Scalar>> quadratures;
             typename matslise::Matscs<Scalar>::Sector *matscs;
             Scalar min, max;
+            Scalar ybar;
 
             std::vector<Scalar> eigenvalues;
             std::vector<typename Matslise<Scalar>::Eigenfunction> eigenfunctions;
             bool backward;
+
+            Sector(const Matslise2D<Scalar> *se2d) : se2d(se2d) {}
 
             Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
 
@@ -227,6 +232,9 @@ namespace matslise {
             static bool compare(const Sector &a, const Sector &b) {
                 return a.matslise->estimatePotentialMinimum() < b.matslise->estimatePotentialMinimum();
             }
+
+            Sector *
+            refine(const Matslise2D<Scalar> *problem, const Scalar &min, const Scalar &max, bool backward) const;
         };
     };
 

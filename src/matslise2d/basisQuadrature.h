@@ -6,6 +6,7 @@
 #define MATSLISE_BASISQUADRATURE_H
 
 #include "./etaIntegrals.h"
+#include "../util/legendre.h"
 
 template<typename Scalar, int N = MATSLISE_N>
 void legendreTransform(const Scalar &delta, Eigen::Array<Scalar, N, 1> &quadratures) {
@@ -38,33 +39,30 @@ void legendreTransform(const Scalar &delta, Eigen::Array<Scalar, N, 1> &quadratu
 template<typename Scalar>
 class AbstractBasisQuadrature {
 public:
-    virtual Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(const Scalar &y) = 0;
+    virtual Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(
+            const typename matslise::Matslise2D<Scalar>::Sector &sector2d, const Scalar &y) = 0;
 };
 
 template<typename Scalar, int hmax, bool halfrange = false>
 class BasisQuadrature : public AbstractBasisQuadrature<Scalar> {
 public:
-    const typename matslise::Matslise2D<Scalar>::Sector *sector2d;
     const matslise::Matslise<Scalar> *matslise;
     std::vector<Eigen::Array<Scalar, hmax, 1>> quadData;
 
-    BasisQuadrature() {}
-
-    BasisQuadrature(
-            const typename matslise::Matslise2D<Scalar>::Sector *sector2d,
-            const matslise::Matslise<Scalar> *matslise) : sector2d(sector2d), matslise(matslise) {
+    BasisQuadrature(const matslise::Matslise<Scalar> *matslise) : matslise(matslise) {
     }
 
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(const Scalar &y) override {
+    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+    dV(const typename matslise::Matslise2D<Scalar>::Sector &sector2d, const Scalar &y) override {
         if (quadData.empty())
-            calculateQuadData();
+            calculateQuadData(sector2d);
 
-        Eigen::Index N = sector2d->se2d->N;
+        Eigen::Index N = sector2d.se2d->N;
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV
                 = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Zero(N, N);
 
         for (int i = 0; i < N; ++i) {
-            dV(i, i) = sector2d->eigenvalues[i];
+            dV(i, i) = sector2d.eigenvalues[i];
         }
 
 
@@ -83,7 +81,7 @@ public:
 
             vDiff += Eigen::Array<Scalar, hmax, 1>::Map(
                     legendre::getCoefficients<hmax, Scalar, Scalar>(
-                            [this, &y](const Scalar &x) -> Scalar { return this->sector2d->se2d->potential(x, y); },
+                            [&](const Scalar &x) -> Scalar { return sector2d.se2d->potential(x, y); },
                             sector1d->min, sector1d->max
                     ).data());
 
@@ -109,11 +107,11 @@ public:
         return dV;
     }
 
-private:
-    void calculateQuadData() {
+public:
+    void calculateQuadData(const typename matslise::Matslise2D<Scalar>::Sector &sector2d) {
 #define hmax2 (2*MATSLISE_HMAX_delta-1)
         for (auto sector1d : matslise->sectors) {
-            Eigen::Index N = sector2d->se2d->N;
+            Eigen::Index N = sector2d.se2d->N;
             Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> u = sector1d->t_coeff.unaryExpr(
                     [](const Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
                         return T(0, 0);
@@ -132,7 +130,7 @@ private:
 
             std::vector<matslise::Y<Scalar>> y0;
             y0.reserve(N);
-            for (auto &f : sector2d->eigenfunctions) {
+            for (auto &f : sector2d.eigenfunctions) {
                 if (sector1d->backward) {
                     y0.emplace_back(f(sector1d->max));
                     y0.back().reverse();
@@ -148,11 +146,11 @@ private:
                     Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
                             eta = (i == j
                                    ? eta_integrals<Scalar, true>(sector1d->h,
-                                                                 sector1d->vs[0] - sector2d->eigenvalues[i],
-                                                                 sector1d->vs[0] - sector2d->eigenvalues[j])
+                                                                 sector1d->vs[0] - sector2d.eigenvalues[i],
+                                                                 sector1d->vs[0] - sector2d.eigenvalues[j])
                                    : eta_integrals<Scalar, false>(sector1d->h,
-                                                                  sector1d->vs[0] - sector2d->eigenvalues[i],
-                                                                  sector1d->vs[0] - sector2d->eigenvalues[j]));
+                                                                  sector1d->vs[0] - sector2d.eigenvalues[i],
+                                                                  sector1d->vs[0] - sector2d.eigenvalues[j]));
 
                     Eigen::Array<Scalar, hmax, 1> quadratures = Eigen::Array<Scalar, hmax, 1>::Zero();
                     {

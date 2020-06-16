@@ -259,7 +259,10 @@ The next set of parameters are more advanced and can be useful to tweak when the
                     l->at(i) = s.eigenvalues[i];
                 return l;
             })
-            .def_readonly("matslise", &Matslise2D<>::Sector::matslise, py::return_value_policy::reference)
+            .def_property_readonly("matslise",
+                                   [](Matslise2D<>::Sector &s) -> AbstractMatslise<double> * {
+                                       return s.matslise.get();
+                                   }, py::return_value_policy::reference_internal)
             .def_readonly("matscs", &Matslise2D<>::Sector::matscs, py::return_value_policy::reference)
             .def_readonly("min", &Matslise2D<>::Sector::min)
             .def_readonly("max", &Matslise2D<>::Sector::max);

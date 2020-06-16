@@ -10,10 +10,38 @@ namespace matslise {
     };
 
     template<typename Problem, typename Scalar=typename Problem::Scalar>
-    using SectorBuilder=std::function<SectorBuilderReturn<Problem>(
+    using SectorBuilder = std::function<SectorBuilderReturn<Problem>(
             const Problem *, const Scalar &min, const Scalar &max)>;
 
     namespace sector_builder {
+        template<typename Scalar, typename Problem>
+        typename std::integral_constant<bool, std::is_same<decltype(
+        std::declval<typename Problem::Sector>().refine(
+                std::declval<Problem *>(), std::declval<Scalar>(), std::declval<Scalar>(), std::declval<bool>())
+        ), typename Problem::Sector *>::value> __sectorHasRefine(int);
+
+        template<typename Scalar, typename Problem>
+        std::false_type __sectorHasRefine(...);
+
+        template<typename Scalar, typename Problem>
+        static constexpr bool sectorHasRefine = decltype(__sectorHasRefine<Scalar, Problem>(0))::value;
+
+        template<typename Scalar, typename Problem>
+        static typename std::enable_if<sectorHasRefine<Scalar, Problem>, typename Problem::Sector *>::type
+        refineSector(const typename Problem::Sector &sector, const Problem *problem, const Scalar &min,
+                     const Scalar &max, bool backward) {
+            return sector.refine(problem, min, max, backward);
+        }
+
+
+        template<typename Scalar, typename Problem>
+        static typename std::enable_if<!sectorHasRefine<Scalar, Problem>, typename Problem::Sector *>::type
+        refineSector(const typename Problem::Sector &, const Problem *problem, const Scalar &min, const Scalar &max,
+                     bool backward) {
+            return new typename Problem::Sector(problem, min, max, backward);
+        }
+
+
         template<typename Problem>
         SectorBuilder<Problem> uniform(int sectorCount) {
             typedef typename Problem::Scalar Scalar;
@@ -77,9 +105,12 @@ namespace matslise {
                     } else {
                         xmin = xmax - h;
                     }
-                    delete s;
+                    Sector *prevSector = s;
+                    s = refineSector<Scalar, Problem>(*prevSector, ms, xmin, xmax, !forward);
+                    delete prevSector;
+                } else {
+                    s = new Sector(ms, xmin, xmax, !forward);
                 }
-                s = new Sector(ms, xmin, xmax, !forward);
                 error = s->error();
                 // cout << "(h: " << h << ", error: " << error << ") ";
             } while (error > tolerance && steps < 10 && h > 1e-5);
@@ -103,7 +134,7 @@ namespace matslise {
                         }
                     }
                     h = xmax - xmin;
-                    auto *newSector = new Sector(ms, xmin, xmax, !forward);
+                    auto *newSector = refineSector<Scalar, Problem>(*s, ms, xmin, xmax, !forward);
                     error = newSector->error();
                     // cout << "(h: " << h << ", error: " << error << ") ";
                     if (error > tolerance) {
@@ -129,7 +160,7 @@ namespace matslise {
                 std::vector<typename Problem::Sector *> backward;
                 // It shouldn't be the true middle
                 typename Problem::Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
-                typename Problem::Scalar h = .33*(max - min);
+                typename Problem::Scalar h = .33 * (max - min);
                 forward.push_back(automaticNextSector(problem, h, min, mid, tolerance, true));
                 backward.push_back(automaticNextSector(problem, h, mid, max, tolerance, false));
 

@@ -1,7 +1,7 @@
 #ifndef SCHRODINGER_LEGENDRE_H
 #define SCHRODINGER_LEGENDRE_H
 
-#include "../matslise.h"
+#include "./eigen.h"
 
 namespace legendre {
     template<typename Scalar>

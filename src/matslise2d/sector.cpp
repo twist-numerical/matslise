@@ -13,22 +13,33 @@ using namespace quadrature;
 
 
 template<typename Scalar>
+typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise2D<Scalar>::Sector &sector) {
+    return new typename Matscs<Scalar>::Sector(
+            legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
+                    [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+                        return sector.quadratures->dV(sector, y);
+                    }, sector.min, sector.max),
+            sector.min, sector.max, sector.backward);
+}
+
+template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
                                    bool backward)
         : se2d(se2d), min(ymin), max(ymax), backward(backward) {
-    const Scalar ybar = (ymax + ymin) / 2;
-    function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
+    // std::cout << "new sector 2d" << std::endl;
+    ybar = (ymax + ymin) / 2;
+    function<Scalar(Scalar)> vbar_fun = [se2d, this](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
 
-    unique_ptr<AbstractBasisQuadrature<Scalar>> quadrature;
     if (se2d->options.nestedOptions._symmetric) {
-        matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
-        quadrature = std::make_unique<BasisQuadrature<Scalar, 8, true>>(
-                this, static_cast<const MatsliseHalf<Scalar> *>(matslise)->ms);
+        matslise = std::make_shared<MatsliseHalf<Scalar>>(
+                vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
+        quadratures = std::make_shared<BasisQuadrature<Scalar, 8, true>>(
+                static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms);
     } else {
-        matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9,
-                                        se2d->options.nestedOptions._builder);
-        quadrature = std::make_unique<BasisQuadrature<Scalar, 8, false>>(
-                this, static_cast<const Matslise<Scalar> *>(matslise));
+        matslise = std::make_shared<Matslise<Scalar>>(
+                vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
+        quadratures = std::make_shared<BasisQuadrature<Scalar, 8, false>>(
+                static_cast<const Matslise<Scalar> *>(matslise.get()));
     }
 
     vector<pair<int, Scalar>> index_eigv = matslise->eigenvaluesByIndex(0, se2d->N, Y<Scalar>::Dirichlet());
@@ -46,17 +57,34 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
         eigenfunctions[i] = matslise->eigenfunction(E, Y<Scalar>::Dirichlet(), index);
     }
 
-    matscs = new typename Matscs<Scalar>::Sector(
-            legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([&](Scalar y) -> MatrixXs {
-                return quadrature->dV(y);
-            }, min, max),
-            ymin, ymax, backward);
+    matscs = initializeMatscs<Scalar>(*this);
 }
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::~Sector() {
-    delete matslise;
     delete matscs;
+}
+
+template<typename Scalar>
+typename Matslise2D<Scalar>::Sector *Matslise2D<Scalar>::Sector::refine(
+        const Matslise2D<Scalar> *problem, const Scalar &_min, const Scalar &_max, bool _backward) const {
+    Scalar h = _max - _min;
+    if (backward != _backward || ybar < _min + h / 3 || ybar > _max - h / 3) {
+        return new Sector(problem, _min, _max, _backward);
+    }
+
+    // std::cout << "refining sector 2d" << std::endl;
+    auto sector = new Sector(problem);
+    sector->min = _min;
+    sector->max = _max;
+    sector->backward = _backward;
+    sector->ybar = ybar;
+    sector->matslise = matslise;
+    sector->eigenfunctions = eigenfunctions;
+    sector->eigenvalues = eigenvalues;
+    sector->quadratures = quadratures;
+    sector->matscs = initializeMatscs<Scalar>(*sector);
+    return sector;
 }
 
 template<typename Scalar>
