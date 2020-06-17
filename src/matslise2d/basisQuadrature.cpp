@@ -2,10 +2,12 @@
 #include "./etaIntegrals.h"
 #include "../util/legendre.h"
 
+using namespace Eigen;
+
 template<typename Scalar, int N = MATSLISE_N>
-void legendreTransform(const Scalar &delta, Eigen::Array<Scalar, N, 1> &quadratures) {
-    static Eigen::Matrix<Scalar, N, N> legendrePolynomials = (
-            Eigen::Matrix<Scalar, MATSLISE_N, MATSLISE_N>()
+void legendreTransform(const Scalar &delta, Array<Scalar, N, 1> &quadratures) {
+    static Matrix<Scalar, N, N> legendrePolynomials = (
+            Matrix<Scalar, MATSLISE_N, MATSLISE_N>()
                     << 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     -1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     1, -6, 6, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -31,35 +33,35 @@ void legendreTransform(const Scalar &delta, Eigen::Array<Scalar, N, 1> &quadratu
 }
 
 template<typename Scalar, int hmax, bool halfrange>
-Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+Matrix<Scalar, Dynamic, Dynamic>
 matslise::BasisQuadrature<Scalar, hmax, halfrange>::dV(
         const typename matslise::Matslise2D<Scalar>::Sector &sector2d, const Scalar &y) {
     if (quadData.empty())
         calculateQuadData(sector2d);
 
-    Eigen::Index N = sector2d.se2d->N;
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV
-            = Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Zero(N, N);
+    Index N = sector2d.se2d->N;
+    Matrix<Scalar, Dynamic, Dynamic> dV
+            = Matrix<Scalar, Dynamic, Dynamic>::Zero(N, N);
 
     for (int i = 0; i < N; ++i) {
         dV(i, i) = sector2d.eigenvalues[i];
     }
 
 
-    Eigen::Array<Scalar, hmax, 1> vDiff;
+    Array<Scalar, hmax, 1> vDiff;
     auto quadIt = quadData.begin();
 
     for (auto sector1d : matslise->sectors) {
 
         if (sector1d->backward) {
-            vDiff = Eigen::Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
+            vDiff = Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
             for (int i = 0; i < hmax; i += 2)
                 vDiff(i) *= -1;
         } else {
-            vDiff = -Eigen::Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
+            vDiff = -Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
         }
 
-        vDiff += Eigen::Array<Scalar, hmax, 1>::Map(
+        vDiff += Array<Scalar, hmax, 1>::Map(
                 matslise::legendre::getCoefficients<hmax, Scalar, Scalar>(
                         [&](const Scalar &x) -> Scalar { return sector2d.se2d->potential(x, y); },
                         sector1d->min, sector1d->max
@@ -90,27 +92,27 @@ matslise::BasisQuadrature<Scalar, hmax, halfrange>::dV(
 template<typename Scalar, int hmax, bool halfrange>
 void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
         const typename matslise::Matslise2D<Scalar>::Sector &sector2d) {
-    Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+    Matrix<Scalar, Dynamic, Dynamic>
             UE(MATSLISE_INTEGRATE_delta, MATSLISE_INTEGRATE_delta);
 
     for (auto sector1d : matslise->sectors) {
-        Eigen::Index N = sector2d.se2d->N;
-        Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> u = sector1d->t_coeff.unaryExpr(
-                [](const Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
+        Index N = sector2d.se2d->N;
+        Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> u = sector1d->t_coeff.unaryExpr(
+                [](const Matrix<Scalar, 2, 2, DontAlign> &T) {
                     return T(0, 0);
                 });
-        Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> v = sector1d->t_coeff.unaryExpr(
-                [](const Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> &T) {
+        Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> v = sector1d->t_coeff.unaryExpr(
+                [](const Matrix<Scalar, 2, 2, DontAlign> &T) {
                     return T(0, 1);
                 });
 
-        Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+        Array<Scalar, Dynamic, Dynamic>
                 uu = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(u, u);
-        Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+        Array<Scalar, Dynamic, Dynamic>
                 uv = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(u, v);
-        Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+        Array<Scalar, Dynamic, Dynamic>
                 vu = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(v, u);
-        Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+        Array<Scalar, Dynamic, Dynamic>
                 vv = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(v, v);
 
         std::vector<matslise::Y<Scalar>> y0;
@@ -128,7 +130,7 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
             for (int j = 0; j <= i; ++j) {
                 if (halfrange && (i & 1) != (j & 1))
                     continue;
-                Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+                Array<Scalar, Dynamic, Dynamic>
                         eta = (i == j
                                ? eta_integrals<Scalar, true>(sector1d->h,
                                                              sector1d->vs[0] - sector2d.eigenvalues[i],
@@ -137,28 +139,33 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
                                                               sector1d->vs[0] - sector2d.eigenvalues[i],
                                                               sector1d->vs[0] - sector2d.eigenvalues[j]));
 
-                Eigen::Array<Scalar, hmax, 1> quadratures = Eigen::Array<Scalar, hmax, 1>::Zero();
+                Array<Scalar, hmax, 1> quadratures = Array<Scalar, hmax, 1>::Zero();
                 {
                     Scalar suu = y0[i].y(0) * y0[j].y(0);
                     Scalar suv = y0[i].y(0) * y0[j].y(1);
                     Scalar svu = y0[i].y(1) * y0[j].y(0);
                     Scalar svv = y0[i].y(1) * y0[j].y(1);
 
-                    UE.template triangularView<Eigen::Upper>() = (
-                            (suu * uu + suv * uv + svu * vu + svv * vv)
-                                    .transpose().matrix()
-                            * eta.matrix()
-                    ).template triangularView<Eigen::Upper>();
+                    /*                   UE.template triangularView<Eigen::Upper>() = (
+                                               (suu * uu + suv * uv + svu * vu + svv * vv)
+                                                       .transpose().matrix()
+                                               * eta.matrix()
+                                       ).template triangularView<Eigen::Upper>();*/
 
-                    for (Eigen::Index m = 0; m < hmax; ++m)
-                        quadratures(m) = UE.diagonal(m).sum();
+                    for (Index n = 0; n < MATSLISE_INTEGRATE_delta; ++n) {
+                        Matrix<Scalar, Dynamic, 1> coln
+                                = (suu * uu + suv * uv + svu * vu + svv * vv).matrix().col(n);
+                        for (Index m = 0; m < hmax && m + n < MATSLISE_INTEGRATE_delta; ++m) {
+                            quadratures(m) += coln.dot(eta.col(m + n).matrix());
+                        }
+                    }
                 }
                 legendreTransform<Scalar>(sector1d->h, quadratures);
                 quadData.push_back(quadratures);
 
                 if (sector1d->backward) {
                     auto &quad = quadData.back();
-                    for (Eigen::Index k = 1; k < hmax; k += 2)
+                    for (Index k = 1; k < hmax; k += 2)
                         quad(k) *= -1;
                 }
             }
