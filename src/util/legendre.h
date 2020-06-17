@@ -3,7 +3,7 @@
 
 #include "./eigen.h"
 
-namespace legendre {
+namespace matslise::legendre {
     template<typename Scalar>
     struct LegendreData {
         Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> weights;

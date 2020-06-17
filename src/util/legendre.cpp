@@ -1,6 +1,6 @@
 #include "legendre.h"
 
-namespace legendre {
+namespace matslise::legendre {
 template<>
 const LegendreData<double> *LegendreData<double>::initData() {
     auto *data = new LegendreData<double>[10];

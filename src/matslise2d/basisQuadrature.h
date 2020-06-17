@@ -78,7 +78,7 @@ public:
             }
 
             vDiff += Eigen::Array<Scalar, hmax, 1>::Map(
-                    legendre::getCoefficients<hmax, Scalar, Scalar>(
+                    matslise::legendre::getCoefficients<hmax, Scalar, Scalar>(
                             [&](const Scalar &x) -> Scalar { return sector2d.se2d->potential(x, y); },
                             sector1d->min, sector1d->max
                     ).data());
