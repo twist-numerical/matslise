@@ -119,12 +119,12 @@ public:
                         return T(0, 1);
                     });
 
-            Eigen::Array<Eigen::Array<Scalar, hmax2, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> uu
-                    = etaProduct<Scalar, hmax2>(u, u);
-            Eigen::Array<Eigen::Array<Scalar, hmax2, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> uv
-                    = etaProduct<Scalar, hmax2>(u, v);
-            Eigen::Array<Eigen::Array<Scalar, hmax2, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta> vv
-                    = etaProduct<Scalar, hmax2>(v, v);
+            Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, hmax2>
+                    uu = etaProduct<Scalar, hmax2>(u, u);
+            Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, hmax2>
+                    uv = etaProduct<Scalar, hmax2>(u, v);
+            Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, hmax2>
+                    vv = etaProduct<Scalar, hmax2>(v, v);
 
             std::vector<matslise::Y<Scalar>> y0;
             y0.reserve(N);
@@ -141,7 +141,7 @@ public:
                 for (int j = 0; j <= i; ++j) {
                     if (halfrange && (i & 1) != (j & 1))
                         continue;
-                    Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, MATSLISE_ETA_delta, MATSLISE_ETA_delta>
+                    Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_INTEGRATE_delta>
                             eta = (i == j
                                    ? eta_integrals<Scalar, true>(sector1d->h,
                                                                  sector1d->vs[0] - sector2d.eigenvalues[i],
@@ -156,14 +156,15 @@ public:
                         Scalar suv = y0[i].y(0) * y0[j].y(1);
                         Scalar svu = y0[i].y(1) * y0[j].y(0);
                         Scalar svv = y0[i].y(1) * y0[j].y(1);
-                        for (int l = 0; l < MATSLISE_ETA_delta; ++l)
-                            for (int m = 0; m < MATSLISE_ETA_delta; ++m) {
-                                Eigen::Array<Scalar, hmax2, 1> s =
-                                        (suu * uu(l, m) + suv * uv(l, m) + svu * uv(m, l) + svv * vv(l, m));
-                                for (int n = std::max(0, 2 * l - 1 + 2 * m - 1);
+                        for (Eigen::Index l = 0; l < MATSLISE_ETA_delta; ++l)
+                            for (Eigen::Index m = 0; m < MATSLISE_ETA_delta; ++m) {
+                                Eigen::Index k = ETA_index(l, m);
+                                Eigen::Index kt = ETA_index(m, l);
+                                for (Eigen::Index n = std::max((Eigen::Index) 0, 2 * l - 1 + 2 * m - 1);
                                      n < hmax2 && n < MATSLISE_INTEGRATE_delta; ++n) {
-                                    int count = std::min(hmax, MATSLISE_INTEGRATE_delta - n);
-                                    quadratures.segment(0, count) += s(n) * eta(l, m).segment(n, count);
+                                    Scalar s = (suu * uu(k, n) + suv * uv(k, n) + svu * uv(kt, n) + svv * vv(k, n));
+                                    Eigen::Index count = std::min((Eigen::Index) hmax, MATSLISE_INTEGRATE_delta - n);
+                                    quadratures.segment(0, count) += s * eta.row(k).segment(n, count);
                                 }
                             }
                     }
