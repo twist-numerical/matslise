@@ -1,7 +1,3 @@
-//
-// Created by toon on 6/3/20.
-//
-
 #ifndef MATSLISE_BASISQUADRATURE_H
 #define MATSLISE_BASISQUADRATURE_H
 
@@ -41,6 +37,8 @@ class AbstractBasisQuadrature {
 public:
     virtual Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(
             const typename matslise::Matslise2D<Scalar>::Sector &sector2d, const Scalar &y) = 0;
+
+    virtual ~AbstractBasisQuadrature() {}
 };
 
 template<typename Scalar, int hmax, bool halfrange = false>

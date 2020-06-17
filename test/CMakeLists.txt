@@ -30,7 +30,7 @@ if (DEFINED EMSCRIPTEN)
     option(NODE_BIN "Binary directory of node installation. Make sure 'ava' is installed." "")
     add_custom_target(matslise_test
             COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} npm link ava
-            COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} ava --verbose
+            COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} ava --verbose -T 2m
             DEPENDS matslise_test_copy_files
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test-js)
 else ()
