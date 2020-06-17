@@ -146,14 +146,8 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
                     Scalar svu = y0[i].y(1) * y0[j].y(0);
                     Scalar svv = y0[i].y(1) * y0[j].y(1);
 
-                    /*                   UE.template triangularView<Eigen::Upper>() = (
-                                               (suu * uu + suv * uv + svu * vu + svv * vv)
-                                                       .transpose().matrix()
-                                               * eta.matrix()
-                                       ).template triangularView<Eigen::Upper>();*/
-
                     for (Index n = 0; n < MATSLISE_INTEGRATE_delta; ++n) {
-                        Matrix<Scalar, Dynamic, 1> coln
+                        Matrix<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, 1> coln
                                 = (suu * uu + suv * uv + svu * vu + svv * vv).matrix().col(n);
                         for (Index m = 0; m < hmax && m + n < MATSLISE_INTEGRATE_delta; ++m) {
                             quadratures(m) += coln.dot(eta.col(m + n).matrix());
