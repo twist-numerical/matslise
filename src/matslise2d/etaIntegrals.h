@@ -15,12 +15,13 @@ inline constexpr Eigen::Index ETA_index(Eigen::Index i, Eigen::Index j) {
 }
 
 template<typename Scalar, Eigen::Index N>
-Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> etaProduct(
+Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> etaProduct(
         const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &u,
         const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &v) {
 
-    Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> uv
-            = Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Zero(MATSLISE_ETA_delta * MATSLISE_ETA_delta, N);
+    Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> uv
+            = Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic>
+            ::Zero(MATSLISE_ETA_delta * MATSLISE_ETA_delta, N);
 
     for (int i = 0; i < MATSLISE_ETA_delta; ++i)
         for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
@@ -107,11 +108,11 @@ Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> integrateEtaTaylor(
 }
 
 template<typename Scalar, bool equal>
-Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>
+Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic>
 eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
-    Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> I
-            = Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Zero(
-                    MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_INTEGRATE_delta);
+    Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> I
+            = Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic>
+            ::Zero(MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_INTEGRATE_delta);
 
     Scalar Z1 = delta * delta * dZ1;
     Scalar Z2 = delta * delta * dZ2;
