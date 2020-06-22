@@ -144,8 +144,21 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
                     Scalar svu = y0[i].y(1) * y0[j].y(0);
                     Scalar svv = y0[i].y(1) * y0[j].y(1);
 
+                    Eigen::Index last_eta = 3;
+                    Eigen::Index last_eta_increment = 3;
                     for (Index n = 0; n < MATSLISE_INTEGRATE_delta; ++n) {
-                        if (n <= MATSLISE_INTEGRATE_delta - hmax) {
+                        if (last_eta < MATSLISE_INTEGRATE_delta) {
+                            if (n % 2 == 0 && n > 0) {
+                                last_eta += last_eta_increment;
+                                ++last_eta_increment;
+                            }
+
+                            Matrix<Scalar, -1, 1, Eigen::ColMajor, MATSLISE_ETA_delta * MATSLISE_ETA_delta, 1> coln
+                                    = (suu * uu + suv * uv + svu * vu + svv * vv).matrix().col(n).head(last_eta);
+                            for (Index m = 0; m < hmax && m + n < MATSLISE_INTEGRATE_delta; ++m) {
+                                quadratures(m) += coln.dot(eta.col(m + n).head(last_eta).matrix());
+                            }
+                        } else if (n <= MATSLISE_INTEGRATE_delta - hmax) {
                             quadratures += (
                                     (suu * uu + suv * uv + svu * vu + svv * vv).matrix()
                                             .template block<MATSLISE_ETA_delta * MATSLISE_ETA_delta, 1>(0, n)
@@ -157,7 +170,7 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
                                     = (suu * uu + suv * uv + svu * vu + svv * vv).matrix().col(n);
                             for (Index m = 0; m < hmax && m + n < MATSLISE_INTEGRATE_delta; ++m) {
                                 quadratures(m) += coln.dot(
-                                        eta.template block<MATSLISE_ETA_delta * MATSLISE_ETA_delta, 1>(0, m+n)
+                                        eta.template block<MATSLISE_ETA_delta * MATSLISE_ETA_delta, 1>(0, m + n)
                                                 .matrix());
                             }
                         }

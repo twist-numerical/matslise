@@ -11,7 +11,13 @@
 
 
 inline constexpr Eigen::Index ETA_index(Eigen::Index i, Eigen::Index j) {
-    return i + (j * MATSLISE_ETA_delta);
+    Eigen::Index n = i + j;
+    Eigen::Index t = n * (n + 1) / 2 + i; //i + (j * MATSLISE_ETA_delta);
+    if (i + j >= MATSLISE_ETA_delta) {
+        Eigen::Index k = i + j - MATSLISE_ETA_delta + 1;
+        t -= k * k;
+    }
+    return t;
 }
 
 template<typename Scalar, Eigen::Index N>
@@ -25,9 +31,10 @@ Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> et
 
     for (int i = 0; i < MATSLISE_ETA_delta; ++i)
         for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
+            Eigen::Index ij = ETA_index(i, j);
             for (int ni = 0; ni < MATSLISE_HMAX_delta; ++ni)
                 for (int nj = 0; nj < MATSLISE_HMAX_delta && ni + nj < N; ++nj)
-                    uv(ETA_index(i, j), ni + nj) += u(i, ni) * v(j, nj);
+                    uv(ij, ni + nj) += u(i, ni) * v(j, nj);
         }
     return uv;
 }
