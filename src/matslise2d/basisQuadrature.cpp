@@ -109,19 +109,19 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
         Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Dynamic>
                 uv = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(u, v);
         Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Dynamic>
-                vu = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(v, u);
-        Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Dynamic>
                 vv = etaProduct<Scalar, MATSLISE_INTEGRATE_delta>(v, v);
+        Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Dynamic>
+                vu(MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_INTEGRATE_delta);
 
-        std::vector<matslise::Y<Scalar>> y0;
+        for (Index i = 0; i < MATSLISE_ETA_delta; ++i)
+            for (Index j = 0; j < MATSLISE_ETA_delta; ++j)
+                vu.row(ETA_index(j, i)) = uv.row(ETA_index(i, j));
+
+        std::vector<std::pair<Scalar, Scalar>> y0;
         y0.reserve(N);
         for (auto &f : sector2d.eigenfunctions) {
-            if (sector1d->backward) {
-                y0.emplace_back(f(sector1d->max));
-                y0.back().reverse();
-            } else {
-                y0.emplace_back(f(sector1d->min));
-            }
+            Y<Scalar> y = f(sector1d->backward ? sector1d->max : sector1d->min);
+            y0.emplace_back(y.y(0), sector1d->backward ? -y.y(1) : y.y(1));
         }
 
         for (int i = 0; i < N; ++i)
@@ -139,10 +139,10 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
 
                 Array<Scalar, hmax, 1> quadratures = Array<Scalar, hmax, 1>::Zero();
                 {
-                    Scalar suu = y0[i].y(0) * y0[j].y(0);
-                    Scalar suv = y0[i].y(0) * y0[j].y(1);
-                    Scalar svu = y0[i].y(1) * y0[j].y(0);
-                    Scalar svv = y0[i].y(1) * y0[j].y(1);
+                    Scalar suu = y0[i].first * y0[j].first;
+                    Scalar suv = y0[i].first * y0[j].second;
+                    Scalar svu = y0[i].second * y0[j].first;
+                    Scalar svv = y0[i].second * y0[j].second;
 
                     Eigen::Index last_eta = 3;
                     Eigen::Index last_eta_increment = 3;
