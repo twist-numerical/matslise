@@ -193,6 +193,8 @@ namespace matslise {
     public:
         class Sector {
         public:
+            static const bool expensive = true;
+
             const Matslise2D<Scalar> *se2d;
             std::shared_ptr<AbstractMatslise<Scalar>> matslise;
             std::shared_ptr<AbstractBasisQuadrature<Scalar>> quadratures;

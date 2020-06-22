@@ -176,6 +176,8 @@ namespace matslise {
     public:
         class Sector {
         public:
+            static const bool expensive = false;
+
             Eigen::Array<Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta, Eigen::DontAlign> t_coeff;
             Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> t_coeff_h[MATSLISE_ETA_h];
             const Matslise<Scalar> *s;

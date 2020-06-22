@@ -79,12 +79,11 @@ namespace matslise {
 
         template<typename Problem>
         typename Problem::Sector *automaticNextSector(
-                const Problem *ms, const typename Problem::Scalar &_h,
+                const Problem *ms, typename Problem::Scalar &h,
                 const typename Problem::Scalar &left, const typename Problem::Scalar &right,
                 const typename Problem::Scalar &tolerance, bool forward) {
             typedef typename Problem::Scalar Scalar;
             typedef typename Problem::Sector Sector;
-            Scalar h = _h;
             Scalar xmin = forward ? left : right - h;
             Scalar xmax = forward ? left + h : right;
             if (forward && xmax > right) {
@@ -114,35 +113,45 @@ namespace matslise {
                 error = s->error();
                 // cout << "(h: " << h << ", error: " << error << ") ";
             } while (error > tolerance && steps < 10 && h > 1e-5);
-            if (steps == 0) {
-                while (error < tolerance / 2 && steps < 10 && h != right - left) {
-                    ++steps;
+            if constexpr(Sector::expensive) {
+                if (error < tolerance / 2) {
                     if (error <= 0) {
-                        // rare edge cases
-                        xmin = left;
-                        xmax = right;
+                        h = right - left;
                     } else {
                         h *= pow(tolerance / error, 1. / (Problem::order - 1));
-                        if (forward) {
-                            xmax = xmin + h;
-                            if (xmax > right)
-                                xmax = right;
-                        } else {
-                            xmin = xmax - h;
-                            if (xmin < left)
-                                xmin = left;
-                        }
                     }
-                    h = xmax - xmin;
-                    auto *newSector = refineSector<Scalar, Problem>(*s, ms, xmin, xmax, !forward);
-                    error = newSector->error();
-                    // cout << "(h: " << h << ", error: " << error << ") ";
-                    if (error > tolerance) {
-                        delete newSector;
-                        break;
-                    } else {
-                        delete s;
-                        s = newSector;
+                }
+            } else {
+                if (steps == 0) {
+                    while (error < tolerance / 2 && steps < 10 && h != right - left) {
+                        ++steps;
+                        if (error <= 0) {
+                            // rare edge cases
+                            xmin = left;
+                            xmax = right;
+                        } else {
+                            h *= pow(tolerance / error, 1. / (Problem::order - 1));
+                            if (forward) {
+                                xmax = xmin + h;
+                                if (xmax > right)
+                                    xmax = right;
+                            } else {
+                                xmin = xmax - h;
+                                if (xmin < left)
+                                    xmin = left;
+                            }
+                        }
+                        h = xmax - xmin;
+                        auto *newSector = refineSector<Scalar, Problem>(*s, ms, xmin, xmax, !forward);
+                        error = newSector->error();
+                        // cout << "(h: " << h << ", error: " << error << ") ";
+                        if (error > tolerance) {
+                            delete newSector;
+                            break;
+                        } else {
+                            delete s;
+                            s = newSector;
+                        }
                     }
                 }
             }
@@ -159,20 +168,21 @@ namespace matslise {
                 std::vector<typename Problem::Sector *> forward;
                 std::vector<typename Problem::Sector *> backward;
                 // It shouldn't be the true middle
-                typename Problem::Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
-                typename Problem::Scalar h = .33 * (max - min);
-                forward.push_back(automaticNextSector(problem, h, min, mid, tolerance, true));
-                backward.push_back(automaticNextSector(problem, h, mid, max, tolerance, false));
+                Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
+                Scalar forwardH = .33 * (max - min);
+                Scalar backwardH = forwardH;
+                forward.push_back(automaticNextSector(problem, forwardH, min, mid, tolerance, true));
+                backward.push_back(automaticNextSector(problem, backwardH, mid, max, tolerance, false));
 
 
                 while (forward.back()->max != backward.back()->min) {
                     if (Sector::compare(*backward.back(), *forward.back()))
                         forward.push_back(automaticNextSector(
-                                problem, forward.back()->max - forward.back()->min, forward.back()->max,
+                                problem, forwardH, forward.back()->max,
                                 backward.back()->min, tolerance, true));
                     else
                         backward.push_back(automaticNextSector(
-                                problem, backward.back()->max - backward.back()->min, forward.back()->max,
+                                problem, backwardH, forward.back()->max,
                                 backward.back()->min, tolerance, false));
                 }
 
