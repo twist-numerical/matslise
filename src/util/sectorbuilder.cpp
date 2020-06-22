@@ -134,6 +134,7 @@ typename Problem::Sector *automaticNextSector(
                 error = newSector->error();
 
                 if (error > tolerance) {
+                    h = s->max - s->min;
                     delete newSector;
                     break;
                 } else {
