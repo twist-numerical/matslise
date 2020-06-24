@@ -30,10 +30,26 @@ void testTrapezoidal(const function<double(double)> &f, const function<double(do
         CHECK(Approx(trapezoidal::adaptive(f, a, b, 1e-10)).margin(1e-10) == (integral(b) - integral(a)));
 }
 
-TEST_CASE("adaptive sin(x)", "[util][trapezoidal]") {
+TEST_CASE("adaptive sin(x) (trapezoidal)", "[util][trapezoidal]") {
     for (double a = -20; a < 10; a += 3.94) {
         for (double b = a + .1; b < 15; b += 3.941) {
             testTrapezoidal(
+                    [](double x) { return sin(x); },
+                    [](double x) { return -cos(x); },
+                    a, b);
+        }
+    }
+}
+
+
+void testGaussKonrod(const function<double(double)> &f, const function<double(double)> &integral, double a, double b) {
+    CHECK(Approx(gauss_konrod::adaptive(f, a, b, 1e-10)).margin(1e-10) == (integral(b) - integral(a)));
+}
+
+TEST_CASE("adaptive sin(x) (gaussKonrod)", "[util][gaussKonrod]") {
+    for (double a = -20; a < 10; a += 3.94) {
+        for (double b = a + .1; b < 15; b += 3.941) {
+            testGaussKonrod(
                     [](double x) { return sin(x); },
                     [](double x) { return -cos(x); },
                     a, b);

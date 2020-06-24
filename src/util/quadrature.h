@@ -50,6 +50,17 @@ namespace quadrature {
         }
     }
 
+    namespace gauss_konrod {
+        template<typename Scalar, typename Value=Scalar, bool bulk = false>
+        Value adaptive(
+                const std::function<typename std::conditional<bulk, Eigen::Array<Value, Eigen::Dynamic, 1>, Value>::type(
+                        const typename std::conditional<bulk, Eigen::Array<Scalar, Eigen::Dynamic, 1>, Scalar>::type &)> &f,
+                Scalar a, Scalar b, const Scalar &tolerance,
+                const std::function<Scalar(const Value &)> &error = [](const Value &x) -> Scalar {
+                    return abs(x);
+                });
+    }
+
     namespace trapezoidal {
         template<typename Scalar, typename Value=Scalar>
         Value adaptive(const std::function<Value(Scalar)> &f, Scalar a, Scalar b,
