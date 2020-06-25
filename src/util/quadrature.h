@@ -51,6 +51,17 @@ namespace quadrature {
     }
 
     namespace gauss_konrod {
+        template<typename Scalar, typename Value=Scalar>
+        inline std::pair<Value, Scalar> applyGaussKonrod(
+                const std::function<Eigen::Array<Value, Eigen::Dynamic, 1>(
+                        const Eigen::Array<Scalar, Eigen::Dynamic, 1> &)> &f, Scalar a, Scalar b,
+                const std::function<Scalar(const Value &)> &error);
+
+        template<typename Scalar, typename Value=Scalar>
+        inline std::pair<Value, Scalar> applyGaussKonrod(
+                const std::function<Value(const Scalar &)> &f, Scalar a, Scalar b,
+                const std::function<Scalar(const Value &)> &error);
+
         template<typename Scalar, typename Value=Scalar, bool bulk = false>
         Value adaptive(
                 const std::function<typename std::conditional<bulk, Eigen::Array<Value, Eigen::Dynamic, 1>, Value>::type(

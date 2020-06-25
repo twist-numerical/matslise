@@ -29,19 +29,44 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
     matchIndex = sectorsBuild.matchIndex;
     sectorCount = sectors.size();
 
-
+/*
+    vector<MatrixXs> altM;
     ArrayXs grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
-    M.reserve(sectorCount - 1);
+    altM.reserve(sectorCount - 1);
     ArrayXXs basis[2]{ArrayXXs(), sectors[0]->template basis<false>(grid)};
     for (int k = 0; k < sectorCount - 1; ++k) {
         basis[k & 1] = sectors[k + 1]->template basis<false>(grid);
 
-        M.emplace_back(N, N);
+        altM.emplace_back(N, N);
 
         for (int i = 0; i < N; ++i)
             for (int j = 0; j < N; ++j)
-                M.back()(i, j) = lobatto::quadrature<Scalar>(
+                altM.back()(i, j) = lobatto::quadrature<Scalar>(
                         grid, basis[k & 1].col(i) * basis[1 - (k & 1)].col(j));
+    }
+*/
+
+    M.reserve(sectorCount - 1);
+
+    map<pair<int, int>, ArrayXs> prev;
+    map<pair<int, int>, ArrayXs> next;
+    for (int k = 0; k < sectorCount - 1; ++k) {
+        next.clear();
+
+        M.push_back(move(
+                gauss_konrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
+                    ArrayXXs prevBasis = sectors[k]->template basis<false>(x);
+                    ArrayXXs nextBasis = sectors[k + 1]->template basis<false>(x);
+
+                    Array<MatrixXs, Dynamic, 1> result(x.size());
+                    for (Index i = 0; i < x.size(); ++i) {
+                        result(i) = nextBasis.row(i).matrix().transpose() * prevBasis.row(i).matrix();
+                    }
+                    return result;
+                }, domain.getMin(0), domain.getMax(0), 1e-8, [&](const MatrixXs &v) {
+                    return v.maxCoeff();
+                })
+        ));
     }
 }
 
