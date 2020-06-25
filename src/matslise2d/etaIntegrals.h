@@ -83,7 +83,7 @@ Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> integrateEtaTaylor(
     Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> I
             = Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2>::Zero();
 
-    Scalar *eta = calculateEta<Scalar>(delta * delta * dZ1, 2);
+    Eigen::Array<Scalar, 2, 1> eta = calculateEta<Scalar, 2>(delta * delta * dZ1);
 
     Scalar xi_i = 0;
     Scalar eta0_i = 0;
@@ -103,14 +103,7 @@ Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> integrateEtaTaylor(
             I(i - 2 * k, 1) += dZ2k * taylor[k] * eta0_i;
         }
     }
-/*
-    for (int k = 0; k <= degree; ++k) {
-        std::cout << taylor[k] << ", ";
-    }
-    std::cout << std::endl;
 
-    std::cout << "\n" << I.transpose() << std::endl;
-*/
     return I;
 }
 
@@ -247,25 +240,20 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
         Scalar I000, I101, I011, I112;
 
         if (equal) {
-            Scalar *eta = calculateEta<Scalar>(delta * delta * dZ1, 2);
+            Eigen::Array<Scalar, 2, 1> eta = calculateEta<Scalar, 2>(delta * delta * dZ1);
 
             I(ETA_index(0, 0), 0) = I000 = (delta * eta[0] * eta[1] + delta) / 2;
             I(ETA_index(0, 1), 1) = I(ETA_index(1, 0), 1) = I101 = I011 = (eta[0] * eta[0] - 1) / (2 * dZ1);
             I(ETA_index(1, 1), 2) = I112 = (delta * eta[0] * eta[1] - delta) / (2 * dZ1);
-
-            delete[] eta;
         } else {
             Scalar denominator = 1 / (dZ1 - dZ2);
-            Scalar *eta1 = calculateEta<Scalar>(Z1, 2);
-            Scalar *eta2 = calculateEta<Scalar>(Z2, 2);
+            Eigen::Array<Scalar, 2, 1> eta1 = calculateEta<Scalar, 2>(Z1);
+            Eigen::Array<Scalar, 2, 1> eta2 = calculateEta<Scalar, 2>(Z2);
 
             I(ETA_index(0, 0), 0) = I000 = denominator * delta * (dZ1 * eta1[1] * eta2[0] - dZ2 * eta1[0] * eta2[1]);
             I(ETA_index(1, 0), 1) = I101 = denominator * (eta1[0] * eta2[0] - Z2 * eta1[1] * eta2[1] - 1);
             I(ETA_index(0, 1), 1) = I011 = -denominator * (eta1[0] * eta2[0] - Z1 * eta1[1] * eta2[1] - 1);
             I(ETA_index(1, 1), 2) = I112 = denominator * delta * (eta1[0] * eta2[1] - eta1[1] * eta2[0]);
-
-            delete[] eta1;
-            delete[] eta2;
         }
 
         int lastN = 100;// MATSLISE_INTEGRATE_delta - 3;

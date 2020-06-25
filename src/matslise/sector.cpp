@@ -46,7 +46,7 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &de
 
     const Scalar dd = delta * delta;
     const Scalar vsE = vs[0] - E;
-    Scalar *eta = calculateEta(vsE * dd, MATSLISE_ETA_delta);
+    Array<Scalar, MATSLISE_ETA_delta, 1> eta = calculateEta<Scalar, MATSLISE_ETA_delta>(vsE * dd);
     T<Scalar> t(1);
     t.t << 0, 0, vsE * delta * eta[1], 0;
     t.dt << 0, 0, -delta * eta[1] - vsE * dd * delta * eta[2] / 2, 0;
@@ -59,7 +59,6 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &de
             t.dt += hor * (-dd * eta[i + 1] / 2);
     }
 
-    delete[] eta;
     return t;
 }
 
@@ -67,7 +66,7 @@ template<typename Scalar>
 T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
-    Scalar *eta = calculateEta((vs[0] - E) * h * h, MATSLISE_ETA_h);
+    Array<Scalar, MATSLISE_ETA_h, 1> eta = calculateEta<Scalar, MATSLISE_ETA_h>((vs[0] - E) * h * h);
     T<Scalar> t(1);
     t.t << 0, 0, (vs[0] - E) * h * eta[1], 0;
     t.dt << 0, 0, -h * eta[1] + -(vs[0] - E) * h * h * h * eta[2] / 2, 0;
@@ -78,7 +77,7 @@ T<Scalar> Matslise<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) cons
         if (i + 1 < MATSLISE_ETA_h)
             t.dt += t_coeff_h[i] * (-h * h * eta[i + 1] / 2);
     }
-    delete[] eta;
+
     return t;
 }
 

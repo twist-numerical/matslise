@@ -28,23 +28,8 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     sectorCount = sectors.size();
-
-/*
-    vector<MatrixXs> altM;
-    ArrayXs grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
-    altM.reserve(sectorCount - 1);
-    ArrayXXs basis[2]{ArrayXXs(), sectors[0]->template basis<false>(grid)};
-    for (int k = 0; k < sectorCount - 1; ++k) {
-        basis[k & 1] = sectors[k + 1]->template basis<false>(grid);
-
-        altM.emplace_back(N, N);
-
-        for (int i = 0; i < N; ++i)
-            for (int j = 0; j < N; ++j)
-                altM.back()(i, j) = lobatto::quadrature<Scalar>(
-                        grid, basis[k & 1].col(i) * basis[1 - (k & 1)].col(j));
-    }
-*/
+    for (auto &sector : sectors)
+        sector->quadratures.reset();
 
     M.reserve(sectorCount - 1);
 
@@ -52,7 +37,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
     map<pair<int, int>, ArrayXXs> next;
     Scalar xWidth = domain.template getMax<0>() - domain.template getMin<0>();
     for (int k = 0; k < sectorCount - 1; ++k) {
-        if(k > 0) {
+        if (k > 0) {
             prev = std::move(next);
             next.clear();
         }
@@ -72,7 +57,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                         result(i) = nextBasis.row(i).matrix().transpose() * prevBasis.row(i).matrix();
                     }
                     return result;
-                }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [&](const MatrixXs &v) {
+                }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [](const MatrixXs &v) {
                     return v.maxCoeff();
                 })
         ));

@@ -26,9 +26,9 @@ template<>
 inline const int CalculateEtaData<boost::multiprecision::float128>::taylor_degree = 15;
 #endif
 
-template<typename Scalar>
-Scalar *calculateEta(Scalar Z, int etaCount) {
-    Scalar *eta;
+template<typename Scalar, int n>
+Eigen::Array<Scalar, n, 1> calculateEta(Scalar Z) {
+    Eigen::Array<Scalar, n, 1> eta;
     if (abs(Z) < 0.5) {
         Scalar e9 = 0, e8 = 0;
         Scalar z = 1;
@@ -37,17 +37,26 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
             e9 += z * CalculateEtaData<Scalar>::taylor_eta9[i];
         }
 
-        eta = new Scalar[11]{0, 0, 0, 0, 0, 0, 0, 0, 0, e8, e9};
-        for (int i = 8; i >= 0; --i)
-            eta[i] = Z * eta[i + 2] + (2 * i + 1) * eta[i + 1];
+        if constexpr(n > 10)
+            eta[10] = e9;
+        if constexpr(n > 9)
+            eta[9] = e8;
+
+        Scalar eta_prev = e9;
+        Scalar eta_curr = e8;
+        for (int i = 8; i >= 0; --i) {
+            Scalar tmp = eta_curr;
+            eta_curr = Z * eta_prev + (2 * i + 1) * eta_curr;
+            eta_prev = tmp;
+            if (i < n)
+                eta[i] = eta_curr;
+        }
 
     } else {
-        eta = new Scalar[etaCount];
-
         if (Z > 0) {
             if (Z > 500) {
                 // The calculated results will probably be inaccurate
-                // std::cerr << ("Z > 500") << std::endl;
+                // std::    cerr << ("Z > 500") << std::endl;
             }
             Scalar sZ = sqrt(Z);
             eta[0] = cosh(sZ);
@@ -58,7 +67,7 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
             eta[1] = sin(sZ) / sZ;
         }
 
-        for (int i = 2; i < etaCount; ++i) {
+        for (int i = 2; i < n; ++i) {
             eta[i] = (eta[i - 2] - (2 * i - 3) * eta[i - 1]) / Z;
         }
     }
@@ -66,20 +75,12 @@ Scalar *calculateEta(Scalar Z, int etaCount) {
     return eta;
 }
 
-template<typename Scalar>
-Eigen::Array<Scalar, Eigen::Dynamic, 1> *calculateEta(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &Z, int etaCount) {
-    auto *eta = new Eigen::Array<Scalar, Eigen::Dynamic, 1>[etaCount];
-    for (int j = 0; j < etaCount; ++j)
-        eta[j].resize(Z.size(), 1);
+template<typename Scalar, int n>
+Eigen::Array<Scalar, n, Eigen::Dynamic> calculateEta(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &Z) {
+    Eigen::Array<Scalar, n, Eigen::Dynamic> eta(n, Z.size());
 
-    for (int i = 0; i < Z.size(); ++i) {
-        Scalar *eta_i = calculateEta<Scalar>(Z[i], etaCount);
-
-        for (int j = 0; j < etaCount; ++j)
-            eta[j][i] = eta_i[j];
-
-        delete[] eta_i;
-    }
+    for (int i = 0; i < Z.size(); ++i)
+        eta.col(i) = calculateEta<Scalar, n>(Z[i]);
 
     return eta;
 }
