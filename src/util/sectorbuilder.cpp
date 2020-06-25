@@ -81,32 +81,31 @@ typename Problem::Sector *automaticNextSector(
         xmin = left;
     }
     h = xmax - xmin;
-    Sector *s = nullptr;
-    Scalar error = 1;
     int steps = 0;
-    do {
-        if (s != nullptr) {
-            ++steps;
-            h *= std::max(Scalar(.1), Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
-            if (forward) {
-                xmax = xmin + h;
-            } else {
-                xmin = xmax - h;
-            }
-            Sector *prevSector = s;
-            s = refineSector<Scalar, Problem>(*prevSector, ms, xmin, xmax, !forward);
-            delete prevSector;
+    Sector *s = new Sector(ms, xmin, xmax, !forward);
+    Scalar error = s->error();
+    while (error > tolerance && steps < 10 && h > 1e-5) {
+        ++steps;
+        h *= std::max(Scalar(.1), Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
+        if (forward) {
+            xmax = xmin + h;
         } else {
-            s = new Sector(ms, xmin, xmax, !forward);
+            xmin = xmax - h;
         }
+        Sector *prevSector = s;
+        s = refineSector<Scalar, Problem>(*prevSector, ms, xmin, xmax, !forward);
+        h = xmax - xmin;
+        delete prevSector;
         error = s->error();
-    } while (error > tolerance && steps < 10 && h > 1e-5);
+    }
     if constexpr(Sector::expensive) {
         if (error < tolerance / 2) {
             if (error <= 0) {
                 h = right - left;
             } else {
                 h *= pow(tolerance / error, 1. / (Problem::order - 1));
+                if (h > right - left)
+                    h = right - left;
             }
         }
     } else {
