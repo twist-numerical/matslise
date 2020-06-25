@@ -2,6 +2,7 @@
 #define MATSLISE_QUADRATURE_H
 
 #include <stack>
+#include <tuple>
 #include "eigen.h"
 
 

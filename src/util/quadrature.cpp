@@ -1,4 +1,5 @@
 #include "./quadrature.h"
+#include <vector>
 
 using namespace Eigen;
 using namespace quadrature;
@@ -26,7 +27,7 @@ namespace quadrature::gauss_konrod {
             << 0.030753241996117268354628393577204, 0.070366047488108124709267416450667, 0.107159220467171935011869546685869, 0.139570677926154314447804794511028, 0.166269205816993933553200860481209, 0.186161000015562211026800561866423, 0.198431485327111576456118326443839, 0.202578241925561272880620199967519, 0.198431485327111576456118326443839, 0.186161000015562211026800561866423, 0.166269205816993933553200860481209, 0.139570677926154314447804794511028, 0.107159220467171935011869546685869, 0.070366047488108124709267416450667, 0.030753241996117268354628393577204
     ).finished();
 
-    template<typename Scalar, typename Value=Scalar>
+    template<typename Scalar, typename Value>
     inline std::pair<Value, Scalar> applyGaussKonrod(
             const std::function<Eigen::Array<Value, Eigen::Dynamic, 1>(
                     const Eigen::Array<Scalar, Eigen::Dynamic, 1> &)> &f, Scalar a, Scalar b,
@@ -54,7 +55,7 @@ namespace quadrature::gauss_konrod {
         return {valueKonrad, error((valueKonrad - valueGauss))};
     }
 
-    template<typename Scalar, typename Value=Scalar>
+    template<typename Scalar, typename Value>
     inline std::pair<Value, Scalar> applyGaussKonrod(
             const std::function<Value(const Scalar &)> &f, Scalar a, Scalar b,
             const std::function<Scalar(const Value &)> &error) {
