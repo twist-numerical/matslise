@@ -48,22 +48,31 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 
     M.reserve(sectorCount - 1);
 
-    map<pair<int, int>, ArrayXs> prev;
-    map<pair<int, int>, ArrayXs> next;
+    map<pair<int, int>, ArrayXXs> prev;
+    map<pair<int, int>, ArrayXXs> next;
+    Scalar xWidth = domain.template getMax<0>() - domain.template getMin<0>();
     for (int k = 0; k < sectorCount - 1; ++k) {
-        next.clear();
+        if(k > 0) {
+            prev = std::move(next);
+            next.clear();
+        }
 
         M.push_back(move(
                 gauss_konrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
-                    ArrayXXs prevBasis = sectors[k]->template basis<false>(x);
-                    ArrayXXs nextBasis = sectors[k + 1]->template basis<false>(x);
+                    int depth = round(log2(xWidth / (x[x.size() - 1] - x[0])));
+                    int offset = round((x[0] - domain.template getMin<0>()) / (xWidth / (1 << depth)));
+                    pair<int, int> key{depth, offset};
+                    if (prev.find(key) == prev.end())
+                        prev[key] = sectors[k]->template basis<false>(x);
+                    const ArrayXXs &prevBasis = prev[key];
+                    const ArrayXXs &nextBasis = next[key] = sectors[k + 1]->template basis<false>(x);
 
                     Array<MatrixXs, Dynamic, 1> result(x.size());
                     for (Index i = 0; i < x.size(); ++i) {
                         result(i) = nextBasis.row(i).matrix().transpose() * prevBasis.row(i).matrix();
                     }
                     return result;
-                }, domain.getMin(0), domain.getMax(0), 1e-8, [&](const MatrixXs &v) {
+                }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [&](const MatrixXs &v) {
                     return v.maxCoeff();
                 })
         ));
