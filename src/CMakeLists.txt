@@ -27,7 +27,7 @@ SET(MATSLISE_SRC
         matscs/matscs.cpp matscs/sector.cpp
         matslise2d/halfrange.cpp matslise2d/eigenvalues.cpp matslise2d/eigenfunctions.cpp
         matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp schrodinger.h
-        util/legendre.cpp util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
+        util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_SRC})
