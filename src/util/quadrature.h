@@ -72,41 +72,6 @@ namespace quadrature {
                     return abs(x);
                 });
     }
-
-    namespace trapezoidal {
-        template<typename Scalar, typename Value=Scalar>
-        Value adaptive(const std::function<Value(Scalar)> &f, Scalar a, Scalar b,
-                       const Scalar &tolerance,
-                       const std::function<Scalar(const Value &)> error = [](const Value &x) -> Scalar {
-                           return abs(x);
-                       }) {
-            std::stack<std::tuple<Scalar, Value, Scalar, Value>> todo;
-            Scalar l = b - a;
-            todo.push({a, f(a), b, f(b)});
-            Value fa, fb;
-            Value result;
-            bool resultInitialized = false;
-            while (!todo.empty()) {
-                std::tie(a, fa, b, fb) = todo.top();
-                todo.pop();
-                Scalar c = (a + b) / 2;
-                Value fc = f(c);
-                Value estimate = (b - a) / 6 * (fa + 4 * fc + fb);
-                if (error(estimate - (b - a) / 4 * (fa + 2 * fc + fb)) < tolerance / l * (b - a)) {
-                    if (resultInitialized)
-                        result += estimate;
-                    else {
-                        result = estimate;
-                        resultInitialized = true;
-                    }
-                } else {
-                    todo.push({a, fa, c, fc});
-                    todo.push({c, fc, b, fb});
-                }
-            }
-            return result;
-        };
-    }
 }
 
 #endif
