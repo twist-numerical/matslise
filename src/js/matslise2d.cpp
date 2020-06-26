@@ -20,16 +20,18 @@ void bind_matslise2d() {
                       }))
             .function("computeEigenfunction",
                       optional_override(
-                              [](const AbstractMatslise2D<double> &se2d, double E, const val &x, const val &y) -> val {
-                                  vector<ArrayXXd> result = se2d.eigenfunction(E, val2ArrayXd(x), val2ArrayXd(y));
-                                  val r = val::array();
-                                  for (ArrayXXd &eigenfunction : result)
-                                      r.call<val>("push", ArrayXXd2val(eigenfunction));
-                                  return r;
+                              [](const AbstractMatslise2D<double> &se2d, double E, const val &_x,
+                                 const val &_y) -> val {
+                                  ArrayXd x = val2ArrayXd(_x);
+                                  ArrayXd y = val2ArrayXd(_y);
+                                  val result = val::array();
+                                  for (const auto &f : se2d.eigenfunction(E))
+                                      result.call<val>("push", ArrayXXd2val(f(x, y)));
+                                  return result;
                               }))
             .function("eigenfunction", optional_override(
                     [](const AbstractMatslise2D<double> &se2d, double E) -> val {
-                        std::vector<std::function<double(double, double)>> calculators = se2d.eigenfunction(E);
+                        std::vector<Eigenfunction2D<>> calculators = se2d.eigenfunction(E);
                         val r = val::array();
                         for (const auto &f : calculators)
                             r.call<val>("push", val::global("Function")
@@ -37,7 +39,7 @@ void bind_matslise2d() {
                                             "var f = function(x, y) { return calculator.eval(x, y); };"
                                             "f.delete = function() { calculator.delete(); };"
                                             "return f;")
-                                    )(f));
+                                    )((std::function<double(double, double)>) f));
                         return r;
                     }));
 

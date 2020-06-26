@@ -102,70 +102,73 @@ Scalar Matslise2D<Scalar>::Sector::error() const {
 }
 
 template<typename Scalar>
-template<bool withDerivative, typename diffType>
-diffType Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::ArrayXs &x) const {
+template<bool withDerivatives>
+typename std::conditional<withDerivatives,
+        std::pair<typename Matslise2D<Scalar>::ArrayXXs, typename Matslise2D<Scalar>::ArrayXXs>,
+        typename Matslise2D<Scalar>::ArrayXXs>::type
+Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::ArrayXs &x) const {
     Eigen::Index size = x.size();
 
     ArrayXXs b(size, se2d->N);
-    ArrayXXs b_x(size, se2d->N);
+    ArrayXXs b_x;
+    if constexpr(withDerivatives)
+        b_x.resize(size, se2d->N);
     for (int i = 0; i < se2d->N; ++i) {
         Array<Y<Scalar>, Dynamic, 1> ys = eigenfunctions[i](x);
         b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                 [](const Y<Scalar> &y) -> Scalar {
                     return y.y[0];
                 });
-        if constexpr(withDerivative)
+        if constexpr(withDerivatives)
             b_x.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                     [](const Y<Scalar> &y) -> Scalar {
                         return y.y[1];
                     });
     }
-    if constexpr(withDerivative)
+    if constexpr(withDerivatives)
         return {b, b_x};
     else
         return b;
 }
 
 template<typename Scalar>
-template<bool withDerivative, typename diffType>
-function<diffType(Scalar)> Matslise2D<Scalar>::Sector::basis() const {
-    return [this](const Scalar &x) -> diffType {
-        ArrayXs b(this->eigenfunctions.size());
-        ArrayXs b_x(this->eigenfunctions.size());
+template<bool withDerivatives>
+typename std::conditional<withDerivatives,
+        std::pair<typename Matslise2D<Scalar>::ArrayXs, typename Matslise2D<Scalar>::ArrayXs>,
+        typename Matslise2D<Scalar>::ArrayXs>::type
+Matslise2D<Scalar>::Sector::basis(const Scalar &x) const {
+    ArrayXs b(this->eigenfunctions.size());
+    ArrayXs b_x;
+    if constexpr(withDerivatives)
+        b_x.resize(this->eigenfunctions.size());
 
-        for (int i = 0; i < static_cast<int>(this->eigenfunctions.size()); ++i) {
-            Y<Scalar> y = this->eigenfunctions[static_cast<size_t>(i)](x);
-            b[i] = y.y[0];
-            if constexpr (withDerivative)
-                b_x[i] = y.y[1];
-        }
-        if constexpr (withDerivative)
-            return {b, b_x};
-        else
-            return b;
-    };
+    for (Index i = 0; i < this->se2d->N; ++i) {
+        Y<Scalar> y = this->eigenfunctions[i](x);
+        b[i] = y.y[0];
+        if constexpr (withDerivatives)
+            b_x[i] = y.y[1];
+    }
+    if constexpr (withDerivatives)
+        return {b, b_x};
+    else
+        return b;
 }
 
 #define INSTANTIATE_PROPAGATE(Scalar, r) \
 template Y<Scalar, Dynamic, r> \
 Matslise2D<Scalar>::Sector::propagate<r>( \
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
+        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &, const Scalar &, const Scalar &, bool) const;
 
 #define INSTANTIATE_BASIS(Scalar, r) \
-template function<std::conditional<r, \
+template std::conditional<r, \
         std::pair<Matslise2D<Scalar>::ArrayXs, Matslise2D<Scalar>::ArrayXs>, \
-        Matslise2D<Scalar>::ArrayXs>::type(Scalar)> \
-Matslise2D<Scalar>::Sector::basis<r, std::conditional<r, \
-    std::pair<Matslise2D<Scalar>::ArrayXs, Matslise2D<Scalar>::ArrayXs>, \
-    Matslise2D<Scalar>::ArrayXs>::type>() const; \
+        Matslise2D<Scalar>::ArrayXs>::type \
+Matslise2D<Scalar>::Sector::basis<r>(const Scalar &) const; \
 template std::conditional<r, \
         pair<Matslise2D<Scalar>::ArrayXXs, Matslise2D<Scalar>::ArrayXXs>, \
         Matslise2D<Scalar>::ArrayXXs \
     >::type \
-Matslise2D<Scalar>::Sector::basis<r, std::conditional<r, \
-        pair<Matslise2D<Scalar>::ArrayXXs, Matslise2D<Scalar>::ArrayXXs>, \
-        Matslise2D<Scalar>::ArrayXXs \
-    >::type>(const Matslise2D<Scalar>::ArrayXs &x) const;
+Matslise2D<Scalar>::Sector::basis<r>(const Matslise2D<Scalar>::ArrayXs &) const;
 
 #define INSTANTIATE_MORE(Scalar)\
 INSTANTIATE_PROPAGATE(Scalar, 1)\

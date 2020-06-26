@@ -40,7 +40,10 @@ Estimate an error of a given eigenvalue by using a lower order method.
             .def("eigenfunction",
                  [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
                          -> vector<ArrayXXd> {
-                     return se2d.eigenfunction(E, x, y);
+                     vector<ArrayXXd> result;
+                     for (auto &f : se2d.eigenfunction(E))
+                         result.push_back(f(x, y));
+                     return result;
                  }, R""""(\
 Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
 
@@ -49,8 +52,11 @@ Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the
 :returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
 )"""", py::arg("E"), py::arg("x"), py::arg("y"))
             .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<double(double, double)>> {
-                     return se2d.eigenfunction(E);
+                 [](const Matslise2D<> &se2d, double E) -> vector<function<double(double, double)>> {
+                     vector<function<double(double, double)>> result;
+                     for (auto &f : se2d.eigenfunction(E))
+                         result.push_back(f);
+                     return result;
                  }, R""""(\
 Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
 
@@ -60,8 +66,11 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 )"""", py::arg("E"))
             .def("eigenfunctionDerivatives",
                  [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
-                         -> vector<std::tuple<ArrayXXd, ArrayXXd, ArrayXXd>> {
-                     return se2d.eigenfunctionDerivatives(E, x, y);
+                         -> vector<tuple<ArrayXXd, ArrayXXd, ArrayXXd>> {
+                     vector<tuple<ArrayXXd, ArrayXXd, ArrayXXd>> result;
+                     for (auto &f : se2d.eigenfunctionWithDerivatives(E))
+                         result.push_back(f(x, y));
+                     return result;
                  }, R""""(\
 Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
 
@@ -70,9 +79,13 @@ Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the
 :returns: a list of three len(x) by len(y) grids of values. For each triplet of grids, position i, j contains the value (resp. x-derivative and y-derivative) of that eigenfunction evaluated in the point x[i], y[j].
 )"""", py::arg("E"), py::arg("x"), py::arg("y"))
             .def("eigenfunctionDerivatives",
-                 [](const Matslise2D<> &se2d, double E) -> vector<std::function<
-                         std::tuple<double, double, double>(double, double)>> {
-                     return se2d.eigenfunctionDerivatives(E);
+                 [](const Matslise2D<> &se2d, double E) -> vector<function<
+                         tuple<double, double, double>(double, double)>> {
+                     vector<function<
+                             tuple<double, double, double>(double, double)>> result;
+                     for (auto &f : se2d.eigenfunctionWithDerivatives(E))
+                         result.push_back(f);
+                     return result;
                  }, R""""(\
 Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
 

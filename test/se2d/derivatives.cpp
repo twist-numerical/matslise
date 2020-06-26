@@ -46,7 +46,7 @@ TEST_CASE("Derivatives of eigenfunctions", "[matslise2d][y_derivative][derivativ
     for (double E : {3.19, 5.5, 7.55, 8., 8.45, 9.9, 11.3, 12.1, 12.2, 13.9}) {
         E = p.eigenvalue(E);
         INFO("E: " << E);
-        for (const auto &f : p.eigenfunctionDerivatives(E))
+        for (const auto &f : p.eigenfunctionWithDerivatives(E))
             for (double x = -5 + step / 2; x < 5; x += step)
                 for (double y = -5 + step / 2; y < 5; y += step) {
                     INFO("(x, y): (" << x << ", " << y << ")");

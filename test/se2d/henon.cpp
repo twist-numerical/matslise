@@ -41,15 +41,14 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon]") {
         REQUIRE(abs(error.first) < 1e-3);
         REQUIRE(Approx(p2.eigenvalue(E)).margin(1e-7) == E);
 
-        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
+        const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         REQUIRE(f.size() == multiplicity);
-        vector<function<double(double, double)>> funcs = p2.eigenfunction(E);
-        REQUIRE(funcs.size() == multiplicity);
 
         for (int k = 0; k < multiplicity; ++k) {
+            auto fkxx = f[k](x, x);
             for (int i = 0; i < n; ++i)
                 for (int j = 0; j < n; ++j)
-                    REQUIRE(Approx(f[k](i, j)).margin(1e-7) == funcs[k](x[i], x[j]));
+                    REQUIRE(Approx(f[k](x[i], x[j])).margin(1e-7) == fkxx(i, j));
         }
     }
 }
@@ -86,15 +85,14 @@ TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][ha
         REQUIRE(abs(error.first) < 1e-3);
         REQUIRE(Approx(p2.eigenvalue(E)).margin(1e-7) == E);
 
-        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
+        const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         REQUIRE(f.size() == multiplicity);
-        vector<function<double(double, double)>> funcs = p2.eigenfunction(E);
-        REQUIRE(funcs.size() == multiplicity);
 
         for (int k = 0; k < multiplicity; ++k) {
+            auto fkxx = f[k](x, x);
             for (int i = 0; i < n; ++i)
                 for (int j = 0; j < n; ++j)
-                    REQUIRE(Approx(f[k](i, j)).margin(1e-7) == funcs[k](x[i], x[j]));
+                    REQUIRE(Approx(f[k](x[i], x[j])).margin(1e-7) == fkxx(i, j));
         }
     }
 }

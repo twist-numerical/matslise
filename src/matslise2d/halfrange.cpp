@@ -2,6 +2,7 @@
 #include <map>
 #include "../matslise.h"
 #include "../util/quadrature.h"
+#include "../util/constants.h"
 
 using namespace Eigen;
 using namespace matslise;
@@ -68,93 +69,59 @@ vector<Scalar> Matslise2DHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax) co
 
 
 template<typename Scalar>
-template<bool withDerivative, typename returnType>
-returnType Matslise2DHalf<Scalar>::eigenfunctionHelper(const Scalar &E, const ArrayXs &x, const ArrayXs &y) const {
-    Eigen::Index n = y.size();
-    for (Eigen::Index i = 1; i < n; ++i)
-        if (y[i - 1] > y[i])
-            throw runtime_error("SE2DHalf::computeEigenfunction(): y has to be sorted");
-
-    Array<bool, Dynamic, 1> isNegative(n);
-    ArrayXs sortedY(n);
-    {
-        long i = n;
-        long negativeIndex = 0;
-        long positiveIndex = n;
-        while (negativeIndex < positiveIndex) {
-            --i;
-            if (-y[negativeIndex] > y[positiveIndex - 1]) {
-                isNegative[i] = true;
-                sortedY[i] = -y[negativeIndex];
-                negativeIndex += 1;
-            } else {
-                isNegative[i] = false;
-                positiveIndex -= 1;
-                sortedY[i] = y[positiveIndex];
-            }
-        }
-    }
-
-    const Scalar SQRT1_2 = sqrt(Scalar(.5));
-
-    returnType result;
+template<bool withDerivatives>
+vector<Eigenfunction2D<Scalar, withDerivatives>> Matslise2DHalf<Scalar>::eigenfunction(const Scalar &E) const {
+    vector<Eigenfunction2D<Scalar, withDerivatives>> eigenfunctions;
     for (bool even : {false, true}) {
         const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
         if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-3) {
-            auto sortedFs = se2d->template eigenfunctionHelper<withDerivative>(boundary, E, x, sortedY);
-            for (auto sortedF : sortedFs) {
-                typename std::conditional<withDerivative, std::tuple<ArrayXXs, ArrayXXs, ArrayXXs>, ArrayXXs>::type f;
-                if constexpr(withDerivative)
-                    f = {ArrayXXs::Zero(x.size(), y.size()), ArrayXXs::Zero(x.size(), y.size()),
-                         ArrayXXs::Zero(x.size(), y.size())};
-                else
-                    f = ArrayXXs::Zero(x.size(), y.size());
-                Eigen::Index negativeIndex = 0;
-                Eigen::Index positiveIndex = n;
-                for (Eigen::Index i = n - 1; i >= 0; --i) {
-                    Eigen::Index index = isNegative[i] ? negativeIndex++ : --positiveIndex;
-                    Scalar scale = !isNegative[i] || even ? SQRT1_2 : -SQRT1_2;
-                    if constexpr(withDerivative) {
-                        get<0>(f).col(index) = scale * get<0>(sortedF).col(i);
-                        get<1>(f).col(index) = scale * get<1>(sortedF).col(i);
-                        get<2>(f).col(index) = scale * get<2>(sortedF).col(i);
-                    } else {
-                        f.col(index) = scale * sortedF.col(i);
-                    }
-                }
-                result.push_back(f);
-            }
-
-        }
-    }
-    return result;
-}
-
-template<typename Scalar>
-template<bool withDerivative, typename returnType>
-returnType Matslise2DHalf<Scalar>::eigenfunctionHelper(const Scalar &E) const {
-    const Scalar SQRT1_2 = sqrt(Scalar(.5));
-    returnType result;
-    for (bool even : {false, true}) {
-        const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
-        if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-5) {
-            for (const auto &f : se2d->template eigenfunctionHelper<withDerivative>(boundary, E)) {
-                result.push_back([f, even, SQRT1_2](const Scalar &x, const Scalar &y) -> auto {
-                    auto r = f(x, y < 0 ? -y : y);
-                    Scalar scale = y < 0 && !even ? -SQRT1_2 : SQRT1_2;
-                    if constexpr(withDerivative) {
-                        get<0>(r) *= scale;
-                        get<1>(r) *= scale;
-                        get<2>(r) *= scale;
-                    } else {
-                        r *= scale;
-                    }
-                    return r;
-                });
+            for (const auto &f : se2d->template eigenfunction<withDerivatives>(boundary, E)) {
+                eigenfunctions.push_back(
+                        {
+                                [even, f](const Scalar &x, const Scalar &y) {
+                                    auto r = f(x, y < 0 ? -y : y);
+                                    Scalar scale =
+                                            y < 0 && !even ? -constants<Scalar>::SQRT1_2 : constants<Scalar>::SQRT1_2;
+                                    if constexpr(withDerivatives) {
+                                        get<0>(r) *= scale;
+                                        get<1>(r) *= scale;
+                                        get<2>(r) *= scale;
+                                    } else {
+                                        r *= scale;
+                                    }
+                                    return r;
+                                },
+                                [even, f](const ArrayXs &x, const ArrayXs &y)
+                                        -> typename Eigenfunction2D<Scalar, withDerivatives>::ArrayReturn {
+                                    typename Eigenfunction2D<Scalar, withDerivatives>::ArrayReturn result
+                                            = f(x, y.abs());
+                                    if constexpr(withDerivatives) {
+                                        get<0>(result) *= constants<Scalar>::SQRT1_2;
+                                        get<1>(result) *= constants<Scalar>::SQRT1_2;
+                                        get<2>(result) *= constants<Scalar>::SQRT1_2;
+                                    } else {
+                                        result *= constants<Scalar>::SQRT1_2;
+                                    }
+                                    if (!even) {
+                                        for (int i = 0; i < y.size(); ++i) {
+                                            if (y[i] < 0) {
+                                                if constexpr(withDerivatives) {
+                                                    get<0>(result).col(i) *= -1;
+                                                    get<1>(result).col(i) *= -1;
+                                                    get<2>(result).col(i) *= -1;
+                                                } else {
+                                                    result.col(i) *= -1;
+                                                }
+                                            }
+                                        }
+                                    }
+                                    return result;
+                                }
+                        });
             }
         }
     }
-    return result;
+    return eigenfunctions;
 }
 
 

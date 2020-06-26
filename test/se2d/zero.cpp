@@ -20,19 +20,22 @@ void compareEigenfunctions(
     int n = 50, m = 60;
     ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
     ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
-    const std::vector<ArrayXXd> fs = p.eigenfunction(E, x, y);
+    const std::vector<Eigenfunction2D<>> fs = p.eigenfunction(E);
 
     REQUIRE(exact.size() == fs.size());
-    for (const ArrayXXd &f :fs) {
+    for (const Eigenfunction2D<> &f :fs) {
+        ArrayXXd fxy = f(x, y);
         for (int i = 0; i < n; ++i)
             for (int j = 0; j < m; ++j) {
+                if (i % 10 == 0 && j % 10 == 0)
+                    REQUIRE(Approx(f(x[i], y[j])).margin(1e-10) == fxy(i, j));
                 bool valid = false;
                 for (const function<double(double, double)> &e : exact)
-                    if (abs(abs(e(x[i], y[j])) - abs(f(i, j))) < 1e-5)
+                    if (abs(abs(e(x[i], y[j])) - abs(fxy(i, j))) < 1e-5)
                         valid = true;
                 CHECKED_ELSE(valid) {
                     std::stringstream ss;
-                    ss << E << ": " << x[i] << ", " << y[j] << " : " << f(i, j);
+                    ss << E << ": " << x[i] << ", " << y[j] << " : " << f(x[i], x[j]);
                     FAIL(ss.str());
                 }
             }

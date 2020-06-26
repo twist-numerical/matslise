@@ -38,8 +38,6 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
         CHECK(Approx(foundEigenvalues[i]).margin(1e-7) == eigenvalues[i].first);
     }
 
-    ArrayXd x(3);
-    x << -1, 0, 1;
     double E;
     unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
@@ -61,7 +59,7 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
             CHECK(Approx(Em).margin(1e-7) == E);
         }
 
-        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
+        const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         CHECK(f.size() == multiplicity);
     }
     checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
@@ -97,8 +95,6 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
     }
      */
 
-    ArrayXd x(3);
-    x << -1, 0, 1;
     double E;
     int multiplicity;
 
@@ -116,7 +112,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
             CHECK(p2.eigenvalueError(Em) < 1e-5);
         }
 
-        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
+        const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         CHECK(static_cast<long>(f.size()) == multiplicity);
     }
     checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
@@ -144,8 +140,6 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
 
     CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
-    ArrayXd x(3);
-    x << -1, 0, 1;
     double E;
     unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
@@ -168,7 +162,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
             CHECK(p2.eigenvalueError(Em) < 1e-5);
         }
 
-        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
+        const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         CHECK(f.size() == multiplicity);
     }
     checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());
@@ -196,8 +190,6 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
 
     CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
-    ArrayXd x(3);
-    x << -1, 0, 1;
     double E;
     unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
@@ -220,7 +212,7 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
             CHECK(p2.eigenvalueError(Em) < 1e-5);
         }
 
-        const vector<Array<double, -1, -1>> f = p2.eigenfunction(E, x, x);
+        const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         CHECK(f.size() == multiplicity);
     }
     checkOrthonormality(&p2, eigenvalues_simple.begin(), eigenvalues_simple.end());

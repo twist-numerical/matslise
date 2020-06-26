@@ -112,14 +112,14 @@ vector<Scalar> Matslise2D<Scalar>::eigenvalues(
 template<typename Scalar>
 inline bool
 is_first_eigenvalue(const Matslise2D<Scalar> &se2d, const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) {
-    vector<typename Matslise2D<Scalar>::ArrayXXs> eigenfunctions = se2d.eigenfunction(
-            left, E,
-            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
-            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
+    vector<Eigenfunction2D<Scalar>> eigenfunctions = se2d.eigenfunction(
+            left, E);
     if (eigenfunctions.size() != 1)
         return false;
-
-    return eigenfunctions[0].minCoeff() * eigenfunctions[0].abs().maxCoeff() > -1e-5;
+    Array<Scalar, Dynamic, Dynamic> values = eigenfunctions[0](
+            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
+            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
+    return values.minCoeff() * values.abs().maxCoeff() > -1e-5;
 }
 
 template<typename Scalar>
