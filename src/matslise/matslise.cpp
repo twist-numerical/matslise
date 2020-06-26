@@ -25,7 +25,7 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
     Sector *sector;
     do {
         sector = sectors[sectorIndex];
-        tie(y, dTheta) = sector->propagate(E, y, a, b, use_h);
+        tie(y, dTheta) = sector->template propagate<true>(E, y, a, b, use_h);
         theta += dTheta;
         sectorIndex += a < b ? 1 : -1;
     } while (!sector->contains(b));
@@ -185,13 +185,16 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     vector<Y<Scalar>> ys(ms.sectorCount + 1);
     ys[0] = left;
     for (int i = 0; i <= ms.matchIndex; ++i) {
-        ys[i + 1] = ms.sectors[i]->propagateForward(E, ys[i]).first;
+        typename Matslise<Scalar>::Sector *sector = ms.sectors[i];
+        ys[i + 1] = sector->template propagate<false>(E, ys[i], sector->min, sector->max);
     }
     Y<Scalar> yl = ys[ms.matchIndex + 1];
 
     ys[ms.sectorCount] = right;
-    for (int i = ms.sectorCount - 1; i > ms.matchIndex; --i)
-        ys[i] = ms.sectors[i]->propagateBackward(E, ys[i + 1]).first;
+    for (int i = ms.sectorCount - 1; i > ms.matchIndex; --i) {
+        typename Matslise<Scalar>::Sector *sector = ms.sectors[i];
+        ys[i] = sector->template propagate<false>(E, ys[i + 1], sector->max, sector->min);
+    }
     Y<Scalar> &yr = ys[ms.matchIndex + 1];
 
     Scalar s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
@@ -234,9 +237,9 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
         int sectorIndex = sector - sectors.begin();
 
         if ((**sector).backward) {
-            return (**sector).propagate(E, (*steps)[sectorIndex + 1], (**sector).max, x).first;
+            return (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x);
         } else {
-            return (**sector).propagate(E, (*steps)[sectorIndex], (**sector).min, x).first;
+            return (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x);
         }
     }, [this, E, steps](const Array<Scalar, Dynamic, 1> &x) {
         Eigen::Index n = x.size();
@@ -254,9 +257,9 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
                 sectorIndex = sector - sectors.begin();
             }
             if ((**sector).backward) {
-                ys[i] = (**sector).propagate(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]).first;
+                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]);
             } else {
-                ys[i] = (**sector).propagate(E, (*steps)[sectorIndex], (**sector).min, x[i]).first;
+                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x[i]);
             }
 
         }

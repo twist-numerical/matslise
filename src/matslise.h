@@ -197,18 +197,9 @@ namespace matslise {
 
             T<Scalar> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
-            std::pair<matslise::Y<Scalar>, Scalar>
+            template<bool withPrufer>
+            typename std::conditional<withPrufer, std::pair<matslise::Y<Scalar>, Scalar>, matslise::Y<Scalar>>::type
             propagate(const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, bool use_h = true) const;
-
-            std::pair<matslise::Y<Scalar>, Scalar>
-            propagateForward(const Scalar &E, const matslise::Y<Scalar> &y, bool use_h = true) const {
-                return propagate(E, y, min, max, use_h);
-            }
-
-            std::pair<matslise::Y<Scalar>, Scalar>
-            propagateBackward(const Scalar &E, const matslise::Y<Scalar> &y, bool use_h = true) const {
-                return propagate(E, y, max, min, use_h);
-            }
 
             Scalar theta0(const Scalar &E, const Y<Scalar> &y0) const;
 
@@ -221,12 +212,6 @@ namespace matslise {
             static bool compare(const Sector &a, const Sector &b) {
                 return a.vs[0] < b.vs[0];
             }
-
-        private :
-            std::pair<Y<Scalar>, Scalar>
-            propagateDelta(
-                    const Scalar &E, const Y<Scalar> &y0, Scalar delta, bool use_h) const;
-
         };
     };
 

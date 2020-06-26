@@ -142,59 +142,54 @@ Scalar Matslise<Scalar>::Sector::prufer(
     }
 }
 
-template<typename Scalar>
-pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagateDelta(
-        const Scalar &E, const Y<Scalar> &y0, Scalar delta, bool use_h) const {
-    if (backward)
+template<typename Scalar, bool withPrufer>
+void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
+                    const Scalar &E, Y<Scalar> &y, Scalar delta, bool use_h, Scalar &theta) {
+    if (sector->backward)
         delta *= -1;
     bool direction = delta >= 0;
     if (!direction)
         delta = -delta;
-    bool forward = direction != backward;
-    if (delta > h)
-        delta = h;
+    if (delta > sector->h)
+        delta = sector->h;
 
-    const T<Scalar> &t = calculateT(E, delta, use_h);
-    Y<Scalar> y = y0;
-    if (backward)
+    Y<Scalar> y0 = y;
+    (void) y0; // Unused when not 'withPrufer'
+    const T<Scalar> &t = sector->calculateT(E, delta, use_h);
+    if (sector->backward)
         y.reverse();
-    Y<Scalar> y1 = direction ? t * y : t / y;
-    if (backward)
-        y1.reverse();
+    y = direction ? t * y : t / y;
+    if (sector->backward)
+        y.reverse();
 
-    Scalar theta = forward ? prufer(E, delta, y0, y1) : -prufer(E, delta, y1, y0);
-
-    return {y1, theta};
+    if constexpr(withPrufer)
+        theta += direction != sector->backward ? sector->prufer(E, delta, y0, y) : -sector->prufer(E, delta, y, y0);
 }
 
 template<typename Scalar>
-pair<Y<Scalar>, Scalar> Matslise<Scalar>::Sector::propagate(
+template<bool withPrufer>
+typename conditional<withPrufer, std::pair<Y<Scalar>, Scalar>, Y<Scalar>>::type
+Matslise<Scalar>::Sector::propagate(
         const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar> y = y0;
     Scalar argdet = 0;
-    Scalar theta;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (!backward) { // forward
-            if (a > min) {
-                tie(y, theta) = propagateDelta(E, y, min - a, use_h);
-                argdet += theta;
-            }
-            if (b > min) {
-                tie(y, theta) = propagateDelta(E, y, b - min, use_h);
-                argdet += theta;
-            }
+            if (a > min)
+                propagateDelta<Scalar, withPrufer>(this, E, y, min - a, use_h, argdet);
+            if (b > min)
+                propagateDelta<Scalar, withPrufer>(this, E, y, b - min, use_h, argdet);
         } else {
-            if (a < max) {
-                tie(y, theta) = propagateDelta(E, y, max - a, use_h);
-                argdet += theta;
-            }
-            if (b < max) {
-                tie(y, theta) = propagateDelta(E, y, b - max, use_h);
-                argdet += theta;
-            }
+            if (a < max)
+                propagateDelta<Scalar, withPrufer>(this, E, y, max - a, use_h, argdet);
+            if (b < max)
+                propagateDelta<Scalar, withPrufer>(this, E, y, b - max, use_h, argdet);
         }
     }
-    return {y, argdet};
+    if constexpr(withPrufer)
+        return {y, argdet};
+    else
+        return y;
 }
 
 template<typename Scalar>
@@ -217,5 +212,14 @@ Scalar Matslise<Scalar>::Sector::error() const {
 
     return std::max(e_loc0, std::max(e_locu, std::max(e_locup, e_locv)));
 }
+
+#define INSTANTIATE_PROPAGATE(Scalar, withPrufer) \
+template typename conditional<withPrufer, pair<Y<Scalar>, Scalar>, Y<Scalar>>::type \
+Matslise<Scalar>::Sector::propagate<withPrufer>( \
+    const Scalar&, const Y<Scalar>&, const Scalar&, const Scalar&, bool) const;
+
+#define INSTANTIATE_MORE(Scalar) \
+INSTANTIATE_PROPAGATE(Scalar, false) \
+INSTANTIATE_PROPAGATE(Scalar, true)
 
 #include "../util/instantiate.h"
