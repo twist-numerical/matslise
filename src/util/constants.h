@@ -13,6 +13,7 @@ public:
 template<typename Scalar>
 inline const Scalar constants<Scalar>::PI = boost::math::constants::pi<Scalar>();
 #else
+template<typename Scalar>
 inline const Scalar constants<Scalar>::PI  = static_cast<Scalar>(3.1415926535897932384626l);
 #endif
 

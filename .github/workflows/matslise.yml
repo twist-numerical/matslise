@@ -76,6 +76,8 @@ jobs:
         name: Build Eigen3
         run: cmake ..
         working-directory: ../eigen/build
+      - name: Install boost
+        run: sudo apt-get install boost
       - uses: actions/checkout@v2
       - run: mkdir build
       - name: CMake
