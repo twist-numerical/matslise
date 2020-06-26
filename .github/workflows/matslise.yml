@@ -55,6 +55,42 @@ jobs:
           ./matslise_test
         working-directory: ./build/test
 
+  matslise_test_float128:
+    name: Test matslise (float128)
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Cache Eigen3
+        id: cache-eigen3_3
+        uses: actions/cache@v1
+        with:
+          path: ../eigen
+          key: ${{ runner.os }}-eigen3_3
+      - name: Download Eigen3
+        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
+        run: |
+          git clone https://gitlab.com/libeigen/eigen.git ../eigen
+          cd ../eigen
+          git checkout 3.3
+          mkdir ../eigen/build
+      - if: ${{steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
+        name: Build Eigen3
+        run: cmake ..
+        working-directory: ../eigen/build
+      - uses: actions/checkout@v2
+      - run: mkdir build
+      - name: CMake
+        run: |
+          cmake .. -DCMAKE_BUILD_TYPE=Release \
+            -DEigen3_DIR="$(pwd)/../../eigen/build" \
+            -DLONG_DOUBLE=ON -DQUADMATH=ON
+          cmake --build . --target matslise_test --config Release -- -j 3
+        working-directory: ./build
+      - name: Run tests
+        run: |
+          ./matslise_test
+        working-directory: ./build/test
+
+
   pyslise_test:
     name: Test pyslise
     runs-on: ${{ matrix.os }}

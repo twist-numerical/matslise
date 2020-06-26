@@ -49,7 +49,7 @@ Scalar powInt(Scalar x, unsigned int n) {
             y *= x;
         x *= x;
     }
-    return x * y;
+    return y *= x;
 }
 
 
@@ -257,7 +257,7 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
         }
 
         int lastN = 100;// MATSLISE_INTEGRATE_delta - 3;
-        Scalar dn = std::pow(delta, lastN);
+        Scalar dn = powInt(delta, lastN);
         Scalar I00n = 0;
         Scalar I01n = 0;
         Scalar I10n = 0;

@@ -1,6 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
+#include <algorithm>
 #include "../catch.hpp"
 #include "../../src/matslise.h"
 #include "../../src/util/eigen.h"
@@ -12,7 +13,8 @@ using namespace matslise;
 using namespace std;
 using namespace Eigen;
 
-double mathieu(double x) {
+template<typename Scalar=double>
+Scalar mathieu(Scalar x) {
     return 2 * cos(2 * x);
 }
 
@@ -64,20 +66,20 @@ vector<double> correct = {-0.110248816992, 3.917024772998, 9.047739259809, 16.03
                           40000.000012500299, 40401.000012376229};
 
 TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
 
     testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8);
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8);
 
     testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary conditions)",
           "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8);
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8);
 
     Y<double> y0({0, -1}, {0, 0});
     testProblem(ms, y0, y0, correct, 1e-7);
@@ -122,7 +124,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -2.57141674375544, -3.13821749458430, -3.10573501735402, -2.51014152163740, -1.48587759669341,
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
-    Matslise<double> ms(&mathieu, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
     Y<double> ystart({0, 1}, {0, 0});
 
     {
@@ -160,3 +162,35 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         }
     }
 }
+
+#ifdef MATSLISE_long_double
+
+TEST_CASE("Solving the mathieu problem (first 200) (auto) (long)", "[matslise][mathieu][auto][long]") {
+    Matslise<long double> ms(&mathieu<long double>, 0, constants<long double>::PI, 1e-8);
+
+    vector<long double> correct_ld(correct.size());
+    transform(correct.begin(), correct.end(), correct_ld.begin(),
+              [](double a) -> long double { return static_cast<long double>(a); });
+
+    testProblem<long double>(ms, Y<long double>::Dirichlet(), Y<long double>::Dirichlet(), correct_ld, 1e-7);
+}
+
+#endif
+
+#ifdef MATSLISE_float128
+
+#include <boost/multiprecision/float128.hpp>
+
+using boost::multiprecision::float128;
+
+TEST_CASE("Solving the mathieu problem (first 200) (auto) (float128)", "[matslise][mathieu][auto][float128]") {
+    Matslise<float128> ms(&mathieu<float128>, 0, constants<float128>::PI, 1e-8);
+
+    vector<float128> correct_q(correct.size());
+    transform(correct.begin(), correct.end(), correct_q.begin(),
+              [](double a) -> float128 { return static_cast<float128>(a); });
+
+    testProblem<float128>(ms, Y<float128>::Dirichlet(), Y<float128>::Dirichlet(), correct_q, 1e-7);
+}
+
+#endif

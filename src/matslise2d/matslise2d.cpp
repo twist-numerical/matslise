@@ -44,8 +44,9 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 
         M.push_back(move(
                 gauss_konrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
-                    int depth = round(log2(xWidth / (x[x.size() - 1] - x[0])));
-                    int offset = round((x[0] - domain.template getMin<0>()) / (xWidth / (1 << depth)));
+                    int depth = static_cast<int>(round(log2(xWidth / (x[x.size() - 1] - x[0]))));
+                    int offset = static_cast<int>(round(
+                            (x[0] - domain.template getMin<0>()) / (xWidth / (1 << depth))));
                     pair<int, int> key{depth, offset};
                     if (prev.find(key) == prev.end())
                         prev[key] = sectors[k]->template basis<false>(x);
@@ -58,7 +59,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                     }
                     return result;
                 }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [](const MatrixXs &v) {
-                    return v.maxCoeff();
+                    return v.array().abs().maxCoeff();
                 })
         ));
     }
