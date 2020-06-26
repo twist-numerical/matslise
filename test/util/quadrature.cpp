@@ -3,18 +3,19 @@
 #include <tuple>
 #include "../catch.hpp"
 #include "../../src/matslise.h"
-#include "../../src/util/lobatto.h"
+#include "../../src/util/quadrature.h"
 
 
 using namespace std;
 using namespace Eigen;
+using namespace quadrature;
 
 
 int max(int a, int b) {
     return a > b ? a : b;
 }
 
-void testFunction(function<double(double)> f, function<double(double)> integral, double a, double b, int Nmin = 10) {
+void testFunction(const function<double(double)> &f, const function<double(double)> &integral, double a, double b, int Nmin = 10) {
     for (int N = Nmin; N < 3 * Nmin || N < 100; N += 10) {
         ArrayXd grid(N);
         for (int i = 0; i < N; ++i)
@@ -22,6 +23,37 @@ void testFunction(function<double(double)> f, function<double(double)> integral,
         ArrayXd lg = lobatto::grid(grid);
         ArrayXd eval = lg.unaryExpr(f);
         CHECK(Approx(lobatto::quadrature<double>(lg, eval)).margin(1e-10) == (integral(b) - integral(a)));
+    }
+}
+
+void testTrapezoidal(const function<double(double)> &f, const function<double(double)> &integral, double a, double b) {
+        CHECK(Approx(trapezoidal::adaptive(f, a, b, 1e-10)).margin(1e-10) == (integral(b) - integral(a)));
+}
+
+TEST_CASE("adaptive sin(x) (trapezoidal)", "[util][trapezoidal]") {
+    for (double a = -20; a < 10; a += 3.94) {
+        for (double b = a + .1; b < 15; b += 3.941) {
+            testTrapezoidal(
+                    [](double x) { return sin(x); },
+                    [](double x) { return -cos(x); },
+                    a, b);
+        }
+    }
+}
+
+
+void testGaussKonrod(const function<double(double)> &f, const function<double(double)> &integral, double a, double b) {
+    CHECK(Approx(gauss_konrod::adaptive(f, a, b, 1e-10)).margin(1e-10) == (integral(b) - integral(a)));
+}
+
+TEST_CASE("adaptive sin(x) (gaussKonrod)", "[util][gaussKonrod]") {
+    for (double a = -20; a < 10; a += 3.94) {
+        for (double b = a + .1; b < 15; b += 3.941) {
+            testGaussKonrod(
+                    [](double x) { return sin(x); },
+                    [](double x) { return -cos(x); },
+                    a, b);
+        }
     }
 }
 

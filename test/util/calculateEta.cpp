@@ -12,12 +12,10 @@ const int etaCount = 11;
 
 template<typename Scalar>
 void testEta(const Scalar &Z, const std::array<Scalar, etaCount> &correct, const Scalar &tolerance) {
-    Scalar *etas = calculateEta(Z, etaCount);
+    Array<Scalar, etaCount, 1> etas = calculateEta<Scalar, etaCount>(Z);
 
     for (int i = 0; i < etaCount; ++i)
         REQUIRE(abs(etas[i] - correct[i]) <= tolerance);
-
-    delete[] etas;
 }
 
 TEST_CASE("calculate eta", "[util][eta]") {

@@ -6,8 +6,10 @@
 #define MATSLISE_TEST_PROBLEM_H
 
 #include "../../src/matslise.h"
-#include "../../src/util/lobatto.h"
+#include "../../src/util/quadrature.h"
 #include "../catch.hpp"
+
+using namespace quadrature;
 
 template<typename Scalar>
 void testEigenvaluesByIndex(
@@ -45,9 +47,8 @@ void testOrthogonality(
         INFO("Checking eigenvalue " << iE.first << ": " << iE.second);
 
         Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1> f_xs = problem.eigenfunction(
-                iE.second, left, right, xs, iE.first);
-        std::function<matslise::Y<Scalar>(Scalar)> f = problem.eigenfunctionCalculator(
-                iE.second, left, right, iE.first);
+                iE.second, left, right, iE.first)(xs);
+        std::function<matslise::Y<Scalar>(Scalar)> f = problem.eigenfunction(iE.second, left, right, iE.first);
 
         for (int i = 0; i < xs.rows(); ++i) {
             CHECK(Approx(f_xs[i].y[0]).margin(tolerance) == f(xs[i]).y[0]);

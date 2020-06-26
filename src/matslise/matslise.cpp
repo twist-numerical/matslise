@@ -211,57 +211,57 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     return ys;
 }
 
-template<typename Scalar>
-Array<Y<Scalar>, Dynamic, 1>
-Matslise<Scalar>::eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
-                                const matslise::Y<Scalar> &right,
-                                const Array<Scalar, Dynamic, 1> &x, int) const {
-    Eigen::Index n = x.size();
-    for (Eigen::Index i = 1; i < n; ++i)
-        if (x[i - 1] > x[i])
-            throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
-    if (n != 0 && (x[0] < domain.min || x[n - 1] > domain.max))
-        throw runtime_error("Matslise::computeEigenfunction(): x is out of range");
-
-    vector<Y<Scalar>> steps = propagationSteps(*this, E, left, right);
-    Array<Y<Scalar>, Dynamic, 1> ys(n);
-
-    unsigned int sector = 0;
-    for (Eigen::Index i = 0; i < n; ++i) {
-        while (x[i] > sectors[sector]->max)
-            ++sector;
-        if (sectors[sector]->backward) {
-            ys[i] = sectors[sector]->propagate(E, steps[sector + 1], sectors[sector]->max, x[i]).first;
-        } else {
-            ys[i] = sectors[sector]->propagate(E, steps[sector], sectors[sector]->min, x[i]).first;
-        }
-
+template<typename Scalar, typename Iterator>
+Iterator findSector(const Scalar &x, Iterator a, Iterator b) {
+    while (b - a > 1) {
+        Iterator c = a + (b - a) / 2;
+        if (x < (**c).min)
+            b = c;
+        else
+            a = c;
     }
-
-    return ys;
+    return a;
 }
 
 template<typename Scalar>
-std::function<Y<Scalar>(Scalar)> Matslise<Scalar>::eigenfunctionCalculator(
+typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
         const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
-    vector<Y<Scalar>> ys = propagationSteps(*this, E, left, right);
-    return [this, E, ys](Scalar x) -> Y<Scalar> {
-        int a = 0;
-        int b = this->sectorCount;
-        while (a + 1 < b) {
-            int c = (a + b) / 2;
-            if (x < this->sectors[c]->min)
-                b = c;
-            else
-                a = c;
-        }
-        const Matslise<Scalar>::Sector *sector = this->sectors[a];
-        if (sector->backward) {
-            return sector->propagate(E, ys[a + 1], sector->max, x).first;
+    shared_ptr<vector<Y<Scalar>>> steps = make_shared<vector<Y<Scalar>>>(
+            std::move(propagationSteps(*this, E, left, right)));
+
+    return {[this, E, steps](const Scalar &x) {
+        auto sector = findSector(x, sectors.begin(), sectors.end());
+        int sectorIndex = sector - sectors.begin();
+
+        if ((**sector).backward) {
+            return (**sector).propagate(E, (*steps)[sectorIndex + 1], (**sector).max, x).first;
         } else {
-            return sector->propagate(E, ys[a], sector->min, x).first;
+            return (**sector).propagate(E, (*steps)[sectorIndex], (**sector).min, x).first;
         }
-    };
+    }, [this, E, steps](const Array<Scalar, Dynamic, 1> &x) {
+        Eigen::Index n = x.size();
+
+        Array<Y<Scalar>, Dynamic, 1> ys(n);
+
+        int sectorIndex = 0;
+        auto sector = sectors.begin();
+        for (Eigen::Index i = 0; i < n; ++i) {
+            if (x[i] < (**sector).min) {
+                sector = findSector(x[i], sectors.begin(), sector);
+                sectorIndex = sector - sectors.begin();
+            } else if (x[i] > (**sector).max) {
+                sector = findSector(x[i], sector + 1, sectors.end());
+                sectorIndex = sector - sectors.begin();
+            }
+            if ((**sector).backward) {
+                ys[i] = (**sector).propagate(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]).first;
+            } else {
+                ys[i] = (**sector).propagate(E, (*steps)[sectorIndex], (**sector).min, x[i]).first;
+            }
+
+        }
+        return ys;
+    }};
 }
 
 #include "../util/instantiate.h"

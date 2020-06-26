@@ -3,11 +3,12 @@
 
 #include "../catch.hpp"
 #include "../../src/matslise.h"
-#include "../../src/util/lobatto.h"
+#include "../../src/util/quadrature.h"
 
 using namespace std;
 using namespace Eigen;
 using namespace matslise;
+using namespace quadrature;
 
 template<typename Scalar=double, typename doubleIterator>
 void checkOrthonormality(const AbstractMatslise2D<Scalar> *p, const doubleIterator &begin, const doubleIterator &end) {

@@ -3,7 +3,7 @@
 #include <tuple>
 #include "../catch.hpp"
 #include "../../src/matslise.h"
-#include "../../src/util/lobatto.h"
+#include "../../src/util/quadrature.h"
 #include "checkOrthonormality.h"
 #include "../../src/util/constants.h"
 

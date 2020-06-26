@@ -73,6 +73,8 @@ namespace matslise {
         private:
             int n;
         public:
+            static const bool expensive = false;
+
             Eigen::Array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_delta, MATSCS_HMAX_delta>
                     t_coeff;
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> t_coeff_h[MATSCS_ETA_h];

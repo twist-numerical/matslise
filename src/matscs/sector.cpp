@@ -20,7 +20,7 @@ Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar 
 
 template<typename Scalar>
 Matscs<Scalar>::Sector::Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
-        const Scalar &min, const Scalar &max, bool backward)
+                               const Scalar &min, const Scalar &max, bool backward)
         : vs(vs), min(min), max(max), backward(backward) {
     h = max - min;
     SelfAdjointEigenSolver<Matrix<Scalar, Dynamic, Dynamic>> es(vs[0]);
@@ -55,23 +55,21 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, const Sca
         return calculateT(E);
 
     ArrayXs VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(n, E)) * delta;
-    ArrayXs *eta = calculateEta<Scalar>(VEd * delta, MATSCS_ETA_delta);
+    Array<Scalar, MATSCS_ETA_delta, Dynamic> eta = calculateEta<Scalar, MATSCS_ETA_delta>(VEd * delta);
     T<Scalar, Dynamic> t(n);
-    t.t << zero, zero, diagonalMatrix<Scalar>(eta[1] * VEd), zero;
-    t.dt << zero, zero, diagonalMatrix<Scalar>(-delta * eta[1] - (delta * delta / 2) * eta[2] * VEd), zero;
+    t.t << zero, zero, diagonalMatrix<Scalar>(eta.row(1).transpose() * VEd), zero;
+    t.dt << zero, zero, diagonalMatrix<Scalar>(
+            -delta * eta.row(1).transpose() - (delta * delta / 2) * eta.row(2).transpose() * VEd), zero;
 
     for (int i = 0; i < MATSCS_ETA_delta; ++i) {
         MatrixXs hor = horner<MatrixXs>(
                 t_coeff.row(i), delta, MATSCS_HMAX_delta);
-        t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i]));
+        t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i)));
 
         if (i + 1 < MATSCS_ETA_delta)
             t.dt += hor * kroneckerProduct(
-                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i + 1] * (-delta * delta / 2.)));
+                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i + 1) * (-delta * delta / 2.)));
     }
-
-
-    delete[] eta;
 
     t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.t *
           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
@@ -89,19 +87,19 @@ T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_
     MatrixXs one = MatrixXs::Identity(N, N);
 
     ArrayXs VEd = (vs[0].diagonal().array() - Array<Scalar, Dynamic, 1>::Constant(N, E)) * h;
-    ArrayXs *eta = calculateEta<Scalar>(VEd * h, MATSCS_ETA_h);
+    Array<Scalar, MATSCS_ETA_h, Dynamic> eta = calculateEta<Scalar, MATSCS_ETA_h>(VEd * h);
     T<Scalar, Dynamic> t(N);
-    t.t << zero, zero, diagonalMatrix<Scalar>(eta[1] * VEd), zero;
-    t.dt << zero, zero, diagonalMatrix<Scalar>(-h * eta[1] - (h * h / 2) * eta[2] * VEd), zero;
+    t.t << zero, zero, diagonalMatrix<Scalar>(eta.row(1).transpose() * VEd), zero;
+    t.dt << zero, zero, diagonalMatrix<Scalar>(
+            -h * eta.row(1).transpose() - (h * h / 2) * eta.row(2).transpose() * VEd), zero;
 
     for (int i = 0; i < MATSCS_ETA_h; ++i) {
-        t.t += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i]));
+        t.t += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i)));
 
         if (i + 1 < MATSCS_ETA_h)
             t.dt += t_coeff_h[i] * kroneckerProduct(
-                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta[i + 1] * (-h * h / 2)));
+                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i + 1) * (-h * h / 2)));
     }
-    delete[] eta;
 
     t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.t *
           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
@@ -164,16 +162,16 @@ pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagateDelta(
 
     ArrayXs Z = d * d * (vs[0].diagonal().array() - ArrayXs::Constant(n, E));
 
-    ArrayXs *eta = calculateEta(Z, 2);
+    Array<Scalar, 2, Dynamic> eta = calculateEta<Scalar, 2>(Z);
     Scalar argdet = 0;
     for (int i = 0; i < n; ++i) {
         if (Z[i] < 0) {
             Scalar sZ = (d < 0 ? -1 : 1) * sqrt(-Z[i]);
             argdet += (sZ + atan2(
-                    (d - sZ) * eta[1][i] * eta[0][i],
-                    1 + (d * sZ + Z[i]) * eta[1][i] * eta[1][i]));
+                    (d - sZ) * eta(1, i) * eta(0, i),
+                    1 + (d * sZ + Z[i]) * eta(1, i) * eta(1, i)));
         } else {
-            argdet += atan2(d * eta[1][i], eta[0][i]);
+            argdet += atan2(d * eta(1, i), eta(0, i));
         }
     }
     argdet *= 2;
@@ -183,11 +181,9 @@ pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagateDelta(
     ArrayXs betas = angle<Scalar>(thetaZ);
     const complex<Scalar> i_delta(0, d);
     ArrayXs alphas = angle<Scalar>(
-            ((eta[0] + i_delta * eta[1]) / (eta[0] - i_delta * eta[1])).matrix().asDiagonal() * thetaZ0
+            ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() * thetaZ0
     );
     argdet += (betas - alphas).sum();
-
-    delete[] eta;
 
     return {y1, argdet};
 }

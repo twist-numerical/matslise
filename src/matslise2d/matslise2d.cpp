@@ -1,12 +1,13 @@
 #include <iostream>
 #include <map>
 #include "../matslise.h"
-#include "../util/lobatto.h"
+#include "../util/quadrature.h"
 #include "../util/find_sector.h"
 
 using namespace Eigen;
 using namespace matslise;
 using namespace std;
+using namespace quadrature;
 
 
 template<typename Scalar>
@@ -23,34 +24,51 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                                const Options2<Scalar> &_options):
         AbstractMatslise2D<Scalar>(potential, domain), N(_options._N), options(_options) {
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
-    grid = lobatto::grid<Scalar>(getGrid(domain.getMin(0), domain.getMax(0), options._gridPoints));
     auto sectorsBuild = options._builder(this, domain.min, domain.max);
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     sectorCount = sectors.size();
+    for (auto &sector : sectors)
+        sector->quadratures.reset();
 
-    M = new MatrixXs[sectorCount - 1];
-    for (int i = 0; i < sectorCount - 1; ++i)
-        M[i] = calculateM(i);
-}
+    M.reserve(sectorCount - 1);
 
-template<typename Scalar>
-typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::calculateM(int k) const {
-    MatrixXs result(N, N);
+    map<pair<int, int>, ArrayXXs> prev;
+    map<pair<int, int>, ArrayXXs> next;
+    Scalar xWidth = domain.template getMax<0>() - domain.template getMin<0>();
+    for (int k = 0; k < sectorCount - 1; ++k) {
+        if (k > 0) {
+            prev = std::move(next);
+            next.clear();
+        }
 
-    for (int i = 0; i < N; ++i)
-        for (int j = 0; j < N; ++j)
-            result(i, j) = lobatto::quadrature<Scalar>(
-                    grid, sectors[k]->eigenfunctions[j] * sectors[k + 1]->eigenfunctions[i]);
+        M.push_back(move(
+                gauss_konrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
+                    int depth = static_cast<int>(round(log2(xWidth / (x[x.size() - 1] - x[0]))));
+                    int offset = static_cast<int>(round(
+                            (x[0] - domain.template getMin<0>()) / (xWidth / (1 << depth))));
+                    pair<int, int> key{depth, offset};
+                    if (prev.find(key) == prev.end())
+                        prev[key] = sectors[k]->template basis<false>(x);
+                    const ArrayXXs &prevBasis = prev[key];
+                    const ArrayXXs &nextBasis = next[key] = sectors[k + 1]->template basis<false>(x);
 
-    return result;
+                    Array<MatrixXs, Dynamic, 1> result(x.size());
+                    for (Index i = 0; i < x.size(); ++i) {
+                        result(i) = nextBasis.row(i).matrix().transpose() * prevBasis.row(i).matrix();
+                    }
+                    return result;
+                }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [](const MatrixXs &v) {
+                    return v.array().abs().maxCoeff();
+                })
+        ));
+    }
 }
 
 template<typename Scalar>
 Matslise2D<Scalar>::~Matslise2D() {
     for (int i = 0; i < sectorCount; ++i)
         delete sectors[i];
-    delete[] M;
 }
 
 template<typename Scalar>

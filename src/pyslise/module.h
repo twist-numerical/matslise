@@ -1,6 +1,8 @@
 #ifndef MATSLISE_PYSLISE
 #define MATSLISE_PYSLISE
 
+#include "../matslise.h"
+
 #include <pybind11/pybind11.h>
 #include <pybind11/functional.h>
 #include <pybind11/stl.h>
@@ -8,8 +10,6 @@
 #include <pybind11/numpy.h>
 
 #include <tuple>
-
-#include "../matslise.h"
 
 namespace py = pybind11;
 using namespace Eigen;

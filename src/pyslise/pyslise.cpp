@@ -55,7 +55,7 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
                     const optional<Vector2d> &_right, int index)
                          -> tuple<ArrayXd, ArrayXd> {
                      const Vector2d &right = _right ? *_right : left;
-                     auto ysY = m.eigenfunction(E, make_y(left), make_y(right), xs, index);
+                     auto ysY = m.eigenfunction(E, make_y(left), make_y(right), index)(xs);
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
                      for (Eigen::Index i = 0; i < ysY.size(); ++i) {
@@ -78,8 +78,7 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
                  [](AbstractMatslise<double> &m, double E, const Vector2d &left,
                     const optional<Vector2d> &_right, int index) -> function<pair<double, double>(double)> {
                      const Vector2d &right = _right ? *_right : left;
-                     function<Y<>(double)> calculator = m.eigenfunctionCalculator(E, make_y(left), make_y(right),
-                                                                                  index);
+                     function<Y<>(double)> calculator = m.eigenfunction(E, make_y(left), make_y(right), index);
                      return [calculator](double x) -> pair<double, double> {
                          Y<> y = calculator(x);
                          return make_pair(y.y[0], y.y[1]);

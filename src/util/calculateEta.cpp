@@ -4,9 +4,6 @@
 using namespace Eigen;
 
 template<>
-const int CalculateEtaData<double>::taylor_degree = 7;
-
-template<>
 const double CalculateEtaData<double>::taylor_eta8[8] = {
         2.90196368627741177e-8, 7.63674654283529413e-10, 9.09136493194677872e-12, 6.58794560285998458e-14,
         3.29397280142999229e-16, 1.21998992645555270e-18, 3.50571817946997902e-21, 8.07769165776492862e-24
@@ -20,8 +17,7 @@ const double CalculateEtaData<double>::taylor_eta9[8] = {
 };
 
 #ifdef MATSLISE_long_double
-template<>
-const int CalculateEtaData<long double>::taylor_degree = 11;
+
 template<>
 const long double CalculateEtaData<long double>::taylor_eta8[12] = {
         2.9019636862774117676078e-8l, 7.6367465428352941252838e-10l, 9.0913649319467787205760e-12l,
@@ -39,11 +35,6 @@ const long double CalculateEtaData<long double>::taylor_eta9[12] = {
 #endif
 
 #ifdef MATSLISE_float128
-
-#include <boost/multiprecision/float128.hpp>
-
-template<>
-const int CalculateEtaData<boost::multiprecision::float128>::taylor_degree = 15;
 
 template<>
 const boost::multiprecision::float128 CalculateEtaData<boost::multiprecision::float128>::taylor_eta8[16] = {

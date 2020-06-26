@@ -3,6 +3,7 @@
 
 #include "schrodinger.h"
 #include "util/rectangle.h"
+#include "matslise2d/basisQuadrature.h"
 
 namespace matslise {
     template<typename Scalar>
@@ -57,10 +58,9 @@ namespace matslise {
 
         using AbstractMatslise2D<Scalar>::domain;
         using AbstractMatslise2D<Scalar>::potential;
-        MatrixXs *M;
+        std::vector<MatrixXs> M;
         int sectorCount;
         std::vector<typename Matslise2D<Scalar>::Sector *> sectors;
-        ArrayXs grid;
         int N;
         int matchIndex;
         Options2<Scalar> options;
@@ -188,22 +188,25 @@ namespace matslise {
         std::vector<Y<Scalar, Eigen::Dynamic>> eigenfunctionSteps(
                 const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
 
-        MatrixXs calculateM(int k) const;
-
         MatrixXs conditionY(Y<Scalar, Eigen::Dynamic> &y) const;
 
     public:
         class Sector {
         public:
-            const Matslise2D<Scalar> *se2d;
-            AbstractMatslise<Scalar> *matslise;
-            typename matslise::Matscs<Scalar>::Sector *matscs;
-            ArrayXs vbar;
-            Scalar min, max;
+            static const bool expensive = true;
 
-            Scalar *eigenvalues;
-            ArrayXs *eigenfunctions;
+            const Matslise2D<Scalar> *se2d;
+            std::shared_ptr<AbstractMatslise<Scalar>> matslise;
+            std::shared_ptr<AbstractBasisQuadrature<Scalar>> quadratures;
+            typename matslise::Matscs<Scalar>::Sector *matscs;
+            Scalar min, max;
+            Scalar ybar;
+
+            std::vector<Scalar> eigenvalues;
+            std::vector<typename Matslise<Scalar>::Eigenfunction> eigenfunctions;
             bool backward;
+
+            Sector(const Matslise2D<Scalar> *se2d) : se2d(se2d) {}
 
             Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
 
@@ -229,11 +232,11 @@ namespace matslise {
             Scalar error() const;
 
             static bool compare(const Sector &a, const Sector &b) {
-                return a.vbar.minCoeff() < b.vbar.minCoeff();
+                return a.matslise->estimatePotentialMinimum() < b.matslise->estimatePotentialMinimum();
             }
 
-        public:
-            MatrixXs calculateDeltaV(const Scalar &y) const;
+            Sector *
+            refine(const Matslise2D<Scalar> *problem, const Scalar &min, const Scalar &max, bool backward) const;
         };
     };
 

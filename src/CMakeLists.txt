@@ -26,8 +26,8 @@ SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp
         matslise2d/halfrange.cpp matslise2d/eigenvalues.cpp matslise2d/eigenfunctions.cpp
-        matslise2d/matslise2d.cpp matslise2d/sector.cpp schrodinger.h
-        util/legendre.cpp util/calculateEta.cpp)
+        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp schrodinger.h
+        util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_SRC})
@@ -40,7 +40,6 @@ if (DEFINED EMSCRIPTEN)
             LINK_FLAGS " --bind -s NO_EXIT_RUNTIME=1 -O3 -s ASSERTIONS=1 -s DISABLE_EXCEPTION_CATCHING=0 -s SAFE_HEAP=1 -s TOTAL_MEMORY=128mb -s MODULARIZE=1 -s USE_ES6_IMPORT_META=0")
     em_link_js_library(matslise ${libraryJsFiles})
 else ()
-    set(targets matslise pyslise)
     set(libraries Eigen3::Eigen)
 
     add_library(matslise ${MATSLISE_SRC})
@@ -79,7 +78,7 @@ else ()
             set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
             set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
             set(BLA_DEFINITIONS USE_MKL)
-            foreach (target ${targets})
+            foreach (target matslise)
                 target_compile_definitions(${target} PUBLIC ${BLA_DEFINITIONS})
                 target_include_directories(${target} PUBLIC ${BLA_INCLUDE_DIR})
 

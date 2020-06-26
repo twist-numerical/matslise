@@ -34,9 +34,9 @@ TEST_CASE("HR: sanity checks eigenfunctions", "[halfrange][matslise][mathieu]") 
             {(ArrayXd(3) << -1, 0, 1).finished()}
     }) {
         for (const double E : eigenvalues) {
-            Array<Y<>, Dynamic, 1> fs = ms.eigenfunction(E, y0, xs);
+            Array<Y<>, Dynamic, 1> fs = ms.eigenfunction(E, y0)(xs);
 
-            function<Y<>(double)> f = ms.eigenfunctionCalculator(E, y0);
+            function<Y<>(double)> f = ms.eigenfunction(E, y0);
             for (Index i = 0; i < xs.size(); ++i) {
                 CHECK((fs[i].y.array().abs() - f(xs[i]).y.array().abs()).abs().maxCoeff() < 1e-8);
             }
@@ -105,7 +105,7 @@ TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctio
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart);
     for (pair<int, double> ie : eigenvalues) {
         double e = ie.second;
-        function<Y<double>(double)> f = ms.eigenfunctionCalculator(e, ystart);
+        function<Y<double>(double)> f = ms.eigenfunction(e, ystart);
 
         int n = 61;
         double v = 0;

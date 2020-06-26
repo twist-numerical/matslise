@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 #include "../matslise.h"
-#include "../util/lobatto.h"
+#include "../util/quadrature.h"
 
 using namespace Eigen;
 using namespace matslise;

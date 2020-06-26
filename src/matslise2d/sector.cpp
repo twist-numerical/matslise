@@ -1,56 +1,90 @@
 #include <iostream>
+#include <complex>
 #include "../matslise.h"
-#include "../util/lobatto.h"
+#include "../util/quadrature.h"
 #include "../util/legendre.h"
+#include "../util/horner.h"
+#include "./basisQuadrature.h"
 
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
+using namespace quadrature;
+
+
+template<typename Scalar>
+typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise2D<Scalar>::Sector &sector) {
+    return new typename Matscs<Scalar>::Sector(
+            legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
+                    [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+                        return sector.quadratures->dV(sector, y);
+                    }, sector.min, sector.max),
+            sector.min, sector.max, sector.backward);
+}
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
                                    bool backward)
         : se2d(se2d), min(ymin), max(ymax), backward(backward) {
-    const Scalar ybar = (ymax + ymin) / 2;
-    function<Scalar(Scalar)> vbar_fun = [se2d, ybar](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
-    vbar = se2d->grid.unaryExpr(vbar_fun);
-    if (se2d->options.nestedOptions._symmetric)
-        matslise = new MatsliseHalf<Scalar>(vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
-    else
-        matslise = new Matslise<Scalar>(vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9,
-                                        se2d->options.nestedOptions._builder);
+    // std::cout << "new sector 2d" << std::endl;
+    ybar = (ymax + ymin) / 2;
+    function<Scalar(Scalar)> vbar_fun = [se2d, this](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
+
+    if (se2d->options.nestedOptions._symmetric) {
+        matslise = std::make_shared<MatsliseHalf<Scalar>>(
+                vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
+        quadratures = std::make_shared<BasisQuadrature<Scalar, 8, true>>(
+                static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms);
+    } else {
+        matslise = std::make_shared<Matslise<Scalar>>(
+                vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
+        quadratures = std::make_shared<BasisQuadrature<Scalar, 8, false>>(
+                static_cast<const Matslise<Scalar> *>(matslise.get()));
+    }
 
     vector<pair<int, Scalar>> index_eigv = matslise->eigenvaluesByIndex(0, se2d->N, Y<Scalar>::Dirichlet());
     if (static_cast<int>(index_eigv.size()) != se2d->N) {
         throw std::runtime_error("SE2D: not enough basis-functions found on a sector");
     }
-    eigenvalues = new Scalar[se2d->N];
-    eigenfunctions = new ArrayXs[se2d->N];
+    eigenvalues.resize(se2d->N);
+    eigenfunctions.resize(se2d->N);
     Scalar E;
     int index;
     for (int i = 0; i < se2d->N; ++i) {
         tie(index, E) = index_eigv[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
         // TODO: check i == index
-        Array<Y<Scalar>, Dynamic, 1> func = matslise->eigenfunction(
-                E, Y<Scalar>::Dirichlet(), se2d->grid, index);
-        eigenfunctions[i] = ArrayXs(func.size());
-        for (Eigen::Index j = 0; j < func.size(); ++j)
-            eigenfunctions[i][j] = func[j].y[0];
+        eigenfunctions[i] = matslise->eigenfunction(E, Y<Scalar>::Dirichlet(), index);
     }
 
-    matscs = new typename Matscs<Scalar>::Sector(
-            legendre::getCoefficients<MATSCS_N, MatrixXs, Scalar>([this](Scalar y) -> MatrixXs {
-                return this->calculateDeltaV(y); }, min, max),
-                ymin, ymax, backward);
+    matscs = initializeMatscs<Scalar>(*this);
 }
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::~Sector() {
-    delete matslise;
     delete matscs;
-    delete[] eigenvalues;
-    delete[] eigenfunctions;
+}
+
+template<typename Scalar>
+typename Matslise2D<Scalar>::Sector *Matslise2D<Scalar>::Sector::refine(
+        const Matslise2D<Scalar> *problem, const Scalar &_min, const Scalar &_max, bool _backward) const {
+    Scalar h = _max - _min;
+    if (backward != _backward || ybar < _min + h / 3 || ybar > _max - h / 3) {
+        return new Sector(problem, _min, _max, _backward);
+    }
+
+    // std::cout << "refining sector 2d" << std::endl;
+    auto sector = new Sector(problem);
+    sector->min = _min;
+    sector->max = _max;
+    sector->backward = _backward;
+    sector->ybar = ybar;
+    sector->matslise = matslise;
+    sector->eigenfunctions = eigenfunctions;
+    sector->eigenvalues = eigenvalues;
+    sector->quadratures = quadratures;
+    sector->matscs = initializeMatscs<Scalar>(*sector);
+    return sector;
 }
 
 template<typename Scalar>
@@ -68,32 +102,14 @@ Scalar Matslise2D<Scalar>::Sector::error() const {
 }
 
 template<typename Scalar>
-typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::Sector::calculateDeltaV(const Scalar &y) const {
-    MatrixXs dV(se2d->N, se2d->N);
-
-    ArrayXs vDiff = se2d->grid.unaryExpr([this, y](const Scalar &x) -> Scalar { return this->se2d->potential(x, y); }) - vbar;
-
-    for (int i = 0; i < se2d->N; ++i) {
-        for (int j = 0; j <= i; ++j) {
-            dV(i, j) = lobatto::quadrature<Scalar>(se2d->grid, eigenfunctions[i] * vDiff * eigenfunctions[j]);
-            if (j < i) dV(j, i) = dV(i, j);
-        }
-        dV(i, i) += eigenvalues[i];
-    }
-
-    return dV;
-}
-
-template<typename Scalar>
 template<bool withDerivative, typename diffType>
 diffType Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::ArrayXs &x) const {
-    const Y<Scalar> y0 = Y<Scalar>({0, 1}, {0, 0});
     Eigen::Index size = x.size();
 
     ArrayXXs b(size, se2d->N);
     ArrayXXs b_x(size, se2d->N);
     for (int i = 0; i < se2d->N; ++i) {
-        auto ys = matslise->eigenfunction(eigenvalues[i], y0, x, i);
+        Array<Y<Scalar>, Dynamic, 1> ys = eigenfunctions[i](x);
         b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                 [](const Y<Scalar> &y) -> Scalar {
                     return y.y[0];
@@ -113,17 +129,12 @@ diffType Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::Ar
 template<typename Scalar>
 template<bool withDerivative, typename diffType>
 function<diffType(Scalar)> Matslise2D<Scalar>::Sector::basis() const {
-    const Y<Scalar> y0 = Y<Scalar>::Dirichlet(1);
-    vector<function<Y<Scalar>(Scalar)>> basis(static_cast<size_t>(se2d->N));
-    for (int index = 0; index < se2d->N; ++index) {
-        basis[static_cast<size_t>(index)] = matslise->eigenfunctionCalculator(eigenvalues[index], y0, index);
-    }
-    return [basis](const Scalar &x) -> diffType {
-        ArrayXs b(basis.size());
-        ArrayXs b_x(basis.size());
+    return [this](const Scalar &x) -> diffType {
+        ArrayXs b(this->eigenfunctions.size());
+        ArrayXs b_x(this->eigenfunctions.size());
 
-        for (int i = 0; i < static_cast<int>(basis.size()); ++i) {
-            Y<Scalar> y = basis[static_cast<size_t>(i)](x);
+        for (int i = 0; i < static_cast<int>(this->eigenfunctions.size()); ++i) {
+            Y<Scalar> y = this->eigenfunctions[static_cast<size_t>(i)](x);
             b[i] = y.y[0];
             if constexpr (withDerivative)
                 b_x[i] = y.y[1];

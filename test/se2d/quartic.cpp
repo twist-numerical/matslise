@@ -50,7 +50,7 @@ TEST_CASE("Eigenfunctions quartic: c=0", "[matslise2d][eigenvalues][quartic]") {
             -1, 1, 6,
             {2.5616265756400316393, 5.3968039831941313950, 7.5491560629022652232, 8.4359873223484674428,
              9.6175877647334193257, 10.366020696842355027, 12.818706298776658594, 12.886584502841939840,
-             13.406949149052421685, 15.336126803517827432});
+             13.406949149052421685, 15.336126803517827432}, 27, 1e-8);
     testQuartic<double>(
             0, 1, 5,
             {2.7847032830605837113, 6.0411643457423693920, 9.2976254084241550728, 10.047401599289601544,
@@ -60,7 +60,7 @@ TEST_CASE("Eigenfunctions quartic: c=0", "[matslise2d][eigenvalues][quartic]") {
             1, 1, 5,
             {2.9520500919628742871, 6.4629059998638721377, 10.390627295503782127, 10.882435576819807244,
              14.658513813565503097, 15.482771577251666477, 19.217523495888984907, 20.293829707535892571,
-             20.661082690597886009, 24.033166193470850317});
+             20.661082690597886009, 24.033166193470850317}, 27, 1e-8);
 }
 
 TEST_CASE("Eigenfunctions quartic: c=3", "[matslise2d][eigenvalues][quartic]") {
@@ -87,7 +87,7 @@ TEST_CASE("Eigenfunctions quartic: c=3", "[matslise2d][eigenvalues][quartic]") {
 
 using boost::multiprecision::float128;
 
-TEST_CASE("Eigenfunctions quartic: c=-3 (float128)", "[se2d][eigenvalues][quartic][float128][slow]") {
+TEST_CASE("Eigenfunctions quartic: c=-3 (float128)", "[matslise2d][eigenvalues][quartic][float128][slow]") {
 #pragma omp parallel
 #pragma omp single
     {
@@ -117,7 +117,7 @@ TEST_CASE("Eigenfunctions quartic: c=-3 (float128)", "[se2d][eigenvalues][quarti
 
 }
 
-TEST_CASE("Eigenfunctions quartic: c=0 (float128)", "[se2d][eigenvalues][quartic][float128][slow]") {
+TEST_CASE("Eigenfunctions quartic: c=0 (float128)", "[matslise2d][eigenvalues][quartic][float128][slow]") {
 #pragma omp parallel
 #pragma omp single
     {
@@ -148,7 +148,7 @@ TEST_CASE("Eigenfunctions quartic: c=0 (float128)", "[se2d][eigenvalues][quartic
     }
 }
 
-TEST_CASE("Eigenfunctions quartic: c=3 (float128)", "[se2d][eigenvalues][quartic][float128][slow]") {
+TEST_CASE("Eigenfunctions quartic: c=3 (float128)", "[matslise2d][eigenvalues][quartic][float128][slow]") {
     // unsolvable
     /* testQuartic<double>(-1, 1e3, 2.8,
                 {17.686909350775717644, 37.965440109662577256, 48.868379100596636584, 56.219242763197933124,
