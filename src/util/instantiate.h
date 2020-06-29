@@ -11,6 +11,7 @@ template class matslise::MatsliseHalf<Scalar>;\
 template class matslise::Matscs<Scalar>;\
 template class matslise::Matslise2D<Scalar>;\
 template class matslise::Matslise2DHalf<Scalar>;\
+template class matslise::Matslise3D<Scalar>;\
 INSTANTIATE_MORE(Scalar)
 
 INSTANTIATE_MATSLISE(double)

@@ -3,6 +3,7 @@
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/find_sector.h"
+#include "./matching.h"
 
 using namespace Eigen;
 using namespace matslise;
@@ -98,16 +99,7 @@ Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, 
         conditionY(yr);
     }
 
-
-    ColPivHouseholderQR<MatrixXs> left_solver(yl.getY(0).transpose());
-    ColPivHouseholderQR<MatrixXs> right_solver(yr.getY(0).transpose());
-    MatrixXs Ul = left_solver.solve(yl.getY(1).transpose()).transpose();
-    MatrixXs Ur = right_solver.solve(yr.getY(1).transpose()).transpose();
-    return make_pair(
-            Ul - Ur,
-            left_solver.solve((yl.getdY(1) - Ul * yl.getdY(0)).transpose()).transpose()
-            - right_solver.solve((yr.getdY(1) - Ur * yr.getdY(0)).transpose()).transpose()
-    );
+    return errorMatrix<Scalar>(yl, yr);
 }
 
 template<typename Scalar>
@@ -137,36 +129,7 @@ template<typename Scalar>
 vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
         const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
     pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(yLeft, E, use_h);
-    EigenSolver<MatrixXs> solver(N);
-
-    solver.compute(error_matrix.first, true);
-
-    multimap<Scalar, int> rightMap;
-    Array<Scalar, Dynamic, 1> eigenvaluesRight = solver.eigenvalues().array().real();
-    for (int i = 0; i < N; ++i)
-        rightMap.insert({eigenvaluesRight[i], i});
-    MatrixXs right = solver.eigenvectors().real();
-
-    multimap<Scalar, int> leftMap;
-    solver.compute(error_matrix.first.transpose(), true);
-    Array<Scalar, Dynamic, 1> eigenvaluesLeft = solver.eigenvalues().array().real();
-    for (int i = 0; i < N; ++i)
-        leftMap.insert({eigenvaluesLeft[i], i});
-    MatrixXs left = solver.eigenvectors().transpose().real();
-
-
-    vector<pair<Scalar, Scalar>> errors;
-    for (auto leftI = leftMap.begin(), rightI = rightMap.begin();
-         leftI != leftMap.end() && rightI != rightMap.end();
-         ++leftI, ++rightI) {
-        int &li = leftI->second;
-        int &ri = rightI->second;
-        errors.push_back({eigenvaluesLeft[li],
-                          (left.row(li) * error_matrix.second * right.col(ri) /
-                           (left.row(li) * right.col(ri)))[0]});
-    }
-
-    return errors;
+    return eigenvaluesWithDerivatives<Scalar, false>(error_matrix.first, error_matrix.second);
 }
 
 template<typename Scalar>
@@ -179,6 +142,15 @@ Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const 
             return abs(a.first) < abs(b.first);
         return abs(a.first / a.second) < abs(b.first / b.second);
     });
+}
+
+template<typename Scalar>
+Scalar Matslise2D<Scalar>::estimatePotentialMinimum() const {
+    auto iterator = this->sectors.begin();
+    Scalar minimal = (*iterator++)->matslise->estimatePotentialMinimum();
+    for (; iterator != this->sectors.end(); ++iterator)
+        minimal = min(minimal, (*iterator)->matslise->estimatePotentialMinimum());
+    return minimal;
 }
 
 #include "../util/instantiate.h"

@@ -117,9 +117,9 @@ is_first_eigenvalue(const Matslise2D<Scalar> &se2d, const Y<Scalar, Eigen::Dynam
     if (eigenfunctions.size() != 1)
         return false;
     Array<Scalar, Dynamic, Dynamic> values = eigenfunctions[0](
-            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.sub.min, se2d.domain.sub.max),
-            Matslise2D<Scalar>::ArrayXs::LinSpaced(50, se2d.domain.min, se2d.domain.max));
-    return values.minCoeff() * values.abs().maxCoeff() > -1e-5;
+            Matslise2D<Scalar>::ArrayXs::LinSpaced(101, se2d.domain.sub.min, se2d.domain.sub.max),
+            Matslise2D<Scalar>::ArrayXs::LinSpaced(101, se2d.domain.min, se2d.domain.max));
+    return values.minCoeff() * values.maxCoeff() > -1e-5;
 }
 
 template<typename Scalar>
@@ -156,48 +156,55 @@ vector<Scalar> Matslise2D<Scalar>::firstEigenvalues(const Y<Scalar, Dynamic> &le
 }
 
 template<typename Scalar>
+int numberPositive(const vector<pair<Scalar, Scalar>> &errors) {
+    int n = 0;
+    for (auto &error : errors)
+        if (error.first > 0)
+            ++n;
+    return n;
+}
+
+template<typename Scalar>
 Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const {
-    Scalar potentialMinimum = sectors[0]->matslise->estimatePotentialMinimum();
-    for (int i = 0; i < sectorCount; ++i)
-        potentialMinimum = min(potentialMinimum, sectors[i]->matslise->estimatePotentialMinimum());
+    Scalar lower = estimatePotentialMinimum();
+    cout << "Potential minimum: " << lower << endl;
+    Scalar upper = eigenvalue(left, lower);
+    if (is_first_eigenvalue(*this, left, upper))
+        return upper;
 
-    const int maxDepth = 4;
-    vector<pair<Scalar, int>> guesses{{potentialMinimum, 0}};
-    function<bool(const pair<Scalar, int> &, const pair<Scalar, int> &)> comp
-            = [](const pair<Scalar, int> &a, const pair<Scalar, int> &b) -> bool {
-                return b.first < a.first;
-            };
-
-    int depth;
-    Scalar guess;
-    set<Scalar> seen;
-
-    while (!guesses.empty()) {
-        tie(guess, depth) = guesses.front();
-        pop_heap(guesses.begin(), guesses.end(), comp);
-        guesses.pop_back();
-
-        if (depth >= maxDepth) {
-            Scalar E = eigenvalue(left, guess);
-
-            if (!set_contains(seen, E, Scalar(1e-5)) && is_first_eigenvalue(*this, left, E))
-                return E;
-            seen.insert(E);
-        } else {
-            auto errors = matchingErrors(left, guess);
-            sort(errors.begin(), errors.end(),
-                 [](const pair<Scalar, Scalar> &a, const pair<Scalar, Scalar> &b) -> bool {
-                     return a.first / a.second > b.first / b.second;
-                 });
-            for (auto it = errors.begin(); it != errors.end() && it != errors.begin() + 3; ++it) {
-                Scalar newGuess = guess - it->first / it->second;
-                guesses.emplace_back(newGuess, depth + 1);
-                push_heap(guesses.begin(), guesses.end(), comp);
+    {
+        int steps = 0;
+        Scalar stepSize = 1;
+        while (numberPositive(matchingErrors(left, lower)) != N) {
+            lower -= (stepSize *= 2);
+            if (++steps > 10) {
+                throw runtime_error("Could not find the first eigenvalue. A useful lower bound is not found.");
+            }
+        }
+    }
+    {
+        int steps = 0;
+        Scalar stepSize = 2;
+        while (numberPositive(matchingErrors(left, upper)) >= N) {
+            upper += (stepSize *= 2);
+            if (++steps > 10) {
+                throw runtime_error("Could not find the first eigenvalue. A useful upper bound is not found.");
             }
         }
     }
 
-    throw runtime_error("Could not find the first eigenvalue.");
+    while (upper - lower > 1e-3) {
+        Scalar mid = (lower + upper) / 2;
+        if (numberPositive(matchingErrors(left, mid)) == N)
+            lower = mid;
+        else
+            upper = mid;
+    }
+    Scalar first = eigenvalue(left, lower);
+    cout << "Guess for first: " << first << endl;
+    if (!is_first_eigenvalue(*this, left, first))
+        throw runtime_error("Could not find the first eigenvalue.");
+    return first;
 }
 
 template<typename Scalar>

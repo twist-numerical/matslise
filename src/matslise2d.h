@@ -55,6 +55,8 @@ namespace matslise {
 
         virtual std::vector<Eigenfunction2D<Scalar, true>> eigenfunctionWithDerivatives(const Scalar &E) const = 0;
 
+        virtual Scalar estimatePotentialMinimum() const = 0;
+
         virtual ~AbstractMatslise2D() = default;
     };
 
@@ -107,6 +109,8 @@ namespace matslise {
         }
 
     public: // overrides
+        Scalar estimatePotentialMinimum() const override;
+
         Scalar firstEigenvalue() const override {
             return firstEigenvalue(dirichletBoundary);
         }
@@ -247,6 +251,10 @@ namespace matslise {
                        const Options2<Scalar> &options);
 
         virtual ~Matslise2DHalf();
+
+        Scalar estimatePotentialMinimum() const override {
+            return se2d->estimatePotentialMinimum();
+        }
 
         Scalar firstEigenvalue() const override;
 

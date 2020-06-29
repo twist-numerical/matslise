@@ -257,5 +257,6 @@ namespace matslise {
 
 #include "matscs.h"
 #include "matslise2d.h"
+#include "matslise3d.h"
 
 #endif //SCHRODINGER_MATSLISE_H

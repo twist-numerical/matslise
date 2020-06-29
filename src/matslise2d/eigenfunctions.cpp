@@ -1,5 +1,6 @@
 #include "../matslise.h"
 #include <map>
+#include "./matching.h"
 
 using namespace Eigen;
 using namespace matslise;
@@ -35,6 +36,7 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
         U[i + 1] = conditionY(steps[i + 1]);
     }
     const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
+    MatrixXs kernel = getKernel<Scalar>(matchLeft, matchRight, 1e-4);
 
     ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
     ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
@@ -44,10 +46,8 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
     lu.setThreshold(1e-4);
 
     vector<Y<Scalar, Dynamic>> elements;
-    if (lu.dimensionOfKernel() > 0) {
+    if (kernel.cols() > 0) {
         elements.resize(sectorCount + 1);
-        MatrixXs kernel = lu.kernel();
-
         MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
         MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
 

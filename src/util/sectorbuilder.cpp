@@ -187,6 +187,7 @@ template SectorBuilder<Problem> sector_builder::automatic<Problem>(const Problem
 #define INSTANTIATE_MORE(Scalar) \
 INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>) \
 INSTANTIATE_SECTOR_BUILDER(Matscs<Scalar>) \
-INSTANTIATE_SECTOR_BUILDER(Matslise2D<Scalar>)
+INSTANTIATE_SECTOR_BUILDER(Matslise2D<Scalar>) \
+INSTANTIATE_SECTOR_BUILDER(Matslise3D<Scalar>)
 
 #include "./instantiate.h"

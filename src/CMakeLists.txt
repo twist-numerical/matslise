@@ -5,15 +5,15 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 message("Matslise")
 if (MSVC)
     add_compile_options(
-    /wd4267 # possible loss of data size_t -> int
-    /wd4244 # possible loss of data size_t -> int
-    /wd4661 # no suitable definition provided for explicit template instantiation request
-    /wd4820 #'bytes' bytes padding added after construct 'member_name'
-    /wd4464  # relative include path contains '..'
-    /DNOMINMAX
-    /D_USE_MATH_DEFINES
-    /bigobj)
-else()
+            /wd4267 # possible loss of data size_t -> int
+            /wd4244 # possible loss of data size_t -> int
+            /wd4661 # no suitable definition provided for explicit template instantiation request
+            /wd4820 #'bytes' bytes padding added after construct 'member_name'
+            /wd4464  # relative include path contains '..'
+            /DNOMINMAX
+            /D_USE_MATH_DEFINES
+            /bigobj)
+else ()
     add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
     OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
     IF (OPTIMIZE)
@@ -27,6 +27,7 @@ SET(MATSLISE_SRC
         matscs/matscs.cpp matscs/sector.cpp
         matslise2d/halfrange.cpp matslise2d/eigenvalues.cpp matslise2d/eigenfunctions.cpp
         matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp schrodinger.h
+        matslise3d/matslise3d.cpp
         util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
 
 if (DEFINED EMSCRIPTEN)
@@ -102,7 +103,7 @@ else ()
         add_subdirectory(../cmake/pybind11 pybind11)
         message("-- python: ${PYTHON_EXECUTABLE}")
         pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
-                pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp)
+                pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
         target_link_libraries(pyslise PRIVATE ${libraries})
 
         configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
