@@ -33,6 +33,17 @@ Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, c
 }
 
 template<typename Scalar>
+void Matslise<Scalar>::Sector::setBackward(bool _backward) {
+    if (_backward != backward) {
+        this->backward = _backward;
+        for (int i = 1; i < MATSLISE_N; i += 2)
+            vs[i] *= -1;
+
+        calculateTCoeffs();
+    }
+}
+
+template<typename Scalar>
 void Matslise<Scalar>::Sector::calculateTCoeffs() {
     calculate_tcoeff_matrix(h, vs, t_coeff, t_coeff_h);
 }

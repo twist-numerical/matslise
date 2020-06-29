@@ -187,6 +187,8 @@ namespace matslise {
 
             Sector(const Matslise *problem, const Scalar &min, const Scalar &max, bool backward);
 
+            void setBackward(bool);
+
             void calculateTCoeffs();
 
             bool contains(const Scalar &point) const {

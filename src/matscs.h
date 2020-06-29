@@ -88,6 +88,8 @@ namespace matslise {
             Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
                    const Scalar &min, const Scalar &max, bool backward = false);
 
+            void setBackward(bool);
+
             void calculateTCoeffs();
 
             bool contains(Scalar point) const {

@@ -1,6 +1,31 @@
 #include "module.h"
 
 void pyslise3d(py::module &m) {
+    m.def("Pyslise3D_anharmonic", [](
+                  double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
+                  double tolerance, int z_count, double z_tol
+          ) {
+              py::gil_scoped_release release;
+              if (z_count != -1 && z_tol != -1) {
+                  throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
+              }
+              if (z_count == -1 && z_tol == -1) {
+                  z_tol = tolerance;
+              }
+              SectorBuilder<Matslise3D<double>> sectorBuilder =
+                      z_count == -1 ? sector_builder::automatic<Matslise3D<double>>(z_tol)
+                                    : sector_builder::uniform<Matslise3D<double>>(z_count);
+              return make_unique<Matslise3D<double>>([](double x, double y, double z) {
+                  return 2 * (
+                          x * x * (2 + x * x * (.5 + 2 * x * x))
+                          + y * y * (2 + y * y * (.5 + 2 * y * y))
+                          + z * z * (2 + z * z * (.5 + 2 * z * z))
+                          + x * y + y * z + z * x);
+              }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, sectorBuilder, tolerance);
+          }, py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"), py::arg("zmin"), py::arg("zmax"),
+          py::arg("tolerance"),
+          py::arg("z_count") = -1, py::arg("z_tolerance") = -1);
+
     py::class_<AbstractMatslise3D<double>>(m, "AbstractPyslise3D")
             .def("eigenvalue", &AbstractMatslise3D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.

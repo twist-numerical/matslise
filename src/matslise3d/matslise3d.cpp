@@ -137,6 +137,12 @@ Matslise3D<Scalar>::Sector::Sector(
 }
 
 template<typename Scalar>
+void Matslise3D<Scalar>::Sector::setBackward(bool _backward) {
+    backward = _backward;
+    matscs->setBackward(backward);
+}
+
+template<typename Scalar>
 Matslise3D<Scalar>::Sector::~Sector() {
     delete matscs;
 }

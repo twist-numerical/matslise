@@ -66,6 +66,12 @@ Matslise2D<Scalar>::Sector::~Sector() {
 }
 
 template<typename Scalar>
+void Matslise2D<Scalar>::Sector::setBackward(bool _backward) {
+    backward = _backward;
+    matscs->setBackward(backward);
+}
+
+template<typename Scalar>
 typename Matslise2D<Scalar>::Sector *Matslise2D<Scalar>::Sector::refine(
         const Matslise2D<Scalar> *problem, const Scalar &_min, const Scalar &_max, bool _backward) const {
     Scalar h = _max - _min;

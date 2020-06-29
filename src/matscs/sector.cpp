@@ -17,7 +17,6 @@ Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar 
         : Sector(legendre::getCoefficients<MATSCS_N>(s->V, min, max), min, max, backward) {
 }
 
-
 template<typename Scalar>
 Matscs<Scalar>::Sector::Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
                                const Scalar &min, const Scalar &max, bool backward)
@@ -31,6 +30,18 @@ Matscs<Scalar>::Sector::Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dyn
         this->vs[i] = (backward && i % 2 == 1 ? -1 : 1) * diagonalize.transpose() * vs[i] * diagonalize;
 
     calculateTCoeffs();
+}
+
+template<typename Scalar>
+void Matscs<Scalar>::Sector::setBackward(bool _backward) {
+    if (backward != _backward) {
+        backward = _backward;
+
+        for (int i = 1; i < MATSCS_N; i += 2)
+            this->vs[i] *= -1;
+
+        calculateTCoeffs();
+    }
 }
 
 template<typename Scalar>

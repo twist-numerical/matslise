@@ -52,6 +52,13 @@ else ()
     install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
 
+    OPTION(PARALLEL "Compile with parallel algorithms." OFF)
+    IF (PARALLEL)
+        ADD_DEFINITIONS(-DMATSLISE_parallel -DEIGEN_DONT_PARALLELIZE)
+        find_package(OpenMP REQUIRED)
+        target_link_libraries(matslise PUBLIC OpenMP::OpenMP_CXX)
+    ENDIF (PARALLEL)
+
     OPTION(LONG_DOUBLE "Option description" OFF)
     IF (LONG_DOUBLE)
         ADD_DEFINITIONS(-DMATSLISE_long_double)

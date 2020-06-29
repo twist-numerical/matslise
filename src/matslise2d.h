@@ -199,6 +199,8 @@ namespace matslise {
 
             virtual ~Sector();
 
+            void setBackward(bool);
+
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(
                     const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,

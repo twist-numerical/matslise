@@ -48,7 +48,25 @@ SectorBuilder<Problem> sector_builder::uniform(int sectorCount) {
 
         std::vector<Sector *> sectors;
         sectors.resize(sectorCount);
+#ifdef MATSLISE_parallel
+#pragma omp parallel for shared(min, h)
+        for (int i = 0; i < sectorCount; ++i) {
+            sectors[i] = new Sector(problem, min + i * h, max - (sectorCount - i - 1) * h, i > sectorCount / 2);
+        }
+        int matchIndex = 0;
+        for (int i = 1; i < sectorCount; ++i) {
+            if (Sector::compare(*sectors[i], *sectors[matchIndex]))
+                matchIndex = i;
+        }
+        if (matchIndex > 0)
+            --matchIndex;
 
+#pragma omp parallel for
+        for (int i = 0; i < sectorCount; ++i) {
+            sectors[i]->setBackward(i > matchIndex);
+        }
+
+#else
         sectors[0] = new Sector(problem, min, min + h, false);
         sectors[sectorCount - 1] = new Sector(problem, min + (sectorCount - 1) * h, max, true);
         int i = 0, j = sectorCount - 1;
@@ -62,6 +80,7 @@ SectorBuilder<Problem> sector_builder::uniform(int sectorCount) {
             }
         }
         int matchIndex = i;
+#endif
         return {std::move(sectors), matchIndex};
     };
 }
