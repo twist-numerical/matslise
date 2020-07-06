@@ -43,15 +43,16 @@ eigenvaluesWithDerivatives(const Matrix<Scalar, Dynamic, Dynamic> &error,
     Array<Scalar, Dynamic, 1> eigenvaluesRight = solver.eigenvalues().array().real();
     for (int i = 0; i < N; ++i)
         rightMap.insert({eigenvaluesRight[i], i});
-    MatrixXs right = solver.eigenvectors().real();
+    // We assume that .eigenvalues() and .pseudoEigenvectors() return elements in the same order
+    // We assume that .pseudoEigenvectors() will fix some issues with complex eigenvectors.
+    MatrixXs right = solver.pseudoEigenvectors();
 
     std::multimap<Scalar, int> leftMap;
     solver.compute(error.transpose(), true);
     Array<Scalar, Dynamic, 1> eigenvaluesLeft = solver.eigenvalues().array().real();
     for (int i = 0; i < N; ++i)
         leftMap.insert({eigenvaluesLeft[i], i});
-    MatrixXs left = solver.eigenvectors().transpose().real();
-
+    MatrixXs left = solver.pseudoEigenvectors().transpose();
 
     std::vector<typename std::conditional<withVectors,
             std::tuple<Scalar, Scalar, VectorXs>,
@@ -99,12 +100,9 @@ getKernel(const Y<Scalar, Dynamic> &left, const Y<Scalar, Dynamic> &right, const
     std::vector<VectorXs> kernel_list;
     for (auto &error : eigenvaluesWithDerivatives<Scalar, true>(error_matrix.first, error_matrix.second)) {
         if (abs(std::get<0>(error) / std::get<1>(error)) < tolerance) {
-            std::cout << std::get<0>(error) << ", " << std::get<1>(error) << " -> " << std::get<2>(error).transpose()
-                      << std::endl;
             kernel_list.push_back(std::move(std::get<2>(error)));
         }
     }
-    std::cout << std::endl;
     MatrixXs kernel(left.getN(), kernel_list.size());
     for (Index i = 0; i < static_cast<Index>(kernel_list.size()); ++i)
         kernel.col(i) = kernel_list[i];

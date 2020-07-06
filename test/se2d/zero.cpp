@@ -71,7 +71,6 @@ TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
                     });
                 }
             }
-            // can be executed when normalizing is done
             compareEigenfunctions(p, E, v);
         }
     }

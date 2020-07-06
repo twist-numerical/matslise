@@ -291,7 +291,7 @@ Matscs<Scalar>::Sector::propagatePsi(
         const Scalar &E, const Matrix<Scalar, Dynamic, Dynamic> &_psi, const Scalar &a, const Scalar &b) const {
     Matrix<Scalar, Dynamic, Dynamic> psi = _psi;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
-        if (direction == forward) { // forward
+        if (direction == forward) {
             if (a > min)
                 psi = propagatePsi_delta(this, E, psi, min - a);
             if (b > min)

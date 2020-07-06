@@ -189,7 +189,7 @@ Matslise<Scalar>::Sector::propagate(
     Y<Scalar> y = y0;
     Scalar argdet = 0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
-        if (direction == forward) { // forward
+        if (direction == forward) {
             if (a > min)
                 propagateDelta<Scalar, withPrufer>(this, E, y, min - a, use_h, argdet);
             if (b > min)

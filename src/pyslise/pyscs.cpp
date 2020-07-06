@@ -4,7 +4,9 @@ void pyscs(py::module &m) {
     py::class_<Matscs<>::Sector>(m, "PyscsSector")
             .def_readonly("min", &Matscs<>::Sector::min)
             .def_readonly("max", &Matscs<>::Sector::max)
-            .def_readonly("backward", &Matscs<>::Sector::backward);
+            .def_property_readonly("forward", [](const Matscs<>::Sector &s) -> bool {
+                return s.direction == Direction::forward;
+            });
     py::class_<Matscs<>>(m, "Pyscs")
             .def(py::init(
                     [](const function<MatrixXd(double)> &V, int N, double xmin, double xmax, int steps,

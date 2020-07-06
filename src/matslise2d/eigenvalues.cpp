@@ -167,7 +167,7 @@ int numberPositive(const vector<pair<Scalar, Scalar>> &errors) {
 template<typename Scalar>
 Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const {
     Scalar lower = estimatePotentialMinimum();
-    cout << "Potential minimum: " << lower << endl;
+    //cout << "Potential minimum: " << lower << endl;
     Scalar upper = eigenvalue(left, lower);
     if (is_first_eigenvalue(*this, left, upper))
         return upper;
@@ -201,7 +201,7 @@ Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left
             upper = mid;
     }
     Scalar first = eigenvalue(left, lower);
-    cout << "Guess for first: " << first << endl;
+    //cout << "Guess for first: " << first << endl;
     if (!is_first_eigenvalue(*this, left, first))
         throw runtime_error("Could not find the first eigenvalue.");
     return first;

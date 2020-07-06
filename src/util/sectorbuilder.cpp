@@ -19,8 +19,8 @@ constexpr bool sectorHasRefine = decltype(__sectorHasRefine<Scalar, Problem>(0))
 template<typename Scalar, typename Problem>
 typename std::enable_if<sectorHasRefine<Scalar, Problem>, typename Problem::Sector *>::type
 refineSector(const typename Problem::Sector &sector, const Problem *problem, const Scalar &min,
-             const Scalar &max, bool backward) {
-    return sector.refine(problem, min, max, backward);
+             const Scalar &max, Direction direction) {
+    return sector.refine(problem, min, max, direction);
 }
 
 
@@ -53,10 +53,8 @@ SectorBuilder<Problem> sector_builder::uniform(int sectorCount) {
         int matchIndex = 0;
         for (int i = 1; i < sectorCount; ++i) {
             if (Sector::compare(*sectors[i], *sectors[matchIndex]))
-                matchIndex = i;
+                matchIndex = i-1;
         }
-        if (matchIndex > 0)
-            --matchIndex;
 
 #pragma omp parallel for
         for (int i = 0; i < sectorCount; ++i) {
@@ -86,31 +84,30 @@ template<typename Problem>
 typename Problem::Sector *automaticNextSector(
         const Problem *ms, typename Problem::Scalar &h,
         const typename Problem::Scalar &left, const typename Problem::Scalar &right,
-        const typename Problem::Scalar &tolerance, bool forward) {
+        const typename Problem::Scalar &tolerance, Direction direction) {
     typedef typename Problem::Scalar Scalar;
     typedef typename Problem::Sector Sector;
-    Scalar xmin = forward ? left : right - h;
-    Scalar xmax = forward ? left + h : right;
-    if (forward && xmax > right) {
+    Scalar xmin = direction == forward ? left : right - h;
+    Scalar xmax = direction == forward ? left + h : right;
+    if (direction == forward && xmax > right) {
         xmax = right;
-    } else if (!forward && xmin < left) {
+    } else if (direction == backward && xmin < left) {
         xmin = left;
     }
     h = xmax - xmin;
     int steps = 0;
-    Sector *s = new Sector(ms, xmin, xmax, forward ? Direction::forward : Direction::backward);
+    Sector *s = new Sector(ms, xmin, xmax, direction);
     Scalar error = s->error();
     while (error > tolerance && steps < 10 && h > 1e-3) {
         ++steps;
         h *= std::max(Scalar(.1), Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
-        if (forward) {
+        if (direction == forward) {
             xmax = xmin + h;
         } else {
             xmin = xmax - h;
         }
         Sector *prevSector = s;
-        s = refineSector<Scalar, Problem>(
-                *prevSector, ms, xmin, xmax, forward ? Direction::forward : Direction::backward);
+        s = refineSector<Scalar, Problem>(*prevSector, ms, xmin, xmax, direction);
         h = xmax - xmin;
         delete prevSector;
         error = s->error();
@@ -135,7 +132,7 @@ typename Problem::Sector *automaticNextSector(
                     xmax = right;
                 } else {
                     h *= pow(tolerance / error, 1. / (Problem::order - 1));
-                    if (forward) {
+                    if (direction == forward) {
                         xmax = xmin + h;
                         if (xmax > right)
                             xmax = right;
@@ -147,7 +144,7 @@ typename Problem::Sector *automaticNextSector(
                 }
                 h = xmax - xmin;
                 auto *newSector = refineSector<Scalar, Problem>(
-                        *s, ms, xmin, xmax, forward ? Direction::forward : Direction::backward);
+                        *s, ms, xmin, xmax, direction);
                 error = newSector->error();
 
                 if (error > tolerance) {
@@ -177,19 +174,19 @@ SectorBuilder<Problem> sector_builder::automatic(const typename Problem::Scalar 
         Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
         Scalar forwardH = .33 * (max - min);
         Scalar backwardH = forwardH;
-        forward.push_back(automaticNextSector(problem, forwardH, min, mid, tolerance, true));
-        backward.push_back(automaticNextSector(problem, backwardH, mid, max, tolerance, false));
+        forward.push_back(automaticNextSector(problem, forwardH, min, mid, tolerance, Direction::forward));
+        backward.push_back(automaticNextSector(problem, backwardH, mid, max, tolerance, Direction::backward));
 
 
         while (forward.back()->max != backward.back()->min) {
             if (Sector::compare(*backward.back(), *forward.back()))
                 forward.push_back(automaticNextSector(
                         problem, forwardH, forward.back()->max,
-                        backward.back()->min, tolerance, true));
+                        backward.back()->min, tolerance, Direction::forward));
             else
                 backward.push_back(automaticNextSector(
                         problem, backwardH, forward.back()->max,
-                        backward.back()->min, tolerance, false));
+                        backward.back()->min, tolerance, Direction::backward));
         }
 
         int matchIndex = forward.size() - 1;

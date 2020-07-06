@@ -71,7 +71,7 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
             return s <= 0 ? 1 : Scalar(1.) / sqrt(s);
         });
 
-        for (int i = 0; i <= sectorCount; ++i) {
+        for (Index i = 0; i <= sectorCount; ++i) {
             elements[static_cast<size_t>(i)] *= normalizer.matrix().asDiagonal();
         }
     }
@@ -117,9 +117,8 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
 
                                 Y<Scalar, Dynamic, 1> c =
                                         sector->direction == forward
-                                        ? sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y, true)
-                                        : sector->propagate(E, (*steps)[sectorIndex + 1].col(column), sector->max, y,
-                                                            true);
+                                        ? sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y)
+                                        : sector->propagate(E, (*steps)[sectorIndex + 1].col(column), sector->max, y);
 
                                 if constexpr (withDerivative) {
                                     ArrayXs b, b_x;
