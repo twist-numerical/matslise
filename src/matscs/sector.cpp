@@ -13,34 +13,38 @@ using namespace matslise;
 using namespace Eigen;
 
 template<typename Scalar>
-Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar &max, bool backward)
-        : Sector(legendre::getCoefficients<MATSCS_N>(s->V, min, max), min, max, backward) {
+Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar &max, Direction direction)
+        : Sector(legendre::getCoefficients<MATSCS_N>(s->V, min, max), min, max, direction) {
 }
 
 template<typename Scalar>
 Matscs<Scalar>::Sector::Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
-                               const Scalar &min, const Scalar &max, bool backward)
-        : vs(vs), min(min), max(max), backward(backward) {
+                               const Scalar &min, const Scalar &max, Direction direction)
+        : vs(vs), min(min), max(max), direction(direction) {
     h = max - min;
     SelfAdjointEigenSolver<Matrix<Scalar, Dynamic, Dynamic>> es(vs[0]);
     n = vs[0].rows();
     diagonalize = es.eigenvectors();
 
     for (int i = 0; i < MATSCS_N; ++i)
-        this->vs[i] = (backward && i % 2 == 1 ? -1 : 1) * diagonalize.transpose() * vs[i] * diagonalize;
+        this->vs[i] = (direction == backward && i % 2 == 1 ? -1 : 1) * diagonalize.transpose() * vs[i] * diagonalize;
 
-    calculateTCoeffs();
+
+    if (direction != none)
+        calculateTCoeffs();
 }
 
 template<typename Scalar>
-void Matscs<Scalar>::Sector::setBackward(bool _backward) {
-    if (backward != _backward) {
-        backward = _backward;
+void Matscs<Scalar>::Sector::setDirection(Direction newDirection) {
+    if (newDirection != direction) {
+        if (direction == backward || newDirection == backward)
+            for (int i = 1; i < MATSCS_N; i += 2)
+                this->vs[i] *= -1;
 
-        for (int i = 1; i < MATSCS_N; i += 2)
-            this->vs[i] *= -1;
+        direction = newDirection;
 
-        calculateTCoeffs();
+        if (direction != none)
+            calculateTCoeffs();
     }
 }
 
@@ -124,7 +128,7 @@ template<int r>
 Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagateDeltaColumn(
         const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &_delta, bool use_h) const {
     Scalar delta = _delta;
-    if (backward)
+    if (direction == backward)
         delta *= -1;
     bool rightDirection = delta >= 0;
     if (!rightDirection)
@@ -134,10 +138,10 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagateDeltaColumn(
 
     const T<Scalar, Dynamic> &t = calculateT(E, delta, use_h);
     Y<Scalar, Dynamic, r> y = y0;
-    if (backward)
+    if (direction == backward)
         y.reverse();
     Y<Scalar, Dynamic, r> y1 = rightDirection ? t * y : t / y;
-    if (backward)
+    if (direction == backward)
         y1.reverse();
 
     return y1;
@@ -205,7 +209,7 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagateColumn(
         const Scalar &E, const Y<Scalar, Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar, Dynamic, r> y = y0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
-        if (!backward) { // forward
+        if (direction == forward) { // forward
             if (a > min)
                 y = propagateDeltaColumn(E, y, min - a, use_h);
             if (b > min)
@@ -227,7 +231,7 @@ pair<Y<Scalar, Dynamic>, Scalar> Matscs<Scalar>::Sector::propagate(
     Scalar argdet = 0;
     Scalar dTheta;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
-        if (!backward) { // forward
+        if (direction == forward) {
             if (a > min) {
                 tie(y, dTheta) = propagateDelta(E, y, min - a, use_h);
                 argdet += dTheta;
@@ -255,7 +259,7 @@ template<typename Scalar>
 Matrix<Scalar, Dynamic, Dynamic>
 propagatePsi_delta(const typename Matscs<Scalar>::Sector *sector, Scalar E, const Matrix<Scalar, Dynamic, Dynamic> &psi,
                    Scalar delta) {
-    if (sector->backward)
+    if (sector->direction == backward)
         delta *= -1;
     bool forward = delta >= 0;
     if (!forward)
@@ -264,7 +268,7 @@ propagatePsi_delta(const typename Matscs<Scalar>::Sector *sector, Scalar E, cons
         delta = sector->h;
 
     // TODO: verify
-    Scalar extra = sector->backward ? -1 : 1;
+    Scalar extra = sector->direction == forward ? 1 : -1;
     if (delta > 0) {
         T<Scalar, Dynamic> T = sector->calculateT(E, delta);
         return extra * (T.getT(1, 1) + extra * T.getT(1, 0) * psi).transpose()
@@ -287,7 +291,7 @@ Matscs<Scalar>::Sector::propagatePsi(
         const Scalar &E, const Matrix<Scalar, Dynamic, Dynamic> &_psi, const Scalar &a, const Scalar &b) const {
     Matrix<Scalar, Dynamic, Dynamic> psi = _psi;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
-        if (!backward) { // forward
+        if (direction == forward) { // forward
             if (a > min)
                 psi = propagatePsi_delta(this, E, psi, min - a);
             if (b > min)

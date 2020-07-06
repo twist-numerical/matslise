@@ -53,12 +53,12 @@ matslise::BasisQuadrature<Scalar, hmax, halfrange>::dV(
 
     for (auto sector1d : matslise->sectors) {
 
-        if (sector1d->backward) {
+        if (sector1d->direction == forward) {
+            vDiff = -Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
+        } else {
             vDiff = Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
             for (int i = 0; i < hmax; i += 2)
                 vDiff(i) *= -1;
-        } else {
-            vDiff = -Array<Scalar, hmax, 1>::Map(sector1d->vs.data());
         }
 
         vDiff += Array<Scalar, hmax, 1>::Map(
@@ -120,8 +120,13 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
         std::vector<std::pair<Scalar, Scalar>> y0;
         y0.reserve(N);
         for (auto &f : sector2d.eigenfunctions) {
-            Y<Scalar> y = f(sector1d->backward ? sector1d->max : sector1d->min);
-            y0.emplace_back(y.y(0), sector1d->backward ? -y.y(1) : y.y(1));
+            if (sector1d->direction == forward) {
+                Y<Scalar> y = f(sector1d->min);
+                y0.emplace_back(y.y(0), y.y(1));
+            } else {
+                Y<Scalar> y = f(sector1d->max);
+                y0.emplace_back(y.y(0), -y.y(1));
+            }
         }
 
         for (int i = 0; i < N; ++i)
@@ -179,7 +184,7 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
                 legendreTransform<Scalar>(sector1d->h, quadratures);
                 quadData.push_back(quadratures);
 
-                if (sector1d->backward) {
+                if (sector1d->direction == backward) {
                     auto &quad = quadData.back();
                     for (Index k = 1; k < hmax; k += 2)
                         quad(k) *= -1;

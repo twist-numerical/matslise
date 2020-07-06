@@ -191,15 +191,15 @@ namespace matslise {
 
             std::vector<Scalar> eigenvalues;
             std::vector<typename Matslise<Scalar>::Eigenfunction> eigenfunctions;
-            bool backward;
+            Direction direction = none;;
 
             Sector(const Matslise2D<Scalar> *se2d) : se2d(se2d) {}
 
-            Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, Direction);
 
             virtual ~Sector();
 
-            void setBackward(bool);
+            void setDirection(Direction);
 
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(
@@ -226,7 +226,7 @@ namespace matslise {
             }
 
             Sector *
-            refine(const Matslise2D<Scalar> *problem, const Scalar &min, const Scalar &max, bool backward) const;
+            refine(const Matslise2D<Scalar> *problem, const Scalar &min, const Scalar &max, Direction) const;
         };
     };
 

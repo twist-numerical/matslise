@@ -20,26 +20,29 @@ int sign(const Scalar &s) {
 }
 
 template<typename Scalar>
-Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, bool backward)
-        : s(s), min(min), max(max), backward(backward) {
+Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, Direction direction)
+        : s(s), min(min), max(max), direction(direction) {
     h = max - min;
     vs = legendre::getCoefficients<MATSLISE_N>(s->potential, min, max);
-    if (backward) {
+    if (direction == backward) {
         for (int i = 1; i < MATSLISE_N; i += 2)
             vs[i] *= -1;
     }
 
-    calculateTCoeffs();
+    if (direction != none)
+        calculateTCoeffs();
 }
 
 template<typename Scalar>
-void Matslise<Scalar>::Sector::setBackward(bool _backward) {
-    if (_backward != backward) {
-        this->backward = _backward;
-        for (int i = 1; i < MATSLISE_N; i += 2)
-            vs[i] *= -1;
+void Matslise<Scalar>::Sector::setDirection(Direction newDirection) {
+    if (direction != newDirection) {
+        if (direction == backward || newDirection == backward)
+            for (int i = 1; i < MATSLISE_N; i += 2)
+                vs[i] *= -1;
 
-        calculateTCoeffs();
+        direction = newDirection;
+        if (direction != none)
+            calculateTCoeffs();
     }
 }
 
@@ -156,7 +159,7 @@ Scalar Matslise<Scalar>::Sector::prufer(
 template<typename Scalar, bool withPrufer>
 void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
                     const Scalar &E, Y<Scalar> &y, Scalar delta, bool use_h, Scalar &theta) {
-    if (sector->backward)
+    if (sector->direction == backward)
         delta *= -1;
     bool direction = delta >= 0;
     if (!direction)
@@ -167,14 +170,15 @@ void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
     Y<Scalar> y0 = y;
     (void) y0; // Unused when not 'withPrufer'
     const T<Scalar> &t = sector->calculateT(E, delta, use_h);
-    if (sector->backward)
+    if (sector->direction == backward)
         y.reverse();
     y = direction ? t * y : t / y;
-    if (sector->backward)
+    if (sector->direction == backward)
         y.reverse();
 
     if constexpr(withPrufer)
-        theta += direction != sector->backward ? sector->prufer(E, delta, y0, y) : -sector->prufer(E, delta, y, y0);
+        theta += direction != (sector->direction == backward) ?
+                 sector->prufer(E, delta, y0, y) : -sector->prufer(E, delta, y, y0);
 }
 
 template<typename Scalar>
@@ -185,7 +189,7 @@ Matslise<Scalar>::Sector::propagate(
     Y<Scalar> y = y0;
     Scalar argdet = 0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
-        if (!backward) { // forward
+        if (direction == forward) { // forward
             if (a > min)
                 propagateDelta<Scalar, withPrufer>(this, E, y, min - a, use_h, argdet);
             if (b > min)

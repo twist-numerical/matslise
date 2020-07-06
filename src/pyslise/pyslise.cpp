@@ -182,7 +182,9 @@ Note: only one of steps and tolerance have to be set.
     py::class_<Matslise<>::Sector>(m, "PysliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
             .def_readonly("max", &Matslise<>::Sector::max)
-            .def_readonly("backward", &Matslise<>::Sector::backward)
+            .def_property_readonly("forward", [](const Matslise<>::Sector &s) -> bool {
+                return s.direction == Direction::forward;
+            })
             .def_property_readonly("v", [](const Matslise<>::Sector &s) -> vector<double> {
                 vector<double> r(MATSLISE_N);
                 for (int i = 0; i < MATSLISE_N; ++i)

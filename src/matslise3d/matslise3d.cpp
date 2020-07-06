@@ -86,13 +86,13 @@ typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise3D<Scal
                         cout << dV << "\n" << endl;
                         return dV;
                     }, sector.min, sector.max),
-            sector.min, sector.max, sector.backward);
+            sector.min, sector.max, sector.direction);
 }
 
 template<typename Scalar>
 Matslise3D<Scalar>::Sector::Sector(
-        const Matslise3D<Scalar> *matslise3d, const Scalar &zmin, const Scalar &zmax, bool backward)
-        : matslise3d(matslise3d), min(zmin), max(zmax), backward(backward) {
+        const Matslise3D<Scalar> *matslise3d, const Scalar &zmin, const Scalar &zmax, Direction direction)
+        : matslise3d(matslise3d), min(zmin), max(zmax), direction(direction) {
 
     zbar = (zmax + zmin) / 2;
     function<Scalar(const Scalar &, const Scalar &)> vbar_fun = [matslise3d, this](
@@ -103,6 +103,7 @@ Matslise3D<Scalar>::Sector::Sector(
     matslise2d = std::make_shared<Matslise2D<Scalar>>(
             vbar_fun, matslise3d->domain.sub,
             Options2<Scalar>().tolerance(matslise3d->tolerance)
+                    .N(18)
                     .nested(Options1<Scalar>().tolerance(matslise3d->tolerance)));
 
     cout << "Seeking: " << zbar << endl;
@@ -137,9 +138,9 @@ Matslise3D<Scalar>::Sector::Sector(
 }
 
 template<typename Scalar>
-void Matslise3D<Scalar>::Sector::setBackward(bool _backward) {
-    backward = _backward;
-    matscs->setBackward(backward);
+void Matslise3D<Scalar>::Sector::setDirection(Direction newDirection) {
+    direction = newDirection;
+    matscs->setDirection(newDirection);
 }
 
 template<typename Scalar>
@@ -282,17 +283,17 @@ Scalar Matslise3D<Scalar>::Sector::error() const {
 
 template<typename Scalar>
 typename Matslise3D<Scalar>::Sector *Matslise3D<Scalar>::Sector::refine(
-        const Matslise3D<Scalar> *problem, const Scalar &_min, const Scalar &_max, bool _backward) const {
+        const Matslise3D<Scalar> *problem, const Scalar &_min, const Scalar &_max, Direction _direction) const {
     Scalar h = _max - _min;
-    if (backward != _backward || zbar < _min + h / 3 || zbar > _max - h / 3) {
-        return new Sector(problem, _min, _max, _backward);
+    if (zbar < _min + h / 3 || zbar > _max - h / 3) {
+        return new Sector(problem, _min, _max, _direction);
     }
 
     // std::cout << "refining sector 2d" << std::endl;
     auto sector = new Sector(problem);
+    sector->direction = _direction;
     sector->min = _min;
     sector->max = _max;
-    sector->backward = _backward;
     sector->zbar = zbar;
     sector->matslise2d = matslise2d;
     sector->eigenfunctions = eigenfunctions;

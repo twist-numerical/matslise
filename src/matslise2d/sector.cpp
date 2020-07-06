@@ -19,13 +19,13 @@ typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise2D<Scal
                     [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
                         return sector.quadratures->dV(sector, y);
                     }, sector.min, sector.max),
-            sector.min, sector.max, sector.backward);
+            sector.min, sector.max, sector.direction);
 }
 
 template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
-                                   bool backward)
-        : se2d(se2d), min(ymin), max(ymax), backward(backward) {
+                                   Direction direction)
+        : se2d(se2d), min(ymin), max(ymax), direction(direction) {
     // std::cout << "new sector 2d" << std::endl;
     ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, this](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
@@ -66,24 +66,24 @@ Matslise2D<Scalar>::Sector::~Sector() {
 }
 
 template<typename Scalar>
-void Matslise2D<Scalar>::Sector::setBackward(bool _backward) {
-    backward = _backward;
-    matscs->setBackward(backward);
+void Matslise2D<Scalar>::Sector::setDirection(Direction newDirection) {
+    direction = newDirection;
+    matscs->setDirection(newDirection);
 }
 
 template<typename Scalar>
 typename Matslise2D<Scalar>::Sector *Matslise2D<Scalar>::Sector::refine(
-        const Matslise2D<Scalar> *problem, const Scalar &_min, const Scalar &_max, bool _backward) const {
+        const Matslise2D<Scalar> *problem, const Scalar &_min, const Scalar &_max, Direction _direction) const {
     Scalar h = _max - _min;
-    if (backward != _backward || ybar < _min + h / 3 || ybar > _max - h / 3) {
-        return new Sector(problem, _min, _max, _backward);
+    if (ybar < _min + h / 3 || ybar > _max - h / 3) {
+        return new Sector(problem, _min, _max, _direction);
     }
 
     // std::cout << "refining sector 2d" << std::endl;
     auto sector = new Sector(problem);
     sector->min = _min;
     sector->max = _max;
-    sector->backward = _backward;
+    sector->direction = _direction;
     sector->ybar = ybar;
     sector->matslise = matslise;
     sector->eigenfunctions = eigenfunctions;

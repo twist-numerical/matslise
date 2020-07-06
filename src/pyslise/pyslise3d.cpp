@@ -48,6 +48,7 @@ Estimate an error of a given eigenvalue by using a lower order method.
             .def(py::init([](const function<double(double, double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
                              double tolerance, int z_count, double z_tol) {
+                     py::gil_scoped_release release;
                      if (z_count != -1 && z_tol != -1) {
                          throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
                      }
@@ -57,8 +58,10 @@ Estimate an error of a given eigenvalue by using a lower order method.
                      SectorBuilder<Matslise3D<double>> sectorBuilder =
                              z_count == -1 ? sector_builder::automatic<Matslise3D<double>>(z_tol)
                                            : sector_builder::uniform<Matslise3D<double>>(z_count);
-                     return make_unique<Matslise3D<double>>(
-                             V, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, sectorBuilder, tolerance);
+                     return make_unique<Matslise3D<double>>([V](double x, double y, double z) -> double {
+                         py::gil_scoped_acquire acquire;
+                         return V(x, y, z);
+                     }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, sectorBuilder, tolerance);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.

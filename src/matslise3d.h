@@ -96,15 +96,15 @@ namespace matslise {
             std::vector<Scalar> eigenvalues;
             std::vector<Eigenfunction2D < Scalar>> eigenfunctions;
             std::vector<ArrayXXs> eigenfunctions_grid;
-            bool backward;
+            Direction direction = none;
 
             Sector(const Matslise3D<Scalar> *matslise3d) : matslise3d(matslise3d) {}
 
-            Sector(const Matslise3D<Scalar> *matslise3d, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const Matslise3D<Scalar> *matslise3d, const Scalar &min, const Scalar &max, Direction);
 
             virtual ~Sector();
 
-            void setBackward(bool);
+            void setDirection(Direction);
 
             template<int r>
             Y <Scalar, Eigen::Dynamic, r> propagate(
@@ -124,7 +124,7 @@ namespace matslise {
             }
 
             Sector *
-            refine(const Matslise3D<Scalar> *problem, const Scalar &min, const Scalar &max, bool backward) const;
+            refine(const Matslise3D<Scalar> *problem, const Scalar &min, const Scalar &max, Direction) const;
         };
     };
 }

@@ -96,6 +96,7 @@ else ()
                         m
                         Threads::Threads
                         ${CMAKE_DL_LIBS}
+                        ${CMAKE_DL_LIBS}
                         ${BLAS_LIBRARIES})
             endforeach ()
             add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
@@ -112,6 +113,9 @@ else ()
         pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
                 pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
         target_link_libraries(pyslise PRIVATE ${libraries})
+        IF (PARALLEL)
+            target_link_libraries(pyslise PUBLIC OpenMP::OpenMP_CXX)
+        ENDIF (PARALLEL)
 
         configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
         configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)

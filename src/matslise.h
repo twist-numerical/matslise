@@ -19,6 +19,10 @@
 #define MATSLISE_N 16
 
 namespace matslise {
+    enum Direction {
+        none, forward, backward
+    };
+
     template<typename Scalar>
     class AbstractMatslise {
     public:
@@ -183,11 +187,11 @@ namespace matslise {
             const Matslise<Scalar> *s;
             std::array<Scalar, MATSLISE_N> vs;
             Scalar min, max, h;
-            bool backward;
+            Direction direction = none;
 
-            Sector(const Matslise *problem, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const Matslise *problem, const Scalar &min, const Scalar &max, Direction direction);
 
-            void setBackward(bool);
+            void setDirection(Direction);
 
             void calculateTCoeffs();
 

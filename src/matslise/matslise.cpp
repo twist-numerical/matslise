@@ -229,17 +229,17 @@ Iterator findSector(const Scalar &x, Iterator a, Iterator b) {
 template<typename Scalar>
 typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
         const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
-    shared_ptr<vector<Y<Scalar>>> steps = make_shared<vector<Y<Scalar>>>(
+    shared_ptr < vector < Y < Scalar >> > steps = make_shared < vector < Y < Scalar >> > (
             std::move(propagationSteps(*this, E, left, right)));
 
     return {[this, E, steps](const Scalar &x) {
         auto sector = findSector(x, sectors.begin(), sectors.end());
         int sectorIndex = sector - sectors.begin();
 
-        if ((**sector).backward) {
-            return (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x);
-        } else {
+        if ((**sector).direction == forward) {
             return (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x);
+        } else {
+            return (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x);
         }
     }, [this, E, steps](const Array<Scalar, Dynamic, 1> &x) {
         Eigen::Index n = x.size();
@@ -256,10 +256,10 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
                 sector = findSector(x[i], sector + 1, sectors.end());
                 sectorIndex = sector - sectors.begin();
             }
-            if ((**sector).backward) {
-                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]);
-            } else {
+            if ((**sector).direction == forward) {
                 ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x[i]);
+            } else {
+                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]);
             }
 
         }

@@ -38,13 +38,6 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
     const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
     MatrixXs kernel = getKernel<Scalar>(matchLeft, matchRight, 1e-4);
 
-    ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
-    ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
-    FullPivLU<MatrixXs> lu(
-            left_solver.solve(matchLeft.getY(1).transpose()).transpose()
-            - right_solver.solve(matchRight.getY(1).transpose()).transpose());
-    lu.setThreshold(1e-4);
-
     vector<Y<Scalar, Dynamic>> elements;
     if (kernel.cols() > 0) {
         elements.resize(sectorCount + 1);
@@ -123,10 +116,10 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
                                 const Sector *sector = sectors[sectorIndex];
 
                                 Y<Scalar, Dynamic, 1> c =
-                                        sector->backward
-                                        ? sector->propagate(E, (*steps)[sectorIndex + 1].col(column),
-                                                            sector->max, y, true)
-                                        : sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y, true);
+                                        sector->direction == forward
+                                        ? sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y, true)
+                                        : sector->propagate(E, (*steps)[sectorIndex + 1].col(column), sector->max, y,
+                                                            true);
 
                                 if constexpr (withDerivative) {
                                     ArrayXs b, b_x;
@@ -167,14 +160,14 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
                                         }
                                     }
 
-                                    if (sector->backward) {
-                                        c = sector->propagate(
-                                                E, (*steps)[static_cast<size_t>(sectorIndex + 1)].col(column),
-                                                sector->max, v, true);
-                                    } else {
+                                    if (sector->direction == forward) {
                                         c = sector->propagate(
                                                 E, (*steps)[static_cast<size_t>(sectorIndex)].col(column),
                                                 sector->min, v, true);
+                                    } else {
+                                        c = sector->propagate(
+                                                E, (*steps)[static_cast<size_t>(sectorIndex + 1)].col(column),
+                                                sector->max, v, true);
                                     }
 
 

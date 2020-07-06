@@ -32,7 +32,7 @@ namespace matslise {
         int matchIndex;
     public:
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
-               int n, const Scalar &xmin, const Scalar &xmax, SectorBuilder<Matscs<Scalar>> sectorBuilder) :
+               int n, const Scalar &xmin, const Scalar &xmax, SectorBuilder <Matscs<Scalar>> sectorBuilder) :
                 V(V), n(n), xmin(xmin), xmax(xmax) {
             auto sectorsBuild = sectorBuilder(this, xmin, xmax);
             sectors = std::move(sectorsBuild.sectors);
@@ -81,14 +81,14 @@ namespace matslise {
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> diagonalize;
             std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> vs;
             Scalar min, max, h;
-            bool backward;
+            Direction direction = none;
 
-            Sector(const Matscs *problem, const Scalar &min, const Scalar &max, bool backward = false);
+            Sector(const Matscs *problem, const Scalar &min, const Scalar &max, Direction);
 
             Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
-                   const Scalar &min, const Scalar &max, bool backward = false);
+                   const Scalar &min, const Scalar &max, Direction);
 
-            void setBackward(bool);
+            void setDirection(Direction);
 
             void calculateTCoeffs();
 

@@ -8,19 +8,15 @@ using namespace std;
 TEST_CASE("3D: coulomb", "[matslise3d][coulomb]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
+    /*
     const double a = 0.05;
     Matslise3D<double> matslise([a](double x, double y, double z) -> double {
         double r = hypot(hypot(x, y), z);
         if (r < a)
-            return -1 / a;
-        return -1 / r;
-    }, {{{-12.3, 12.3}, -12.3, 12.3}, -12.3, 12.3}, sector_builder::uniform<Matslise3D<double>>(18), 1e-7);
+            return -2 / a;
+        return -2 / r;
+    }, {{{-12.3, 12.3}, -12.3, 12.3}, -12.3, 12.3}, sector_builder::uniform<Matslise3D<double>>(12), 1e-6);
 
-    cout << matslise.eigenvalue(-0.48) << endl;
-    cout << matslise.eigenvalue(-0.50) << endl;
-    cout << matslise.eigenvalue(-0.52) << endl;
-    cout << endl;
-    cout << matslise.eigenvalue(-0.11) << endl;
-    cout << matslise.eigenvalue(-0.122) << endl;
-    cout << matslise.eigenvalue(-0.13) << endl;
+    cout << matslise.eigenvalue(-1) << endl;
+     */
 }
