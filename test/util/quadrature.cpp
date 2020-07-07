@@ -26,14 +26,14 @@ void testFunction(const function<double(double)> &f, const function<double(doubl
     }
 }
 
-void testGaussKonrod(const function<double(double)> &f, const function<double(double)> &integral, double a, double b) {
-    CHECK(Approx(gauss_konrod::adaptive(f, a, b, 1e-10)).margin(1e-10) == (integral(b) - integral(a)));
+void testGaussKronrod(const function<double(double)> &f, const function<double(double)> &integral, double a, double b) {
+    CHECK(Approx(gauss_kronrod::adaptive(f, a, b, 1e-10)).margin(1e-10) == (integral(b) - integral(a)));
 }
 
-TEST_CASE("adaptive sin(x) (gaussKonrod)", "[util][gaussKonrod]") {
+TEST_CASE("adaptive sin(x) (gaussKronrod)", "[util][gaussKronrod]") {
     for (double a = -20; a < 10; a += 3.94) {
         for (double b = a + .1; b < 15; b += 3.941) {
-            testGaussKonrod(
+            testGaussKronrod(
                     [](double x) { return sin(x); },
                     [](double x) { return -cos(x); },
                     a, b);
