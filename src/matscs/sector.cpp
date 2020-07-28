@@ -20,10 +20,9 @@ Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar 
 template<typename Scalar>
 Matscs<Scalar>::Sector::Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
                                const Scalar &min, const Scalar &max, Direction direction)
-        : vs(vs), min(min), max(max), direction(direction) {
+        :n(vs[0].rows()), vs(vs), min(min), max(max), direction(direction) {
     h = max - min;
     SelfAdjointEigenSolver<Matrix<Scalar, Dynamic, Dynamic>> es(vs[0]);
-    n = vs[0].rows();
     diagonalize = es.eigenvectors();
 
     for (int i = 0; i < MATSCS_N; ++i)
@@ -58,69 +57,59 @@ Matrix<Scalar, Dynamic, Dynamic> diagonalMatrix(const T &arr) {
     return arr.matrix().asDiagonal();
 }
 
+template<typename Scalar, bool use_h>
+T<Scalar, Dynamic> calculateTFromVEd(const typename Matscs<Scalar>::Sector *sector, const Scalar &delta,
+                                     const Array<Scalar, Dynamic, 1> &VEd) {
+    typedef Matrix<Scalar, Dynamic, Dynamic> MatrixXs;
+    Index n = sector->n;
+    MatrixXs zero = MatrixXs::Zero(n, n);
+    const Index MATSCS_ETA = use_h ? MATSCS_ETA_h : MATSCS_ETA_delta;
+    Array<Scalar, MATSCS_ETA, Dynamic> eta = calculateEta<Scalar, MATSCS_ETA>(VEd * delta);
+
+    T<Scalar, Dynamic> t(n);
+    t.t << zero, zero, diagonalMatrix<Scalar>(eta.row(1).transpose() * VEd), zero;
+    t.dt << zero, zero, diagonalMatrix<Scalar>(
+            -delta * eta.row(1).transpose() - (delta * delta / 2) * eta.row(2).transpose() * VEd), zero;
+
+    for (int i = 0; i < MATSCS_ETA; ++i) {
+        MatrixXs hor;
+        if constexpr(!use_h) {
+            hor = horner<MatrixXs>(sector->t_coeff.row(i), delta, MATSCS_HMAX_delta);
+        }
+        const MatrixXs &coeff = use_h ? sector->t_coeff_h[i] : hor;
+        t.t += coeff * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i)));
+
+        if (i + 1 < MATSCS_ETA)
+            t.dt += coeff * kroneckerProduct(
+                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i + 1) * (-delta * delta / 2.)));
+    }
+
+    t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), sector->diagonalize) * t.t *
+          kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), sector->diagonalize.transpose());
+    t.dt = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), sector->diagonalize) * t.dt *
+           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), sector->diagonalize.transpose());
+    return t;
+}
+
 template<typename Scalar>
 T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, const Scalar &delta, bool use_h) const {
-    MatrixXs zero = MatrixXs::Zero(n, n);
-    MatrixXs one = MatrixXs::Identity(n, n);
-
     if (abs(delta) <= EPS) {
         return T<Scalar, Dynamic>(n);
     }
     if (use_h && abs(delta - h) <= EPS)
         return calculateT(E);
 
-    ArrayXs VEd = (vs[0].diagonal() - Matrix<Scalar, Dynamic, 1>::Constant(n, E)) * delta;
-    Array<Scalar, MATSCS_ETA_delta, Dynamic> eta = calculateEta<Scalar, MATSCS_ETA_delta>(VEd * delta);
-    T<Scalar, Dynamic> t(n);
-    t.t << zero, zero, diagonalMatrix<Scalar>(eta.row(1).transpose() * VEd), zero;
-    t.dt << zero, zero, diagonalMatrix<Scalar>(
-            -delta * eta.row(1).transpose() - (delta * delta / 2) * eta.row(2).transpose() * VEd), zero;
-
-    for (int i = 0; i < MATSCS_ETA_delta; ++i) {
-        MatrixXs hor = horner<MatrixXs>(
-                t_coeff.row(i), delta, MATSCS_HMAX_delta);
-        t.t += hor * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i)));
-
-        if (i + 1 < MATSCS_ETA_delta)
-            t.dt += hor * kroneckerProduct(
-                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i + 1) * (-delta * delta / 2.)));
-    }
-
-    t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.t *
-          kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
-    t.dt = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.dt *
-           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
-    return t;
+    return calculateTFromVEd<Scalar, false>(
+            this, delta, (vs[0].diagonal().array() - Array<Scalar, Dynamic, 1>::Constant(n, E)) * delta);
 }
 
 template<typename Scalar>
 T<Scalar, Dynamic> Matscs<Scalar>::Sector::calculateT(const Scalar &E, bool use_h) const {
     if (!use_h)
         return calculateT(E, h, false);
-    int N = n;
-    MatrixXs zero = MatrixXs::Zero(N, N);
-    MatrixXs one = MatrixXs::Identity(N, N);
 
-    ArrayXs VEd = (vs[0].diagonal().array() - Array<Scalar, Dynamic, 1>::Constant(N, E)) * h;
-    Array<Scalar, MATSCS_ETA_h, Dynamic> eta = calculateEta<Scalar, MATSCS_ETA_h>(VEd * h);
-    T<Scalar, Dynamic> t(N);
-    t.t << zero, zero, diagonalMatrix<Scalar>(eta.row(1).transpose() * VEd), zero;
-    t.dt << zero, zero, diagonalMatrix<Scalar>(
-            -h * eta.row(1).transpose() - (h * h / 2) * eta.row(2).transpose() * VEd), zero;
-
-    for (int i = 0; i < MATSCS_ETA_h; ++i) {
-        t.t += t_coeff_h[i] * kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i)));
-
-        if (i + 1 < MATSCS_ETA_h)
-            t.dt += t_coeff_h[i] * kroneckerProduct(
-                    Matrix<Scalar, 2, 2>::Identity(), diagonalMatrix<Scalar>(eta.row(i + 1) * (-h * h / 2)));
-    }
-
-    t.t = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.t *
-          kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
-    t.dt = kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize) * t.dt *
-           kroneckerProduct(Matrix<Scalar, 2, 2>::Identity(), diagonalize.transpose());
-    return t;
+    return calculateTFromVEd<Scalar, true>(
+            this, h, (vs[0].diagonal().array() - Array<Scalar, Dynamic, 1>::Constant(n, E)) * h);
 }
 
 template<typename Scalar>
@@ -308,8 +297,9 @@ Matscs<Scalar>::Sector::propagatePsi(
 
 template<typename Scalar>
 Scalar Matscs<Scalar>::Sector::error() const {
-    Scalar E = vs[0].diagonal().minCoeff();
-    Scalar error = (calculateT(E, true).t - calculateT(E, false).t).cwiseAbs().mean();
+    Scalar error = (calculateTFromVEd<Scalar, true>(this, h, Array<Scalar, Dynamic, 1>::Zero(n)).t
+                    - calculateTFromVEd<Scalar, false>(this, h, Array<Scalar, Dynamic, 1>::Zero(n)).t
+    ).array().abs().maxCoeff();
     if (isnan(error))
         return numeric_limits<Scalar>::infinity();
     return error;

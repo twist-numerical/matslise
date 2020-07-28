@@ -61,6 +61,7 @@ else ()
             matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp
             matscs/propagatePsi.cpp matscs/propagateTheta.cpp
             se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp se2d/derivatives.cpp
+            se2d/coulomb.cpp
             matslise3d/coulomb.cpp
             util/quadrature.cpp util/calculateEta.cpp
             main.cpp)

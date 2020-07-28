@@ -24,7 +24,7 @@ template<typename Scalar>
 Matslise3D<Scalar>::Matslise3D(
         const std::function<Scalar(Scalar, Scalar, Scalar)> &potential, const matslise::Rectangle<3, Scalar> &domain,
         const SectorBuilder<Matslise3D<Scalar>> &sectorBuilder, const Scalar &tolerance)
-        : AbstractMatslise3D<Scalar>(potential, domain), N(10), tolerance(tolerance) {
+        : AbstractMatslise3D<Scalar>(potential, domain), N(20), tolerance(tolerance) {
     grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<0>(), domain.template getMax<0>()));
     grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<1>(), domain.template getMax<1>()));
 
@@ -44,9 +44,9 @@ Matslise3D<Scalar>::Matslise3D(
                         sectors[k]->eigenfunctions_grid[j] *
                         sectors[k + 1]->eigenfunctions_grid[i]);
 
-        cout << "M:" << endl;
-        cout << r << endl;
-        cout << endl;
+        // cout << "M:" << endl;
+        // cout << r << endl;
+        // cout << endl;
         M.push_back(move(r));
     }
 }
@@ -82,8 +82,8 @@ typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise3D<Scal
                             dV(i, i) += sector.eigenvalues[i];
                         }
 
-                        cout << "Z: " << z << " dV:" << endl;
-                        cout << dV << "\n" << endl;
+                        // cout << "Z: " << z << " dV:" << endl;
+                        // cout << dV << "\n" << endl;
                         return dV;
                     }, sector.min, sector.max),
             sector.min, sector.max, sector.direction);
@@ -103,7 +103,7 @@ Matslise3D<Scalar>::Sector::Sector(
     matslise2d = std::make_shared<Matslise2D<Scalar>>(
             vbar_fun, matslise3d->domain.sub,
             Options2<Scalar>().tolerance(matslise3d->tolerance)
-                    .N(18)
+                    .N(12)
                     .nested(Options1<Scalar>().tolerance(matslise3d->tolerance)));
 
     cout << "Seeking: " << zbar << endl;

@@ -166,8 +166,9 @@ int numberPositive(const vector<pair<Scalar, Scalar>> &errors) {
 
 template<typename Scalar>
 Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const {
-    Scalar lower = estimatePotentialMinimum();
-    //cout << "Potential minimum: " << lower << endl;
+    Scalar minimal = estimatePotentialMinimum();
+    Scalar lower = minimal;
+    cout << "Potential minimum: " << lower << endl;
     Scalar upper = eigenvalue(left, lower);
     if (is_first_eigenvalue(*this, left, upper))
         return upper;
@@ -201,10 +202,26 @@ Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left
             upper = mid;
     }
     Scalar first = eigenvalue(left, lower);
-    //cout << "Guess for first: " << first << endl;
-    if (!is_first_eigenvalue(*this, left, first))
-        throw runtime_error("Could not find the first eigenvalue.");
-    return first;
+    cout << "Guess for first: " << first << endl;
+    if (is_first_eigenvalue(*this, left, first))
+        return first;
+
+    first -= fundamentalGap(domain);
+    cout << "Wrong! Going for bruteforce between " << minimal << " and " << first << endl;
+    Index n = 60;
+    Scalar h = (first - minimal) / n;
+    Scalar guess = minimal;
+    for (Index i = 1; i < n; ++i) {
+        guess += h;
+        if (numberPositive(matchingErrors(left, guess)) != N) {
+            guess = eigenvalue(left, guess);
+            if (is_first_eigenvalue(*this, left, guess))
+                return guess;
+            break;
+        }
+    }
+
+    throw runtime_error("Could not find the first eigenvalue.");
 }
 
 template<typename Scalar>

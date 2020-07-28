@@ -70,9 +70,8 @@ namespace matslise {
     public:
 
         class Sector {
-        private:
-            int n;
         public:
+            const Eigen::Index n;
             static const bool expensive = false;
 
             Eigen::Array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_delta, MATSCS_HMAX_delta>

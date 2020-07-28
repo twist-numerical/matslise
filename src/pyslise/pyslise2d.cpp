@@ -103,6 +103,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                              int y_count, double y_tol,
                              double tol,
                              int N, int grid_points) {
+                     py::gil_scoped_release release;
                      if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
                      }
@@ -134,7 +135,10 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                          o2.sectorCount(y_count);
                      else
                          o2.tolerance(y_tol);
-                     return make_unique<Matslise2D<>>(V, Rectangle<2, double>{{xmin, xmax}, ymin, ymax}, o2);
+                     return make_unique<Matslise2D<>>([V](double x, double y) -> double {
+                         py::gil_scoped_acquire acquire;
+                         return V(x, y);
+                     }, Rectangle<2, double>{{xmin, xmax}, ymin, ymax}, o2);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -272,6 +276,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                     l->at(i) = s.eigenvalues[i];
                 return l;
             })
+            .def("error", &Matslise2D<>::Sector::error)
             .def_property_readonly("matslise",
                                    [](Matslise2D<>::Sector &s) -> AbstractMatslise<double> * {
                                        return s.matslise.get();
