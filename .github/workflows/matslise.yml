@@ -181,9 +181,9 @@ jobs:
         with:
           node-version: 10
       - name: Install emscripten
-        uses: mymindstorm/setup-emsdk@v4
+        uses: mymindstorm/setup-emsdk@v6
         with:
-          version: 1.39.13
+          version: 1.39.20
       - name: NPM install ava
         run: |
           npm install -g ava
