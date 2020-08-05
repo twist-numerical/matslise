@@ -34,8 +34,12 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
     CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
 
     const vector<double> foundEigenvalues = p2.eigenvaluesByIndex(0, 10);
+    int j = 0;
     for (int i = 0; i < 10; ++i) {
         CHECK(Approx(foundEigenvalues[i]).margin(1e-7) == eigenvalues[i].first);
+        CHECK(p2.estimateIndex(foundEigenvalues[i] - 1e-3) == j);
+        j += eigenvalues[i].second;
+        CHECK(p2.estimateIndex(foundEigenvalues[i] + 1e-3) == j);
     }
 
     double E;

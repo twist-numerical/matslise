@@ -57,6 +57,8 @@ namespace matslise {
 
         virtual Scalar estimatePotentialMinimum() const = 0;
 
+        virtual Eigen::Index estimateIndex(const Scalar &E) const = 0;
+
         virtual ~AbstractMatslise2D() = default;
     };
 
@@ -139,6 +141,10 @@ namespace matslise {
             return eigenfunction < true > (E);
         }
 
+        Eigen::Index estimateIndex(const Scalar &E) const override {
+            return estimateIndex(dirichletBoundary, E);
+        }
+
     public: // left boundary conditions
         std::pair<MatrixXs, MatrixXs> matchingErrorMatrix(
                 const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h = true) const;
@@ -171,6 +177,8 @@ namespace matslise {
         std::vector<Eigenfunction2D<Scalar, withDerivatives>>
         eigenfunction(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
 
+        Eigen::Index estimateIndex(Y<Scalar, Eigen::Dynamic> y, const Scalar &E) const;
+
     protected:
         std::vector<Y<Scalar, Eigen::Dynamic>> eigenfunctionSteps(
                 const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
@@ -191,7 +199,7 @@ namespace matslise {
 
             std::vector<Scalar> eigenvalues;
             std::vector<typename Matslise<Scalar>::Eigenfunction> eigenfunctions;
-            Direction direction = none;;
+            Direction direction = none;
 
             Sector(const Matslise2D<Scalar> *se2d) : se2d(se2d) {}
 
@@ -200,6 +208,8 @@ namespace matslise {
             virtual ~Sector();
 
             void setDirection(Direction);
+
+            Eigen::Index estimateIndex(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y) const;
 
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(
@@ -275,6 +285,10 @@ namespace matslise {
         std::vector<Eigenfunction2D<Scalar, true>>
         eigenfunctionWithDerivatives(const Scalar &E) const override {
             return eigenfunction < true > (E);
+        }
+
+        Eigen::Index estimateIndex(const Scalar &) const override {
+            return 0;
         }
 
         template<bool withDerivatives>

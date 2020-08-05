@@ -105,7 +105,6 @@ namespace matslise {
                             bool use_h = true) const;
 
             std::pair<Y < Scalar, Eigen::Dynamic>, Scalar>
-
             propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
                       bool use_h = true) const;
 

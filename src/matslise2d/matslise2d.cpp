@@ -102,9 +102,24 @@ Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, 
     return errorMatrix<Scalar>(yl, yr);
 }
 
+
 template<typename Scalar>
-Y<Scalar, Dynamic>
-Matslise2D<Scalar>::propagate(
+Index Matslise2D<Scalar>::estimateIndex(Y<Scalar, Eigen::Dynamic> y, const Scalar &E) const {
+    Index index = 0;
+    Index sectorIndex = 0;
+    for (; sectorIndex < sectorCount - 1; ++sectorIndex) {
+        Sector *sector = sectors[sectorIndex];
+        index += sector->estimateIndex(E, y);
+        y = sector->propagate(E, y, sector->min, sector->max);
+        conditionY(y);
+        y = M[sectorIndex] * y;
+    }
+    index += sectors[sectorIndex]->estimateIndex(E, y);
+    return index;
+}
+
+template<typename Scalar>
+Y<Scalar, Dynamic> Matslise2D<Scalar>::propagate(
         const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     if (!domain.contains(1, a) || !domain.contains(1, b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
@@ -112,16 +127,17 @@ Matslise2D<Scalar>::propagate(
     int sectorIndex = find_sector<Matslise2D<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
-    do {
+    while (true) {
         sector = sectors[sectorIndex];
         if (direction == -1 && sectorIndex < sectorCount - 1)
             y = (MatrixXs)(M[sectorIndex].transpose()) * y;
         y = sector->propagate(E, y, a, b, use_h);
+        if (sector->contains(b))break;
         conditionY(y);
         if (direction == 1)
             y = M[sectorIndex] * y;
         sectorIndex += direction;
-    } while (!sector->contains(b));
+    }
     return y;
 }
 

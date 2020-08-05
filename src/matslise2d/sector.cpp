@@ -4,6 +4,8 @@
 #include "../util/quadrature.h"
 #include "../util/legendre.h"
 #include "../util/horner.h"
+#include "../util/constants.h"
+#include "../util/calculateEta.h"
 #include "./basisQuadrature.h"
 
 using namespace matslise;
@@ -91,6 +93,64 @@ typename Matslise2D<Scalar>::Sector *Matslise2D<Scalar>::Sector::refine(
     sector->quadratures = quadratures;
     sector->matscs = initializeMatscs<Scalar>(*sector);
     return sector;
+}
+
+template<typename Scalar>
+void clamp(Scalar &value, const Scalar &min, const Scalar &max) {
+    if (value < min)
+        value = min;
+    else if (value > max)
+        value = max;
+}
+
+
+template<typename Scalar>
+Matrix<complex<Scalar>, Dynamic, Dynamic> theta(const Y<Scalar, Dynamic> &y) {
+    return (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1))
+            .transpose()
+            .partialPivLu()
+            .solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
+            .transpose();
+}
+
+template<typename Scalar, typename InputMatrix>
+inline Scalar angle(const InputMatrix &m) {
+    const Scalar PI2 = constants<Scalar>::PI * 2;
+    return m.eigenvalues().array().arg().unaryExpr(
+            [&](const Scalar &a) -> Scalar { return a < 0 ? a + PI2 : a; }).sum();
+}
+
+template<typename Scalar>
+Index Matslise2D<Scalar>::Sector::estimateIndex(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0) const {
+    Scalar h = max - min;
+    Index n = matscs->n;
+    Y<Scalar, Dynamic> y1 = propagate(E, y0, min, max);
+    using ArrayXs = typename Matslise2D<Scalar>::ArrayXs;
+    using MatrixXcs = Matrix<complex<Scalar>, Dynamic, Dynamic>;
+
+    ArrayXs Z = h * h * (matscs->vs[0].diagonal().array() - ArrayXs::Constant(n, E));
+
+    Array<Scalar, 2, Dynamic> eta = calculateEta<Scalar, 2>(Z);
+    Scalar argdet = 0;
+    for (int i = 0; i < n; ++i) {
+        if (Z[i] < 0) {
+            Scalar sZ = (h < 0 ? -1 : 1) * sqrt(-Z[i]);
+            argdet += (sZ + atan2(
+                    (h - sZ) * eta(1, i) * eta(0, i),
+                    1 + (h * sZ + Z[i]) * eta(1, i) * eta(1, i)));
+        } else {
+            argdet += atan2(h * eta(1, i), eta(0, i));
+        }
+    }
+    argdet *= 2;
+
+    MatrixXcs thetaZ0 = theta(y0);
+    const complex<Scalar> i_delta(0, h);
+    Scalar alpha = angle<Scalar>(
+            ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() * thetaZ0
+    );
+
+    return round((angle<Scalar>(thetaZ0) + argdet - alpha) / (2 * constants<Scalar>::PI));
 }
 
 template<typename Scalar>

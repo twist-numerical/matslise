@@ -59,7 +59,7 @@ Estimate an error of a given eigenvalue by using a lower order method.
                              z_count == -1 ? sector_builder::automatic<Matslise3D<double>>(z_tol)
                                            : sector_builder::uniform<Matslise3D<double>>(z_count);
                      return make_unique<Matslise3D<double>>([V](double x, double y, double z) -> double {
-                        // py::gil_scoped_acquire acquire;
+                         py::gil_scoped_acquire acquire;
                          return V(x, y, z);
                      }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, sectorBuilder, tolerance);
                  }),

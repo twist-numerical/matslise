@@ -92,7 +92,8 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 :param float E: the eigenvalue.
 
 :returns: a list of functions (depending on multiplicity) each taking a x-value and a y-value and returning the value, the x-derivative and the y-derivative of that eigenfunction in (x, y).
-)"""", py::arg("E"));
+)"""", py::arg("E"))
+            .def("estimateIndex", &AbstractMatslise2D<double>::estimateIndex, py::arg("E"));
 
 
     py::class_<Matslise2D<>, AbstractMatslise2D<double>>(m, "Pyslise2D")
@@ -196,6 +197,9 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                     l->at(i) = p.M[i];
                 return l;
             })
+            .def_property_readonly("__matchpoint", [](const Matslise2D<> &p) -> double {
+                return p.sectors[p.matchIndex]->max;
+            })
             .def_property_readonly("__sectors", [](Matslise2D<> &p) -> std::vector<Matslise2D<>::Sector *> {
                 vector<Matslise2D<>::Sector *> l(p.sectorCount);
                 for (int i = 0; i < p.sectorCount; ++i)
@@ -277,6 +281,14 @@ The next set of parameters are more advanced and can be useful to tweak when the
                 return l;
             })
             .def("error", &Matslise2D<>::Sector::error)
+            .def("estimateIndex",
+                 [](const Matslise2D<>::Sector &sector, double E, const MatrixXd &y, const MatrixXd &dy) -> Index {
+                     Y<double, Dynamic> y0(sector.matscs->n);
+                     y0.getY(0) = y;
+                     y0.getY(1) = dy;
+                     return sector.estimateIndex(y0, E);
+                 },
+                 py::arg("E"), py::arg("y"), py::arg("dy"))
             .def_property_readonly("matslise",
                                    [](Matslise2D<>::Sector &s) -> AbstractMatslise<double> * {
                                        return s.matslise.get();
