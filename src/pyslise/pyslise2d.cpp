@@ -1,7 +1,7 @@
 #include "module.h"
 
 void pyslise2d(py::module &m) {
-    py::class_<AbstractMatslise2D<double>>(m, "AbstractPyslise2D")
+    py::class_<AbstractMatslise2D<double>, shared_ptr<AbstractMatslise2D<double>>>(m, "AbstractPyslise2D")
             .def("firstEigenvalue", [](const Matslise2D<> &se2d) -> double {
                 return se2d.firstEigenvalue();
             })
@@ -96,7 +96,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
             .def("estimateIndex", &AbstractMatslise2D<double>::estimateIndex, py::arg("E"));
 
 
-    py::class_<Matslise2D<>, AbstractMatslise2D<double>>(m, "Pyslise2D")
+    py::class_<Matslise2D<>, AbstractMatslise2D<double>, shared_ptr<Matslise2D<double>>>(m, "Pyslise2D")
             .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax,
                              bool symmetric,
@@ -207,7 +207,7 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                 return l;
             });
 
-    py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>>(m, "Pyslise2DHalf")
+    py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>, shared_ptr<Matslise2DHalf<double>>>(m, "Pyslise2DHalf")
             .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymax,
                              bool symmetric,

@@ -1,32 +1,7 @@
 #include "module.h"
 
 void pyslise3d(py::module &m) {
-    m.def("Pyslise3D_anharmonic", [](
-                  double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
-                  double tolerance, int z_count, double z_tol
-          ) {
-              py::gil_scoped_release release;
-              if (z_count != -1 && z_tol != -1) {
-                  throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
-              }
-              if (z_count == -1 && z_tol == -1) {
-                  z_tol = tolerance;
-              }
-              SectorBuilder<Matslise3D<double>> sectorBuilder =
-                      z_count == -1 ? sector_builder::automatic<Matslise3D<double>>(z_tol)
-                                    : sector_builder::uniform<Matslise3D<double>>(z_count);
-              return make_unique<Matslise3D<double>>([](double x, double y, double z) {
-                  return 2 * (
-                          x * x * (2 + x * x * (.5 + 2 * x * x))
-                          + y * y * (2 + y * y * (.5 + 2 * y * y))
-                          + z * z * (2 + z * z * (.5 + 2 * z * z))
-                          + x * y + y * z + z * x);
-              }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, sectorBuilder, tolerance);
-          }, py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"), py::arg("zmin"), py::arg("zmax"),
-          py::arg("tolerance"),
-          py::arg("z_count") = -1, py::arg("z_tolerance") = -1);
-
-    py::class_<AbstractMatslise3D<double>>(m, "AbstractPyslise3D")
+    py::class_<AbstractMatslise3D<double>, shared_ptr<AbstractMatslise3D<double>>>(m, "AbstractPyslise3D")
             .def("eigenvalue", &AbstractMatslise3D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 
@@ -43,8 +18,7 @@ Estimate an error of a given eigenvalue by using a lower order method.
 :returns: the estimated error for the given eigenvalue.
 )"""", py::arg("E"));
 
-
-    py::class_<Matslise3D<double>, AbstractMatslise3D<double>>(m, "Pyslise3D")
+    py::class_<Matslise3D<double>, AbstractMatslise3D<double>, shared_ptr<Matslise3D<double>>>(m, "Pyslise3D")
             .def(py::init([](const function<double(double, double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
                              double tolerance, int z_count, double z_tol) {
@@ -106,11 +80,11 @@ Just like Pyslise3D::calculateError(E) computes this function the discontinuity 
             .def_property_readonly("eigenvalues", [](Matslise3D<>::Sector &s) -> vector<double> {
                 return s.eigenvalues;
             })
-            .def_property_readonly("matslise2d",
-                                   [](Matslise3D<>::Sector &s) -> shared_ptr<AbstractMatslise2D<double>> {
-                                       return s.matslise2d;
-                                   }, py::return_value_policy::reference_internal)
-            .def_property_readonly("eigenfunctions", [](Matslise3D<>::Sector &s) -> vector<ArrayXXd> {
+            .def_property_readonly(
+                    "matslise2d", [](const Matslise3D<>::Sector &s) -> shared_ptr<AbstractMatslise2D<double>> {
+                        return s.matslise2d;
+                    })
+            .def_property_readonly("eigenfunctions", [](const Matslise3D<>::Sector &s) -> vector<ArrayXXd> {
                 return s.eigenfunctions_grid;
             })
             .def_readonly("matscs", &Matslise3D<>::Sector::matscs, py::return_value_policy::reference)
