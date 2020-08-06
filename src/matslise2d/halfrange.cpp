@@ -24,15 +24,10 @@ Matslise2DHalf<Scalar>::~Matslise2DHalf() {
 }
 
 template<typename Scalar>
-Scalar Matslise2DHalf<Scalar>::firstEigenvalue() const {
-    return se2d->firstEigenvalue(neumannBoundary);
-}
-
-template<typename Scalar>
-Scalar Matslise2DHalf<Scalar>::eigenvalue(const Scalar &guessE) const {
-    Scalar evenE = se2d->eigenvalue(neumannBoundary, guessE);
-    Scalar oddE = se2d->eigenvalue(dirichletBoundary, guessE);
-    if (abs(evenE - guessE) < abs(oddE - guessE))
+pair<Scalar, Index> Matslise2DHalf<Scalar>::eigenvalue(const Scalar &guessE) const {
+    pair<Scalar, Index> evenE = se2d->eigenvalue(neumannBoundary, guessE);
+    pair<Scalar, Index> oddE = se2d->eigenvalue(dirichletBoundary, guessE);
+    if (abs(evenE.first - guessE) < abs(oddE.first - guessE))
         return evenE;
     else
         return oddE;
@@ -44,9 +39,9 @@ Scalar Matslise2DHalf<Scalar>::eigenvalueError(const Scalar &E) const {
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax) const {
-    vector<Scalar> eigenvalues = se2d->eigenvalues(neumannBoundary, Emin, Emax);
-    vector<Scalar> eigenvaluesOdd = se2d->eigenvalues(dirichletBoundary, Emin, Emax);
+vector<tuple<Index, Scalar, Index>> Matslise2DHalf<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax) const {
+    vector<tuple<Index, Scalar, Index>> eigenvalues = se2d->eigenvalues(neumannBoundary, Emin, Emax);
+    vector<tuple<Index, Scalar, Index>> eigenvaluesOdd = se2d->eigenvalues(dirichletBoundary, Emin, Emax);
     eigenvalues.insert(eigenvalues.end(),
                        make_move_iterator(eigenvaluesOdd.begin()),
                        make_move_iterator(eigenvaluesOdd.end()));
@@ -55,10 +50,10 @@ vector<Scalar> Matslise2DHalf<Scalar>::eigenvalues(const Scalar &Emin, const Sca
 }
 
 template<typename Scalar>
-vector<Scalar> Matslise2DHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax) const {
-    vector<Scalar> valuesNeumann = se2d->eigenvaluesByIndex(neumannBoundary, 0, Imax);
-    vector<Scalar> valuesDirichlet = se2d->eigenvaluesByIndex(dirichletBoundary, 0, Imax);
-    vector<Scalar> result;
+vector<tuple<Index, Scalar, Index>> Matslise2DHalf<Scalar>::eigenvaluesByIndex(Index Imin, Index Imax) const {
+    vector<tuple<Index, Scalar, Index>> valuesNeumann = se2d->eigenvaluesByIndex(neumannBoundary, 0, Imax);
+    vector<tuple<Index, Scalar, Index>> valuesDirichlet = se2d->eigenvaluesByIndex(dirichletBoundary, 0, Imax);
+    vector<tuple<Index, Scalar, Index>> result;
     merge(valuesNeumann.begin(), valuesNeumann.end(),
           valuesDirichlet.begin(), valuesDirichlet.end(),
           back_inserter(result));
@@ -74,7 +69,7 @@ vector<Eigenfunction2D<Scalar, withDerivatives>> Matslise2DHalf<Scalar>::eigenfu
     vector<Eigenfunction2D<Scalar, withDerivatives>> eigenfunctions;
     for (bool even : {false, true}) {
         const Y<Scalar, Dynamic> &boundary = even ? neumannBoundary : dirichletBoundary;
-        if (abs(E - se2d->eigenvalue(boundary, E)) < 1e-3) {
+        if (abs(E - se2d->eigenvalue(boundary, E).first) < 1e-3) {
             for (const auto &f : se2d->template eigenfunction<withDerivatives>(boundary, E)) {
                 eigenfunctions.push_back(
                         {

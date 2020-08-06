@@ -107,12 +107,15 @@ Matslise3D<Scalar>::Sector::Sector(
                     .nested(Options1<Scalar>().tolerance(matslise3d->tolerance)));
 
     cout << "Seeking: " << zbar << endl;
-    vector<Scalar> singleEigenvalues = matslise2d->eigenvaluesByIndex(0, matslise3d->N);
+    vector<tuple<Index, Scalar, Index>> singleEigenvalues = matslise2d->eigenvaluesByIndex(0, matslise3d->N);
     cout << "found: " << zbar << endl;
-    for (auto &E : singleEigenvalues)
-        cout << " " << E;
+    Index eigenvalueCount = 0;
+    for (auto &iEm : singleEigenvalues) {
+        eigenvalueCount += get<2>(iEm);
+        cout << " (" << get<0>(iEm) << ", " << get<1>(iEm) << ", " << get<2>(iEm)<<")";
+    }
     cout << endl;
-    if (static_cast<int>(singleEigenvalues.size()) != matslise3d->N) {
+    if (eigenvalueCount < matslise3d->N) {
         throw std::runtime_error("Matlise3D: not enough basis-functions found on a sector");
     }
     eigenvalues.reserve(matslise3d->N);
@@ -120,9 +123,9 @@ Matslise3D<Scalar>::Sector::Sector(
     eigenfunctions_grid.reserve(matslise3d->N);
 
     Index i = 0;
-    for (const Scalar &E : singleEigenvalues) {
-        for (auto &f :  matslise2d->eigenfunction(E)) {
-            eigenvalues.push_back(E);
+    for (auto &E : singleEigenvalues) {
+        for (auto &f :  matslise2d->eigenfunction(get<1>(E))) {
+            eigenvalues.push_back(get<1>(E));
             eigenfunctions.push_back(f);
             eigenfunctions_grid.push_back(move(f(matslise3d->grid_x, matslise3d->grid_y)));
 

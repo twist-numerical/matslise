@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <queue>
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/find_sector.h"
@@ -153,15 +154,15 @@ vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
 }
 
 template<typename Scalar>
+bool newtonSorter(const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) {
+    return abs(a.first * b.second) < abs(b.first * a.second);
+}
+
+template<typename Scalar>
 pair<Scalar, Scalar>
 Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
     vector<pair<Scalar, Scalar>> errors = matchingErrors(yLeft, E, use_h);
-    return *min_element(errors.begin(), errors.end(), [](
-            const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {
-        if (abs(a.first) > 100 || abs(b.first) > 100)
-            return abs(a.first) < abs(b.first);
-        return abs(a.first / a.second) < abs(b.first / b.second);
-    });
+    return *min_element(errors.begin(), errors.end(), &newtonSorter<Scalar>);
 }
 
 template<typename Scalar>
@@ -174,7 +175,7 @@ Scalar Matslise2D<Scalar>::estimatePotentialMinimum() const {
 }
 
 template<typename Scalar>
-Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scalar &_E, bool use_h) const {
+pair<Scalar, Index> Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scalar &_E, bool use_h) const {
     const Scalar tolerance = 1e-9;
     const Scalar minTolerance = 1e-5;
     const int maxIterations = 30;
@@ -189,213 +190,90 @@ Scalar Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scal
     } while (i < maxIterations && abs(error) > tolerance);
 
     if (abs(error) > minTolerance)
-        return NAN;
-    return E;
+        return {NAN, 0};
+
+    vector<pair<Scalar, Scalar>> errors = matchingErrors(left, E, use_h);
+    sort(errors.begin(), errors.end(), &newtonSorter<Scalar>);
+    Index count = 1;
+    for (int j = 1; j < N; ++j)
+        if (abs(errors[j].first / errors[j].second) < minTolerance)
+            ++count;
+    return {E, count};
 }
 
 template<typename Scalar>
 Scalar Matslise2D<Scalar>::eigenvalueError(const Y<Scalar, Dynamic> &left, const Scalar &E) const {
-    return abs(E - eigenvalue(left, E, false));
+    return abs(E - eigenvalue(left, E, false).first);
 }
 
-template<typename Scalar, typename I>
-Scalar mean(I start, I end) {
-    Scalar sum = 0;
-    int count = 0;
-    for (I i = start; i != end; ++i) {
-        sum += *i;
-        ++count;
+template<typename Scalar>
+vector<tuple<Index, Scalar, Index>> eigenvaluesHelper(
+        const Matslise2D<Scalar> &matslise2d, const Y<Scalar, Dynamic> &left,
+        const Scalar &Emin, const Scalar &Emax, const Index &Imin, const Index &Imax) {
+
+    queue<tuple<int, Scalar, Scalar, Index, Index>> toCheck;
+    toCheck.emplace(0, Emin, Emax, matslise2d.estimateIndex(left, Emin), matslise2d.estimateIndex(left, Emax));
+    vector<tuple<Index, Scalar, Index>> found;
+    while (!toCheck.empty()) {
+        const int &depth = get<0>(toCheck.front());
+        const Scalar &a = get<1>(toCheck.front());
+        const Scalar &b = get<2>(toCheck.front());
+        const Index &ia = get<3>(toCheck.front());
+        const Index &ib = get<4>(toCheck.front());
+
+        Scalar mid = (a + b) / 2;
+        pair<Scalar, Index> E = matslise2d.eigenvalue(left, mid);
+        if (E.second == ib - ia && a - 1e-4 < E.first && E.first < b + 1e-4) {
+            if (Imin < ia + E.second || ia < Imax)
+                found.emplace_back(ia, E.first, E.second);
+        } else {
+            Index imid = matslise2d.estimateIndex(left, mid);
+            if (imid < ia || imid > ib)
+                cerr << "Matslise2D: Error in index estimate" << endl;
+            if (imid > ia && imid >= Imin)
+                toCheck.emplace(depth + 1, a, mid, ia, imid);
+            if (imid < ib && imid <= Imax)
+                toCheck.emplace(depth + 1, mid, b, imid, ib);
+        }
+        toCheck.pop();
     }
-    return sum / count;
+    sort(found.begin(), found.end());
+    return found;
 }
 
 template<typename Scalar>
-inline bool set_contains(const set<Scalar> &values, const Scalar &guess, const Scalar &length) {
-    auto it = values.lower_bound(guess - length);
-    return it != values.end() && *it <= guess + length;
-}
-
-template<typename Scalar>
-vector<Scalar> Matslise2D<Scalar>::eigenvalues(
+vector<tuple<Index, Scalar, Index>> Matslise2D<Scalar>::eigenvalues(
         const Y<Scalar, Dynamic> &left, const Scalar &Emin, const Scalar &Emax) const {
-    typedef pair<Scalar, Scalar> Interval;
-    const int initialSteps = 16;
-
-    const Scalar linear = 0.001;
-    const Scalar minLength = 0.001;
-
-    function<bool(Interval, Interval)> comp = [](Interval a, Interval b) -> bool {
-        return a.first > b.first;
-    };
-
-    vector<Interval> intervals;
-    Scalar length = (Emax - Emin) / initialSteps;
-    {
-        Scalar a = Emin + length / 2;
-        while (a < Emax - length / 4) {
-            intervals.push_back({length / 2, a});
-            push_heap(intervals.begin(), intervals.end(), comp);
-            a += length;
-        }
-    }
-
-    set<Scalar> eigenvalues;
-    Scalar guess;
-    while (!intervals.empty()) {
-        tie(length, guess) = intervals.front();
-        pop_heap(intervals.begin(), intervals.end(), comp);
-        intervals.pop_back();
-
-        if (!set_contains(eigenvalues, guess, length)) {
-            for (const pair<Scalar, Scalar> &error : matchingErrors(left, guess)) {
-                Scalar d = error.first / error.second;
-                if (abs(d) < minLength) {
-                    Scalar E = eigenvalue(left, guess - d);
-                    if (!isnan(E) && !set_contains(eigenvalues, E, minLength))
-                        eigenvalues.insert(E);
-                } else if (abs(d) < 2 * length) {
-                    intervals.push_back({min(abs(d), .5 * length), guess - d});
-                    push_heap(intervals.begin(), intervals.end(), comp);
-                }
-            }
-        }
-    }
-
-    vector<Scalar> result;
-    for (const Scalar &E : eigenvalues) {
-        long valueCount = static_cast<long>(result.size());
-        for (const auto &error : matchingErrors(left, E)) {
-            const Scalar d = error.first / error.second;
-            if (error.first < 1 && abs(d) < linear) {
-                result.push_back(E - d);
-            }
-        }
-        if (valueCount != static_cast<long>(result.size()))
-            sort(result.begin() + valueCount, result.end());
-    }
-    return result;
+    return eigenvaluesHelper(*this, left, Emin, Emax, 0, numeric_limits<Index>::max());
 }
 
 template<typename Scalar>
-inline bool
-is_first_eigenvalue(const Matslise2D<Scalar> &se2d, const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) {
-    vector<Eigenfunction2D<Scalar>> eigenfunctions = se2d.eigenfunction(
-            left, E);
-    if (eigenfunctions.size() != 1)
-        return false;
-    Array<Scalar, Dynamic, Dynamic> values = eigenfunctions[0](
-            Matslise2D<Scalar>::ArrayXs::LinSpaced(101, se2d.domain.sub.min, se2d.domain.sub.max),
-            Matslise2D<Scalar>::ArrayXs::LinSpaced(101, se2d.domain.min, se2d.domain.max));
-    return values.minCoeff() * values.maxCoeff() > -1e-2;
-}
-
-template<typename Scalar>
-constexpr Scalar fundamentalGap(const Rectangle<2, Scalar> &domain) {
-    // https://arxiv.org/abs/1006.1686
-    Scalar step = constants<Scalar>::PI / domain.diameter();
-    step *= step;
-    step *= 3;
-    return step;
-}
-
-template<typename Scalar>
-vector<Scalar> Matslise2D<Scalar>::firstEigenvalues(const Y<Scalar, Dynamic> &left, int n) const {
-    Scalar E0 = firstEigenvalue(left);
-    const Scalar step = max(Scalar(1), fundamentalGap(domain));
-    vector<Scalar> values{E0};
-    Scalar start = E0;
-    while (values.size() < (unsigned long) n) {
-        for (auto E : eigenvalues(left, start, start + step)) {
-            auto lowerBound = lower_bound(values.begin(), values.end(), E);
-            if (lowerBound == values.end()) {
-                if (abs(lowerBound[-1] - E) > 1e-5)
-                    values.emplace_back(E);
-            } else if (abs(lowerBound[0] - E) > 1e-5) {
-                if (lowerBound - 1 == values.begin() || abs(lowerBound[-1] - E) > 1e-5)
-                    values.insert(lowerBound, E);
-            }
-        }
-        start += step;
+vector<tuple<Index, Scalar, Index>> Matslise2D<Scalar>::eigenvaluesByIndex(
+        const Y<Scalar, Dynamic> &left, Index Imin, Index Imax) const {
+    if (Imin < 0)
+        Imin = 0;
+    if (Imax <= Imin)
+        return vector<tuple<Index, Scalar, Index>>();
+    Scalar step = 1;
+    Scalar Emin = estimatePotentialMinimum();
+    Index i = estimateIndex(left, Emin);
+    while (i > Imin) {
+        Emin -= step;
+        step *= 2;
+        i = estimateIndex(left, Emin);
     }
-    while (values.size() > (unsigned long) n)
-        values.pop_back();
-    return values;
-}
+    step = 1;
+    Scalar Emax = Emin;
+    do {
+        Emax += step;
+        step *= 2;
+        i = estimateIndex(left, Emax);
+        if (i < Imin)
+            Emin = Emax;
+    } while (i < Imax);
 
-template<typename Scalar>
-int numberPositive(const vector<pair<Scalar, Scalar>> &errors) {
-    int n = 0;
-    for (auto &error : errors)
-        if (error.first > 0)
-            ++n;
-    return n;
-}
-
-template<typename Scalar>
-Scalar Matslise2D<Scalar>::firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const {
-    Scalar minimal = estimatePotentialMinimum();
-    Scalar lower = minimal;
-    cout << "Potential minimum: " << lower << endl;
-    Scalar upper = eigenvalue(left, lower);
-    if (is_first_eigenvalue(*this, left, upper))
-        return upper;
-
-    {
-        int steps = 0;
-        Scalar stepSize = 1;
-        while (numberPositive(matchingErrors(left, lower)) != N) {
-            lower -= (stepSize *= 2);
-            if (++steps > 10) {
-                throw runtime_error("Could not find the first eigenvalue. A useful lower bound is not found.");
-            }
-        }
-    }
-    {
-        int steps = 0;
-        Scalar stepSize = 2;
-        while (numberPositive(matchingErrors(left, upper)) >= N) {
-            upper += (stepSize *= 2);
-            if (++steps > 10) {
-                throw runtime_error("Could not find the first eigenvalue. A useful upper bound is not found.");
-            }
-        }
-    }
-
-    while (upper - lower > 1e-3) {
-        Scalar mid = (lower + upper) / 2;
-        if (numberPositive(matchingErrors(left, mid)) == N)
-            lower = mid;
-        else
-            upper = mid;
-    }
-    Scalar first = eigenvalue(left, lower);
-    cout << "Guess for first: " << first << endl;
-    if (is_first_eigenvalue(*this, left, first))
-        return first;
-
-    first -= fundamentalGap(domain);
-    cout << "Wrong! Going for bruteforce between " << minimal << " and " << first << endl;
-    Index n = 60;
-    Scalar h = (first - minimal) / n;
-    Scalar guess = minimal;
-    for (Index i = 1; i < n; ++i) {
-        guess += h;
-        if (numberPositive(matchingErrors(left, guess)) != N) {
-            guess = eigenvalue(left, guess);
-            if (is_first_eigenvalue(*this, left, guess))
-                return guess;
-            break;
-        }
-    }
-
-    throw runtime_error("Could not find the first eigenvalue.");
-}
-
-template<typename Scalar>
-vector<Scalar> Matslise2D<Scalar>::eigenvaluesByIndex(const Y<Scalar, Dynamic> &left, int Imin, int Imax) const {
-    vector<Scalar> eigenvalues = firstEigenvalues(left, Imax);
-    eigenvalues.erase(eigenvalues.begin(), eigenvalues.begin() + Imin);
-    return eigenvalues;
+    cout << Emin << ", " << Emax << " (" << Imin << ", " << Imax << ")" << endl;
+    return eigenvaluesHelper(*this, left, Emin, Emax, Imin, Imax);
 }
 
 #include "../util/instantiate.h"

@@ -2,9 +2,6 @@
 
 void pyslise2d(py::module &m) {
     py::class_<AbstractMatslise2D<double>, shared_ptr<AbstractMatslise2D<double>>>(m, "AbstractPyslise2D")
-            .def("firstEigenvalue", [](const Matslise2D<> &se2d) -> double {
-                return se2d.firstEigenvalue();
-            })
             .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 

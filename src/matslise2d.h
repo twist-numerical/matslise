@@ -41,15 +41,15 @@ namespace matslise {
                 : potential(potential), domain(domain) {
         }
 
-        virtual Scalar firstEigenvalue() const = 0;
-
-        virtual Scalar eigenvalue(const Scalar &Eguess) const = 0;
+        virtual std::pair<Scalar, Eigen::Index> eigenvalue(const Scalar &Eguess) const = 0;
 
         virtual Scalar eigenvalueError(const Scalar &E) const = 0;
 
-        virtual std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax) const = 0;
+        virtual std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvalues(const Scalar &Emin, const Scalar &Emax) const = 0;
 
-        virtual std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const = 0;
+        virtual std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvaluesByIndex(Eigen::Index Imin, Eigen::Index Imax) const = 0;
 
         virtual std::vector<Eigenfunction2D<Scalar, false>> eigenfunction(const Scalar &E) const = 0;
 
@@ -106,18 +106,10 @@ namespace matslise {
             return matchingError(dirichletBoundary, E);
         }
 
-        std::vector<Scalar> firstEigenvalues(int n) const {
-            return firstEigenvalues(dirichletBoundary, n);
-        }
-
     public: // overrides
         Scalar estimatePotentialMinimum() const override;
 
-        Scalar firstEigenvalue() const override {
-            return firstEigenvalue(dirichletBoundary);
-        }
-
-        Scalar eigenvalue(const Scalar &Eguess) const override {
+        std::pair<Scalar,Eigen:: Index> eigenvalue(const Scalar &Eguess) const override {
             return eigenvalue(dirichletBoundary, Eguess);
         }
 
@@ -125,11 +117,13 @@ namespace matslise {
             return eigenvalueError(dirichletBoundary, E);
         }
 
-        std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax) const override {
+        std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvalues(const Scalar &Emin, const Scalar &Emax) const override {
             return eigenvalues(dirichletBoundary, Emin, Emax);
         }
 
-        std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const override {
+        std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvaluesByIndex(Eigen::Index Imin, Eigen::Index Imax) const override {
             return eigenvaluesByIndex(dirichletBoundary, Imin, Imax);
         }
 
@@ -155,18 +149,16 @@ namespace matslise {
         std::pair<Scalar, Scalar> matchingError(
                 const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E, bool use_h = true) const;
 
-        std::vector<Scalar> firstEigenvalues(const Y<Scalar, Eigen::Dynamic> &left, int n) const;
-
-        Scalar firstEigenvalue(const Y<Scalar, Eigen::Dynamic> &left) const;
-
-        Scalar eigenvalue(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Eguess, bool use_h = true) const;
+        std::pair<Scalar, Eigen::Index>
+        eigenvalue(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Eguess, bool use_h = true) const;
 
         Scalar eigenvalueError(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &E) const;
 
-        std::vector<Scalar> eigenvalues(
-                const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Emin, const Scalar &Emax) const;
+        std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvalues(const Y<Scalar, Eigen::Dynamic> &left, const Scalar &Emin, const Scalar &Emax) const;
 
-        std::vector<Scalar> eigenvaluesByIndex(const Y<Scalar, Eigen::Dynamic> &left, int Imin, int Imax) const;
+        std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvaluesByIndex(const Y<Scalar, Eigen::Dynamic> &left, Eigen::Index Imin, Eigen::Index Imax) const;
 
         template<bool withDerivatives = false>
         std::vector<Eigenfunction2D<Scalar, withDerivatives>> eigenfunction(const Scalar &E) const {
@@ -269,15 +261,15 @@ namespace matslise {
             return se2d->estimatePotentialMinimum();
         }
 
-        Scalar firstEigenvalue() const override;
-
-        Scalar eigenvalue(const Scalar &Eguess) const override;
+        std::pair<Scalar, Eigen::Index> eigenvalue(const Scalar &Eguess) const override;
 
         Scalar eigenvalueError(const Scalar &E) const override;
 
-        std::vector<Scalar> eigenvalues(const Scalar &Emin, const Scalar &Emax) const override;
+        std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvalues(const Scalar &Emin, const Scalar &Emax) const override;
 
-        std::vector<Scalar> eigenvaluesByIndex(int Imin, int Imax) const override;
+        std::vector<std::tuple<Eigen::Index, Scalar, Eigen::Index>>
+        eigenvaluesByIndex(Eigen::Index Imin, Eigen::Index Imax) const override;
 
         std::vector<Eigenfunction2D<Scalar>> eigenfunction(const Scalar &E) const override {
             return eigenfunction < false > (E);

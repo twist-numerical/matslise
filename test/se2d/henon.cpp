@@ -27,8 +27,6 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon]") {
             {4.87014557482289,  1},
             {4.89864497284387,  2}};
 
-    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == 2 * eigenvalues[0].first);
-
     int n = 2;
     ArrayXd x = ArrayXd::LinSpaced(n, -5, 5);
     double E;
@@ -39,7 +37,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon]") {
 
         const pair<double, double> &error = p2.matchingError(E);
         REQUIRE(abs(error.first) < 1e-3);
-        REQUIRE(Approx(p2.eigenvalue(E)).margin(1e-7) == E);
+        REQUIRE(Approx(p2.eigenvalue(E).first).margin(1e-7) == E);
 
         const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         REQUIRE(f.size() == multiplicity);
@@ -71,7 +69,6 @@ TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][ha
             {4.87014557482289,  1},
             {4.89864497284387,  2}};
 
-    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == 2 * eigenvalues[0].first);
 
     int n = 2;
     ArrayXd x = ArrayXd::LinSpaced(n, -5, 5);
@@ -83,7 +80,7 @@ TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][ha
 
         const pair<double, double> &error = p2.matchingError(E);
         REQUIRE(abs(error.first) < 1e-3);
-        REQUIRE(Approx(p2.eigenvalue(E)).margin(1e-7) == E);
+        REQUIRE(Approx(p2.eigenvalue(E).first).margin(1e-7) == E);
 
         const vector<Eigenfunction2D<>> f = p2.eigenfunction(E);
         REQUIRE(f.size() == multiplicity);

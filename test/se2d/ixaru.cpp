@@ -31,15 +31,16 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
             {13.3323313, 1}
     };
 
-    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
-
-    const vector<double> foundEigenvalues = p2.eigenvaluesByIndex(0, 10);
+    const vector<tuple<Index, double, Index>> foundEigenvalues = p2.eigenvaluesByIndex(0, 10);
     int j = 0;
     for (int i = 0; i < 10; ++i) {
-        CHECK(Approx(foundEigenvalues[i]).margin(1e-7) == eigenvalues[i].first);
-        CHECK(p2.estimateIndex(foundEigenvalues[i] - 1e-3) == j);
+        double E = get<1>(foundEigenvalues[i]);
+        CHECK(j == get<0>(foundEigenvalues[i]));
+        CHECK(eigenvalues[i].second == get<2>(foundEigenvalues[i]));
+        CHECK(Approx(E).margin(1e-7) == eigenvalues[i].first);
+        CHECK(p2.estimateIndex(E - 1e-3) == j);
         j += eigenvalues[i].second;
-        CHECK(p2.estimateIndex(foundEigenvalues[i] + 1e-3) == j);
+        CHECK(p2.estimateIndex(E + 1e-3) == j);
     }
 
     double E;
@@ -57,8 +58,8 @@ TEST_CASE("Eigenfunctions ixaru", "[matslise2d][eigenfunctions][ixaru]") {
         CHECK(p2.eigenvalueError(E) < 1e-5);
 
         if (E < 6) {
-            double El = p2.eigenvalue(E - 0.01);
-            double Em = p2.eigenvalue(E + 0.01);
+            double El = p2.eigenvalue(E - 0.01).first;
+            double Em = p2.eigenvalue(E + 0.01).first;
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
         }
@@ -89,8 +90,6 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
             {13.3323313, 1}
     };
 
-    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
-
     // TODO: Some issues with matchingError function of half dirichlet-problem
     /*
     const vector<double> foundEigenvalues = p2.eigenvaluesByIndex(0, 10);
@@ -108,8 +107,8 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
         eigenvalues_simple.push_back(E);
 
         if (E < 6) {
-            double El = p2.eigenvalue(E - 0.01);
-            double Em = p2.eigenvalue(E + 0.01);
+            double El = p2.eigenvalue(E - 0.01).first;
+            double Em = p2.eigenvalue(E + 0.01).first;
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
             CHECK(p2.eigenvalueError(El) < 1e-5);
@@ -142,8 +141,6 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
             {13.3323313, 1}
     };
 
-    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
-
     double E;
     unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
@@ -158,8 +155,8 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
         CHECK(abs(error.first) < 1e-3);
 
         if (E < 6) {
-            double El = p2.eigenvalue(E - 0.01);
-            double Em = p2.eigenvalue(E + 0.01);
+            double El = p2.eigenvalue(E - 0.01).first;
+            double Em = p2.eigenvalue(E + 0.01).first;
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
             CHECK(p2.eigenvalueError(El) < 1e-5);
@@ -192,8 +189,6 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
             {13.3323313, 1}
     };
 
-    CHECK(Approx(p2.firstEigenvalue()).margin(1e-7) == eigenvalues[0].first);
-
     double E;
     unsigned int multiplicity;
     for (int i = 0; i < 9; ++i) {
@@ -208,8 +203,8 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
         CHECK(abs(error.first) < 1e-3);
 
         if (E < 6) {
-            double El = p2.eigenvalue(E - 0.01);
-            double Em = p2.eigenvalue(E + 0.01);
+            double El = p2.eigenvalue(E - 0.01).first;
+            double Em = p2.eigenvalue(E + 0.01).first;
             CHECK(Approx(El).margin(1e-7) == E);
             CHECK(Approx(Em).margin(1e-7) == E);
             CHECK(p2.eigenvalueError(El) < 1e-5);

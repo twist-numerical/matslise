@@ -60,7 +60,7 @@ TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
             eigenvaluesList.emplace_back(E);
             eigenvalues.insert(E);
             for (int k = -1; k <= 1; ++k)
-                CHECK(Approx(p.eigenvalue(E + k * 1e-2)).margin(1e-7) == E);
+                CHECK(Approx(p.eigenvalue(E + k * 1e-2).first).margin(1e-7) == E);
 
             vector<function<double(double, double)>> v;
             for (int k = 1; k * k < E; ++k) {
@@ -77,8 +77,8 @@ TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
     sort(eigenvaluesList.begin(), eigenvaluesList.end());
 
     int i = 0;
-    for (const double E : p.firstEigenvalues(10)) {
-        CHECK(Approx(E).margin(1e-7) == eigenvaluesList[i]);
+    for (auto &iEm : p.eigenvaluesByIndex(0, 10)) {
+        CHECK(Approx(get<1>(iEm)).margin(1e-7) == eigenvaluesList[i]);
         ++i;
     }
 
