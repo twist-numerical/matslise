@@ -209,7 +209,8 @@ namespace matslise {
 
             void setDirection(Direction);
 
-            Eigen::Index estimateIndex(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y) const;
+            Eigen::Index estimateIndex(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0,
+                                       const Y<Scalar, Eigen::Dynamic> &y1) const;
 
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(

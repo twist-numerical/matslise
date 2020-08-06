@@ -286,7 +286,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                      Y<double, Dynamic> y0(sector.matscs->n);
                      y0.getY(0) = y;
                      y0.getY(1) = dy;
-                     return sector.estimateIndex(y0, E);
+                     return sector.estimateIndex(E, y0, sector.propagate(E, y0, sector.min, sector.max));
                  },
                  py::arg("E"), py::arg("y"), py::arg("dy"))
             .def_property_readonly("matslise",

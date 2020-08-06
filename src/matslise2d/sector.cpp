@@ -1,5 +1,6 @@
 #include <iostream>
 #include <complex>
+#include <queue>
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/legendre.h"
@@ -104,53 +105,80 @@ void clamp(Scalar &value, const Scalar &min, const Scalar &max) {
 }
 
 
-template<typename Scalar>
-Matrix<complex<Scalar>, Dynamic, Dynamic> theta(const Y<Scalar, Dynamic> &y) {
-    return (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1))
+template<typename Scalar, typename Derived>
+Matrix<complex<Scalar>, Dynamic, Dynamic> theta(
+        const MatrixBase<Derived> &U,
+        const MatrixBase<Derived> &V) {
+    return (V - U * complex<Scalar>(0, 1))
             .transpose()
             .partialPivLu()
-            .solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
+            .solve((V + U * complex<Scalar>(0, 1)).transpose())
             .transpose();
 }
 
-template<typename Scalar, typename InputMatrix>
-inline Scalar angle(const InputMatrix &m) {
+template<typename Scalar>
+inline Array<Scalar, Dynamic, 1> angle(const Matrix<complex<Scalar>, Dynamic, Dynamic> &m) {
     const Scalar PI2 = constants<Scalar>::PI * 2;
     return m.eigenvalues().array().arg().unaryExpr(
-            [&](const Scalar &a) -> Scalar { return a < 0 ? a + PI2 : a; }).sum();
+            [&](const Scalar &a) -> Scalar { return a < -1e-16 ? a + PI2 : a; });
 }
 
 template<typename Scalar>
-Index Matslise2D<Scalar>::Sector::estimateIndex(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0) const {
-    Scalar h = max - min;
+Index Matslise2D<Scalar>::Sector::estimateIndex(
+        const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Y<Scalar, Eigen::Dynamic> &y1) const {
     Index n = matscs->n;
-    Y<Scalar, Dynamic> y1 = propagate(E, y0, min, max);
     using ArrayXs = typename Matslise2D<Scalar>::ArrayXs;
     using MatrixXcs = Matrix<complex<Scalar>, Dynamic, Dynamic>;
 
-    ArrayXs Z = h * h * (matscs->vs[0].diagonal().array() - ArrayXs::Constant(n, E));
+    Index zeros = 0;
+    queue<tuple<int, Scalar, Scalar, MatrixXs, MatrixXs, ArrayXs>> todo;
+    todo.emplace(0, min, max, y0.getY(0), y0.getY(1), angle<Scalar>(theta<Scalar>(y1.getY(0), y1.getY(1))));
 
-    Array<Scalar, 2, Dynamic> eta = calculateEta<Scalar, 2>(Z);
-    Scalar argdet = 0;
-    for (int i = 0; i < n; ++i) {
-        if (Z[i] < 0) {
-            Scalar sZ = (h < 0 ? -1 : 1) * sqrt(-Z[i]);
-            argdet += (sZ + atan2(
-                    (h - sZ) * eta(1, i) * eta(0, i),
-                    1 + (h * sZ + Z[i]) * eta(1, i) * eta(1, i)));
+    while (!todo.empty()) {
+        const int &depth = get<0>(todo.front());
+        const Scalar &a = get<1>(todo.front());
+        const Scalar &b = get<2>(todo.front());
+        Scalar h = b - a;
+        const MatrixXs &U0 = get<3>(todo.front());
+        const MatrixXs &V0 = get<4>(todo.front());
+        const ArrayXs &betas = get<5>(todo.front());
+
+        ArrayXs Z = h * h * (matscs->vs[0].diagonal().array() - ArrayXs::Constant(n, E));
+        Array<Scalar, 2, Dynamic> eta = calculateEta<Scalar, 2>(Z);
+
+        MatrixXcs thetaZ0 = theta<Scalar>(U0, V0);
+        const complex<Scalar> i_delta(0, h);
+        ArrayXs alphas = angle<Scalar>(
+                ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() *
+                thetaZ0
+        );
+        if (depth < 2 && ((betas < 1e-4).any() || ((betas - alphas).abs() > 6.283).any())) {
+            // Zeroth order propagation probably inaccurate: refine steps
+            Scalar mid = (a + b) / 2;
+            Y<Scalar, Dynamic> yMid = direction == forward
+                                      ? propagate(E, y0, a, mid)
+                                      : propagate(E, y1, b, mid);
+            todo.emplace(depth + 1, a, mid, U0, V0, angle<Scalar>(theta<Scalar>(yMid.getY(0), yMid.getY(1))));
+            todo.emplace(depth + 1, mid, b, yMid.getY(0), yMid.getY(1), betas);
         } else {
-            argdet += atan2(h * eta(1, i), eta(0, i));
+            Scalar argdet = 0;
+            for (int i = 0; i < n; ++i) {
+                if (Z[i] < 0) {
+                    Scalar sZ = sqrt(-Z[i]);
+                    argdet += (sZ + atan2(
+                            (h - sZ) * eta(1, i) * eta(0, i),
+                            1 + (h * sZ + Z[i]) * eta(1, i) * eta(1, i)));
+                } else {
+                    argdet += atan2(h * eta(1, i), eta(0, i));
+                }
+            }
+            argdet *= 2;
+
+            zeros += round((angle<Scalar>(thetaZ0).sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
         }
+        todo.pop();
     }
-    argdet *= 2;
-
-    MatrixXcs thetaZ0 = theta(y0);
-    const complex<Scalar> i_delta(0, h);
-    Scalar alpha = angle<Scalar>(
-            ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() * thetaZ0
-    );
-
-    return round((angle<Scalar>(thetaZ0) + argdet - alpha) / (2 * constants<Scalar>::PI));
+    return zeros;
 }
 
 template<typename Scalar>
