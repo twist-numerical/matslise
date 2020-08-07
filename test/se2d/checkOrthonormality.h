@@ -10,34 +10,56 @@ using namespace Eigen;
 using namespace matslise;
 using namespace quadrature;
 
-template<typename Scalar=double, typename doubleIterator>
-void checkOrthonormality(const AbstractMatslise2D<Scalar> *p, const doubleIterator &begin, const doubleIterator &end) {
+template<typename Scalar=double>
+void checkOrthonormality(const AbstractMatslise2D<Scalar> &p, const vector<Eigenfunction2D<Scalar>> &eigenfunctions) {
     const int n = 201;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
-            Array<Scalar, Dynamic, 1>::LinSpaced(n, p->domain.getMin(0), p->domain.getMax(0)));
+            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));
     Array<Scalar, Dynamic, 1> y = lobatto::grid<Scalar>(
-            Array<Scalar, Dynamic, 1>::LinSpaced(n, p->domain.getMin(1), p->domain.getMax(1)));
+            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(1), p.domain.getMax(1)));
 
-    vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctions;
-    for (auto i = begin; i < end; ++i) {
-        vector<Eigenfunction2D<>> fs = p->eigenfunction(*i);
-        for (const Eigenfunction2D<> &f : fs) {
-            ArrayXXd value = f(x, y);
-            for (Index xi = 0; xi < n; xi += n / 20)
-                for (Index yi = 0; yi < n; yi += n / 20)
-                    REQUIRE(Approx(value(xi, yi)).margin(1e-10) == f(x[xi], y[yi]));
-            eigenfunctions.push_back(value);
-        }
+    vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctionsOnGrid;
+    for (unsigned long i = 0; i < eigenfunctions.size(); ++i) {
+        const Eigenfunction2D<Scalar> &f = eigenfunctions[i];
+        ArrayXXd value = f(x, y);
+        for (Index xi = 0; xi < n; xi += n / 20)
+            for (Index yi = 0; yi < n; yi += n / 20)
+                REQUIRE(Approx(value(xi, yi)).margin(1e-10) == f(x[xi], y[yi]));
+        eigenfunctionsOnGrid.push_back(value);
     }
 
-    auto eigenfunctionsBegin = eigenfunctions.begin();
-    for (auto i = eigenfunctionsBegin; i != eigenfunctions.end(); ++i)
-        for (auto j = eigenfunctionsBegin; j != eigenfunctions.end(); ++j) {
+    auto eigenfunctionsBegin = eigenfunctionsOnGrid.begin();
+    for (auto i = eigenfunctionsBegin; i != eigenfunctionsOnGrid.end(); ++i)
+        for (auto j = eigenfunctionsBegin; j != eigenfunctionsOnGrid.end(); ++j) {
             INFO("Orthonormality of eigenfunction "
                          << std::distance(eigenfunctionsBegin, i) << " and " << std::distance(eigenfunctionsBegin, j));
-            CHECK(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-1) == (i == j ? 1 : 0));
+            CHECK(Approx(lobatto::quadrature<Scalar>(x, y, *i * *j)).margin(1e-2) == (i == j ? 1 : 0));
         }
 
+}
+
+template<typename Scalar=double>
+void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index, Scalar, Index>> &exactEigenvalues,
+                  const Scalar &tolerance = 1e-7) {
+    Index count = get<0>(exactEigenvalues.back()) + get<2>(exactEigenvalues.back());
+    Index first = get<0>(exactEigenvalues.front());
+
+    vector<tuple<Index, Scalar, Index>> eigenvalues = p.eigenvaluesByIndex(first, first + count);
+
+    auto exact = exactEigenvalues.begin();
+    auto found = eigenvalues.begin();
+    vector<Eigenfunction2D<Scalar>> eigenfunctions;
+    for (; exact != exactEigenvalues.end() && found != eigenvalues.end(); ++exact, ++found) {
+        CHECK(get<0>(*exact) == get<0>(*found));
+        CHECK(Approx(get<1>(*exact)).margin(tolerance) == get<1>(*found));
+        CHECK(get<2>(*exact) == get<2>(*found));
+        auto currentEigenfunctions = p.eigenfunction(get<1>(*found));
+        REQUIRE(get<2>(*exact) == (Index) currentEigenfunctions.size());
+        for (auto &eigenfunction : currentEigenfunctions)
+            eigenfunctions.push_back(eigenfunction);
+    }
+
+    checkOrthonormality(p, eigenfunctions);
 }
 
 
