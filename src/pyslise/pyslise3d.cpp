@@ -21,21 +21,57 @@ Estimate an error of a given eigenvalue by using a lower order method.
     py::class_<Matslise3D<double>, AbstractMatslise3D<double>, shared_ptr<Matslise3D<double>>>(m, "Pyslise3D")
             .def(py::init([](const function<double(double, double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax, double zmin, double zmax,
-                             double tolerance, int z_count, double z_tol) {
+                             double tol,
+                             int x_count, double x_tol,
+                             int y_count, double y_tol,
+                             int z_count, double z_tol,
+                             bool x_symmetric, bool y_symmetric,
+                             int x_basis_size, int xy_basis_size) {
                      py::gil_scoped_release release;
-                     if (z_count != -1 && z_tol != -1) {
+                     if (x_count != -1 && x_tol != -1) {
+                         throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
+                     }
+                     if (x_count == -1 && x_tol == -1) {
+                         if (tol != -1)
+                             x_tol = tol;
+                         else
+                             throw invalid_argument("One of 'x_count' and 'x_tol' must be set.");
+                     }
+                     if (y_count != -1 && y_tol != -1) {
                          throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
                      }
-                     if (z_count == -1 && z_tol == -1) {
-                         z_tol = tolerance;
+                     if (y_count == -1 && y_tol == -1) {
+                         if (tol != -1)
+                             y_tol = tol;
+                         else
+                             throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
                      }
-                     SectorBuilder<Matslise3D<double>> sectorBuilder =
-                             z_count == -1 ? sector_builder::automatic<Matslise3D<double>>(z_tol)
-                                           : sector_builder::uniform<Matslise3D<double>>(z_count);
-                     return make_unique<Matslise3D<double>>([V](double x, double y, double z) -> double {
+                     Matslise3D<>::Config config;
+                     config.tolerance = tol;
+                     config.xBasisSize = x_basis_size;
+                     config.xyBasisSize = xy_basis_size;
+                     config.xSymmetric = x_symmetric;
+                     config.ySymmetric = y_symmetric;
+
+                     if (x_count != -1)
+                         config.xSectorBuilder = sector_builder::uniform<Matslise<>>(x_count);
+                     else
+                         config.xSectorBuilder = sector_builder::automatic<Matslise<>>(x_tol);
+
+                     if (y_count != -1)
+                         config.ySectorBuilder = sector_builder::uniform<Matslise2D<>>(y_count);
+                     else
+                         config.ySectorBuilder = sector_builder::automatic<Matslise2D<>>(y_tol);
+
+                     if (z_count != -1)
+                         config.zSectorBuilder = sector_builder::uniform<Matslise3D<>>(z_count);
+                     else
+                         config.zSectorBuilder = sector_builder::automatic<Matslise3D<>>(z_tol);
+
+                     return make_unique<Matslise3D<>>([V](double x, double y, double z) -> double {
                          py::gil_scoped_acquire acquire;
                          return V(x, y, z);
-                     }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, sectorBuilder, tolerance);
+                     }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -52,7 +88,11 @@ TODO!
                  py::arg("V"),
                  py::arg("xmin"), py::arg("xmax"), py::arg("ymin"), py::arg("ymax"), py::arg("zmin"), py::arg("zmax"),
                  py::arg("tolerance"),
-                 py::arg("z_count") = -1, py::arg("z_tolerance") = -1)
+                 py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
+                 py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
+                 py::arg("z_count") = -1, py::arg("z_tolerance") = -1,
+                 py::arg("x_symmetric") = false, py::arg("y_symmetric") = false,
+                 py::arg("x_basis_size") = 12, py::arg("xy_basis_size") = 12)
             .def("matchingError", [](const Matslise3D<> &s, double const &E) -> pair<double, double> {
                 return s.matchingError(E);
             }, R""""(\

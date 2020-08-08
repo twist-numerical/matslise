@@ -24,34 +24,41 @@ const vector<tuple<Index, double, Index>> IXARU_EIGENVALUES{
 };
 
 TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2D<> problem(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5.5, 5.5}, -5.5, 5.5},
-            Options2<>().tolerance(1e-6).N(10).nested(Options1<>().tolerance(1e-7)));
+            {{-5.5, 5.5}, -5.5, 5.5}, config);
 
     checkProblem(problem, IXARU_EIGENVALUES);
 }
 
 TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru][halfrange]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2DHalf<> problem(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5.5, 5.5}, -5.5, 5.5},
-            Options2<>().tolerance(1e-6).N(10).nested(Options1<>().tolerance(1e-7)));
+            {{-5.5, 5.5}, -5.5, 5.5}, config);
 
     checkProblem(problem, IXARU_EIGENVALUES);
 }
 
 TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixaru][auto][slow]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-5;
+    config.basisSize = 20;
+
     Matslise2D<> problem(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5.5, 5.5}, -5.5, 5.5},
-            Options2<>().tolerance(1e-5).N(20).nested(Options1<>().tolerance(1e-7)));
+            {{-5.5, 5.5}, -5.5, 5.5}, config);
 
     checkProblem(problem, IXARU_EIGENVALUES);
 }

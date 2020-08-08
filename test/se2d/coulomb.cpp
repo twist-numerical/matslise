@@ -8,6 +8,9 @@ using namespace std;
 TEST_CASE("2D: coulomb", "[matslise3d][coulomb]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     const double a = 0.05;
     const double b = 12.3;
     int steps = 16;
@@ -19,7 +22,7 @@ TEST_CASE("2D: coulomb", "[matslise3d][coulomb]") {
             if (r < a)
                 return -2 / a;
             return -2 / r;
-        }, {{-b, b}, -b, b}, Options2<double>().tolerance(1e-6).N(12).nested(Options1<double>().tolerance(1e-7)));
+        }, {{-b, b}, -b, b}, config);
 
 
         double E;

@@ -3,6 +3,9 @@
 
 namespace matslise {
     template<typename Scalar>
+    class Matslise2D;
+
+    template<typename Scalar>
     class AbstractBasisQuadrature {
     public:
         virtual Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> dV(

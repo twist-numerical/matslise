@@ -43,12 +43,14 @@ void compareEigenfunctions(
 }
 
 TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2D<> p(
             [](double, double) -> double {
                 return 0;
             },
-            {{0, constants<double>::PI}, 0, constants<double>::PI},
-            Options2<>().tolerance(1e-6).N(12).nested(Options1<>().tolerance(1e-5)));
+            {{0, constants<double>::PI}, 0, constants<double>::PI}, config);
 
     checkProblem(p, vector<tuple<Index, double, Index>>{
             {0,  2,  1},

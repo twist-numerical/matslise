@@ -23,6 +23,14 @@ namespace matslise {
 
         template<typename Problem>
         SectorBuilder<Problem> automatic(const typename Problem::Scalar &tolerance);
+
+        template<typename Problem>
+        SectorBuilder<Problem> getOrAutomatic(const std::optional<SectorBuilder<Problem>> &sectorBuilder,
+                                              const typename Problem::Scalar &tolerance) {
+            if (sectorBuilder.has_value())
+                return sectorBuilder.value();
+            return automatic<Problem>(tolerance);
+        }
     }
 }
 

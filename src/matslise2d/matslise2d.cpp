@@ -22,14 +22,14 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 
 template<typename Scalar>
 Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential,
-                               const matslise::Rectangle<2, Scalar> &domain,
-                               const Options2<Scalar> &_options):
-        AbstractMatslise2D<Scalar>(potential, domain), N(_options._N), options(_options) {
-    dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
-    auto sectorsBuild = options._builder(this, domain.min, domain.max);
+                               const matslise::Rectangle<2, Scalar> &domain, const Config &_config):
+        AbstractMatslise2D<Scalar>(potential, domain), config(_config) {
+    dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(config.basisSize);
+    auto sectorsBuild = sector_builder::getOrAutomatic(
+            _config.ySectorBuilder, _config.tolerance)(this, domain.min, domain.max);
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
-    sectorCount = sectors.size();
+    Index sectorCount = sectors.size();
     for (auto &sector : sectors)
         sector->quadratures.reset();
 
@@ -69,8 +69,8 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 
 template<typename Scalar>
 Matslise2D<Scalar>::~Matslise2D() {
-    for (int i = 0; i < sectorCount; ++i)
-        delete sectors[i];
+    for (auto &sector : sectors)
+        delete sector;
 }
 
 template<typename Scalar>
@@ -92,6 +92,7 @@ Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, 
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, use_h);
         conditionY(yl);
     }
+    Index sectorCount = sectors.size();
     Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
             E, dirichletBoundary, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, use_h);
     conditionY(yr);
@@ -108,6 +109,7 @@ template<typename Scalar>
 Index Matslise2D<Scalar>::estimateIndex(Y<Scalar, Eigen::Dynamic> y, const Scalar &E) const {
     Index index = 0;
     Index sectorIndex = 0;
+    Index sectorCount = sectors.size();
     for (; sectorIndex < sectorCount - 1; ++sectorIndex) {
         Sector *sector = sectors[sectorIndex];
         Y<Scalar, Dynamic> y1 = sector->propagate(E, y, sector->min, sector->max);
@@ -132,6 +134,7 @@ Y<Scalar, Dynamic> Matslise2D<Scalar>::propagate(
     int sectorIndex = find_sector<Matslise2D<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
     Sector *sector;
+    Index sectorCount = sectors.size();
     while (true) {
         sector = sectors[sectorIndex];
         if (direction == -1 && sectorIndex < sectorCount - 1)
@@ -195,7 +198,8 @@ pair<Scalar, Index> Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &lef
     vector<pair<Scalar, Scalar>> errors = matchingErrors(left, E, use_h);
     sort(errors.begin(), errors.end(), &newtonSorter<Scalar>);
     Index count = 1;
-    for (int j = 1; j < N; ++j)
+    Index N = config.basisSize;
+    for (Index j = 1; j < N; ++j)
         if (abs(errors[j].first / errors[j].second) < minTolerance)
             ++count;
     return {E, count};

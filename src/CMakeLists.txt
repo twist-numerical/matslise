@@ -26,7 +26,7 @@ SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp
         matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
-        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp schrodinger.h
+        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
         matslise3d/matslise3d.cpp
         util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
 

@@ -33,27 +33,30 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
     ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, this](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
 
-    if (se2d->options.nestedOptions._symmetric) {
+    if (se2d->config.xSymmetric) {
         matslise = std::make_shared<MatsliseHalf<Scalar>>(
-                vbar_fun, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
+                vbar_fun, se2d->domain.sub.max, se2d->config.tolerance,
+                sector_builder::getOrAutomatic(se2d->config.xSectorBuilder, se2d->config.tolerance));
         quadratures = std::make_shared<BasisQuadrature<Scalar, 8, true>>(
                 static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms);
     } else {
         matslise = std::make_shared<Matslise<Scalar>>(
-                vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, 1e-9, se2d->options.nestedOptions._builder);
+                vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, se2d->config.tolerance,
+                sector_builder::getOrAutomatic(se2d->config.xSectorBuilder, se2d->config.tolerance));
         quadratures = std::make_shared<BasisQuadrature<Scalar, 8, false>>(
                 static_cast<const Matslise<Scalar> *>(matslise.get()));
     }
 
-    vector<pair<int, Scalar>> index_eigv = matslise->eigenvaluesByIndex(0, se2d->N, Y<Scalar>::Dirichlet());
-    if (static_cast<int>(index_eigv.size()) != se2d->N) {
+    const Index &N = se2d->config.basisSize;
+    vector<pair<int, Scalar>> index_eigv = matslise->eigenvaluesByIndex(0, N, Y<Scalar>::Dirichlet());
+    if (static_cast<int>(index_eigv.size()) != N) {
         throw std::runtime_error("SE2D: not enough basis-functions found on a sector");
     }
-    eigenvalues.resize(se2d->N);
-    eigenfunctions.resize(se2d->N);
+    eigenvalues.resize(N);
+    eigenfunctions.resize(N);
     Scalar E;
     int index;
-    for (int i = 0; i < se2d->N; ++i) {
+    for (int i = 0; i < N; ++i) {
         tie(index, E) = index_eigv[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
         // TODO: check i == index
@@ -203,11 +206,12 @@ typename std::conditional<withDerivatives,
 Matslise2D<Scalar>::Sector::basis(const typename Matslise2D<Scalar>::ArrayXs &x) const {
     Eigen::Index size = x.size();
 
-    ArrayXXs b(size, se2d->N);
+    const Index &N = se2d->config.basisSize;
+    ArrayXXs b(size, N);
     ArrayXXs b_x;
     if constexpr(withDerivatives)
-        b_x.resize(size, se2d->N);
-    for (int i = 0; i < se2d->N; ++i) {
+        b_x.resize(size, N);
+    for (int i = 0; i < N; ++i) {
         Array<Y<Scalar>, Dynamic, 1> ys = eigenfunctions[i](x);
         b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                 [](const Y<Scalar> &y) -> Scalar {
@@ -236,7 +240,8 @@ Matslise2D<Scalar>::Sector::basis(const Scalar &x) const {
     if constexpr(withDerivatives)
         b_x.resize(this->eigenfunctions.size());
 
-    for (Index i = 0; i < this->se2d->N; ++i) {
+    const Index &N = se2d->config.basisSize;
+    for (Index i = 0; i < N; ++i) {
         Y<Scalar> y = this->eigenfunctions[i](x);
         b[i] = y.y[0];
         if constexpr (withDerivatives)

@@ -22,18 +22,20 @@ eval2d(const function<Scalar(const Scalar &, const Scalar &)> &f,
 
 template<typename Scalar>
 Matslise3D<Scalar>::Matslise3D(
-        const std::function<Scalar(Scalar, Scalar, Scalar)> &potential, const matslise::Rectangle<3, Scalar> &domain,
-        const SectorBuilder<Matslise3D<Scalar>> &sectorBuilder, const Scalar &tolerance)
-        : AbstractMatslise3D<Scalar>(potential, domain), N(20), tolerance(tolerance) {
+        const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
+        const matslise::Rectangle<3, Scalar> &domain, const Config &config)
+        : AbstractMatslise3D<Scalar>(potential, domain) {
     grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<0>(), domain.template getMax<0>()));
     grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<1>(), domain.template getMax<1>()));
 
-    auto sectorsBuild = sectorBuilder(this, domain.min, domain.max);
+    auto sectorsBuild = sector_builder::getOrAutomatic(config.zSectorBuilder, config.tolerance)
+            (this, domain.min, domain.max);
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     Index sectorCount = sectors.size();
 
     M.reserve(sectorCount - 1);
+    const Index &N = config.xyBasisSize;
     for (int k = 0; k < sectorCount - 1; ++k) {
         MatrixXs r(N, N);
 
@@ -59,7 +61,7 @@ Matslise3D<Scalar>::~Matslise3D() {
 
 template<typename Scalar>
 typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise3D<Scalar>::Sector &sector) {
-    const int &N = sector.matslise3d->N;
+    const Index &N = sector.matslise3d->config.xyBasisSize;
     auto &matslise3d = sector.matslise3d;
     typedef typename Matslise3D<Scalar>::MatrixXs MatrixXs;
     typedef typename Matslise3D<Scalar>::ArrayXXs ArrayXXs;
@@ -102,25 +104,30 @@ Matslise3D<Scalar>::Sector::Sector(
 
     matslise2d = std::make_shared<Matslise2D<Scalar>>(
             vbar_fun, matslise3d->domain.sub,
-            Options2<Scalar>().tolerance(matslise3d->tolerance)
-                    .N(12)
-                    .nested(Options1<Scalar>().tolerance(matslise3d->tolerance)));
+            [&] {
+                typename Matslise2D<Scalar>::Config config2d;
+                config2d.tolerance = matslise3d->config.tolerance;
+                config2d.basisSize = matslise3d->config.xBasisSize;
+                return config2d;
+            }());
 
     cout << "Seeking: " << zbar << endl;
-    vector<tuple<Index, Scalar, Index>> singleEigenvalues = matslise2d->eigenvaluesByIndex(0, matslise3d->N);
+    vector<tuple<Index, Scalar, Index>> singleEigenvalues = matslise2d->eigenvaluesByIndex(
+            0, matslise3d->config.xyBasisSize);
     cout << "found: " << zbar << endl;
     Index eigenvalueCount = 0;
     for (auto &iEm : singleEigenvalues) {
         eigenvalueCount += get<2>(iEm);
-        cout << " (" << get<0>(iEm) << ", " << get<1>(iEm) << ", " << get<2>(iEm)<<")";
+        cout << " (" << get<0>(iEm) << ", " << get<1>(iEm) << ", " << get<2>(iEm) << ")";
     }
     cout << endl;
-    if (eigenvalueCount < matslise3d->N) {
+    const Index &N = matslise3d->config.xyBasisSize;
+    if (eigenvalueCount < N) {
         throw std::runtime_error("Matlise3D: not enough basis-functions found on a sector");
     }
-    eigenvalues.reserve(matslise3d->N);
-    eigenfunctions.reserve(matslise3d->N);
-    eigenfunctions_grid.reserve(matslise3d->N);
+    eigenvalues.reserve(N);
+    eigenfunctions.reserve(N);
+    eigenfunctions_grid.reserve(N);
 
     Index i = 0;
     for (auto &E : singleEigenvalues) {
@@ -129,10 +136,10 @@ Matslise3D<Scalar>::Sector::Sector(
             eigenfunctions.push_back(f);
             eigenfunctions_grid.push_back(move(f(matslise3d->grid_x, matslise3d->grid_y)));
 
-            if (++i == matslise3d->N)
+            if (++i == N)
                 break;
         }
-        if (i == matslise3d->N)
+        if (i == N)
             break;
     }
     vbar = eval2d<Scalar>([&](const Scalar &x, const Scalar &y) {
@@ -176,6 +183,7 @@ typename Matslise3D<Scalar>::MatrixXs Matslise3D<Scalar>::conditionY(Y<Scalar, D
 template<typename Scalar>
 pair<typename Matslise3D<Scalar>::MatrixXs, typename Matslise3D<Scalar>::MatrixXs>
 Matslise3D<Scalar>::matchingErrorMatrix(const Scalar &E, bool use_h) const {
+    const Index &N = config.xyBasisSize;
     Y<Scalar, Dynamic> yl = Y<Scalar, Dynamic>::Dirichlet(N);
     for (int i = 0; i <= matchIndex; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, use_h);
@@ -205,6 +213,7 @@ Matslise3D<Scalar>::matchingErrorMatrix(const Scalar &E, bool use_h) const {
 template<typename Scalar>
 vector<pair<Scalar, Scalar>> Matslise3D<Scalar>::matchingErrors(const Scalar &E, bool use_h) const {
     pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(E, use_h);
+    const Index &N = config.xyBasisSize;
     EigenSolver<MatrixXs> solver(N);
 
     solver.compute(error_matrix.first, true);

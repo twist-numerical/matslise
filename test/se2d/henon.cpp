@@ -22,35 +22,55 @@ const vector<tuple<Index, double, Index>> HENON_EIGENVALUES{
         {11, 2 * 4.89864497284387,  2}};
 
 TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2D<> problem(
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },
-            {{-6, 6}, -6, 6},
-            Options2<>().tolerance(1e-6).nested(Options1<>().tolerance(1e-7)));
+            {{-6, 6}, -6, 6}, config);
 
     // TODO: orthogonalize multiple eigenfunctions
     checkProblem<double, false>(problem, HENON_EIGENVALUES);
 }
 
-TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][henon][symmetric][auto]") {
+TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon][auto]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2D<> problem(
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * y * (x * x - y * y / 3);
             },
-            {{-6, 6}, -6, 6},
-            Options2<>().tolerance(1e-6).nested(Options1<>().tolerance(1e-7)));
+            {{-6, 6}, -6, 6}, config);
+
+    checkProblem(problem, HENON_EIGENVALUES);
+}
+
+TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][henon][symmetric][auto]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+    config.xSymmetric = true;
+
+    Matslise2D<> problem(
+            [](double x, double y) -> double {
+                return (x * x + y * y) + 1 / (2. * sqrt(5.)) * y * (x * x - y * y / 3);
+            },
+            {{-6, 6}, -6, 6}, config);
 
     checkProblem(problem, HENON_EIGENVALUES);
 }
 
 TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][half][auto]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2DHalf<> problem(
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },
-            {{-6, 6}, -6, 6},
-            Options2<>().tolerance(1e-6).nested(Options1<>().tolerance(1e-7)));
+            {{-6, 6}, -6, 6}, config);
 
     checkProblem(problem, HENON_EIGENVALUES);
 }

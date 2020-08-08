@@ -14,6 +14,8 @@ Array<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>>
 Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Scalar &E) const {
+    Index sectorCount = sectors.size();
+    Index N = config.basisSize;
     auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
     auto *endSteps = new Y<Scalar, Dynamic>[sectorCount];
 
@@ -84,7 +86,7 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
 template<typename Scalar>
 Index findSectorIndex(const Matslise2D<Scalar> *matslise2D, const Scalar &y) {
     Eigen::Index a = 0;
-    Eigen::Index b = matslise2D->sectorCount;
+    Eigen::Index b = matslise2D->sectors.size();
     while (a + 1 < b) {
         Eigen::Index c = (a + b) / 2;
         if (y < matslise2D->sectors[c]->min)

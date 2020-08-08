@@ -39,7 +39,7 @@ matslise::BasisQuadrature<Scalar, hmax, halfrange>::dV(
     if (quadData.empty())
         calculateQuadData(sector2d);
 
-    Index N = sector2d.se2d->N;
+    const Index &N = sector2d.se2d->config.basisSize;
     Matrix<Scalar, Dynamic, Dynamic> dV
             = Matrix<Scalar, Dynamic, Dynamic>::Zero(N, N);
 
@@ -93,8 +93,8 @@ template<typename Scalar, int hmax, bool halfrange>
 void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
         const typename matslise::Matslise2D<Scalar>::Sector &sector2d) {
 
+    const Index &N = sector2d.se2d->config.basisSize;
     for (auto sector1d : matslise->sectors) {
-        Index N = sector2d.se2d->N;
         Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> u = sector1d->t_coeff.unaryExpr(
                 [](const Matrix<Scalar, 2, 2, DontAlign> &T) {
                     return T(0, 0);

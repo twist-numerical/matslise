@@ -1,7 +1,6 @@
 #ifndef MATSLISE_MATSLISE2D_H
 #define MATSLISE_MATSLISE2D_H
 
-#include "schrodinger.h"
 #include "util/rectangle.h"
 #include "matslise2d/basisQuadrature.h"
 
@@ -62,7 +61,7 @@ namespace matslise {
         virtual ~AbstractMatslise2D() = default;
     };
 
-    template<typename _Scalar>
+    template<typename _Scalar=double>
     class Matslise2D : public AbstractMatslise2D<_Scalar> {
     public:
         typedef _Scalar Scalar;
@@ -72,21 +71,27 @@ namespace matslise {
         using typename AbstractMatslise2D<Scalar>::ArrayXXs;
         static const int order = matslise::Matscs<Scalar>::order;
 
+        struct Config {
+            Scalar tolerance = 1e-6;
+            bool xSymmetric = false;
+            Eigen::Index basisSize = 12;
+            std::optional<SectorBuilder<Matslise<Scalar>, Scalar>> xSectorBuilder;
+            std::optional<SectorBuilder<Matslise2D<Scalar>, Scalar>> ySectorBuilder;
+        };
+
+
         class Sector;
 
         using AbstractMatslise2D<Scalar>::domain;
         using AbstractMatslise2D<Scalar>::potential;
         std::vector<MatrixXs> M;
-        int sectorCount;
         std::vector<typename Matslise2D<Scalar>::Sector *> sectors;
-        int N;
         int matchIndex;
-        Options2<Scalar> options;
+        Config config;
         Y<Scalar, Eigen::Dynamic> dirichletBoundary;
     public:
         Matslise2D(const std::function<Scalar(Scalar, Scalar)> &potential,
-                   const matslise::Rectangle<2, Scalar> &domain,
-                   const Options2<Scalar> &options);
+                   const matslise::Rectangle<2, Scalar> &domain, const Config &config = Config());
 
         virtual ~Matslise2D();
 
@@ -241,6 +246,7 @@ namespace matslise {
         using typename AbstractMatslise2D<_Scalar>::MatrixXs;
         using typename AbstractMatslise2D<_Scalar>::ArrayXs;
         using typename AbstractMatslise2D<_Scalar>::ArrayXXs;
+        typedef typename Matslise2D<_Scalar>::Config Config;
     public:
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> neumannBoundary;
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> dirichletBoundary;
@@ -252,8 +258,7 @@ namespace matslise {
 
     public:
         Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &potential,
-                       const Rectangle<2, Scalar> &domain,
-                       const Options2<Scalar> &options);
+                       const Rectangle<2, Scalar> &domain, const Config &config);
 
         virtual ~Matslise2DHalf();
 

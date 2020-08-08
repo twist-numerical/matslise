@@ -38,6 +38,18 @@ namespace matslise {
         using typename AbstractMatslise3D<Scalar>::ArrayXXs;
         static const int order = matslise::Matscs<Scalar>::order;
 
+        struct Config {
+            Scalar tolerance = 1e-6;
+            bool xSymmetric = false;
+            bool ySymmetric = false;
+            std::optional<SectorBuilder < Matslise < Scalar>, Scalar>> xSectorBuilder;
+            std::optional<SectorBuilder < Matslise2D < Scalar>, Scalar>> ySectorBuilder;
+            std::optional<SectorBuilder < Matslise3D<Scalar>, Scalar>> zSectorBuilder;
+            Eigen::Index xyBasisSize = 12;
+            Eigen::Index xBasisSize = 12;
+        };
+
+        const Config config;
         ArrayXs grid_x;
         ArrayXs grid_y;
 
@@ -46,16 +58,12 @@ namespace matslise {
         using AbstractMatslise3D<Scalar>::domain;
         using AbstractMatslise3D<Scalar>::potential;
         std::vector<MatrixXs> M;
-        int N;
         int matchIndex;
-        Scalar tolerance;
 
         std::vector<typename Matslise3D<Scalar>::Sector *> sectors;
     public:
         Matslise3D(const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
-                   const matslise::Rectangle<3, Scalar> &domain,
-                   const SectorBuilder <Matslise3D<Scalar>> &sectorBuilder,
-                   const Scalar &tolerance);
+                   const matslise::Rectangle<3, Scalar> &domain, const Config &config = Config());
 
         virtual ~Matslise3D();
 
