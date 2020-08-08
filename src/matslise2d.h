@@ -109,7 +109,7 @@ namespace matslise {
     public: // overrides
         Scalar estimatePotentialMinimum() const override;
 
-        std::pair<Scalar,Eigen:: Index> eigenvalue(const Scalar &Eguess) const override {
+        std::pair<Scalar, Eigen::Index> eigenvalue(const Scalar &Eguess) const override {
             return eigenvalue(dirichletBoundary, Eguess);
         }
 
@@ -241,10 +241,10 @@ namespace matslise {
         using typename AbstractMatslise2D<_Scalar>::MatrixXs;
         using typename AbstractMatslise2D<_Scalar>::ArrayXs;
         using typename AbstractMatslise2D<_Scalar>::ArrayXXs;
-    private:
+    public:
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> neumannBoundary;
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> dirichletBoundary;
-    public:
+
         Matslise2D<Scalar> *se2d;
 
         using AbstractMatslise2D<Scalar>::domain;
@@ -280,9 +280,7 @@ namespace matslise {
             return eigenfunction < true > (E);
         }
 
-        Eigen::Index estimateIndex(const Scalar &) const override {
-            return 0;
-        }
+        Eigen::Index estimateIndex(const Scalar &) const override;
 
         template<bool withDerivatives>
         std::vector<Eigenfunction2D<Scalar, withDerivatives>> eigenfunction(const Scalar &E) const;

@@ -272,7 +272,6 @@ vector<tuple<Index, Scalar, Index>> Matslise2D<Scalar>::eigenvaluesByIndex(
             Emin = Emax;
     } while (i < Imax);
 
-    cout << Emin << ", " << Emax << " (" << Imin << ", " << Imax << ")" << endl;
     return eigenvaluesHelper(*this, left, Emin, Emax, Imin, Imax);
 }
 

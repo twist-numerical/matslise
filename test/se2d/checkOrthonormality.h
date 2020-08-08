@@ -12,7 +12,7 @@ using namespace quadrature;
 
 template<typename Scalar=double>
 void checkOrthonormality(const AbstractMatslise2D<Scalar> &p, const vector<Eigenfunction2D<Scalar>> &eigenfunctions) {
-    const int n = 201;
+    const int n = 101;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
             Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));
     Array<Scalar, Dynamic, 1> y = lobatto::grid<Scalar>(
@@ -38,7 +38,7 @@ void checkOrthonormality(const AbstractMatslise2D<Scalar> &p, const vector<Eigen
 
 }
 
-template<typename Scalar=double>
+template<typename Scalar=double, bool _checkOrthonormality=true>
 void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index, Scalar, Index>> &exactEigenvalues,
                   const Scalar &tolerance = 1e-7) {
     Index count = get<0>(exactEigenvalues.back()) + get<2>(exactEigenvalues.back());
@@ -50,6 +50,7 @@ void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index,
     auto found = eigenvalues.begin();
     vector<Eigenfunction2D<Scalar>> eigenfunctions;
     for (; exact != exactEigenvalues.end() && found != eigenvalues.end(); ++exact, ++found) {
+        INFO("Checking eigenvalue: (" << get<0>(*exact) << ", " << get<1>(*exact) << ", " << get<2>(*exact) << ")")
         CHECK(get<0>(*exact) == get<0>(*found));
         CHECK(Approx(get<1>(*exact)).margin(tolerance) == get<1>(*found));
         CHECK(get<2>(*exact) == get<2>(*found));
@@ -59,7 +60,8 @@ void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index,
             eigenfunctions.push_back(eigenfunction);
     }
 
-    checkOrthonormality(p, eigenfunctions);
+    if constexpr(_checkOrthonormality)
+        checkOrthonormality(p, eigenfunctions);
 }
 
 

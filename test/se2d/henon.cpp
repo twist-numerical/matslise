@@ -29,7 +29,8 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
             {{-6, 6}, -6, 6},
             Options2<>().tolerance(1e-6).nested(Options1<>().tolerance(1e-7)));
 
-    checkProblem(problem, HENON_EIGENVALUES);
+    // TODO: orthogonalize multiple eigenfunctions
+    checkProblem<double, false>(problem, HENON_EIGENVALUES);
 }
 
 TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][henon][symmetric][auto]") {
