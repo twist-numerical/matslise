@@ -155,12 +155,12 @@ Index Matslise2D<Scalar>::Sector::estimateIndex(
                 ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() *
                 thetaZ0
         );
-        if (depth < 2 && ((betas < 1e-4).any() || ((betas - alphas).abs() > 6.283).any())) {
+        if (depth < 2 && ((betas < 1e-4).any() || ((betas - alphas).abs() > 6).any())) {
             // Zeroth order propagation probably inaccurate: refine steps
             Scalar mid = (a + b) / 2;
             Y<Scalar, Dynamic> yMid = direction == forward
-                                      ? propagate(E, y0, a, mid)
-                                      : propagate(E, y1, b, mid);
+                                      ? propagate(E, y0, min, mid)
+                                      : propagate(E, y1, max, mid);
             todo.emplace(depth + 1, a, mid, U0, V0, angle<Scalar>(theta<Scalar>(yMid.getY(0), yMid.getY(1))));
             todo.emplace(depth + 1, mid, b, yMid.getY(0), yMid.getY(1), betas);
         } else {
