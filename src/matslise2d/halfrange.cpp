@@ -27,7 +27,7 @@ template<typename Scalar>
 pair<Scalar, Index> Matslise2DHalf<Scalar>::eigenvalue(const Scalar &guessE) const {
     pair<Scalar, Index> evenE = se2d->eigenvalue(neumannBoundary, guessE);
     pair<Scalar, Index> oddE = se2d->eigenvalue(dirichletBoundary, guessE);
-    if (abs(evenE.first - guessE) < abs(oddE.first - guessE))
+    if (isnan(oddE.first) || (!isnan(evenE.first) && abs(evenE.first - guessE) < abs(oddE.first - guessE)))
         return evenE;
     else
         return oddE;

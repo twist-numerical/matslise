@@ -230,6 +230,8 @@ vector<tuple<Index, Scalar, Index>> eigenvaluesHelper(
         if (E.second == ib - ia && a - 1e-4 < E.first && E.first < b + 1e-4) {
             if (Imin < ia + E.second || ia < Imax)
                 found.emplace_back(ia, E.first, E.second);
+        } else if (depth > 30) {
+            cerr << "Matslise2D: max search depth reached" << endl;
         } else {
             Index imid = matslise2d.estimateIndex(left, mid);
             if (imid < ia || imid > ib)

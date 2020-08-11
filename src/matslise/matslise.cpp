@@ -102,15 +102,15 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         c = ia + 1 < ib || tb - ta < 1e-5 || depth % 2 == 0
             ? .5 * (a + b)
             : ((tb - ia) * a - (ta - ia) * b) / (tb - ta);
-        if ((tb - ta < 0.01 && depth > 3) || depth > 20) {
+        if ((tb - ta < 0.01 && depth > 3) || depth > 30) {
             eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, true));
         } else {
             tc = get<2>(ms->matchingError(c, left, right)) / constants<Scalar>::PI;
             if (isnan(tc)) {
                 // cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
             } else if (ia + 1 < ib) {
-                toCheck.push(make_tuple(a, ta, c, tc, depth));
-                toCheck.push(make_tuple(c, tc, b, tb, depth));
+                toCheck.push(make_tuple(a, ta, c, tc, 1 + depth));
+                toCheck.push(make_tuple(c, tc, b, tb, 1 + depth));
             } else {
                 if (abs(tc - ia) < 1e-8)
                     eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, true));
@@ -229,7 +229,7 @@ Iterator findSector(const Scalar &x, Iterator a, Iterator b) {
 template<typename Scalar>
 typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
         const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
-    shared_ptr < vector < Y < Scalar >> > steps = make_shared < vector < Y < Scalar >> > (
+    shared_ptr<vector<Y<Scalar >>> steps = make_shared<vector<Y<Scalar >>>(
             std::move(propagationSteps(*this, E, left, right)));
 
     return {[this, E, steps](const Scalar &x) {

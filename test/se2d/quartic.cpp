@@ -16,9 +16,10 @@ void testQuartic(
         const Scalar &tolerance = static_cast<Scalar>(1e-5), const Scalar &error = static_cast<Scalar>(1e-8)) {
     Matslise2D<>::Config config;
     config.tolerance = tolerance;
+    config.xSymmetric = true;
     config.ySectorBuilder = sector_builder::uniform<Matslise2D<>>(sectorCount);
 
-    Matslise2D<Scalar> p(
+    Matslise2DHalf<Scalar> p(
             [a, c](const Scalar &x, const Scalar &y) -> Scalar {
                 return x * x + y * y + c * (x * x * x * x + 2 * a * x * x * y * y + y * y * y * y);
             },
