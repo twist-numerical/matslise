@@ -14,10 +14,10 @@ template<typename Scalar>
 void testQuartic(
         const Scalar &a, const Scalar &c, const Scalar &alpha, const vector<Scalar> &eigenvalues, int sectorCount = 23,
         const Scalar &tolerance = static_cast<Scalar>(1e-5), const Scalar &error = static_cast<Scalar>(1e-8)) {
-    Matslise2D<>::Config config;
+    typename Matslise2D<Scalar>::Config config;
     config.tolerance = tolerance;
     config.xSymmetric = true;
-    config.ySectorBuilder = sector_builder::uniform<Matslise2D<>>(sectorCount);
+    config.ySectorBuilder = sector_builder::uniform<Matslise2D<Scalar>>(sectorCount);
 
     Matslise2DHalf<Scalar> p(
             [a, c](const Scalar &x, const Scalar &y) -> Scalar {

@@ -177,7 +177,7 @@ Index Matslise2D<Scalar>::Sector::estimateIndex(
             }
             argdet *= 2;
 
-            zeros += round((angle<Scalar>(thetaZ0).sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
+            zeros += (Eigen::Index) round((angle<Scalar>(thetaZ0).sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
         }
         todo.pop();
     }

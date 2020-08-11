@@ -23,11 +23,11 @@ void bind_matslise2d() {
             .function("eigenvalueError", &AbstractMatslise2D<double>::eigenvalueError)
             .function("eigenvalues", optional_override([](
                     const AbstractMatslise2D<double> &se2d, double emin, double emax) -> val {
-                return vector2val(se2d.eigenvalues(emin, emax));
+                return eigenvaluesToVal(se2d.eigenvalues(emin, emax));
             }))
             .function("eigenvaluesByIndex",
                       optional_override([](const AbstractMatslise2D<double> &se2d, int imin, int imax) -> val {
-                          return vector2val(se2d.eigenvaluesByIndex(imin, imax));
+                          return eigenvaluesToVal(se2d.eigenvaluesByIndex(imin, imax));
                       }))
             .function("computeEigenfunction",
                       optional_override(
