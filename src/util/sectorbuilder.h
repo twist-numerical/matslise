@@ -2,6 +2,7 @@
 #define MATSLISE_SECTORBUILDER_H
 
 #include <vector>
+#include <optional>
 #include <type_traits>
 #include <functional>
 
