@@ -27,7 +27,7 @@ SET(MATSLISE_SRC
         matscs/matscs.cpp matscs/sector.cpp
         matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
         matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
-        matslise3d/matslise3d.cpp
+        matslise3d/matslise3d.cpp matslise3d/sector.cpp
         util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
 
 if (DEFINED EMSCRIPTEN)

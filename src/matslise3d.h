@@ -46,6 +46,8 @@ namespace matslise {
             std::optional<SectorBuilder < Matslise < Scalar>, Scalar>> xSectorBuilder;
             std::optional<SectorBuilder < Matslise2D < Scalar>, Scalar>> ySectorBuilder;
             std::optional<SectorBuilder < Matslise3D<Scalar>, Scalar>> zSectorBuilder;
+            Eigen::Index zStepsPerSector = 5;
+            Eigen::Index yStepsPerSector = 3;
             Eigen::Index xyBasisSize = 12;
             Eigen::Index xBasisSize = 12;
         };
