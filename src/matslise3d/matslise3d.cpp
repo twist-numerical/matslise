@@ -11,7 +11,7 @@ template<typename Scalar>
 Matslise3D<Scalar>::Matslise3D(
         const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
         const matslise::Rectangle<3, Scalar> &domain, const Config &config)
-        : AbstractMatslise3D<Scalar>(potential, domain) {
+        : AbstractMatslise3D<Scalar>(potential, domain), config(config) {
     grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<0>(), domain.template getMax<0>()));
     grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<1>(), domain.template getMax<1>()));
 
@@ -20,6 +20,7 @@ Matslise3D<Scalar>::Matslise3D(
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     Index sectorCount = sectors.size();
+    cout << "sectors build" << endl;
 
     M.reserve(sectorCount - 1);
     const Index &N = config.xyBasisSize;

@@ -26,7 +26,8 @@ Estimate an error of a given eigenvalue by using a lower order method.
                              int y_count, double y_tol,
                              int z_count, double z_tol,
                              bool x_symmetric, bool y_symmetric,
-                             int x_basis_size, int xy_basis_size) {
+                             int x_basis_size, int xy_basis_size,
+                             int y_steps_per_sector, int z_steps_per_sector) {
                      py::gil_scoped_release release;
                      if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
@@ -52,6 +53,8 @@ Estimate an error of a given eigenvalue by using a lower order method.
                      config.xyBasisSize = xy_basis_size;
                      config.xSymmetric = x_symmetric;
                      config.ySymmetric = y_symmetric;
+                     config.yStepsPerSector = y_steps_per_sector;
+                     config.zStepsPerSector = z_steps_per_sector;
 
                      if (x_count != -1)
                          config.xSectorBuilder = sector_builder::uniform<Matslise<>>(x_count);
@@ -92,7 +95,8 @@ TODO!
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
                  py::arg("z_count") = -1, py::arg("z_tolerance") = -1,
                  py::arg("x_symmetric") = false, py::arg("y_symmetric") = false,
-                 py::arg("x_basis_size") = 12, py::arg("xy_basis_size") = 12)
+                 py::arg("x_basis_size") = 12, py::arg("xy_basis_size") = 12,
+                 py::arg("y_steps_per_sector") = 3, py::arg("z_steps_per_sector") = 3)
             .def("matchingError", [](const Matslise3D<> &s, double const &E) -> pair<double, double> {
                 return s.matchingError(E);
             }, R""""(\

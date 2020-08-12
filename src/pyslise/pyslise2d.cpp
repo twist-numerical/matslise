@@ -281,10 +281,10 @@ The next set of parameters are more advanced and can be useful to tweak when the
             .def("error", &Matslise2D<>::Sector::error)
             .def("estimateIndex",
                  [](const Matslise2D<>::Sector &sector, double E, const MatrixXd &y, const MatrixXd &dy) -> Index {
-                     Y<double, Dynamic> y0(sector.matscs->n);
+                     Y<double, Dynamic> y0(sector.se2d->config.basisSize);
                      y0.getY(0) = y;
                      y0.getY(1) = dy;
-                     return sector.estimateIndex(E, y0, sector.propagate(E, y0, sector.min, sector.max));
+                     return sector.propagateWithIndex(E, y0).second;
                  },
                  py::arg("E"), py::arg("y"), py::arg("dy"))
             .def_property_readonly("matslise",

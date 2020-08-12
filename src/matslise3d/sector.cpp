@@ -19,35 +19,46 @@ eval2d(const function<Scalar(const Scalar &, const Scalar &)> &f,
 }
 
 template<typename Scalar>
-typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise3D<Scalar>::Sector &sector) {
+vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise3D<Scalar>::Sector &sector) {
     const Index &N = sector.matslise3d->config.xyBasisSize;
     auto &matslise3d = sector.matslise3d;
     typedef typename Matslise3D<Scalar>::MatrixXs MatrixXs;
     typedef typename Matslise3D<Scalar>::ArrayXXs ArrayXXs;
-    return new typename Matscs<Scalar>::Sector(
-            legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
-                    [&](Scalar z) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
-                        MatrixXs dV(N, N);
 
-                        ArrayXXs vDiff = eval2d<Scalar>([&](const Scalar &x, const Scalar &y) {
-                            return matslise3d->potential(x, y, z);
-                        }, matslise3d->grid_x, matslise3d->grid_y) - sector.vbar;
+    vector<typename Matscs<Scalar>::Sector> matscs;
+    Index steps = matslise3d->config.zStepsPerSector;
+    Scalar h = (sector.max - sector.min) / steps;
+    matscs.reserve(steps);
+    for (Index i = 0; i < steps; ++i) {
+        Scalar min = sector.min + i * h;
+        Scalar max = sector.max - (steps - i - 1) * h;
+        // cout << min << ", " << max << endl; To many calls
+        matscs.emplace_back(
+                legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
+                        [&](Scalar z) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+                            MatrixXs dV(N, N);
 
-                        for (int i = 0; i < N; ++i) {
-                            for (int j = 0; j <= i; ++j) {
-                                dV(i, j) = lobatto::quadrature<Scalar>(
-                                        matslise3d->grid_x, matslise3d->grid_y,
-                                        sector.eigenfunctions_grid[i] * vDiff * sector.eigenfunctions_grid[j]);
-                                if (j < i) dV(j, i) = dV(i, j);
+                            ArrayXXs vDiff = eval2d<Scalar>([&](const Scalar &x, const Scalar &y) {
+                                return matslise3d->potential(x, y, z);
+                            }, matslise3d->grid_x, matslise3d->grid_y) - sector.vbar;
+
+                            for (int i = 0; i < N; ++i) {
+                                for (int j = 0; j <= i; ++j) {
+                                    dV(i, j) = lobatto::quadrature<Scalar>(
+                                            matslise3d->grid_x, matslise3d->grid_y,
+                                            sector.eigenfunctions_grid[i] * vDiff * sector.eigenfunctions_grid[j]);
+                                    if (j < i) dV(j, i) = dV(i, j);
+                                }
+                                dV(i, i) += sector.eigenvalues[i];
                             }
-                            dV(i, i) += sector.eigenvalues[i];
-                        }
 
-                        // cout << "Z: " << z << " dV:" << endl;
-                        // cout << dV << "\n" << endl;
-                        return dV;
-                    }, sector.min, sector.max),
-            sector.min, sector.max, sector.direction);
+                            // cout << "Z: " << z << " dV:" << endl;
+                            // cout << dV << "\n" << endl;
+                            return dV;
+                        }, min, max),
+                min, max, sector.direction);
+    }
+    return matscs;
 }
 
 template<typename Scalar>
@@ -63,16 +74,17 @@ Matslise3D<Scalar>::Sector::Sector(
 
     matslise2d = std::make_shared<Matslise2D<Scalar>>(
             vbar_fun, matslise3d->domain.sub,
-                    [&] {
-                        typename Matslise2D<Scalar>::Config config2d;
-                        config2d.tolerance = matslise3d->config.tolerance;
-                        config2d.basisSize = matslise3d->config.xBasisSize;
-                        return config2d;
-                    }());
+            [&] {
+                typename Matslise2D<Scalar>::Config config2d;
+                config2d.tolerance = matslise3d->config.tolerance;
+                config2d.basisSize = matslise3d->config.xBasisSize;
+                config2d.stepsPerSector = matslise3d->config.yStepsPerSector;
+                return config2d;
+            }());
 
+    const Index &N = matslise3d->config.xyBasisSize;
     cout << "Seeking: " << zbar << endl;
-    vector<tuple<Index, Scalar, Index>> singleEigenvalues = matslise2d->eigenvaluesByIndex(
-            0, matslise3d->config.xyBasisSize);
+    vector<tuple<Index, Scalar, Index>> singleEigenvalues = matslise2d->eigenvaluesByIndex(0, N);
     cout << "found: " << zbar << endl;
     Index eigenvalueCount = 0;
     for (auto &iEm : singleEigenvalues) {
@@ -80,7 +92,6 @@ Matslise3D<Scalar>::Sector::Sector(
         cout << " (" << get<0>(iEm) << ", " << get<1>(iEm) << ", " << get<2>(iEm) << ")";
     }
     cout << endl;
-    const Index &N = matslise3d->config.xyBasisSize;
     if (eigenvalueCount < N) {
         throw std::runtime_error("Matlise3D: not enough basis-functions found on a sector");
     }
@@ -111,26 +122,30 @@ Matslise3D<Scalar>::Sector::Sector(
 template<typename Scalar>
 void Matslise3D<Scalar>::Sector::setDirection(Direction newDirection) {
     direction = newDirection;
-    matscs->setDirection(newDirection);
-}
-
-template<typename Scalar>
-Matslise3D<Scalar>::Sector::~Sector() {
-    delete matscs;
+    for (auto &sector : matscs)
+        sector.setDirection(newDirection);
 }
 
 template<typename Scalar>
 template<int r>
 Y<Scalar, Eigen::Dynamic, r>
 Matslise3D<Scalar>::Sector::propagate(
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
-    return matscs->propagateColumn(
-            E, y0, a < min ? min : a > max ? max : a, b < min ? min : b > max ? max : b, use_h);
+        const Scalar &E, Y<Scalar, Eigen::Dynamic, r> y, const Scalar &a, const Scalar &b, bool use_h) const {
+    if (a < b)
+        for (auto sector = matscs.begin(); sector != matscs.end(); ++sector)
+            y = sector->propagateColumn(E, y, a, b, use_h);
+    else if (b < a)
+        for (auto sector = matscs.rbegin(); sector != matscs.rend(); ++sector)
+            y = sector->propagateColumn(E, y, a, b, use_h);
+    return y;
 }
 
 template<typename Scalar>
 Scalar Matslise3D<Scalar>::Sector::error() const {
-    return matscs->error();
+    Scalar error = 0;
+    for (auto &sector : matscs)
+        error += sector.error();
+    return error;
 }
 
 
@@ -159,7 +174,7 @@ typename Matslise3D<Scalar>::Sector *Matslise3D<Scalar>::Sector::refine(
 #define INSTANTIATE_PROPAGATE(Scalar, r) \
 template Y<Scalar, Dynamic, r> \
 Matslise3D<Scalar>::Sector::propagate<r>( \
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const;
+        const Scalar &, Y<Scalar, Eigen::Dynamic, r>, const Scalar &, const Scalar &, bool) const;
 
 #define INSTANTIATE_MORE(Scalar) \
 INSTANTIATE_PROPAGATE(Scalar, 1) \

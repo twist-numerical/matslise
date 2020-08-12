@@ -99,7 +99,7 @@ namespace matslise {
 
             const Matslise3D<Scalar> *matslise3d;
             std::shared_ptr<matslise::AbstractMatslise2D<Scalar>> matslise2d;
-            typename matslise::Matscs<Scalar>::Sector *matscs;
+            std::vector<typename matslise::Matscs<Scalar>::Sector> matscs;
             Scalar min, max;
             Scalar zbar;
             ArrayXXs vbar;
@@ -113,13 +113,11 @@ namespace matslise {
 
             Sector(const Matslise3D<Scalar> *matslise3d, const Scalar &min, const Scalar &max, Direction);
 
-            virtual ~Sector();
-
             void setDirection(Direction);
 
             template<int r>
             Y <Scalar, Eigen::Dynamic, r> propagate(
-                    const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
+                    const Scalar &E, Y <Scalar, Eigen::Dynamic, r> y, const Scalar &a, const Scalar &b,
                     bool use_h = true) const;
 
             bool contains(const Scalar &point) const {
