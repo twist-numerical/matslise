@@ -60,18 +60,18 @@ TEST_CASE("coffey_evans beta=20 (long)", "[matslise][coffey_evans][long]") {
     }, 1e-10l, 1e-6l);
 }
 
-TEST_CASE("coffey_evans beta=30 (long)", "[matslise][coffey_evans][long]") {
-    const long double B = 30;
+TEST_CASE("coffey_evans beta=25 (long)", "[matslise][coffey_evans][long]") {
+    const long double B = 25;
     MatsliseHalf<long double> ms([B](long double x) -> long double {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
     }, constants<long double>::PI / 2, 1e-16l);
 
     testProblem<long double>(ms, Y<long double>::Dirichlet(), Y<long double>::Dirichlet(), {
-            0.0l, 117.94630766207001l, 231.66492923712826l, 231.66492931296196l, 231.66492938879651l,
-            340.88829980961299l, 445.28308958243815l, 445.28317230667329l, 445.28325503133368l, 544.41838514936001l,
-            637.68224987405006l, 637.70436234165697l, 637.72650231851446l, 724.25768135002033l, 800.83131218170922l,
-            802.47879869262465l, 804.27930516886272l, 868.96022287077210l, 909.48104650741504l, 925.97730983473230l,
-            951.87880679659270l
+            -1.135062089074e-13l, 97.93456168636l, 191.5876270397l, 191.5876332914l, 191.5876395431l, 280.6142452707l,
+            364.5514239172l, 364.5556442011l, 364.5598657471l, 442.7565471969l, 513.5622195791l, 514.1467037287l,
+            514.7539154451l, 576.4541995075l, 617.3051763327l, 627.3305565146l, 643.6889863523l, 679.7428881998l,
+            712.5636841571l, 745.7862711434l, 783.0815766780l, 823.3740032667l, 865.9301603850l, 910.7939535365l,
+            957.9552968192l, 1007.348280357l, 1058.929521339l, 1112.670063971l, 1168.546138839l, 1226.538193369l
     }, 1e-12l, 1e-6l);
 }
 
@@ -87,7 +87,7 @@ TEST_CASE("coffey_evans beta=20 (float128)", "[matslise][coffey_evans][float128]
     const float128 B = 20;
     MatsliseHalf<float128> ms([B](float128 x) -> float128 {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, constants<float128>::PI / 2, 1e-14q);
+    }, constants<float128>::PI / 2, 1e-18q);
 
     testProblem<float128>(ms, Y<float128>::Dirichlet(), Y<float128>::Dirichlet(), {
             -0.00000000000002q, 77.91619567714397q, 151.46277834645664q, 151.46322365765860q, 151.46366898835166q,
@@ -102,7 +102,7 @@ TEST_CASE("coffey_evans beta=25 (float128)", "[matslise][coffey_evans][float128]
     const float128 B = 25;
     MatsliseHalf<float128> ms([B](float128 x) -> float128 {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, constants<float128>::PI / 2, 1e-16q);
+    }, constants<float128>::PI / 2, 1e-18q);
 
     testProblem<float128>(ms, Y<float128>::Dirichlet(), Y<float128>::Dirichlet(), {
             -1.135062089074e-13q, 97.93456168636q, 191.5876270397q, 191.5876332914q, 191.5876395431q, 280.6142452707q,
