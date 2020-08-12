@@ -51,7 +51,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
 
 TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixaru][auto][slow]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-5;
+    config.tolerance = 1e-6;
     config.basisSize = 20;
 
     Matslise2D<> problem(

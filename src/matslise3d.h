@@ -36,7 +36,8 @@ namespace matslise {
         using typename AbstractMatslise3D<Scalar>::MatrixXs;
         using typename AbstractMatslise3D<Scalar>::ArrayXs;
         using typename AbstractMatslise3D<Scalar>::ArrayXXs;
-        static const int order = matslise::Matscs<Scalar>::order;
+        static constexpr int order = matslise::Matscs<Scalar>::order;
+        static constexpr bool refineSectors = true;
 
         struct Config {
             Scalar tolerance = 1e-6;

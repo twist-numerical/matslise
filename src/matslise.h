@@ -114,7 +114,8 @@ namespace matslise {
     class Matslise : public AbstractMatslise<_Scalar> {
     public:
         typedef _Scalar Scalar;
-        static const int order = 16;
+        static constexpr int order = 16;
+        static constexpr bool refineSectors = false;
 
         class Sector;
 

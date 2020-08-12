@@ -109,19 +109,16 @@ template<typename Scalar>
 Index Matslise2D<Scalar>::estimateIndex(Y<Scalar, Eigen::Dynamic> y, const Scalar &E) const {
     Index index = 0;
     Index sectorIndex = 0;
+    Index tmpIndex;
     Index sectorCount = sectors.size();
     for (; sectorIndex < sectorCount - 1; ++sectorIndex) {
         Sector *sector = sectors[sectorIndex];
-        Y<Scalar, Dynamic> y1 = sector->propagate(E, y, sector->min, sector->max);
-        index += sector->estimateIndex(E, y, y1);
-        y = y1;
+        tie(y, tmpIndex) = sector->propagateWithIndex(E, y);
+        index += tmpIndex;
         conditionY(y);
         y = M[sectorIndex] * y;
     }
-    {
-        Sector *sector = sectors[sectorIndex];
-        index += sector->estimateIndex(E, y, sector->propagate(E, y, sector->min, sector->max));
-    }
+    index += sectors[sectorIndex]->propagateWithIndex(E, y).second;
     return index;
 }
 

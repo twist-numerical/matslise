@@ -69,12 +69,14 @@ namespace matslise {
         using typename AbstractMatslise2D<Scalar>::MatrixXs;
         using typename AbstractMatslise2D<Scalar>::ArrayXs;
         using typename AbstractMatslise2D<Scalar>::ArrayXXs;
-        static const int order = matslise::Matscs<Scalar>::order;
+        static constexpr int order = matslise::Matscs<Scalar>::order;
+        static constexpr bool refineSectors = true;
 
         struct Config {
             Scalar tolerance = 1e-6;
             bool xSymmetric = false;
             Eigen::Index basisSize = 12;
+            Eigen::Index stepsPerSector = 3;
             std::optional<SectorBuilder<Matslise<Scalar>, Scalar>> xSectorBuilder;
             std::optional<SectorBuilder<Matslise2D<Scalar>, Scalar>> ySectorBuilder;
         };
@@ -190,7 +192,7 @@ namespace matslise {
             const Matslise2D<Scalar> *se2d;
             std::shared_ptr<AbstractMatslise<Scalar>> matslise;
             std::shared_ptr<AbstractBasisQuadrature<Scalar>> quadratures;
-            typename matslise::Matscs<Scalar>::Sector *matscs;
+            std::vector<typename matslise::Matscs<Scalar>::Sector> matscs;
             Scalar min, max;
             Scalar ybar;
 
@@ -202,16 +204,14 @@ namespace matslise {
 
             Sector(const Matslise2D<Scalar> *se2d, const Scalar &min, const Scalar &max, Direction);
 
-            virtual ~Sector();
-
             void setDirection(Direction);
 
-            Eigen::Index estimateIndex(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0,
-                                       const Y<Scalar, Eigen::Dynamic> &y1) const;
+            std::pair<Y<Scalar, Eigen::Dynamic>, Eigen::Index> propagateWithIndex(
+                    const Scalar &E, Y<Scalar, Eigen::Dynamic> y0) const;
 
             template<int r>
             Y<Scalar, Eigen::Dynamic, r> propagate(
-                    const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
+                    const Scalar &E, Y<Scalar, Eigen::Dynamic, r> y0, const Scalar &a, const Scalar &b,
                     bool use_h = true) const;
 
             bool contains(const Scalar &point) const {

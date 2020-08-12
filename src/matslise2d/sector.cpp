@@ -16,13 +16,23 @@ using namespace quadrature;
 
 
 template<typename Scalar>
-typename Matscs<Scalar>::Sector *initializeMatscs(const typename Matslise2D<Scalar>::Sector &sector) {
-    return new typename Matscs<Scalar>::Sector(
-            legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
-                    [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
-                        return sector.quadratures->dV(sector, y);
-                    }, sector.min, sector.max),
-            sector.min, sector.max, sector.direction);
+vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise2D<Scalar>::Sector &sector) {
+    vector<typename Matscs<Scalar>::Sector> matscs;
+    Index steps = sector.se2d->config.stepsPerSector;
+    Scalar h = (sector.max - sector.min) / steps;
+    matscs.reserve(steps);
+    for (Index i = 0; i < steps; ++i) {
+        Scalar min = sector.min + i * h;
+        Scalar max = sector.max - (steps - i - 1) * h;
+        // cout << min << ", " << max << endl; To many calls
+        matscs.emplace_back(
+                legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
+                        [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
+                            return sector.quadratures->dV(sector, y);
+                        }, min, max),
+                min, max, sector.direction);
+    }
+    return matscs;
 }
 
 template<typename Scalar>
@@ -67,14 +77,10 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
 }
 
 template<typename Scalar>
-Matslise2D<Scalar>::Sector::~Sector() {
-    delete matscs;
-}
-
-template<typename Scalar>
 void Matslise2D<Scalar>::Sector::setDirection(Direction newDirection) {
     direction = newDirection;
-    matscs->setDirection(newDirection);
+    for (auto &sector : matscs)
+        sector.setDirection(newDirection);
 }
 
 template<typename Scalar>
@@ -127,15 +133,17 @@ inline Array<Scalar, Dynamic, 1> angle(const Matrix<complex<Scalar>, Dynamic, Dy
 }
 
 template<typename Scalar>
-Index Matslise2D<Scalar>::Sector::estimateIndex(
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Y<Scalar, Eigen::Dynamic> &y1) const {
-    Index n = matscs->n;
+Index estimateIndexOfSector(const typename Matscs<Scalar>::Sector &sector,
+                            const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Y<Scalar, Eigen::Dynamic> &y1) {
+    Index n = sector.n;
     using ArrayXs = typename Matslise2D<Scalar>::ArrayXs;
+    using MatrixXs = Matrix<Scalar, Dynamic, Dynamic>;
     using MatrixXcs = Matrix<complex<Scalar>, Dynamic, Dynamic>;
 
     Index zeros = 0;
     queue<tuple<int, Scalar, Scalar, MatrixXs, MatrixXs, ArrayXs>> todo;
-    todo.emplace(0, min, max, y0.getY(0), y0.getY(1), angle<Scalar>(theta<Scalar>(y1.getY(0), y1.getY(1))));
+    todo.emplace(0, sector.min, sector.max, y0.getY(0), y0.getY(1),
+                 angle<Scalar>(theta<Scalar>(y1.getY(0), y1.getY(1))));
 
     while (!todo.empty()) {
         const int &depth = get<0>(todo.front());
@@ -146,7 +154,7 @@ Index Matslise2D<Scalar>::Sector::estimateIndex(
         const MatrixXs &V0 = get<4>(todo.front());
         const ArrayXs &betas = get<5>(todo.front());
 
-        ArrayXs Z = h * h * (matscs->vs[0].diagonal().array() - ArrayXs::Constant(n, E));
+        ArrayXs Z = h * h * (sector.vs[0].diagonal().array() - ArrayXs::Constant(n, E));
         Array<Scalar, 2, Dynamic> eta = calculateEta<Scalar, 2>(Z);
 
         MatrixXcs thetaZ0 = theta<Scalar>(U0, V0);
@@ -158,9 +166,9 @@ Index Matslise2D<Scalar>::Sector::estimateIndex(
         if (depth < 2 && ((betas < 1e-4).any() || ((betas - alphas).abs() > 6).any())) {
             // Zeroth order propagation probably inaccurate: refine steps
             Scalar mid = (a + b) / 2;
-            Y<Scalar, Dynamic> yMid = direction == forward
-                                      ? propagate(E, y0, min, mid)
-                                      : propagate(E, y1, max, mid);
+            Y<Scalar, Dynamic> yMid = sector.direction == matslise::forward
+                                      ? sector.propagateColumn(E, y0, sector.min, mid)
+                                      : sector.propagateColumn(E, y1, sector.max, mid);
             todo.emplace(depth + 1, a, mid, U0, V0, angle<Scalar>(theta<Scalar>(yMid.getY(0), yMid.getY(1))));
             todo.emplace(depth + 1, mid, b, yMid.getY(0), yMid.getY(1), betas);
         } else {
@@ -177,7 +185,8 @@ Index Matslise2D<Scalar>::Sector::estimateIndex(
             }
             argdet *= 2;
 
-            zeros += (Eigen::Index) round((angle<Scalar>(thetaZ0).sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
+            zeros += (Eigen::Index) round(
+                    (angle<Scalar>(thetaZ0).sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
         }
         todo.pop();
     }
@@ -185,17 +194,38 @@ Index Matslise2D<Scalar>::Sector::estimateIndex(
 }
 
 template<typename Scalar>
+pair<Y<Scalar, Eigen::Dynamic>, Index> Matslise2D<Scalar>::Sector::propagateWithIndex(
+        const Scalar &E, Y<Scalar, Eigen::Dynamic> y0) const {
+    Index index = 0;
+    for (auto &sector : matscs) {
+        Y<Scalar, Eigen::Dynamic> y1 = sector.propagateColumn(E, y0, min, max, true);
+        index += estimateIndexOfSector(sector, E, y0, y1);
+        y0 = y1;
+    }
+    return {y0, index};
+}
+
+template<typename Scalar>
 template<int r>
 Y<Scalar, Eigen::Dynamic, r>
 Matslise2D<Scalar>::Sector::propagate(
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
-    return matscs->propagateColumn(
-            E, y0, a < min ? min : a > max ? max : a, b < min ? min : b > max ? max : b, use_h);
+        const Scalar &E, Y<Scalar, Eigen::Dynamic, r> y, const Scalar &a, const Scalar &b, bool use_h) const {
+    if (a < b)
+        for (auto sector = matscs.begin(); sector != matscs.end(); ++sector)
+            y = sector->propagateColumn(E, y, a, b, use_h);
+    else if (b < a)
+        for (auto sector = matscs.rbegin(); sector != matscs.rend(); ++sector)
+            y = sector->propagateColumn(E, y, a, b, use_h);
+    return y;
 }
 
 template<typename Scalar>
 Scalar Matslise2D<Scalar>::Sector::error() const {
-    return matscs->error();
+    Scalar error = 0;
+    for (auto &sector : matscs) {
+        error += sector.error();
+    }
+    return error;
 }
 
 template<typename Scalar>
@@ -256,7 +286,7 @@ Matslise2D<Scalar>::Sector::basis(const Scalar &x) const {
 #define INSTANTIATE_PROPAGATE(Scalar, r) \
 template Y<Scalar, Dynamic, r> \
 Matslise2D<Scalar>::Sector::propagate<r>( \
-        const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &, const Scalar &, const Scalar &, bool) const;
+        const Scalar &E, Y<Scalar, Eigen::Dynamic, r>, const Scalar &, const Scalar &, bool) const;
 
 #define INSTANTIATE_BASIS(Scalar, r) \
 template std::conditional<r, \

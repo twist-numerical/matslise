@@ -3,32 +3,15 @@
 
 using namespace matslise;
 
-// Determine if Problem::Sector::refine is defined
 template<typename Scalar, typename Problem>
-typename std::integral_constant<bool, std::is_same<decltype(
-std::declval<typename Problem::Sector>().refine(
-        std::declval<Problem *>(), std::declval<Scalar>(), std::declval<Scalar>(), std::declval<bool>())
-), typename Problem::Sector *>::value> __sectorHasRefine(int);
-
-template<typename Scalar, typename Problem>
-std::false_type __sectorHasRefine(...);
-
-template<typename Scalar, typename Problem>
-constexpr bool sectorHasRefine = decltype(__sectorHasRefine<Scalar, Problem>(0))::value;
-
-template<typename Scalar, typename Problem>
-typename std::enable_if<sectorHasRefine<Scalar, Problem>, typename Problem::Sector *>::type
-refineSector(const typename Problem::Sector &sector, const Problem *problem, const Scalar &min,
-             const Scalar &max, Direction direction) {
-    return sector.refine(problem, min, max, direction);
-}
-
-
-template<typename Scalar, typename Problem>
-static typename std::enable_if<!sectorHasRefine<Scalar, Problem>, typename Problem::Sector *>::type
-refineSector(const typename Problem::Sector &, const Problem *problem, const Scalar &min, const Scalar &max,
+static typename Problem::Sector *
+refineSector(const typename Problem::Sector &sector, const Problem *problem, const Scalar &min, const Scalar &max,
              Direction direction) {
-    return new typename Problem::Sector(problem, min, max, direction);
+    if constexpr(Problem::refineSectors) {
+        return sector.refine(problem, min, max, direction);
+    } else {
+        return new typename Problem::Sector(problem, min, max, direction);
+    }
 }
 
 template<typename Problem>
@@ -53,7 +36,7 @@ SectorBuilder<Problem> sector_builder::uniform(int sectorCount) {
         int matchIndex = 0;
         for (int i = 1; i < sectorCount; ++i) {
             if (Sector::compare(*sectors[i], *sectors[matchIndex]))
-                matchIndex = i-1;
+                matchIndex = i - 1;
         }
 
 #pragma omp parallel for
@@ -100,7 +83,7 @@ typename Problem::Sector *automaticNextSector(
     Scalar error = s->error();
     while (error > tolerance && steps < 10 && h > 1e-3) {
         ++steps;
-        h *= std::max(Scalar(.1), Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
+        h *= std::max(Scalar(.1), .99 * Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
         if (direction == forward) {
             xmax = xmin + h;
         } else {
