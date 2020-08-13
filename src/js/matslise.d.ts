@@ -45,11 +45,11 @@ declare class MatsliseHalf extends AbstractMatslise {
 
 declare class AbstractMatslise2D {
 
-    eigenvalue(E: number): number;
+    eigenvalue(E: number): [number, number];
 
-    eigenvalues(emin: number, emax: number): number[];
+    eigenvalues(emin: number, emax: number): { index: number, value: number, multiplicity: number }[];
 
-    eigenvaluesByIndex(imin: number, imax: number): number[];
+    eigenvaluesByIndex(imin: number, imax: number): { index: number, value: number, multiplicity: number }[];
 
     eigenvalueError(E: number): number;
 

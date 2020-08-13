@@ -19,7 +19,14 @@ val eigenvaluesToVal(const vector<tuple<Index, double, Index>> &list) {
 
 void bind_matslise2d() {
     class_<AbstractMatslise2D<double>>("AbstractMatslise2D")
-            .function("eigenvalue", &AbstractMatslise2D<double>::eigenvalue)
+            .function("eigenvalue", optional_override([](
+                    const AbstractMatslise2D<double> &se2d, double E) -> val {
+                val result = val::object();
+                auto eigenvalue = se2d.eigenvalue(E);
+                result.set("value", eigenvalue.first);
+                result.set("multiplicity", eigenvalue.second);
+                return result;
+            }))
             .function("eigenvalueError", &AbstractMatslise2D<double>::eigenvalueError)
             .function("eigenvalues", optional_override([](
                     const AbstractMatslise2D<double> &se2d, double emin, double emax) -> val {

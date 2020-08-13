@@ -233,7 +233,7 @@ vector<tuple<Index, Scalar, Index>> eigenvaluesHelper(
             Index imid = matslise2d.estimateIndex(left, mid);
             if (imid < ia || imid > ib)
                 cerr << "Matslise2D: Error in index estimate" << endl;
-            if (imid > ia && imid >= Imin)
+            if (imid > ia && imid > Imin)
                 toCheck.emplace(depth + 1, a, mid, ia, imid);
             if (imid < ib && imid <= Imax)
                 toCheck.emplace(depth + 1, mid, b, imid, ib);

@@ -24,9 +24,9 @@ const correct = [
             });
         const eigenvalues = matslise.eigenvaluesByIndex(0, 13);
         for (let i = 0; i < eigenvalues.length; ++i) {
-            t.is(correct[i][0], eigenvalues[i][0]);
-            t.true(Math.abs(correct[i][1] - eigenvalues[i][1]) < 1e-5);
-            t.is(correct[i][2], eigenvalues[i][2]);
+            t.is(correct[i][0], eigenvalues[i].index);
+            t.true(Math.abs(correct[i][1] - eigenvalues[i].value) < 1e-5);
+            t.is(correct[i][2], eigenvalues[i].multiplicity);
         }
     });
 });
