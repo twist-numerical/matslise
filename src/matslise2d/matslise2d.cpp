@@ -23,12 +23,12 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 
 template<typename Scalar>
 Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential,
-                               const matslise::Rectangle<2, Scalar> &domain, const Config &_config):
+                               const matslise::Rectangle<Scalar, 2> &domain, const Config &_config):
         AbstractMatslise2D<Scalar>(potential, domain), config(_config) {
     MATSLISE_SCOPED_TIMER("2D constructor");
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(config.basisSize);
     auto sectorsBuild = sector_builder::getOrAutomatic(
-            _config.ySectorBuilder, _config.tolerance)(this, domain.min, domain.max);
+            _config.ySectorBuilder, _config.tolerance)(this, domain.template min<1>(), domain.template max<1>());
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     Index sectorCount = sectors.size();
@@ -39,7 +39,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 
     map<pair<int, int>, ArrayXXs> prev;
     map<pair<int, int>, ArrayXXs> next;
-    Scalar xWidth = domain.template getMax<0>() - domain.template getMin<0>();
+    Scalar xWidth = domain.template max<0>() - domain.template min<0>();
     for (int k = 0; k < sectorCount - 1; ++k) {
         if (k > 0) {
             prev = std::move(next);
@@ -50,7 +50,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                 gauss_kronrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
                     int depth = static_cast<int>(round(log2(xWidth / (x[x.size() - 1] - x[0]))));
                     int offset = static_cast<int>(round(
-                            (x[0] - domain.template getMin<0>()) / (xWidth / (1 << depth))));
+                            (x[0] - domain.template min<0>()) / (xWidth / (1 << depth))));
                     pair<int, int> key{depth, offset};
                     if (prev.find(key) == prev.end())
                         prev[key] = sectors[k]->template basis<false>(x);
@@ -62,7 +62,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                         result(i) = nextBasis.row(i).matrix().transpose() * prevBasis.row(i).matrix();
                     }
                     return result;
-                }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [](const MatrixXs &v) {
+                }, domain.template min<0>(), domain.template max<0>(), 1e-8, [](const MatrixXs &v) {
                     return v.array().abs().maxCoeff();
                 })
         ));
@@ -131,7 +131,7 @@ template<typename Scalar>
 Y<Scalar, Dynamic> Matslise2D<Scalar>::propagate(
         const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     MATSLISE_SCOPED_TIMER("2D propagate");
-    if (!domain.contains(1, a) || !domain.contains(1, b))
+    if (!domain.template contains<1>(a) || !domain.contains(1, b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic> y = y0;
     int sectorIndex = find_sector<Matslise2D<Scalar>>(this, a);

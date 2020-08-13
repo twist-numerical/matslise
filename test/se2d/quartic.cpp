@@ -23,7 +23,7 @@ void testQuartic(
             [a, c](const Scalar &x, const Scalar &y) -> Scalar {
                 return x * x + y * y + c * (x * x * x * x + 2 * a * x * x * y * y + y * y * y * y);
             },
-            {{-alpha, alpha}, -alpha, alpha}, config);
+            {-alpha, alpha, -alpha, alpha}, config);
     for (const Scalar &E : eigenvalues) {
         CHECK(Approx(E).margin(error) == p.eigenvalue(E+100*error).first);
         CHECK(Approx(E).margin(error) == p.eigenvalue(E-100*error).first);

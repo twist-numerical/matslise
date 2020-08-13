@@ -73,7 +73,7 @@ Matslise3D<Scalar>::Sector::Sector(
     };
 
     matslise2d = std::make_shared<Matslise2D<Scalar>>(
-            vbar_fun, matslise3d->domain.sub,
+            vbar_fun, matslise3d->domain.template slice<0, 1>(),
             [&] {
                 typename Matslise2D<Scalar>::Config config2d;
                 config2d.tolerance = matslise3d->config.tolerance;

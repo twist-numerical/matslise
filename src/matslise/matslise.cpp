@@ -37,8 +37,8 @@ tuple<Scalar, Scalar, Scalar>
 Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, left, domain.min, sectors[matchIndex]->max, use_h);
-    tie(r, thetaR) = propagate(E, right, domain.max, sectors[matchIndex]->max, use_h);
+    tie(l, thetaL) = propagate(E, left, domain.min(), sectors[matchIndex]->max, use_h);
+    tie(r, thetaR) = propagate(E, right, domain.max(), sectors[matchIndex]->max, use_h);
     return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
                       l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
                       thetaL - thetaR);

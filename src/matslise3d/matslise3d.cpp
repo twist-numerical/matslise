@@ -11,14 +11,14 @@ using namespace quadrature;
 template<typename Scalar>
 Matslise3D<Scalar>::Matslise3D(
         const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
-        const matslise::Rectangle<3, Scalar> &domain, const Config &config)
+        const matslise::Rectangle<Scalar, 3> &domain, const Config &config)
         : AbstractMatslise3D<Scalar>(potential, domain), config(config) {
     MATSLISE_SCOPED_TIMER("3D constructor");
-    grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<0>(), domain.template getMax<0>()));
-    grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<1>(), domain.template getMax<1>()));
+    grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template min<0>(), domain.template max<0>()));
+    grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template min<1>(), domain.template max<1>()));
 
     auto sectorsBuild = sector_builder::getOrAutomatic(config.zSectorBuilder, config.tolerance)
-            (this, domain.min, domain.max);
+            (this, domain.template min<2>(), domain.template max<2>());
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
     Index sectorCount = sectors.size();

@@ -23,7 +23,7 @@ TEST_CASE("E derivative of matchingErrorMatrix", "[matslise2d][derivatives][e_de
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5, 5}, -5, 5}, config);
+            {-5., 5., -5., 5.}, config);
 
     MatrixXd mat, diff;
     for (double E = 0.1; E < 20; E += 0.2) {
@@ -43,7 +43,7 @@ TEST_CASE("Derivatives of eigenfunctions", "[matslise2d][y_derivative][derivativ
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5, 5}, -5, 5}, config);
+            {-5., 5., -5., 5.}, config);
 
     double step = .4;
     double phi, phi_x, phi_y, a_phi_x, a_phi_y;

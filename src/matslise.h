@@ -33,9 +33,9 @@ namespace matslise {
 
     public:
         const std::function<Scalar(Scalar)> potential;
-        const Rectangle<1, Scalar> domain;
+        const Rectangle<Scalar, 1> domain;
 
-        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Rectangle<1, Scalar> &domain)
+        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Rectangle<Scalar, 1> &domain)
                 : potential(potential), domain(domain) {
         }
 
@@ -137,7 +137,7 @@ namespace matslise {
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                  const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
                 : AbstractMatslise<Scalar>(V, {xmin, xmax}), tolerance(tolerance) {
-            auto buildSectors = sectorBuilder(this, domain.min, domain.max);
+            auto buildSectors = sectorBuilder(this, domain.min(), domain.max());
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();

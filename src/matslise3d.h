@@ -14,10 +14,10 @@ namespace matslise {
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
 
         const std::function<Scalar(Scalar, Scalar, Scalar)> potential;
-        const Rectangle<3, Scalar> domain;
+        const Rectangle<Scalar, 3> domain;
 
         AbstractMatslise3D(
-                const std::function<Scalar(Scalar, Scalar, Scalar)> &potential, const Rectangle<3, Scalar> &domain)
+                const std::function<Scalar(Scalar, Scalar, Scalar)> &potential, const Rectangle<Scalar, 3> &domain)
                 : potential(potential), domain(domain) {
         }
 
@@ -66,7 +66,7 @@ namespace matslise {
         std::vector<typename Matslise3D<Scalar>::Sector *> sectors;
     public:
         Matslise3D(const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
-                   const matslise::Rectangle<3, Scalar> &domain, const Config &config = Config());
+                   const matslise::Rectangle<Scalar, 3> &domain, const Config &config = Config());
 
         virtual ~Matslise3D();
 

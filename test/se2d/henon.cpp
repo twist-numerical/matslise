@@ -29,7 +29,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },
-            {{-6, 6}, -6, 6}, config);
+            {-6., 6., -6., 6.}, config);
 
     // TODO: orthogonalize multiple eigenfunctions
     checkProblem<double, false>(problem, HENON_EIGENVALUES);
@@ -43,7 +43,7 @@ TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon]
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * y * (x * x - y * y / 3);
             },
-            {{-6, 6}, -6, 6}, config);
+            {-6., 6., -6., 6.}, config);
 
     checkProblem(problem, HENON_EIGENVALUES);
 }
@@ -57,7 +57,7 @@ TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][heno
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * y * (x * x - y * y / 3);
             },
-            {{-6, 6}, -6, 6}, config);
+            {-6., 6., -6., 6.}, config);
 
     checkProblem(problem, HENON_EIGENVALUES);
 }
@@ -70,7 +70,7 @@ TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][ha
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * x * (y * y - x * x / 3);
             },
-            {{-6, 6}, -6, 6}, config);
+            {-6., 6., -6., 6.}, config);
 
     checkProblem(problem, HENON_EIGENVALUES);
 }

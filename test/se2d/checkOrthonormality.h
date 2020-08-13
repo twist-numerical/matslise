@@ -14,9 +14,9 @@ template<typename Scalar=double>
 void checkOrthonormality(const AbstractMatslise2D<Scalar> &p, const vector<Eigenfunction2D<Scalar>> &eigenfunctions) {
     const int n = 101;
     Array<Scalar, Dynamic, 1> x = lobatto::grid<Scalar>(
-            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0)));
+            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.min(0), p.domain.max(0)));
     Array<Scalar, Dynamic, 1> y = lobatto::grid<Scalar>(
-            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.getMin(1), p.domain.getMax(1)));
+            Array<Scalar, Dynamic, 1>::LinSpaced(n, p.domain.min(1), p.domain.max(1)));
 
     vector<Array<Scalar, Dynamic, Dynamic>> eigenfunctionsOnGrid;
     for (unsigned long i = 0; i < eigenfunctions.size(); ++i) {

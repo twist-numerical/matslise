@@ -39,8 +39,7 @@ void testOrthogonality(
         const std::vector<std::pair<int, Scalar>> &eigenvalues,
         const Scalar &tolerance) {
     Eigen::Array<Scalar, Eigen::Dynamic, 1> xs = lobatto::grid<Scalar>(
-            Eigen::Array<Scalar, Eigen::Dynamic, 1>::LinSpaced(
-                    501, problem.domain.min, problem.domain.max));
+            Eigen::Array<Scalar, Eigen::Dynamic, 1>::LinSpaced(501, problem.domain.min(), problem.domain.max()));
 
     std::vector<Eigen::Array<Scalar, Eigen::Dynamic, 1>> evaluated;
     for (const auto &iE:  eigenvalues) {

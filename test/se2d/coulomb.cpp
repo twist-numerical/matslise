@@ -22,7 +22,7 @@ TEST_CASE("2D: coulomb", "[matslise3d][coulomb][long]") {
             if (r < a)
                 return -2 / a;
             return -2 / r;
-        }, {{-b, b}, -b, b}, config);
+        }, {-b, b, -b, b}, config);
 
 
         double E;

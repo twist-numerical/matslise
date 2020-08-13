@@ -34,9 +34,9 @@ namespace matslise {
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
 
         const std::function<Scalar(Scalar, Scalar)> potential;
-        const Rectangle<2, Scalar> domain;
+        const Rectangle<Scalar, 2> domain;
 
-        AbstractMatslise2D(const std::function<Scalar(Scalar, Scalar)> &potential, const Rectangle<2, Scalar> &domain)
+        AbstractMatslise2D(const std::function<Scalar(Scalar, Scalar)> &potential, const Rectangle<Scalar, 2> &domain)
                 : potential(potential), domain(domain) {
         }
 
@@ -93,7 +93,7 @@ namespace matslise {
         Y<Scalar, Eigen::Dynamic> dirichletBoundary;
     public:
         Matslise2D(const std::function<Scalar(Scalar, Scalar)> &potential,
-                   const matslise::Rectangle<2, Scalar> &domain, const Config &config = Config());
+                   const matslise::Rectangle<Scalar, 2> &domain, const Config &config = Config());
 
         virtual ~Matslise2D();
 
@@ -258,7 +258,7 @@ namespace matslise {
 
     public:
         Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &potential,
-                       const Rectangle<2, Scalar> &domain, const Config &config);
+                       const Rectangle<Scalar, 2> &domain, const Config &config);
 
         virtual ~Matslise2DHalf();
 

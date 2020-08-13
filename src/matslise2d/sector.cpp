@@ -46,13 +46,13 @@ Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar 
 
     if (se2d->config.xSymmetric) {
         matslise = std::make_shared<MatsliseHalf<Scalar>>(
-                vbar_fun, se2d->domain.sub.max, se2d->config.tolerance,
+                vbar_fun, se2d->domain.template max<0>(), se2d->config.tolerance,
                 sector_builder::getOrAutomatic(se2d->config.xSectorBuilder, se2d->config.tolerance));
         quadratures = std::make_shared<BasisQuadrature<Scalar, 8, true>>(
                 static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms);
     } else {
         matslise = std::make_shared<Matslise<Scalar>>(
-                vbar_fun, se2d->domain.sub.min, se2d->domain.sub.max, se2d->config.tolerance,
+                vbar_fun, se2d->domain.template min<0>(), se2d->domain.template max<0>(), se2d->config.tolerance,
                 sector_builder::getOrAutomatic(se2d->config.xSectorBuilder, se2d->config.tolerance));
         quadratures = std::make_shared<BasisQuadrature<Scalar, 8, false>>(
                 static_cast<const Matslise<Scalar> *>(matslise.get()));

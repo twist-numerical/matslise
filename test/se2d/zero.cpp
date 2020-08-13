@@ -18,8 +18,8 @@ using namespace Catch::Matchers;
 void compareEigenfunctions(
         const Matslise2D<> &p, double E, const vector<function<double(double, double)>> &exact) {
     int n = 50, m = 60;
-    ArrayXd x = ArrayXd::LinSpaced(n, p.domain.getMin(0), p.domain.getMax(0));
-    ArrayXd y = ArrayXd::LinSpaced(m, p.domain.getMin(1), p.domain.getMax(1));
+    ArrayXd x = ArrayXd::LinSpaced(n, p.domain.min(0), p.domain.max(0));
+    ArrayXd y = ArrayXd::LinSpaced(m, p.domain.min(1), p.domain.max(1));
     const std::vector<Eigenfunction2D<>> fs = p.eigenfunction(E);
 
     REQUIRE(exact.size() == fs.size());
@@ -50,7 +50,7 @@ TEST_CASE("Eigenvalues V=0", "[matslise2d][eigenfunctions][zero]") {
             [](double, double) -> double {
                 return 0;
             },
-            {{0, constants<double>::PI}, 0, constants<double>::PI}, config);
+            {0., constants<double>::PI, 0., constants<double>::PI}, config);
 
     checkProblem(p, vector<tuple<Index, double, Index>>{
             {0,  2,  1},

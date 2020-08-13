@@ -31,7 +31,7 @@ TEST_CASE("Eigenfunctions ixaru auto", "[matslise2d][eigenfunctions][ixaru][auto
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5.5, 5.5}, -5.5, 5.5}, config);
+            {-5.5, 5.5, -5.5, 5.5}, config);
 
     checkProblem(problem, IXARU_EIGENVALUES);
 }
@@ -44,7 +44,7 @@ TEST_CASE("Eigenfunctions ixaru halfrange", "[matslise2d][eigenfunctions][ixaru]
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5.5, 5.5}, -5.5, 5.5}, config);
+            {-5.5, 5.5, -5.5, 5.5}, config);
 
     checkProblem(problem, IXARU_EIGENVALUES);
 }
@@ -58,7 +58,7 @@ TEST_CASE("Eigenfunctions ixaru auto high n", "[matslise2d][eigenfunctions][ixar
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5.5, 5.5}, -5.5, 5.5}, config);
+            {-5.5, 5.5, -5.5, 5.5}, config);
 
     checkProblem(problem, IXARU_EIGENVALUES);
 }
