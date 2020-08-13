@@ -5,7 +5,7 @@
 using namespace matslise;
 using namespace std;
 
-TEST_CASE("3D: coulomb", "[matslise3d][coulomb]") {
+TEST_CASE("3D: coulomb", "[matslise3d][coulomb][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
     Matslise3D<>::Config config;
@@ -23,7 +23,7 @@ TEST_CASE("3D: coulomb", "[matslise3d][coulomb]") {
         if (r < a)
             return -2 / a;
         return -2 / r;
-    }, {-12.3, 12.3, -12.3, 12.3, 0., 12.3}, config);
+    }, {-12.3, 12.3, -12.3, 12.3, -12.3, 12.3}, config);
 
     for (double Eguess : (double[]) {-1, -.25, -.1111}) {
         double E = matslise.eigenvalue(Eguess);

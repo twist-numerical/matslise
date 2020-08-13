@@ -5,7 +5,7 @@
 using namespace matslise;
 using namespace std;
 
-TEST_CASE("2D: coulomb", "[matslise3d][coulomb][long]") {
+TEST_CASE("2D: coulomb", "[matslise3d][coulomb][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
     Matslise2D<>::Config config;

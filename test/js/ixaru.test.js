@@ -21,11 +21,12 @@ const correct = [
             -5.5, 5.5, -5.5, 5.5,
             {
                 tolerance: 1e-5,
+                xSymmetric: true
             });
         const eigenvalues = matslise.eigenvaluesByIndex(0, 13);
-        for (let i = 0; i < eigenvalues.length; ++i) {
+        for (let i = 0; i < eigenvalues.length && i < correct.length; ++i) {
             t.is(correct[i][0], eigenvalues[i].index);
-            t.true(Math.abs(correct[i][1] - eigenvalues[i].value) < 1e-5);
+            t.true(Math.abs(correct[i][1] - eigenvalues[i].value) < 1e-3);
             t.is(correct[i][2], eigenvalues[i].multiplicity);
         }
     });

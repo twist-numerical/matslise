@@ -74,7 +74,7 @@ Estimate an error of a given eigenvalue by using a lower order method.
                      return make_unique<Matslise3D<>>([V](double x, double y, double z) -> double {
                          py::gil_scoped_acquire acquire;
                          return V(x, y, z);
-                     }, Rectangle<3, double>{{{xmin, xmax}, ymin, ymax}, zmin, zmax}, config);
+                     }, Rectangle<double, 3>{xmin, xmax, ymin, ymax, zmin, zmax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.

@@ -91,7 +91,7 @@ void bind_matslise2d() {
                                     options["xSectorCount"].as<int>());
 
                         return new Matslise2D<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
-                                                {{xmin, xmax}, ymin, ymax}, config);
+                                                {xmin, xmax, ymin, ymax}, config);
                     }))
             .function("sectorPoints", optional_override([](const Matslise2D<> &se2d) -> val {
                 val r = val::array();
@@ -140,6 +140,6 @@ void bind_matslise2d() {
                                     options["xSectorCount"].as<int>());
 
                         return new Matslise2DHalf<>([f](double x, double y) -> double { return f(x, y).as<double>(); },
-                                                    {{xmin, xmax}, ymin, ymax}, config);
+                                                    {xmin, xmax, ymin, ymax}, config);
                     }));
 }

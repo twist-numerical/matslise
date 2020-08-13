@@ -137,7 +137,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                      return make_unique<Matslise2D<>>([V](double x, double y) -> double {
                          py::gil_scoped_acquire acquire;
                          return V(x, y);
-                     }, Rectangle<2, double>{{xmin, xmax}, ymin, ymax}, config);
+                     }, Rectangle<double, 2>{xmin, xmax, ymin, ymax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -245,7 +245,7 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                      return make_unique<Matslise2DHalf<>>([V](double x, double y) -> double {
                          py::gil_scoped_acquire acquire;
                          return V(x, y);
-                     }, Rectangle<2, double>{{xmin, xmax}, -ymax, ymax}, config);
+                     }, Rectangle<double, 2>{xmin, xmax, -ymax, ymax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
