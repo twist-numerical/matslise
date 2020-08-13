@@ -1,6 +1,7 @@
 #include "../matslise.h"
 #include "./etaIntegrals.h"
 #include "../util/legendre.h"
+#include "../util/scoped_timer.h"
 
 using namespace Eigen;
 
@@ -38,6 +39,7 @@ matslise::BasisQuadrature<Scalar, hmax, halfrange>::dV(
         const typename matslise::Matslise2D<Scalar>::Sector &sector2d, const Scalar &y) {
     if (quadData.empty())
         calculateQuadData(sector2d);
+    MATSLISE_SCOPED_TIMER("2D quadratures dV");
 
     const Index &N = sector2d.se2d->config.basisSize;
     Matrix<Scalar, Dynamic, Dynamic> dV
@@ -92,6 +94,7 @@ matslise::BasisQuadrature<Scalar, hmax, halfrange>::dV(
 template<typename Scalar, int hmax, bool halfrange>
 void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
         const typename matslise::Matslise2D<Scalar>::Sector &sector2d) {
+    MATSLISE_SCOPED_TIMER("2D calculateQuadData");
 
     const Index &N = sector2d.se2d->config.basisSize;
     for (auto sector1d : matslise->sectors) {

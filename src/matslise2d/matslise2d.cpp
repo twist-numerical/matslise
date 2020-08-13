@@ -4,6 +4,7 @@
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/find_sector.h"
+#include "../util/scoped_timer.h"
 #include "./matching.h"
 
 using namespace Eigen;
@@ -24,6 +25,7 @@ template<typename Scalar>
 Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential,
                                const matslise::Rectangle<2, Scalar> &domain, const Config &_config):
         AbstractMatslise2D<Scalar>(potential, domain), config(_config) {
+    MATSLISE_SCOPED_TIMER("2D constructor");
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(config.basisSize);
     auto sectorsBuild = sector_builder::getOrAutomatic(
             _config.ySectorBuilder, _config.tolerance)(this, domain.min, domain.max);
@@ -75,6 +77,7 @@ Matslise2D<Scalar>::~Matslise2D() {
 
 template<typename Scalar>
 typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) const {
+    MATSLISE_SCOPED_TIMER("2D conditionY");
     MatrixXs U = y.getY(0).partialPivLu().matrixLU();
     U.template triangularView<StrictlyLower>().setZero();
     U.template triangularView<Upper>().
@@ -87,6 +90,7 @@ typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, D
 template<typename Scalar>
 pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
 Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("2D matchingErrorMatrix");
     Y<Scalar, Dynamic> yl = yLeft;
     for (int i = 0; i <= matchIndex; ++i) {
         yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, use_h);
@@ -107,6 +111,7 @@ Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, 
 
 template<typename Scalar>
 Index Matslise2D<Scalar>::estimateIndex(Y<Scalar, Eigen::Dynamic> y, const Scalar &E) const {
+    MATSLISE_SCOPED_TIMER("2D estimateIndex");
     Index index = 0;
     Index sectorIndex = 0;
     Index tmpIndex;
@@ -125,6 +130,7 @@ Index Matslise2D<Scalar>::estimateIndex(Y<Scalar, Eigen::Dynamic> y, const Scala
 template<typename Scalar>
 Y<Scalar, Dynamic> Matslise2D<Scalar>::propagate(
         const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("2D propagate");
     if (!domain.contains(1, a) || !domain.contains(1, b))
         throw runtime_error("Matscs::propagate(): a and b should be in the interval");
     Y<Scalar, Dynamic> y = y0;
@@ -149,6 +155,7 @@ Y<Scalar, Dynamic> Matslise2D<Scalar>::propagate(
 template<typename Scalar>
 vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
         const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("2D matchingErrors");
     pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(yLeft, E, use_h);
     return eigenvaluesWithDerivatives<Scalar, false>(error_matrix.first, error_matrix.second);
 }
@@ -176,6 +183,7 @@ Scalar Matslise2D<Scalar>::estimatePotentialMinimum() const {
 
 template<typename Scalar>
 pair<Scalar, Index> Matslise2D<Scalar>::eigenvalue(const Y<Scalar, Dynamic> &left, const Scalar &_E, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("2D eigenvalue");
     const Scalar tolerance = 1e-9;
     const Scalar minTolerance = 1e-5;
     const int maxIterations = 30;
@@ -247,12 +255,14 @@ vector<tuple<Index, Scalar, Index>> eigenvaluesHelper(
 template<typename Scalar>
 vector<tuple<Index, Scalar, Index>> Matslise2D<Scalar>::eigenvalues(
         const Y<Scalar, Dynamic> &left, const Scalar &Emin, const Scalar &Emax) const {
+    MATSLISE_SCOPED_TIMER("2D eigenvalues");
     return eigenvaluesHelper(*this, left, Emin, Emax, 0, numeric_limits<Index>::max());
 }
 
 template<typename Scalar>
 vector<tuple<Index, Scalar, Index>> Matslise2D<Scalar>::eigenvaluesByIndex(
         const Y<Scalar, Dynamic> &left, Index Imin, Index Imax) const {
+    MATSLISE_SCOPED_TIMER("2D eigenvaluesByIndex");
     if (Imin < 0)
         Imin = 0;
     if (Imax <= Imin)

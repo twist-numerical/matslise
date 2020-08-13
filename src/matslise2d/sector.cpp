@@ -39,6 +39,7 @@ template<typename Scalar>
 Matslise2D<Scalar>::Sector::Sector(const Matslise2D<Scalar> *se2d, const Scalar &ymin, const Scalar &ymax,
                                    Direction direction)
         : se2d(se2d), min(ymin), max(ymax), direction(direction) {
+    MATSLISE_SCOPED_TIMER("2D sector");
     // std::cout << "new sector 2d" << std::endl;
     ybar = (ymax + ymin) / 2;
     function<Scalar(Scalar)> vbar_fun = [se2d, this](Scalar x) -> Scalar { return se2d->potential(x, ybar); };
@@ -118,6 +119,7 @@ template<typename Scalar, typename Derived>
 Matrix<complex<Scalar>, Dynamic, Dynamic> theta(
         const MatrixBase<Derived> &U,
         const MatrixBase<Derived> &V) {
+    MATSLISE_SCOPED_TIMER("2D ios: theta");
     return (V - U * complex<Scalar>(0, 1))
             .transpose()
             .partialPivLu()
@@ -127,6 +129,7 @@ Matrix<complex<Scalar>, Dynamic, Dynamic> theta(
 
 template<typename Scalar>
 inline Array<Scalar, Dynamic, 1> angle(const Matrix<complex<Scalar>, Dynamic, Dynamic> &m) {
+    MATSLISE_SCOPED_TIMER("2D ios: angle");
     const Scalar PI2 = constants<Scalar>::PI * 2;
     return m.eigenvalues().array().arg().unaryExpr(
             [&](const Scalar &a) -> Scalar { return a < -1e-16 ? a + PI2 : a; });
@@ -135,6 +138,7 @@ inline Array<Scalar, Dynamic, 1> angle(const Matrix<complex<Scalar>, Dynamic, Dy
 template<typename Scalar>
 Index estimateIndexOfSector(const typename Matscs<Scalar>::Sector &sector,
                             const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Y<Scalar, Eigen::Dynamic> &y1) {
+    MATSLISE_SCOPED_TIMER("2D index of sector");
     Index n = sector.n;
     using ArrayXs = typename Matslise2D<Scalar>::ArrayXs;
     using MatrixXs = Matrix<Scalar, Dynamic, Dynamic>;
@@ -210,6 +214,7 @@ template<int r>
 Y<Scalar, Eigen::Dynamic, r>
 Matslise2D<Scalar>::Sector::propagate(
         const Scalar &E, Y<Scalar, Eigen::Dynamic, r> y, const Scalar &a, const Scalar &b, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("2D sector propagate");
     if (a < b)
         for (auto sector = matscs.begin(); sector != matscs.end(); ++sector)
             y = sector->propagateColumn(E, y, a, b, use_h);

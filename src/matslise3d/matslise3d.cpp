@@ -1,5 +1,6 @@
 #include "../matslise.h"
 #include "../util/quadrature.h"
+#include "../util/scoped_timer.h"
 #include <map>
 
 using namespace Eigen;
@@ -12,6 +13,7 @@ Matslise3D<Scalar>::Matslise3D(
         const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
         const matslise::Rectangle<3, Scalar> &domain, const Config &config)
         : AbstractMatslise3D<Scalar>(potential, domain), config(config) {
+    MATSLISE_SCOPED_TIMER("3D constructor");
     grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<0>(), domain.template getMax<0>()));
     grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template getMin<1>(), domain.template getMax<1>()));
 
@@ -49,6 +51,7 @@ Matslise3D<Scalar>::~Matslise3D() {
 
 template<typename Scalar>
 typename Matslise3D<Scalar>::MatrixXs Matslise3D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) const {
+    MATSLISE_SCOPED_TIMER("3D conditionY");
     MatrixXs U = y.getY(0).partialPivLu().matrixLU();
     U.template triangularView<StrictlyLower>().setZero();
     U.template triangularView<Upper>().
@@ -61,6 +64,7 @@ typename Matslise3D<Scalar>::MatrixXs Matslise3D<Scalar>::conditionY(Y<Scalar, D
 template<typename Scalar>
 pair<typename Matslise3D<Scalar>::MatrixXs, typename Matslise3D<Scalar>::MatrixXs>
 Matslise3D<Scalar>::matchingErrorMatrix(const Scalar &E, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("3D matchingErrorMatrix");
     const Index &N = config.xyBasisSize;
     Y<Scalar, Dynamic> yl = Y<Scalar, Dynamic>::Dirichlet(N);
     for (int i = 0; i <= matchIndex; ++i) {
@@ -90,6 +94,7 @@ Matslise3D<Scalar>::matchingErrorMatrix(const Scalar &E, bool use_h) const {
 
 template<typename Scalar>
 vector<pair<Scalar, Scalar>> Matslise3D<Scalar>::matchingErrors(const Scalar &E, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("3D matchingErrors");
     pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(E, use_h);
     const Index &N = config.xyBasisSize;
     EigenSolver<MatrixXs> solver(N);
@@ -126,6 +131,7 @@ vector<pair<Scalar, Scalar>> Matslise3D<Scalar>::matchingErrors(const Scalar &E,
 
 template<typename Scalar>
 Scalar Matslise3D<Scalar>::eigenvalue(const Scalar &_E, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("3D eigenvalue");
     const Scalar tolerance = 1e-9;
     const Scalar minTolerance = 1e-5;
     const int maxIterations = 30;

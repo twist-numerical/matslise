@@ -11,7 +11,7 @@ TEST_CASE("3D: coulomb", "[matslise3d][coulomb]") {
     Matslise3D<>::Config config;
     config.tolerance = 1e-7;
     config.xyBasisSize = 14;
-    config.zStepsPerSector = 5;
+    config.zStepsPerSector = 3;
     config.xSymmetric = true;
     config.ySymmetric = true;
     config.zSectorBuilder = sector_builder::uniform<Matslise3D<>>(16);

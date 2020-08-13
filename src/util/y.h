@@ -2,6 +2,7 @@
 #define MATSLISE_Y_H
 
 #include "eigen.h"
+#include "scoped_timer.h"
 #include <iostream>
 
 namespace matslise {
@@ -140,12 +141,13 @@ namespace matslise {
 
         template<int r = 1>
         Y<Scalar, n, r> operator/(Y<Scalar, n, r> y) const {
-            if (n == 1) {
+            if constexpr (n == 1) {
                 Eigen::Matrix<Scalar, 2, 2> tInv, dtInv;
                 tInv << t(1, 1), -t(0, 1), -t(1, 0), t(0, 0);
                 dtInv << dt(1, 1), -dt(0, 1), -dt(1, 0), dt(0, 0);
                 return Y<Scalar, n, r>(tInv * y.y, tInv * y.dy + dtInv * y.y);
             } else {
+                MATSLISE_SCOPED_TIMER("T/Y dynamic");
                 Eigen::HouseholderQR<Eigen::Matrix<Scalar, n2, n2>> qr_t = t.householderQr();
                 Eigen::Matrix<Scalar, n2, r> yinv = qr_t.solve(y.y);
                 return Y<Scalar, n, r>(yinv, qr_t.solve(y.dy) - qr_t.solve(dt * yinv));

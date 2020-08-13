@@ -14,6 +14,7 @@ Array<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
 template<typename Scalar>
 vector<Y<Scalar, Dynamic>>
 Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Scalar &E) const {
+    MATSLISE_SCOPED_TIMER("2D eigenfunctionSteps");
     Index sectorCount = sectors.size();
     Index N = config.basisSize;
     auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
@@ -114,6 +115,7 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
                     {
                             [E, steps, column, this](const Scalar &x, const Scalar &y)
                                     -> typename Eigenfunction2D<Scalar, withDerivative>::ScalarReturn {
+                                MATSLISE_SCOPED_TIMER("2D eigenfunction scalar");
                                 Index sectorIndex = findSectorIndex(this, y);
                                 const Sector *sector = sectors[sectorIndex];
 
@@ -136,6 +138,7 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
                             },
                             [E, steps, column, this](const ArrayXs &x, const ArrayXs &y)
                                     -> typename Eigenfunction2D<Scalar, withDerivative>::ArrayReturn {
+                                MATSLISE_SCOPED_TIMER("2D eigenfunction array");
                                 typedef typename std::conditional<withDerivative, std::pair<ArrayXXs, ArrayXXs>, ArrayXXs>::type BasisType;
                                 map<Index, BasisType> bases;
                                 Index sectorIndex = 0;
