@@ -30,22 +30,31 @@ Estimate an error of a given eigenvalue by using a lower order method.
                              int y_steps_per_sector, int z_steps_per_sector) {
                      py::gil_scoped_release release;
                      if (x_count != -1 && x_tol != -1) {
-                         throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
+                         throw invalid_argument("Not both 'x_count' and 'x_tolerance' can be set.");
                      }
                      if (x_count == -1 && x_tol == -1) {
                          if (tol != -1)
                              x_tol = tol;
                          else
-                             throw invalid_argument("One of 'x_count' and 'x_tol' must be set.");
+                             throw invalid_argument("One of 'x_count' and 'x_tolerance' must be set.");
                      }
                      if (y_count != -1 && y_tol != -1) {
-                         throw invalid_argument("Not both 'y_count' and 'y_tol' can be set.");
+                         throw invalid_argument("Not both 'y_count' and 'y_tolerance' can be set.");
                      }
                      if (y_count == -1 && y_tol == -1) {
                          if (tol != -1)
                              y_tol = tol;
                          else
-                             throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
+                             throw invalid_argument("One of 'y_count' and 'y_tolerance' must be set.");
+                     }
+                     if (z_count != -1 && z_tol != -1) {
+                         throw invalid_argument("Not both 'z_count' and 'z_tolerance' can be set.");
+                     }
+                     if (z_count == -1 && z_tol == -1) {
+                         if (tol != -1)
+                            z_tol = tol;
+                         else
+                             throw invalid_argument("One of 'z_count' and 'z_tolerance' must be set.");
                      }
                      Matslise3D<>::Config config;
                      config.tolerance = tol;

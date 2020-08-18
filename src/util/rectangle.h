@@ -2,6 +2,7 @@
 #define MATSLISE_RECTANGLE_H
 
 #include <cassert>
+#include <array>
 
 namespace matslise {
 

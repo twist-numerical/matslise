@@ -11,6 +11,7 @@ TEST_CASE("3D: coulomb", "[matslise3d][coulomb][slow]") {
     Matslise3D<>::Config config;
     config.tolerance = 1e-7;
     config.xyBasisSize = 14;
+    config.xBasisSize = 14;
     config.zStepsPerSector = 3;
     config.xSymmetric = true;
     config.ySymmetric = true;

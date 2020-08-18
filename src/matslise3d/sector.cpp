@@ -163,6 +163,7 @@ typename Matslise3D<Scalar>::Sector *Matslise3D<Scalar>::Sector::refine(
     sector->min = _min;
     sector->max = _max;
     sector->zbar = zbar;
+    sector->vbar = vbar;
     sector->matslise2d = matslise2d;
     sector->eigenfunctions = eigenfunctions;
     sector->eigenvalues = eigenvalues;

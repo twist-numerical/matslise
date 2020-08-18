@@ -27,7 +27,7 @@ Matslise3D<Scalar>::Matslise3D(
     M.reserve(sectorCount - 1);
     const Index &N = config.xyBasisSize;
     for (int k = 0; k < sectorCount - 1; ++k) {
-        MatrixXs r(N, N);
+        MatrixXs &r = M.emplace_back(N, N);
 
         for (int i = 0; i < N; ++i)
             for (int j = 0; j < N; ++j)
@@ -35,11 +35,8 @@ Matslise3D<Scalar>::Matslise3D(
                         grid_x, grid_y,
                         sectors[k]->eigenfunctions_grid[j] *
                         sectors[k + 1]->eigenfunctions_grid[i]);
-
-        // cout << "M:" << endl;
-        // cout << r << endl;
-        // cout << endl;
-        M.push_back(move(r));
+        cout << "\n\nM " << k << endl;
+        cout << r * r.transpose() - MatrixXs::Identity(N, N) << endl;
     }
 }
 
