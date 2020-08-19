@@ -27,8 +27,9 @@ const vector<tuple<Index, double, Index>> PENTAGON_EIGENVALUES{
 
 TEST_CASE("2D: Pentagon", "[matslise2d][eigenfunctions][slow]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-6;
+    config.tolerance = 1e-7;
     config.basisSize = 14;
+    config.ySectorBuilder = sector_builder::automatic<Matslise2D<>, true>(1e-6);
 
     Matslise2D<> problem(
             [](double x, double y) -> double {

@@ -27,7 +27,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
         AbstractMatslise2D<Scalar>(potential, domain), config(_config) {
     MATSLISE_SCOPED_TIMER("2D constructor");
     dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(config.basisSize);
-    auto sectorsBuild = sector_builder::getOrAutomatic(
+    auto sectorsBuild = sector_builder::getOrAutomatic<Matslise2D<Scalar>, false>(
             _config.ySectorBuilder, _config.tolerance)(this, domain.template min<1>(), domain.template max<1>());
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;

@@ -20,8 +20,8 @@ eval2d(const function<Scalar(const Scalar &, const Scalar &)> &f,
 
 template<typename Scalar>
 vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise3D<Scalar>::Sector &sector) {
-    const Index &N = sector.matslise3d->config.xyBasisSize;
     auto &matslise3d = sector.matslise3d;
+    const Index &N = matslise3d->config.xyBasisSize;
     typedef typename Matslise3D<Scalar>::MatrixXs MatrixXs;
     typedef typename Matslise3D<Scalar>::ArrayXXs ArrayXXs;
 
@@ -72,15 +72,19 @@ Matslise3D<Scalar>::Sector::Sector(
         return matslise3d->potential(x, y, zbar);
     };
 
+
+    const Config &config3d = matslise3d->config;
+    typename Matslise2D<Scalar>::Config config2d;
+    config2d.tolerance = config3d.tolerance;
+    config2d.xSymmetric = config3d.xSymmetric;
+    config2d.basisSize = config3d.xBasisSize;
+    config2d.stepsPerSector = config3d.yStepsPerSector;
+    config2d.xSectorBuilder = sector_builder::getOrAutomatic<Matslise<Scalar>, false>(
+            config3d.xSectorBuilder, config3d.tolerance);
+    config2d.ySectorBuilder = sector_builder::getOrAutomatic<Matslise2D<Scalar>, false>(
+            config3d.ySectorBuilder, config3d.tolerance);
     matslise2d = std::make_shared<Matslise2D<Scalar>>(
-            vbar_fun, matslise3d->domain.template slice<0, 1>(),
-            [&] {
-                typename Matslise2D<Scalar>::Config config2d;
-                config2d.tolerance = matslise3d->config.tolerance;
-                config2d.basisSize = matslise3d->config.xBasisSize;
-                config2d.stepsPerSector = matslise3d->config.yStepsPerSector;
-                return config2d;
-            }());
+            vbar_fun, matslise3d->domain.template slice<0, 1>(), config2d);
 
     const Index &N = matslise3d->config.xyBasisSize;
     cout << "Seeking: " << zbar << endl;

@@ -17,7 +17,7 @@ Matslise3D<Scalar>::Matslise3D(
     grid_x = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template min<0>(), domain.template max<0>()));
     grid_y = lobatto::grid<Scalar>(ArrayXs::LinSpaced(101, domain.template min<1>(), domain.template max<1>()));
 
-    auto sectorsBuild = sector_builder::getOrAutomatic(config.zSectorBuilder, config.tolerance)
+    auto sectorsBuild = sector_builder::getOrAutomatic<Matslise3D<Scalar>, true>(config.zSectorBuilder, config.tolerance)
             (this, domain.template min<2>(), domain.template max<2>());
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;

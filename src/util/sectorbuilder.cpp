@@ -1,5 +1,11 @@
 #include "./sectorbuilder.h"
 #include "../matslise.h"
+#include "./heap.h"
+#include <algorithm>
+#include <vector>
+#include <tuple>
+#include <omp.h>
+
 
 using namespace matslise;
 
@@ -145,8 +151,9 @@ typename Problem::Sector *automaticNextSector(
     return s;
 }
 
+
 template<typename Problem>
-SectorBuilder<Problem> sector_builder::automatic(const typename Problem::Scalar &tolerance) {
+SectorBuilder<Problem> automaticSequential(const typename Problem::Scalar &tolerance) {
     typedef typename Problem::Scalar Scalar;
     typedef typename Problem::Sector Sector;
     return [tolerance](const Problem *problem, const Scalar &min, const Scalar &max)
@@ -176,11 +183,112 @@ SectorBuilder<Problem> sector_builder::automatic(const typename Problem::Scalar 
         forward.insert(forward.end(), backward.rbegin(), backward.rend());
         return {std::move(forward), matchIndex};
     };
+};
+
+template<typename Problem>
+SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &tolerance) {
+    typedef typename Problem::Scalar Scalar;
+    typedef typename Problem::Sector Sector;
+    typedef std::tuple<Scalar, Sector *, int> Item;
+
+    return [tolerance](const Problem *problem, const Scalar &min, const Scalar &max)
+            -> SectorBuilderReturn<Problem> {
+        Heap<Item> heap([](const Item &a, const Item &b) { return std::get<0>(a) < std::get<0>(b); });
+        Scalar maxError = 100 * tolerance;
+        heap.emplace(maxError, new Sector(problem, min, max, none), 0);
+
+        int maxDepth = 20;
+#pragma omp parallel
+        {
+#pragma omp single nowait
+            {
+                while (maxError > tolerance) {
+                    bool empty = false;
+                    while (!empty && maxError > tolerance) {
+                        Sector *sector;
+                        int depth;
+#pragma omp critical (edit_heap)
+                        {
+                            sector = std::get<1>(heap.front());
+                            depth = std::get<2>(heap.front());
+                            heap.pop();
+                        }
+                        Scalar m1 = 0.499 * sector->max + 0.501 * sector->min;
+                        // Scalar m1 = 0.325 * sector->max + 0.675 * sector->min;
+                        // Scalar m2 = 0.675 * sector->max + 0.325 * sector->min;
+                        for (auto &bounds : (std::pair<Scalar, Scalar>[]) {
+                                {sector->min, m1},
+                                {m1,          sector->max}
+                                // {m1,          m2},
+                                // {m2,          sector->max}
+                        }) {
+#pragma omp task
+                            {
+
+                                Sector *newSector = refineSector(*sector, problem, bounds.first, bounds.second,
+                                                                 forward);
+                                Scalar newError = depth < maxDepth ? newSector->error() : 0;
+                                if (!(newError < 100 * tolerance)) { // (! . < .) also correct for nan
+                                    newError = 100 * tolerance;
+                                }
+#pragma omp critical (edit_heap)
+                                {
+                                    heap.emplace(newError, newSector, depth + 1);
+                                }
+                            }
+                        }
+#pragma omp critical (edit_heap)
+                        {
+                            empty = heap.empty();
+                            maxError = std::get<0>(heap.front());
+                        }
+                    }
+#pragma omp taskwait
+                }
+            }
+        }
+
+        SectorBuilderReturn<Problem> result;
+        result.sectors.reserve(heap.size());
+        for (auto &item : heap.data())
+            result.sectors.push_back(std::get<1>(item));
+        std::sort(result.sectors.begin(), result.sectors.end(), [](Sector *a, Sector *b) {
+            return a->min < b->min;
+        });
+
+        auto match = result.sectors.begin();
+        for (auto i = match + 1; i != result.sectors.end(); ++i) {
+            if (Sector::compare(**i, **match))
+                match = i - 1;
+        }
+        result.matchIndex = std::distance(result.sectors.begin(), match);
+
+#pragma omp parallel for
+        for (int i = 0; i < result.matchIndex; ++i) {
+            result.sectors[i]->setDirection(i <= result.matchIndex ? forward : backward);
+        }
+
+        return result;
+    };
+}
+
+template<typename Problem, bool parallel>
+SectorBuilder<Problem> sector_builder::automatic(const typename Problem::Scalar &tolerance) {
+#ifdef MATSLISE_parallel
+    if constexpr(parallel) {
+        return automaticParallel<Problem>(tolerance);
+    } else {
+        return automaticSequential<Problem>(tolerance);
+    }
+#else
+    return automaticSequential<Problem>(tolerance);
+#endif
 }
 
 #define INSTANTIATE_SECTOR_BUILDER(Problem) \
 template SectorBuilder<Problem> sector_builder::uniform<Problem>(int); \
-template SectorBuilder<Problem> sector_builder::automatic<Problem>(const Problem::Scalar&);
+template SectorBuilder<Problem> sector_builder::automatic<Problem, false>(const Problem::Scalar&); \
+template SectorBuilder<Problem> sector_builder::automatic<Problem, true>(const Problem::Scalar&);
 
 #define INSTANTIATE_MORE(Scalar) \
 INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>) \

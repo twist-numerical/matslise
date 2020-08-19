@@ -76,4 +76,3 @@ TEST_CASE("cos(x)sin(c*x)", "[util][lobatto]") {
         }
     }
 }
-
