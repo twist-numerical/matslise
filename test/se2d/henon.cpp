@@ -31,8 +31,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
             },
             {-6., 6., -6., 6.}, config);
 
-    // TODO: orthogonalize multiple eigenfunctions
-    checkProblem<double, false>(problem, HENON_EIGENVALUES);
+    checkProblem(problem, HENON_EIGENVALUES);
 }
 
 TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon][auto]") {

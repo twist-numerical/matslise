@@ -76,22 +76,6 @@ eigenvaluesWithDerivatives(const Matrix<Scalar, Dynamic, Dynamic> &error,
 }
 
 template<typename Scalar>
-void rref(Matrix<Scalar, Dynamic, Dynamic> &M) {
-    Index N = M.cols();
-    if (N > 0) {
-        for (Index i = 0; i < N; ++i) {
-            Index r;
-            M.col(i).array().abs().maxCoeff(&r);
-            M.col(i) /= M(r, i);
-            for (Index j = 0; j < N; ++j) {
-                if (i != j)
-                    M.col(j) -= M(r, j) * M.col(i);
-            }
-        }
-    }
-}
-
-template<typename Scalar>
 Matrix<Scalar, Dynamic, Dynamic>
 getKernel(const Y<Scalar, Dynamic> &left, const Y<Scalar, Dynamic> &right, const Scalar &tolerance) {
     typedef Matrix<Scalar, Dynamic, Dynamic> MatrixXs;
@@ -106,7 +90,6 @@ getKernel(const Y<Scalar, Dynamic> &left, const Y<Scalar, Dynamic> &right, const
     MatrixXs kernel(left.getN(), kernel_list.size());
     for (Index i = 0; i < static_cast<Index>(kernel_list.size()); ++i)
         kernel.col(i) = kernel_list[i];
-    rref(kernel);
     return kernel;
 }
 

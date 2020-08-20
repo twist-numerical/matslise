@@ -38,7 +38,7 @@ void checkOrthonormality(const AbstractMatslise2D<Scalar> &p, const vector<Eigen
 
 }
 
-template<typename Scalar=double, bool _checkOrthonormality=true>
+template<typename Scalar=double>
 void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index, Scalar, Index>> &exactEigenvalues,
                   const Scalar &tolerance = 1e-7) {
     Index count = get<0>(exactEigenvalues.back()) + get<2>(exactEigenvalues.back());
@@ -55,13 +55,12 @@ void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index,
         CHECK(Approx(get<1>(*exact)).margin(tolerance) == get<1>(*found));
         CHECK(get<2>(*exact) == get<2>(*found));
         auto currentEigenfunctions = p.eigenfunction(get<1>(*found));
-        REQUIRE(get<2>(*exact) == (Index) currentEigenfunctions.size());
+        CHECK(get<2>(*exact) == (Index) currentEigenfunctions.size());
         for (auto &eigenfunction : currentEigenfunctions)
             eigenfunctions.push_back(eigenfunction);
     }
 
-    if constexpr(_checkOrthonormality)
-        checkOrthonormality(p, eigenfunctions);
+    checkOrthonormality(p, eigenfunctions);
 }
 
 

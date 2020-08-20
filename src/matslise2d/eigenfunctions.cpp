@@ -6,9 +6,12 @@ using namespace Eigen;
 using namespace matslise;
 using namespace std;
 
-template<typename Scalar>
-Array<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
-    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1)).diagonal().array();
+template<typename Scalar, bool add>
+void cec_cce(Matrix<Scalar, Dynamic, Dynamic> &addTo, const Y<Scalar, Dynamic, Dynamic> &y) {
+    if constexpr(add)
+        addTo += (y).getdY(0).transpose() * (y).getY(1) - (y).getdY(1).transpose() * (y).getY(0);
+    else
+        addTo -= (y).getdY(0).transpose() * (y).getY(1) - (y).getdY(1).transpose() * (y).getY(0);
 }
 
 template<typename Scalar>
@@ -39,7 +42,7 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
         U[i + 1] = conditionY(steps[i + 1]);
     }
     const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
-    MatrixXs kernel = getKernel<Scalar>(matchLeft, matchRight, 1e-4);
+    MatrixXs kernel = getKernel<Scalar>(matchLeft, matchRight, 1e-5);
 
     vector<Y<Scalar, Dynamic>> elements;
     if (kernel.cols() > 0) {
@@ -49,11 +52,13 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
 
         Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
 
-        ArrayXs normalizer = ArrayXs::Zero(left.cols(), 1);
+        MatrixXs normalizer = MatrixXs::Zero(left.cols(), left.cols());
         for (int i = matchIndex + 1; i >= 0; --i) {
             elements[i] = steps[i] * left;
-            if (i <= matchIndex)
-                normalizer += cec_cce(endSteps[i] * left) - cec_cce(elements[i]);
+            if (i <= matchIndex) {
+                cec_cce<Scalar, true>(normalizer, endSteps[i] * left);
+                cec_cce<Scalar, false>(normalizer, elements[i]);
+            }
             if (i > 0) {
                 U[i].template triangularView<Upper>().
                         template solveInPlace<OnTheLeft>(left);
@@ -62,20 +67,20 @@ Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Sc
 
         for (int i = matchIndex + 1; i < sectorCount; ++i) {
             elements[static_cast<size_t>(i + 1)] = endSteps[i] * right;
-            normalizer += cec_cce(elements[i + 1]) -
-                          cec_cce(i > matchIndex + 1 ? steps[i] * right : elementMatchRight);
+            cec_cce<Scalar, true>(normalizer, elements[i + 1]);
+            cec_cce<Scalar, false>(normalizer, i > matchIndex + 1 ? steps[i] * right : elementMatchRight);
             if (i + 1 < sectorCount) {
                 U[i + 1].template triangularView<Upper>().
                         template solveInPlace<OnTheLeft>(right);
             }
         }
 
-        normalizer = normalizer.unaryExpr([](const Scalar &s) -> Scalar {
-            return s <= 0 ? 1 : Scalar(1.) / sqrt(s);
-        });
+        LLT<Ref<MatrixXs>> llt(normalizer); // In place
 
         for (Index i = 0; i <= sectorCount; ++i) {
-            elements[static_cast<size_t>(i)] *= normalizer.matrix().asDiagonal();
+            Y<Scalar, Dynamic> &element = elements[static_cast<size_t>(i)];
+            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.y);
+            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.dy);
         }
     }
     delete[] steps;

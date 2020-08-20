@@ -42,5 +42,5 @@ TEST_CASE("2D: Pentagon", "[matslise2d][eigenfunctions][slow]") {
             },
             {-3., 3., -3., 3.}, config);
 
-    checkProblem<double, false>(problem, PENTAGON_EIGENVALUES, 1e-3);
+    checkProblem(problem, PENTAGON_EIGENVALUES, 1e-3);
 }
