@@ -4,7 +4,6 @@
 #include <algorithm>
 #include <vector>
 #include <tuple>
-#include <omp.h>
 
 
 using namespace matslise;
@@ -185,6 +184,7 @@ SectorBuilder<Problem> automaticSequential(const typename Problem::Scalar &toler
     };
 };
 
+#ifdef MATSLISE_parallel
 template<typename Problem>
 SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &tolerance) {
     typedef typename Problem::Scalar Scalar;
@@ -271,6 +271,7 @@ SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &toleran
         return result;
     };
 }
+#endif
 
 template<typename Problem, bool parallel>
 SectorBuilder<Problem> sector_builder::automatic(const typename Problem::Scalar &tolerance) {
