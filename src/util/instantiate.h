@@ -5,6 +5,7 @@
 #define INSTANTIATE_MORE(Scalar)
 #endif
 
+#ifndef INSTANTIATE_MATSLISE
 #define INSTANTIATE_MATSLISE(Scalar)\
 template class matslise::Matslise<Scalar>;\
 template class matslise::MatsliseHalf<Scalar>;\
@@ -13,6 +14,8 @@ template class matslise::Matslise2D<Scalar>;\
 template class matslise::Matslise2DHalf<Scalar>;\
 template class matslise::Matslise3D<Scalar>;\
 INSTANTIATE_MORE(Scalar)
+
+#endif
 
 INSTANTIATE_MATSLISE(double)
 

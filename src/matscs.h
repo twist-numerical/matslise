@@ -6,11 +6,6 @@
 #include <vector>
 #include <functional>
 
-#define MATSCS_HMAX_delta 7
-#define MATSCS_ETA_delta 3
-#define MATSCS_ETA_h 6
-#define MATSCS_N 9
-
 namespace matslise {
     template<typename _Scalar=double>
     class Matscs {
@@ -20,7 +15,7 @@ namespace matslise {
         typedef Eigen::Matrix<std::complex<Scalar>, Eigen::Dynamic, Eigen::Dynamic> MatrixXcs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
-        static constexpr int order = 6;
+        static constexpr int order = MATSCS_HMAX_delta - 1;
         static constexpr bool refineSectors = false;
 
         class Sector;
@@ -77,7 +72,7 @@ namespace matslise {
 
             Eigen::Array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_delta, MATSCS_HMAX_delta>
                     t_coeff;
-            Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> t_coeff_h[MATSCS_ETA_h];
+            std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_h> t_coeff_h;
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> diagonalize;
             std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> vs;
             Scalar min, max, h;
@@ -106,6 +101,7 @@ namespace matslise {
                             bool use_h = true) const;
 
             std::pair<Y < Scalar, Eigen::Dynamic>, Scalar>
+
             propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
                       bool use_h = true) const;
 

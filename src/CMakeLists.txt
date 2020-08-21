@@ -24,7 +24,7 @@ endif ()
 
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
-        matscs/matscs.cpp matscs/sector.cpp
+        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
         matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
         matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
         matslise3d/matslise3d.cpp matslise3d/sector.cpp
@@ -47,7 +47,7 @@ else ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
-    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h
+    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h formula_constants.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
     install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)

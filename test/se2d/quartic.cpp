@@ -13,7 +13,7 @@ using namespace Eigen;
 template<typename Scalar>
 void testQuartic(
         const Scalar &a, const Scalar &c, const Scalar &alpha, const vector<Scalar> &eigenvalues, int sectorCount = 23,
-        const Scalar &tolerance = static_cast<Scalar>(1e-5), const Scalar &error = static_cast<Scalar>(1e-8)) {
+        const Scalar &tolerance = static_cast<Scalar>(1e-8), const Scalar &error = static_cast<Scalar>(1e-8)) {
     typename Matslise2D<Scalar>::Config config;
     config.tolerance = tolerance;
     config.xSymmetric = true;

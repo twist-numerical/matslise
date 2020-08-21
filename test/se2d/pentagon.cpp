@@ -13,7 +13,6 @@ using namespace Eigen;
 // Numerical approximation (estimated error < 2e-7)
 const vector<tuple<Index, double, Index>> PENTAGON_EIGENVALUES{
         {0,  2.023972511137453,  1},
-        // Finding orthogonal eigenfunctions is hard
         {1,  4.423508358409953,  2},
         {3,  7.01457283417795,   1},
         {4,  7.019042961355106,  1},
@@ -29,7 +28,7 @@ TEST_CASE("2D: Pentagon", "[matslise2d][eigenfunctions][slow]") {
     Matslise2D<>::Config config;
     config.tolerance = 1e-7;
     config.basisSize = 14;
-    config.ySectorBuilder = sector_builder::automatic<Matslise2D<>, true>(1e-6);
+    config.ySectorBuilder = sector_builder::automatic<Matslise2D<>>(1e-6);
 
     Matslise2D<> problem(
             [](double x, double y) -> double {

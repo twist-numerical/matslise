@@ -23,7 +23,7 @@ const vector<tuple<Index, double, Index>> HENON_EIGENVALUES{
 
 TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-6;
+    config.tolerance = 1e-10;
 
     Matslise2D<> problem(
             [](double x, double y) -> double {
@@ -36,7 +36,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
 
 TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-6;
+    config.tolerance = 1e-10;
 
     Matslise2D<> problem(
             [](double x, double y) -> double {
@@ -49,7 +49,7 @@ TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon]
 
 TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][henon][symmetric][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-6;
+    config.tolerance = 1e-10;
     config.xSymmetric = true;
 
     Matslise2D<> problem(
@@ -63,7 +63,7 @@ TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][heno
 
 TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][half][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-6;
+    config.tolerance = 1e-10;
 
     Matslise2DHalf<> problem(
             [](double x, double y) -> double {

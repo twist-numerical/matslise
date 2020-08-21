@@ -15,7 +15,7 @@ TEST_CASE("coffey_evans beta=20", "[matslise][coffey_evans]") {
     const double B = 20;
     MatsliseHalf<double> ms([B](double x) -> double {
         return -2 * B * cos(2 * x) + B * B * sin(2 * x) * sin(2 * x);
-    }, constants<double>::PI / 2, 1e-8);
+    }, constants<double>::PI / 2, 1e-9);
 
     testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), {
             -8.639369922249e-14, 77.91619567714, 151.4627783465, 151.4632236577, 151.4636689884, 220.1542298353,

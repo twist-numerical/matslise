@@ -12,11 +12,7 @@
 #include "util/y.h"
 #include "util/sectorbuilder.h"
 #include "util/rectangle.h"
-
-#define MATSLISE_HMAX_delta 17
-#define MATSLISE_ETA_delta 8
-#define MATSLISE_ETA_h 10
-#define MATSLISE_N 16
+#include "./formula_constants.h"
 
 namespace matslise {
     enum Direction {
@@ -114,7 +110,7 @@ namespace matslise {
     class Matslise : public AbstractMatslise<_Scalar> {
     public:
         typedef _Scalar Scalar;
-        static constexpr int order = 16;
+        static constexpr int order = MATSLISE_HMAX_delta-1;
         static constexpr bool refineSectors = false;
 
         class Sector;

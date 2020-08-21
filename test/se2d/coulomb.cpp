@@ -9,7 +9,7 @@ TEST_CASE("2D: coulomb", "[matslise3d][coulomb][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
     Matslise2D<>::Config config;
-    config.tolerance = 1e-6;
+    config.tolerance = 1e-9;
 
     const double a = 0.05;
     const double b = 12.3;
