@@ -23,7 +23,9 @@ const vector<tuple<Index, double, Index>> HENON_EIGENVALUES{
 
 TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-10;
+    config.basisSize = 14;
+    config.tolerance = 1e-9;
+    config.stepsPerSector = 1;
 
     Matslise2D<> problem(
             [](double x, double y) -> double {
@@ -36,7 +38,7 @@ TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
 
 TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-10;
+    config.tolerance = 1e-8;
 
     Matslise2D<> problem(
             [](double x, double y) -> double {
@@ -63,7 +65,9 @@ TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][heno
 
 TEST_CASE("Eigenfunctions henon (half)", "[matslise2d][eigenfunctions][henon][half][auto]") {
     Matslise2D<>::Config config;
+    config.basisSize = 14;
     config.tolerance = 1e-10;
+    config.stepsPerSector = 1;
 
     Matslise2DHalf<> problem(
             [](double x, double y) -> double {

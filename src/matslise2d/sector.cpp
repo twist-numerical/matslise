@@ -169,7 +169,7 @@ Index estimateIndexOfSector(const typename Matscs<Scalar>::Sector &sector,
                 ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() *
                 thetaZ0
         );
-        if (depth < 2 && ((betas < 1e-4).any() || ((betas - alphas).abs() > 6).any())) {
+        if (depth < 3 && ((betas < 1e-1).any() || ((betas - alphas).abs() > 5.5).any())) {
             // Zeroth order propagation probably inaccurate: refine steps
             Scalar mid = (a + b) / 2;
             Y<Scalar, Dynamic> yMid = sector.direction == matslise::forward
