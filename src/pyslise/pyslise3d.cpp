@@ -16,7 +16,25 @@ Estimate an error of a given eigenvalue by using a lower order method.
 
 :param float E: an eigenvalue to estimate an error for.
 :returns: the estimated error for the given eigenvalue.
-)"""", py::arg("E"));
+)"""", py::arg("E"))
+            .def("eigenvalues", &AbstractMatslise3D<double>::eigenvalues, R""""(\
+This heuristics tries to find all the eigenvalues within a certain range [Emin, Emax]. Because this heuristics isn't an algorithm, it is certainly not certain that all eigenvalues are found. In short: the heuristics starts with a few initial guesses and tries to find all eigenvalues that it can 'see' from that first guess.
+
+It is not a good idea to make the number of initial values large. This will increase computation time and, more importantly, it won't be necessarily better.
+
+:param float Emin Emax: the start and end point of the range that will be searched.
+:param int initial_values: the number of starting guesses that will be used. Defaults to 16.
+:returns: a list of found eigenvalues. When one has a larger multiplicity it is repeated.
+)"""", py::arg("Emin"), py::arg("Emax"))
+            .def("eigenvaluesByIndex", &AbstractMatslise3D<double>::eigenvaluesByIndex, R""""(\
+Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
+
+:param int Imin: the first eigenvalue to find, by index.
+:param int Imax: only the first Imax eigenvalues will be considered.
+
+:returns: a list of eigenvalues.
+)"""", py::arg("Imin"), py::arg("Imax"))
+            .def("estimateIndex", &AbstractMatslise3D<double>::estimateIndex, py::arg("E"));
 
     py::class_<Matslise3D<double>, AbstractMatslise3D<double>, shared_ptr<Matslise3D<double>>>(m, "Pyslise3D")
             .def(py::init([](const function<double(double, double, double)> &V,
@@ -52,7 +70,7 @@ Estimate an error of a given eigenvalue by using a lower order method.
                      }
                      if (z_count == -1 && z_tol == -1) {
                          if (tol != -1)
-                            z_tol = tol;
+                             z_tol = tol;
                          else
                              throw invalid_argument("One of 'z_count' and 'z_tolerance' must be set.");
                      }

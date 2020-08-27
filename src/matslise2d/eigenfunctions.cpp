@@ -1,93 +1,11 @@
 #include "../matslise.h"
 #include <map>
-#include "./matching.h"
+#include "../util/matching.h"
 
 using namespace Eigen;
 using namespace matslise;
 using namespace std;
 
-template<typename Scalar, bool add>
-void cec_cce(Matrix<Scalar, Dynamic, Dynamic> &addTo, const Y<Scalar, Dynamic, Dynamic> &y) {
-    if constexpr(add)
-        addTo += (y).getdY(0).transpose() * (y).getY(1) - (y).getdY(1).transpose() * (y).getY(0);
-    else
-        addTo -= (y).getdY(0).transpose() * (y).getY(1) - (y).getdY(1).transpose() * (y).getY(0);
-}
-
-template<typename Scalar>
-vector<Y<Scalar, Dynamic>>
-Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Scalar &E) const {
-    MATSLISE_SCOPED_TIMER("2D eigenfunctionSteps");
-    Index sectorCount = sectors.size();
-    Index N = config.basisSize;
-    auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
-    auto *endSteps = new Y<Scalar, Dynamic>[sectorCount];
-
-    steps[0] = yLeft;
-    steps[sectorCount] = dirichletBoundary;
-    auto *U = new MatrixXs[sectorCount];
-
-    for (int i = sectorCount - 1; i > matchIndex; --i) {
-        endSteps[i] = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
-        if (i + 1 < sectorCount)
-            U[i + 1] = conditionY(endSteps[i]);
-        steps[i] = sectors[i]->propagate(E, endSteps[i], sectors[i]->max, sectors[i]->min, true);
-    }
-    const Y<Scalar, Dynamic> matchRight = steps[matchIndex + 1];
-
-    U[0] = MatrixXs::Identity(N, N);
-    for (int i = 0; i <= matchIndex; ++i) {
-        endSteps[i] = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
-        steps[i + 1] = M[i] * endSteps[i];
-        U[i + 1] = conditionY(steps[i + 1]);
-    }
-    const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
-    MatrixXs kernel = getKernel<Scalar>(matchLeft, matchRight, 1e-5);
-
-    vector<Y<Scalar, Dynamic>> elements;
-    if (kernel.cols() > 0) {
-        elements.resize(sectorCount + 1);
-        MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
-        MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-
-        Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
-
-        MatrixXs normalizer = MatrixXs::Zero(left.cols(), left.cols());
-        for (int i = matchIndex + 1; i >= 0; --i) {
-            elements[i] = steps[i] * left;
-            if (i <= matchIndex) {
-                cec_cce<Scalar, true>(normalizer, endSteps[i] * left);
-                cec_cce<Scalar, false>(normalizer, elements[i]);
-            }
-            if (i > 0) {
-                U[i].template triangularView<Upper>().
-                        template solveInPlace<OnTheLeft>(left);
-            }
-        }
-
-        for (int i = matchIndex + 1; i < sectorCount; ++i) {
-            elements[static_cast<size_t>(i + 1)] = endSteps[i] * right;
-            cec_cce<Scalar, true>(normalizer, elements[i + 1]);
-            cec_cce<Scalar, false>(normalizer, i > matchIndex + 1 ? steps[i] * right : elementMatchRight);
-            if (i + 1 < sectorCount) {
-                U[i + 1].template triangularView<Upper>().
-                        template solveInPlace<OnTheLeft>(right);
-            }
-        }
-
-        LLT<Ref<MatrixXs>> llt(normalizer); // In place
-
-        for (Index i = 0; i <= sectorCount; ++i) {
-            Y<Scalar, Dynamic> &element = elements[static_cast<size_t>(i)];
-            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.y);
-            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.dy);
-        }
-    }
-    delete[] steps;
-    delete[] endSteps;
-    delete[] U;
-    return elements;
-}
 
 template<typename Scalar>
 Index findSectorIndex(const Matslise2D<Scalar> *matslise2D, const Scalar &y) {
@@ -109,8 +27,8 @@ template<typename Scalar>
 template<bool withDerivative>
 vector<Eigenfunction2D<Scalar, withDerivative>>
 Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &E) const {
-    shared_ptr<vector<Y<Scalar, Dynamic>>> steps
-            = make_shared<vector<Y<Scalar, Dynamic>>>(move(eigenfunctionSteps(left, E)));
+    shared_ptr<vector<Y<Scalar, Dynamic>>> steps = make_shared<vector<Y<Scalar, Dynamic>>>(
+            move(MatsliseND<Scalar, Matslise2DSector<Scalar>>::eigenfunctionSteps(left, E)));
     vector<Eigenfunction2D<Scalar, withDerivative>> eigenfunctions;
     if (!steps->empty()) {
         Eigen::Index cols = (*steps)[0].getY(0).cols();

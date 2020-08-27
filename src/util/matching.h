@@ -1,7 +1,7 @@
 #ifndef MATSLISE_MATCHING_H
 #define MATSLISE_MATCHING_H
 
-#include "../util/eigen.h"
+#include "eigen.h"
 #include "../matslise.h"
 #include <tuple>
 #include <map>

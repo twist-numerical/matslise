@@ -200,7 +200,9 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
             .def_property_readonly("__matchpoint", [](const Matslise2D<> &p) -> double {
                 return p.sectors[p.matchIndex]->max;
             })
-            .def_readonly("__sectors", &Matslise2D<>::sectors);
+            .def_property_readonly("__sectors", [](const Matslise2D<> &p) {
+                return p.sectors;
+            });
 
     py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>, shared_ptr<Matslise2DHalf<double>>>(m, "Pyslise2DHalf")
             .def(py::init([](const function<double(double, double)> &V,

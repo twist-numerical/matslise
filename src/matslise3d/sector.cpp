@@ -22,8 +22,8 @@ template<typename Scalar>
 vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise3D<Scalar>::Sector &sector) {
     auto &matslise3d = sector.matslise3d;
     const Index &N = matslise3d->config.xyBasisSize;
-    typedef typename Matslise3D<Scalar>::MatrixXs MatrixXs;
-    typedef typename Matslise3D<Scalar>::ArrayXXs ArrayXXs;
+    typedef typename AbstractMatslise3D<Scalar>::MatrixXs MatrixXs;
+    typedef typename AbstractMatslise3D<Scalar>::ArrayXXs ArrayXXs;
 
     vector<typename Matscs<Scalar>::Sector> matscs;
     Index steps = matslise3d->config.zStepsPerSector;
@@ -62,9 +62,9 @@ vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise
 }
 
 template<typename Scalar>
-Matslise3D<Scalar>::Sector::Sector(
+Matslise3DSector<Scalar>::Matslise3DSector(
         const Matslise3D<Scalar> *matslise3d, const Scalar &zmin, const Scalar &zmax, Direction direction)
-        : matslise3d(matslise3d), min(zmin), max(zmax), direction(direction) {
+        : MatsliseNDSector<Scalar>(zmin, zmax), matslise3d(matslise3d), direction(direction) {
 
     zbar = (zmax + zmin) / 2;
     function<Scalar(const Scalar &, const Scalar &)> vbar_fun = [matslise3d, this](
@@ -73,7 +73,7 @@ Matslise3D<Scalar>::Sector::Sector(
     };
 
 
-    const Config &config3d = matslise3d->config;
+    const typename Matslise3D<Scalar>::Config &config3d = matslise3d->config;
     typename Matslise2D<Scalar>::Config config2d;
     config2d.tolerance = config3d.tolerance;
     config2d.xSymmetric = config3d.xSymmetric;
@@ -97,6 +97,7 @@ Matslise3D<Scalar>::Sector::Sector(
     }
     cout << endl;
     if (eigenvalueCount < N) {
+
         throw std::runtime_error("Matlise3D: not enough basis-functions found on a sector");
     }
     eigenvalues.reserve(N);
@@ -124,45 +125,22 @@ Matslise3D<Scalar>::Sector::Sector(
 }
 
 template<typename Scalar>
-void Matslise3D<Scalar>::Sector::setDirection(Direction newDirection) {
+void Matslise3DSector<Scalar>::setDirection(Direction newDirection) {
     direction = newDirection;
     for (auto &sector : matscs)
         sector.setDirection(newDirection);
 }
 
-template<typename Scalar>
-template<int r>
-Y<Scalar, Eigen::Dynamic, r>
-Matslise3D<Scalar>::Sector::propagate(
-        const Scalar &E, Y<Scalar, Eigen::Dynamic, r> y, const Scalar &a, const Scalar &b, bool use_h) const {
-    if (a < b)
-        for (auto sector = matscs.begin(); sector != matscs.end(); ++sector)
-            y = sector->propagateColumn(E, y, a, b, use_h);
-    else if (b < a)
-        for (auto sector = matscs.rbegin(); sector != matscs.rend(); ++sector)
-            y = sector->propagateColumn(E, y, a, b, use_h);
-    return y;
-}
 
 template<typename Scalar>
-Scalar Matslise3D<Scalar>::Sector::error() const {
-    Scalar error = 0;
-    for (auto &sector : matscs)
-        error += sector.error();
-    return error;
-}
-
-
-template<typename Scalar>
-typename Matslise3D<Scalar>::Sector *Matslise3D<Scalar>::Sector::refine(
+Matslise3DSector<Scalar> *Matslise3DSector<Scalar>::refine(
         const Matslise3D<Scalar> *problem, const Scalar &_min, const Scalar &_max, Direction _direction) const {
     Scalar h = _max - _min;
     if (zbar < _min + h / 3 || zbar > _max - h / 3) {
-        return new Sector(problem, _min, _max, _direction);
+        return new Matslise3DSector<Scalar>(problem, _min, _max, _direction);
     }
 
-    // std::cout << "refining sector 2d" << std::endl;
-    auto sector = new Sector(problem);
+    auto sector = new Matslise3DSector<Scalar>(problem);
     sector->direction = _direction;
     sector->min = _min;
     sector->max = _max;
@@ -175,14 +153,5 @@ typename Matslise3D<Scalar>::Sector *Matslise3D<Scalar>::Sector::refine(
     sector->matscs = initializeMatscs<Scalar>(*sector);
     return sector;
 }
-
-#define INSTANTIATE_PROPAGATE(Scalar, r) \
-template Y<Scalar, Dynamic, r> \
-Matslise3D<Scalar>::Sector::propagate<r>( \
-        const Scalar &, Y<Scalar, Eigen::Dynamic, r>, const Scalar &, const Scalar &, bool) const;
-
-#define INSTANTIATE_MORE(Scalar) \
-INSTANTIATE_PROPAGATE(Scalar, 1) \
-INSTANTIATE_PROPAGATE(Scalar, -1)
 
 #include "../util/instantiate.h"

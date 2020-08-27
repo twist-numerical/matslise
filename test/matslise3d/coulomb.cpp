@@ -27,7 +27,7 @@ TEST_CASE("3D: coulomb", "[matslise3d][coulomb][slow]") {
     }, {-12.3, 12.3, -12.3, 12.3, -12.3, 12.3}, config);
 
     for (double Eguess : (double[]) {-1, -.25, -.1111}) {
-        double E = matslise.eigenvalue(Eguess);
-        cout << E << " (±" << matslise.eigenvalueError(E) << ")" << endl;
+        auto Em = matslise.eigenvalue(Eguess);
+        cout << Em.first << " (±" << matslise.eigenvalueError(Em.first) << ") (x" << Em.second << ")" << endl;
     }
 }
