@@ -24,50 +24,54 @@ template<typename Scalar>
 inline Array<Scalar, Dynamic, 1> angle(const Matrix<complex<Scalar>, Dynamic, Dynamic> &m) {
     MATSLISE_SCOPED_TIMER("ND ios: angle");
     const Scalar PI2 = constants<Scalar>::PI * 2;
-    return m.eigenvalues().array().arg().unaryExpr(
+    Array<Scalar, Dynamic, 1> eigs = m.eigenvalues().array().arg().unaryExpr(
             [&](const Scalar &a) -> Scalar { return a < -1e-16 ? a + PI2 : a; });
+    sort(eigs.data(), eigs.data() + eigs.size());
+    return eigs;
 }
 
 template<typename Scalar>
-Index estimateIndexOfSector(const typename Matscs<Scalar>::Sector &sector,
-                            const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Y<Scalar, Eigen::Dynamic> &y1) {
+tuple<Y<Scalar, Dynamic>, Index, Array<Scalar, Dynamic, 1>>
+propagateWithIndexOnSector(const typename Matscs<Scalar>::Sector &sector, const Scalar &E,
+                           const Y<Scalar, Eigen::Dynamic> &y0, Array<Scalar, Dynamic, 1> &&angles) {
     MATSLISE_SCOPED_TIMER("ND index of sector");
     Index n = sector.n;
     using ArrayXs = typename Matslise2D<Scalar>::ArrayXs;
     using MatrixXs = Matrix<Scalar, Dynamic, Dynamic>;
-    using MatrixXcs = Matrix<complex<Scalar>, Dynamic, Dynamic>;
 
     Index zeros = 0;
-    queue<tuple<int, Scalar, Scalar, MatrixXs, MatrixXs, ArrayXs>> todo;
-    todo.emplace(0, sector.min, sector.max, y0.getY(0), y0.getY(1),
-                 angle<Scalar>(theta<Scalar>(y1.getY(0), y1.getY(1))));
+    queue<tuple<int, Scalar, Scalar, MatrixXs, MatrixXs, ArrayXs, ArrayXs>> todo;
+    Y<Scalar, Dynamic> y1 = sector.propagateColumn(E, y0, sector.min, sector.max);
+    ArrayXs anglesEnd = angle<Scalar>(theta<Scalar>(y1.getY(0), y1.getY(1)));
+    todo.emplace(0, sector.min, sector.max, y0.getY(0), y0.getY(1), move(angles), anglesEnd);
 
     while (!todo.empty()) {
         const int &depth = get<0>(todo.front());
         const Scalar &a = get<1>(todo.front());
         const Scalar &b = get<2>(todo.front());
         Scalar h = b - a;
-        const MatrixXs &U0 = get<3>(todo.front());
-        const MatrixXs &V0 = get<4>(todo.front());
-        const ArrayXs &betas = get<5>(todo.front());
+        MatrixXs &U0 = get<3>(todo.front());
+        MatrixXs &V0 = get<4>(todo.front());
+        ArrayXs &anglesZ0 = get<5>(todo.front());
+        ArrayXs &betas = get<6>(todo.front());
 
         ArrayXs Z = h * h * (sector.vs[0].diagonal().array() - ArrayXs::Constant(n, E));
         Array<Scalar, 2, Dynamic> eta = calculateEta<Scalar, 2>(Z);
 
-        MatrixXcs thetaZ0 = theta<Scalar>(U0, V0);
         const complex<Scalar> i_delta(0, h);
         ArrayXs alphas = angle<Scalar>(
                 ((eta.row(0) + i_delta * eta.row(1)) / (eta.row(0) - i_delta * eta.row(1))).matrix().asDiagonal() *
-                thetaZ0
+                theta<Scalar>(U0, V0)
         );
-        if (depth < 3 && ((betas < 1e-1).any() || ((betas - alphas).abs() > 5.5).any())) {
+        if (depth < 4 && ((betas < .1).any() || ((betas - alphas).abs() > 5.5).any())) {
             // Zeroth order propagation probably inaccurate: refine steps
             Scalar mid = (a + b) / 2;
             Y<Scalar, Dynamic> yMid = sector.direction == matslise::forward
                                       ? sector.propagateColumn(E, y0, sector.min, mid)
                                       : sector.propagateColumn(E, y1, sector.max, mid);
-            todo.emplace(depth + 1, a, mid, U0, V0, angle<Scalar>(theta<Scalar>(yMid.getY(0), yMid.getY(1))));
-            todo.emplace(depth + 1, mid, b, yMid.getY(0), yMid.getY(1), betas);
+            ArrayXs anglesMid = angle<Scalar>(theta<Scalar>(yMid.getY(0), yMid.getY(1)));
+            todo.emplace(depth + 1, a, mid, move(U0), move(V0), move(anglesZ0), anglesMid);
+            todo.emplace(depth + 1, mid, b, yMid.getY(0), yMid.getY(1), move(anglesMid), move(betas));
         } else {
             Scalar argdet = 0;
             for (int i = 0; i < n; ++i) {
@@ -82,22 +86,22 @@ Index estimateIndexOfSector(const typename Matscs<Scalar>::Sector &sector,
             }
             argdet *= 2;
 
-            zeros += (Eigen::Index) round(
-                    (angle<Scalar>(thetaZ0).sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
+            zeros += (Eigen::Index) round((anglesZ0.sum() + argdet - alphas.sum()) / (2 * constants<Scalar>::PI));
         }
         todo.pop();
     }
-    return zeros;
+    return {y1, zeros, anglesEnd};
 }
 
 template<typename Scalar>
 pair<Y<Scalar, Eigen::Dynamic>, Index> MatsliseNDSector<Scalar>::propagateWithIndex(
         const Scalar &E, Y<Scalar, Eigen::Dynamic> y0) const {
     Index index = 0;
+    Index add;
+    Array<Scalar, Dynamic, 1> angles = angle<Scalar>(theta<Scalar>(y0.getY(0), y0.getY(1)));
     for (auto &sector : matscs) {
-        Y<Scalar, Eigen::Dynamic> y1 = sector.propagateColumn(E, y0, min, max, true);
-        index += estimateIndexOfSector(sector, E, y0, y1);
-        y0 = y1;
+        tie(y0, add, angles) = propagateWithIndexOnSector(sector, E, y0, move(angles));
+        index += add;
     }
     return {y0, index};
 }
