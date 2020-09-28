@@ -13,14 +13,14 @@ template<typename Scalar>
 std::pair<Matrix<Scalar, Dynamic, Dynamic>, Matrix<Scalar, Dynamic, Dynamic>> errorMatrix(
         const Y<Scalar, Dynamic> &left, const Y<Scalar, Dynamic> &right) {
     typedef Matrix<Scalar, Dynamic, Dynamic> MatrixXs;
-    ColPivHouseholderQR<MatrixXs> left_solver(left.getY(0).transpose());
-    ColPivHouseholderQR<MatrixXs> right_solver(right.getY(0).transpose());
-    MatrixXs Ul = left_solver.solve(left.getY(1).transpose()).transpose();
-    MatrixXs Ur = right_solver.solve(right.getY(1).transpose()).transpose();
+    ColPivHouseholderQR<MatrixXs> left_solver(left.block().transpose());
+    ColPivHouseholderQR<MatrixXs> right_solver(right.block().transpose());
+    MatrixXs Ul = left_solver.solve(left.block(dX).transpose()).transpose();
+    MatrixXs Ur = right_solver.solve(right.block(dX).transpose()).transpose();
     return {
             Ul - Ur,
-            left_solver.solve((left.getdY(1) - Ul * left.getdY(0)).transpose()).transpose()
-            - right_solver.solve((right.getdY(1) - Ur * right.getdY(0)).transpose()).transpose()
+            left_solver.solve((left.block(dXdE) - Ul * left.block(dE)).transpose()).transpose()
+            - right_solver.solve((right.block(dXdE) - Ur * right.block(dE)).transpose()).transpose()
     };
 }
 

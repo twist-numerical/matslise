@@ -138,10 +138,10 @@ Y<Scalar, Dynamic, r> Matscs<Scalar>::Sector::propagateDeltaColumn(
 
 template<typename Scalar>
 typename Matscs<Scalar>::MatrixXcs Matscs<Scalar>::Sector::theta(const Y<Scalar, Dynamic> &y) const {
-    return (y.getY(1) - y.getY(0) * complex<Scalar>(0, 1))
+    return (y.block(dX) - y.block() * complex<Scalar>(0, 1))
             .transpose()
             .partialPivLu()
-            .solve((y.getY(1) + y.getY(0) * complex<Scalar>(0, 1)).transpose())
+            .solve((y.block(dX) + y.block() * complex<Scalar>(0, 1)).transpose())
             .transpose();
 }
 

@@ -42,8 +42,8 @@ propagateWithIndexOnSector(const typename Matscs<Scalar>::Sector &sector, const 
     Index zeros = 0;
     queue<tuple<int, Scalar, Scalar, MatrixXs, MatrixXs, ArrayXs, ArrayXs>> todo;
     Y<Scalar, Dynamic> y1 = sector.propagateColumn(E, y0, sector.min, sector.max);
-    ArrayXs anglesEnd = angle<Scalar>(theta<Scalar>(y1.getY(0), y1.getY(1)));
-    todo.emplace(0, sector.min, sector.max, y0.getY(0), y0.getY(1), move(angles), anglesEnd);
+    ArrayXs anglesEnd = angle<Scalar>(theta<Scalar>(y1.block(), y1.block(dX)));
+    todo.emplace(0, sector.min, sector.max, y0.block(), y0.block(dX), move(angles), anglesEnd);
 
     while (!todo.empty()) {
         const int &depth = get<0>(todo.front());
@@ -69,9 +69,9 @@ propagateWithIndexOnSector(const typename Matscs<Scalar>::Sector &sector, const 
             Y<Scalar, Dynamic> yMid = sector.direction == matslise::forward
                                       ? sector.propagateColumn(E, y0, sector.min, mid)
                                       : sector.propagateColumn(E, y1, sector.max, mid);
-            ArrayXs anglesMid = angle<Scalar>(theta<Scalar>(yMid.getY(0), yMid.getY(1)));
+            ArrayXs anglesMid = angle<Scalar>(theta<Scalar>(yMid.block(), yMid.block(dX)));
             todo.emplace(depth + 1, a, mid, move(U0), move(V0), move(anglesZ0), anglesMid);
-            todo.emplace(depth + 1, mid, b, yMid.getY(0), yMid.getY(1), move(anglesMid), move(betas));
+            todo.emplace(depth + 1, mid, b, yMid.block(), yMid.block(dX), move(anglesMid), move(betas));
         } else {
             Scalar argdet = 0;
             for (int i = 0; i < n; ++i) {
@@ -98,7 +98,7 @@ pair<Y<Scalar, Eigen::Dynamic>, Index> MatsliseNDSector<Scalar>::propagateWithIn
         const Scalar &E, Y<Scalar, Eigen::Dynamic> y0) const {
     Index index = 0;
     Index add;
-    Array<Scalar, Dynamic, 1> angles = angle<Scalar>(theta<Scalar>(y0.getY(0), y0.getY(1)));
+    Array<Scalar, Dynamic, 1> angles = angle<Scalar>(theta<Scalar>(y0.block(), y0.block(dX)));
     for (auto &sector : matscs) {
         tie(y0, add, angles) = propagateWithIndexOnSector(sector, E, y0, move(angles));
         index += add;

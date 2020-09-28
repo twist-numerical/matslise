@@ -13,7 +13,7 @@ using namespace Eigen;
 template<typename Scalar>
 Matrix<Scalar, Dynamic, Dynamic> conditionY(Y<Scalar, Dynamic> &y) {
     MATSLISE_SCOPED_TIMER("ND conditionY");
-    Matrix<Scalar, Dynamic, Dynamic> U = y.getY(0).partialPivLu().matrixLU();
+    Matrix<Scalar, Dynamic, Dynamic> U = y.block().partialPivLu().matrixLU();
     U.template triangularView<StrictlyLower>().setZero();
     U.template triangularView<Upper>().
             template solveInPlace<OnTheRight>(y.data);
@@ -214,10 +214,13 @@ Index MatsliseND<Scalar, Sector>::estimateIndex(Y<Scalar, Eigen::Dynamic> y, con
 
 template<typename Scalar, bool add>
 void cec_cce(Matrix<Scalar, Dynamic, Dynamic> &addTo, const Y<Scalar, Dynamic, Dynamic> &y) {
-    if constexpr(add)
-        addTo += (y).getdY(0).transpose() * (y).getY(1) - (y).getdY(1).transpose() * (y).getY(0);
-    else
-        addTo -= (y).getdY(0).transpose() * (y).getY(1) - (y).getdY(1).transpose() * (y).getY(0);
+    if constexpr(add) {
+        addTo += (y).block(dE).transpose() * (y).block(dX);
+        addTo -= (y).block(dXdE).transpose() * (y).block();
+    } else {
+        addTo -= (y).block(dE).transpose() * (y).block(dX);
+        addTo += (y).block(dXdE).transpose() * (y).block();
+    }
 }
 
 template<typename Scalar, typename Sector>
@@ -252,8 +255,8 @@ MatsliseND<Scalar, Sector>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, 
     vector<Y<Scalar, Dynamic>> elements;
     if (kernel.cols() > 0) {
         elements.resize(sectorCount + 1);
-        MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
-        MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
+        MatrixXs left = matchLeft.block().colPivHouseholderQr().solve(kernel);
+        MatrixXs right = matchRight.block().colPivHouseholderQr().solve(kernel);
 
         Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
 

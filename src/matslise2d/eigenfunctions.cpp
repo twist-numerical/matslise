@@ -31,7 +31,7 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
             move(MatsliseND<Scalar, Matslise2DSector<Scalar>>::eigenfunctionSteps(left, E)));
     vector<Eigenfunction2D<Scalar, withDerivative>> eigenfunctions;
     if (!steps->empty()) {
-        Eigen::Index cols = (*steps)[0].getY(0).cols();
+        Eigen::Index cols = (*steps)[0].block().cols();
         eigenfunctions.reserve(cols);
         for (Eigen::Index column = 0; column < cols; ++column) {
             eigenfunctions.push_back(
@@ -51,12 +51,12 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
                                     ArrayXs b, b_x;
                                     tie(b, b_x) = sector->template basis<true>(x);
                                     return {
-                                            c.getY(0).dot(b.matrix()),
-                                            c.getY(0).dot(b_x.matrix()),
-                                            c.getY(1).dot(b.matrix())
+                                            c.block().dot(b.matrix()),
+                                            c.block().dot(b_x.matrix()),
+                                            c.block(YDiff::dX).dot(b.matrix())
                                     };
                                 } else {
-                                    return c.getY(0).dot(sector->template basis<false>(x).matrix());
+                                    return c.block().dot(sector->template basis<false>(x).matrix());
                                 }
                             },
                             [E, steps, column, this](const ArrayXs &x, const ArrayXs &y)
@@ -99,15 +99,15 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
 
 
                                     if constexpr (withDerivative) {
-                                        MatrixXs phi = get<0>(*basis).matrix() * c.getY(0);
-                                        MatrixXs phi_x = get<1>(*basis).matrix() * c.getY(0);
-                                        MatrixXs phi_y = get<0>(*basis).matrix() * c.getY(1);
+                                        MatrixXs phi = get<0>(*basis).matrix() * c.block();
+                                        MatrixXs phi_x = get<1>(*basis).matrix() * c.block();
+                                        MatrixXs phi_y = get<0>(*basis).matrix() * c.block(YDiff::dX);
 
                                         get<0>(result).col(i) = phi;
                                         get<1>(result).col(i) = phi_x;
                                         get<2>(result).col(i) = phi_y;
                                     } else {
-                                        result.col(i) = (*basis).matrix() * c.getY(0);
+                                        result.col(i) = (*basis).matrix() * c.block();
                                     }
                                 }
 

@@ -6,6 +6,10 @@
 #include <iostream>
 
 namespace matslise {
+    enum YDiff {
+        None = 0, dX = 1, dE = 2, dXdE = 3
+    };
+
     template<typename Scalar=double, int _dimension = 1, int _cols = _dimension>
     class Y {
     public:
@@ -13,10 +17,6 @@ namespace matslise {
         static constexpr int n4 = (_dimension == Eigen::Dynamic ? _dimension : 4 * _dimension);
         static constexpr int n2 = (_dimension == Eigen::Dynamic ? _dimension : 2 * _dimension);
         Eigen::Matrix<Scalar, n4, _cols> data;
-
-        enum Derivative {
-            None = 0, dX = 1, dE = 2, dXdE = 3
-        };
 
         static Y<Scalar, _dimension, _dimension> Dirichlet(Eigen::Index N = _dimension) {
             Y<Scalar, _dimension, _dimension> y(N);
@@ -65,11 +65,11 @@ namespace matslise {
             return Y<Scalar, _dimension, _cols>(-data);
         }
 
-        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> block(Derivative d = None) {
+        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> block(YDiff d = None) {
             return data.template block<_dimension, _cols>(((int) d) * dimension(), 0, dimension(), cols());
         }
 
-        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> block(Derivative d = None) const {
+        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> block(YDiff d = None) const {
             return data.template block<_dimension, _cols>(((int) d) * dimension(), 0, dimension(), cols());
         }
 
@@ -87,22 +87,6 @@ namespace matslise {
 
         Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, n2, _cols> ydE() const {
             return data.template bottomRows<n2>(2 * dimension());
-        }
-
-        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> getY(int derivative) {
-            return block(derivative == 0 ? None : dX);
-        }
-
-        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> getY(int derivative) const {
-            return block(derivative == 0 ? None : dX);
-        }
-
-        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> getdY(int derivative) {
-            return block(derivative == 0 ? dE : dXdE);
-        }
-
-        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> getdY(int derivative) const {
-            return block(derivative == 0 ? dE : dXdE);
         }
 
         friend std::ostream &operator<<(std::ostream &os, const Y<Scalar, _dimension, _cols> &m) {
