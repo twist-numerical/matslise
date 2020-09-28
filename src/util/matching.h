@@ -87,7 +87,7 @@ getKernel(const Y<Scalar, Dynamic> &left, const Y<Scalar, Dynamic> &right, const
             kernel_list.push_back(std::move(std::get<2>(error)));
         }
     }
-    MatrixXs kernel(left.getN(), kernel_list.size());
+    MatrixXs kernel(left.dimension(), kernel_list.size());
     for (Index i = 0; i < static_cast<Index>(kernel_list.size()); ++i)
         kernel.col(i) = kernel_list[i];
     return kernel;

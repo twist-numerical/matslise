@@ -5,7 +5,7 @@
 using namespace matslise;
 using namespace std;
 
-TEST_CASE("3D: harmonic oscillator", "[matslise3d][harmonic]") {
+TEST_CASE("3D: harmonic oscillator", "[matslise3d][harmonic][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
     Matslise3D<>::Config config;

@@ -39,8 +39,8 @@ Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<
     Scalar thetaL, thetaR;
     tie(l, thetaL) = propagate(E, left, domain.min(), sectors[matchIndex]->max, use_h);
     tie(r, thetaR) = propagate(E, right, domain.max(), sectors[matchIndex]->max, use_h);
-    return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
-                      l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
+    return make_tuple(l.data[1] * r.data[0] - r.data[1] * l.data[0],
+                      l.data[3] * r.data[0] + l.data[1] * r.data[2] - (r.data[3] * l.data[0] + r.data[1] * l.data[2]),
                       thetaL - thetaR);
 }
 
@@ -197,9 +197,10 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     }
     Y<Scalar> &yr = ys[ms.matchIndex + 1];
 
-    Scalar s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
-    Scalar norm = yl.dy[0] * yl.y[1] - yl.dy[1] * yl.y[0];
-    norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
+    Scalar s = (abs(yr.data[0]) + abs(yl.data[0]) > abs(yr.data[1]) + abs(yl.data[1])) ? yl.data[0] / yr.data[0] :
+               yl.data[1] / yr.data[1];
+    Scalar norm = yl.data[2] * yl.data[1] - yl.data[3] * yl.data[0];
+    norm -= s * s * (yr.data[2] * yr.data[1] - yr.data[3] * yr.data[0]);
     if (norm > 0) {
         norm = sqrt(norm);
     } else {

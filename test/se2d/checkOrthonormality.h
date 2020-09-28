@@ -50,7 +50,9 @@ void checkProblem(const AbstractMatslise2D<Scalar> &p, const vector<tuple<Index,
     auto found = eigenvalues.begin();
     vector<Eigenfunction2D<Scalar>> eigenfunctions;
     for (; exact != exactEigenvalues.end() && found != eigenvalues.end(); ++exact, ++found) {
-        INFO("Checking eigenvalue: (" << get<0>(*exact) << ", " << get<1>(*exact) << ", " << get<2>(*exact) << ")")
+        INFO("Checking eigenvalue: (" << get<0>(*exact) << ", " << get<1>(*exact) << ", " << get<2>(*exact)
+                                      << ") against (" << get<0>(*found) << ", " << get<1>(*found) << ", "
+                                      << get<2>(*found) << ")")
         CHECK(get<0>(*exact) == get<0>(*found));
         CHECK(Approx(get<1>(*exact)).margin(tolerance) == get<1>(*found));
         CHECK(get<2>(*exact) == get<2>(*found));

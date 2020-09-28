@@ -137,11 +137,11 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart)(x);
         REQUIRE(((unsigned long) result.size()) == y0.size());
         for (Eigen::Index i = result.size() - 1; i >= 0; --i)
-            result[i] *= dy0[0] / result[0].y[1];
+            result[i] *= dy0[0] / result[0].data[1];
 
         for (Eigen::Index i = 0; i < result.size(); ++i) {
-            REQUIRE(Approx(y0[i]).margin(1e-12) == result[i].y[0]);
-            REQUIRE(Approx(dy0[i]).margin(1e-12) == result[i].y[1]);
+            REQUIRE(Approx(y0[i]).margin(1e-12) == result[i].data[0]);
+            REQUIRE(Approx(dy0[i]).margin(1e-12) == result[i].data[1]);
         }
     }
 
@@ -154,11 +154,11 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         Array<Y<double>, Dynamic, 1> result = ms.eigenfunction(e, ystart, ystart)(x);
         REQUIRE(result.size() == static_cast<long>(y0.size()));
         for (Eigen::Index i = result.size() - 1; i >= 0; --i)
-            result[i] *= dy3[0] / result[0].y[1];
+            result[i] *= dy3[0] / result[0].data[1];
 
         for (Eigen::Index i = 0; i < result.size(); ++i) {
-            REQUIRE(Approx(y3[i]).margin(1e-12) == result[i].y[0]);
-            REQUIRE(Approx(dy3[i]).margin(1e-12) == result[i].y[1]);
+            REQUIRE(Approx(y3[i]).margin(1e-12) == result[i].data[0]);
+            REQUIRE(Approx(dy3[i]).margin(1e-12) == result[i].data[1]);
         }
     }
 }

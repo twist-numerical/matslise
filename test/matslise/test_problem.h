@@ -50,11 +50,11 @@ void testOrthogonality(
         std::function<matslise::Y<Scalar>(Scalar)> f = problem.eigenfunction(iE.second, left, right, iE.first);
 
         for (int i = 0; i < xs.rows(); ++i) {
-            CHECK(Approx(f_xs[i].y[0]).margin(tolerance) == f(xs[i]).y[0]);
+            CHECK(Approx(f_xs[i].data[0]).margin(tolerance) == f(xs[i]).data[0]);
         }
 
         evaluated.emplace_back(f_xs.template unaryExpr<std::function<Scalar(const matslise::Y<Scalar> &)>>(
-                [&](const matslise::Y<Scalar> &y) { return y.y[0]; }));
+                [&](const matslise::Y<Scalar> &y) { return y.data[0]; }));
     }
 
     {

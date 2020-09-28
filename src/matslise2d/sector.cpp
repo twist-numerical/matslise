@@ -125,12 +125,12 @@ Matslise2DSector<Scalar>::basis(const typename Matslise2DSector<Scalar>::ArrayXs
         Array<Y<Scalar>, Dynamic, 1> ys = eigenfunctions[i](x);
         b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                 [](const Y<Scalar> &y) -> Scalar {
-                    return y.y[0];
+                    return y.data[0];
                 });
         if constexpr(withDerivatives)
             b_x.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
                     [](const Y<Scalar> &y) -> Scalar {
-                        return y.y[1];
+                        return y.data[1];
                     });
     }
     if constexpr(withDerivatives)
@@ -153,9 +153,9 @@ Matslise2DSector<Scalar>::basis(const Scalar &x) const {
     const Index &N = se2d->config.basisSize;
     for (Index i = 0; i < N; ++i) {
         Y<Scalar> y = this->eigenfunctions[i](x);
-        b[i] = y.y[0];
+        b[i] = y.data[0];
         if constexpr (withDerivatives)
-            b_x[i] = y.y[1];
+            b_x[i] = y.data[1];
     }
     if constexpr (withDerivatives)
         return {b, b_x};

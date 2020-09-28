@@ -16,9 +16,7 @@ Matrix<Scalar, Dynamic, Dynamic> conditionY(Y<Scalar, Dynamic> &y) {
     Matrix<Scalar, Dynamic, Dynamic> U = y.getY(0).partialPivLu().matrixLU();
     U.template triangularView<StrictlyLower>().setZero();
     U.template triangularView<Upper>().
-            template solveInPlace<OnTheRight>(y.y);
-    U.template triangularView<Upper>().
-            template solveInPlace<OnTheRight>(y.dy);
+            template solveInPlace<OnTheRight>(y.data);
     return U;
 }
 
@@ -286,8 +284,7 @@ MatsliseND<Scalar, Sector>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, 
 
         for (Index i = 0; i <= sectorCount; ++i) {
             Y<Scalar, Dynamic> &element = elements[static_cast<size_t>(i)];
-            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.y);
-            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.dy);
+            llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.data);
         }
     }
     delete[] steps;
