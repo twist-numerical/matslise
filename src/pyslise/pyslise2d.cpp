@@ -183,8 +183,8 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                  [](const Matslise2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
                          pair<MatrixXd, MatrixXd> {
                      Y<double, Dynamic> y0(m.config.basisSize);
-                     y0.getY(0) = y;
-                     y0.getY(1) = dy;
+                     y0.block() = y;
+                     y0.block(dX) = dy;
                      return unpackY(m.propagate(E, y0, a, b)).first;
                  },
                  py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
@@ -286,8 +286,8 @@ The next set of parameters are more advanced and can be useful to tweak when the
             .def("estimateIndex",
                  [](const Matslise2D<>::Sector &sector, double E, const MatrixXd &y, const MatrixXd &dy) -> Index {
                      Y<double, Dynamic> y0(sector.se2d->config.basisSize);
-                     y0.getY(0) = y;
-                     y0.getY(1) = dy;
+                     y0.block() = y;
+                     y0.block(dX) = dy;
                      return sector.propagateWithIndex(E, y0).second;
                  },
                  py::arg("E"), py::arg("y"), py::arg("dy"))

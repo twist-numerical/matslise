@@ -59,8 +59,8 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
                      for (Eigen::Index i = 0; i < ysY.size(); ++i) {
-                         ys[i] = ysY[i].y[0];
-                         dys[i] = ysY[i].y[1];
+                         ys[i] = ysY[i].y()[0];
+                         dys[i] = ysY[i].y()[1];
                      }
                      return make_tuple(ys, dys);
                  }, R""""(\
@@ -81,7 +81,7 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
                      function<Y<>(double)> calculator = m.eigenfunction(E, make_y(left), make_y(right), index);
                      return [calculator](double x) -> pair<double, double> {
                          Y<> y = calculator(x);
-                         return make_pair(y.y[0], y.y[1]);
+                         return make_pair(y.y()[0], y.y()[1]);
                      };
                  }, R""""(\
 Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
@@ -123,7 +123,7 @@ Note: only one of steps and tolerance have to be set.
                      Y<> y0;
                      double theta;
                      tie(y0, theta) = m.propagate(E, make_y(y), a, b);
-                     return make_tuple(y0.y, theta);
+                     return make_tuple(y0.y(), theta);
                  }, R""""(\
 For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b.
 
@@ -141,7 +141,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                      Y<> y0;
                      double theta;
                      tie(y0, theta) = m.propagate(E, Y<>(y, dy), a, b);
-                     return make_tuple(y0.y, y0.dy, theta);
+                     return make_tuple(y0.y(), y0.ydE(), theta);
                  }, R""""(\
 For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b. In this method the derivative with respect to E is also calculated.
 

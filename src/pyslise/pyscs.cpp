@@ -32,7 +32,7 @@ void pyscs(py::module &m) {
                      double theta = 0;
                      Y<double, Dynamic> r;
                      tie(r, theta) = m.propagate(E, packY(y), a, b, true);
-                     return make_pair(make_pair(r.getY(0), r.getY(1)), theta);
+                     return make_pair(make_pair(r.block(), r.block(dX)), theta);
                  })
             .def("propagatePsi", &Matscs<>::propagatePsi)
             .def("__sector", [](Matscs<> &p, int i) -> Matscs<>::Sector * {
