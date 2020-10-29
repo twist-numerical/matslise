@@ -20,7 +20,7 @@ const correct = [
             (x, y) => (1 + x * x) * (1 + y * y),
             -5.5, 5.5, -5.5, 5.5,
             {
-                tolerance: 1e-5,
+                tolerance: 1e-8,
                 xSymmetric: true
             });
         const eigenvalues = matslise.eigenvaluesByIndex(0, 13);
