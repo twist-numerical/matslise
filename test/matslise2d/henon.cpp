@@ -23,8 +23,8 @@ const vector<tuple<Index, double, Index>> HENON_EIGENVALUES{
 
 TEST_CASE("Eigenfunctions henon", "[matslise2d][eigenfunctions][henon][auto]") {
     Matslise2D<>::Config config;
-    config.basisSize = 14;
-    config.tolerance = 1e-9;
+    config.basisSize = 16;
+    config.tolerance = 1e-10;
     config.stepsPerSector = 1;
 
     Matslise2D<> problem(
