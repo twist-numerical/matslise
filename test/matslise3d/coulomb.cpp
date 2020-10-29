@@ -5,6 +5,7 @@
 using namespace matslise;
 using namespace std;
 
+/* IGNORING FOR NOW
 TEST_CASE("3D: coulomb", "[matslise3d][coulomb][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
@@ -31,3 +32,4 @@ TEST_CASE("3D: coulomb", "[matslise3d][coulomb][slow]") {
         cout << Em.first << " (±" << matslise.eigenvalueError(Em.first) << ") (x" << Em.second << ")" << endl;
     }
 }
+*/

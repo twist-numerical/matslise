@@ -235,7 +235,7 @@ MatsliseND<Scalar, Sector>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, 
     steps[sectorCount] = dirichletBoundary;
     auto *U = new MatrixXs[sectorCount];
 
-    for (int i = sectorCount - 1; i > matchIndex; --i) {
+    for (Index i = sectorCount - 1; i > matchIndex; --i) {
         endSteps[i] = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
         if (i + 1 < sectorCount)
             U[i + 1] = conditionY(endSteps[i]);
@@ -289,6 +289,16 @@ MatsliseND<Scalar, Sector>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, 
             Y<Scalar, Dynamic> &element = elements[static_cast<size_t>(i)];
             llt.matrixL().transpose().template solveInPlace<OnTheRight>(element.data);
         }
+
+        /*
+        cout << "Eigenfunction steps: " << E << endl;
+        for(Index i = 0; i < kernel.cols(); ++i) {
+            for (auto &y : elements)
+                cout << y.block().transpose().row(i) << endl;
+            cout << "\n" << endl;
+        }
+        cout << "\n\n" << endl;
+         */
     }
     delete[] steps;
     delete[] endSteps;

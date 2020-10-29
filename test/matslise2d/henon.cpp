@@ -99,24 +99,25 @@ const vector<tuple<Index, double, Index>> HENON_MORE_EIGENVALUES{
         {24, 2 * 6.85343062732831, 2},
         {26, 2 * 6.99893192820090, 1},
         {27, 2 * 6.99938690825129, 1},
-        {28, 2 * 7.65948550690946, 2}
-        /*  {30, 2 * 7.69772136553152, 1},
-          {31, 2 * 7.73688473693607, 1},
-          {32, 2 * 7.83273518682762, 2},
-          {34, 2 * 8.00942477463143, 2},
-          {36, 2 * 8.55402322299586, 1},
-          {37, 2 * 8.57635148658287, 2},
-          {39, 2 * 8.67792887113521, 2},
-          {41, 2 * 8.81132713081544, 1},
-          {42, 2 * 8.81518847088363, 1},
-          {43, 2 * 9.02172330707064, 2},
-          {45, 2 * 9.44405461567860, 1},*/
+        {28, 2 * 7.65948550690946, 2},
+        {30, 2 * 7.69772136553152, 1},
+        /* LARGE EIGENVALUES REQUIRE A LARGER DOMAIN
+        {31, 2 * 7.73688473693607, 1},
+        {32, 2 * 7.83273518682762, 2},
+        {34, 2 * 8.00942477463143, 2},
+        {36, 2 * 8.55402322299586, 1},
+        {37, 2 * 8.57635148658287, 2},
+        {39, 2 * 8.67792887113521, 2},
+        {41, 2 * 8.81132713081544, 1},
+        {42, 2 * 8.81518847088363, 1},
+        {43, 2 * 9.02172330707064, 2},
+        {45, 2 * 9.44405461567860, 1}, */
 };
 
 
 TEST_CASE("Eigenfunctions henon extended", "[matslise2d][eigenfunctions][henon][half][auto][slow]") {
     Matslise2D<>::Config config;
-    config.basisSize = 30;
+    config.basisSize = 20;
     config.tolerance = 1e-9;
     config.stepsPerSector = 1;
     config.xSymmetric = true;
@@ -125,7 +126,7 @@ TEST_CASE("Eigenfunctions henon extended", "[matslise2d][eigenfunctions][henon][
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * y * (x * x - y * y / 3);
             },
-            {-10., 10., -10., 10.}, config);
+            {-8., 8., -8., 8.}, config);
 
     checkProblem(problem, HENON_MORE_EIGENVALUES);
 }

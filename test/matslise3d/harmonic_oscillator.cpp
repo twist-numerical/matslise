@@ -5,6 +5,7 @@
 using namespace matslise;
 using namespace std;
 
+/* IGNORING FOR NOW
 TEST_CASE("3D: harmonic oscillator", "[matslise3d][harmonic][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
@@ -25,3 +26,4 @@ TEST_CASE("3D: harmonic oscillator", "[matslise3d][harmonic][slow]") {
         cout << get<0>(iEm) << ", " << get<1>(iEm) << ", " << get<2>(iEm) << endl;
     }
 }
+*/

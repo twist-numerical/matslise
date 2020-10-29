@@ -60,8 +60,8 @@ else ()
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp
             matscs/propagatePsi.cpp matscs/propagateTheta.cpp
-            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp se2d/derivatives.cpp
-            se2d/coulomb.cpp se2d/pentagon.cpp
+            matslise2d/henon.cpp matslise2d/ixaru.cpp matslise2d/zero.cpp matslise2d/quartic.cpp matslise2d/derivatives.cpp
+            matslise2d/coulomb.cpp matslise2d/pentagon.cpp
             matslise3d/coulomb.cpp matslise3d/harmonic_oscillator.cpp
             util/quadrature.cpp util/calculateEta.cpp util/rectangle.cpp util/heap.cpp
             main.cpp)
