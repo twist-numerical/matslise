@@ -2,7 +2,7 @@ import pyslise
 import sys
 import doctest
 
-failures, test_count = doctest.testmod(pyslise)
+failures, test_count = doctest.testmod(pyslise, verbose=True)
 
 assert test_count > 0, "No tests were found"
 

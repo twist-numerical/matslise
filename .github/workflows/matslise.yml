@@ -156,7 +156,7 @@ jobs:
         working-directory: ./build
       - name: test pyslise
         run: |
-          python test/pyslise/test_docs.py --verbose
+          python test/pyslise/test_docs.py
 
   matslise_wasm_test:
     name: Test matslise.wasm
