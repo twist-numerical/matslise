@@ -144,7 +144,7 @@ jobs:
           cmake --build . --target pyslise_install --config Release
         working-directory: ./build
         env:
-          CXXFLAGS: "-DMS_WIN64=1 -D_hypot=hypot -static-libgcc -static"
+          CXXFLAGS: "-DMS_WIN64=1 -D_hypot=hypot -static-libgcc -static-libstdc++ -static"
           LDFLAGS: "-static"
       - if: ${{!startsWith(matrix.os, 'windows')}}
         name: CMake (not Windows)
