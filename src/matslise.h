@@ -12,13 +12,13 @@
 #include "util/y.h"
 #include "util/sectorbuilder.h"
 #include "util/rectangle.h"
-
-#define MATSLISE_HMAX_delta 17
-#define MATSLISE_ETA_delta 8
-#define MATSLISE_ETA_h 10
-#define MATSLISE_N 16
+#include "./formula_constants.h"
 
 namespace matslise {
+    enum Direction {
+        none, forward, backward
+    };
+
     template<typename Scalar>
     class AbstractMatslise {
     public:
@@ -29,9 +29,9 @@ namespace matslise {
 
     public:
         const std::function<Scalar(Scalar)> potential;
-        const Rectangle<1, Scalar> domain;
+        const Rectangle<Scalar, 1> domain;
 
-        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Rectangle<1, Scalar> &domain)
+        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Rectangle<Scalar, 1> &domain)
                 : potential(potential), domain(domain) {
         }
 
@@ -110,7 +110,8 @@ namespace matslise {
     class Matslise : public AbstractMatslise<_Scalar> {
     public:
         typedef _Scalar Scalar;
-        static const int order = 16;
+        static constexpr int order = MATSLISE_HMAX_delta-1;
+        static constexpr bool refineSectors = false;
 
         class Sector;
 
@@ -132,7 +133,7 @@ namespace matslise {
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                  const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
                 : AbstractMatslise<Scalar>(V, {xmin, xmax}), tolerance(tolerance) {
-            auto buildSectors = sectorBuilder(this, domain.min, domain.max);
+            auto buildSectors = sectorBuilder(this, domain.min(), domain.max());
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();
@@ -183,9 +184,11 @@ namespace matslise {
             const Matslise<Scalar> *s;
             std::array<Scalar, MATSLISE_N> vs;
             Scalar min, max, h;
-            bool backward;
+            Direction direction = none;
 
-            Sector(const Matslise *problem, const Scalar &min, const Scalar &max, bool backward);
+            Sector(const Matslise *problem, const Scalar &min, const Scalar &max, Direction direction);
+
+            void setDirection(Direction);
 
             void calculateTCoeffs();
 
@@ -257,5 +260,6 @@ namespace matslise {
 
 #include "matscs.h"
 #include "matslise2d.h"
+#include "matslise3d.h"
 
 #endif //SCHRODINGER_MATSLISE_H

@@ -37,10 +37,10 @@ tuple<Scalar, Scalar, Scalar>
 Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, left, domain.min, sectors[matchIndex]->max, use_h);
-    tie(r, thetaR) = propagate(E, right, domain.max, sectors[matchIndex]->max, use_h);
-    return make_tuple(l.y[1] * r.y[0] - r.y[1] * l.y[0],
-                      l.dy[1] * r.y[0] + l.y[1] * r.dy[0] - (r.dy[1] * l.y[0] + r.y[1] * l.dy[0]),
+    tie(l, thetaL) = propagate(E, left, domain.min(), sectors[matchIndex]->max, use_h);
+    tie(r, thetaR) = propagate(E, right, domain.max(), sectors[matchIndex]->max, use_h);
+    return make_tuple(l.data[1] * r.data[0] - r.data[1] * l.data[0],
+                      l.data[3] * r.data[0] + l.data[1] * r.data[2] - (r.data[3] * l.data[0] + r.data[1] * l.data[2]),
                       thetaL - thetaR);
 }
 
@@ -102,15 +102,15 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
         c = ia + 1 < ib || tb - ta < 1e-5 || depth % 2 == 0
             ? .5 * (a + b)
             : ((tb - ia) * a - (ta - ia) * b) / (tb - ta);
-        if ((tb - ta < 0.01 && depth > 3) || depth > 20) {
+        if ((tb - ta < 0.01 && depth > 3) || depth > 30) {
             eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, true));
         } else {
             tc = get<2>(ms->matchingError(c, left, right)) / constants<Scalar>::PI;
             if (isnan(tc)) {
                 // cerr << "Matslise::computeEigenvalues(): some interval converted to NaN" << endl;
             } else if (ia + 1 < ib) {
-                toCheck.push(make_tuple(a, ta, c, tc, depth));
-                toCheck.push(make_tuple(c, tc, b, tb, depth));
+                toCheck.push(make_tuple(a, ta, c, tc, 1 + depth));
+                toCheck.push(make_tuple(c, tc, b, tb, 1 + depth));
             } else {
                 if (abs(tc - ia) < 1e-8)
                     eigenvalues.push_back(newtonIteration<Scalar>(ms, c, left, right, true));
@@ -197,9 +197,10 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     }
     Y<Scalar> &yr = ys[ms.matchIndex + 1];
 
-    Scalar s = (abs(yr.y[0]) + abs(yl.y[0]) > abs(yr.y[1]) + abs(yl.y[1])) ? yl.y[0] / yr.y[0] : yl.y[1] / yr.y[1];
-    Scalar norm = yl.dy[0] * yl.y[1] - yl.dy[1] * yl.y[0];
-    norm -= s * s * (yr.dy[0] * yr.y[1] - yr.dy[1] * yr.y[0]);
+    Scalar s = (abs(yr.data[0]) + abs(yl.data[0]) > abs(yr.data[1]) + abs(yl.data[1])) ? yl.data[0] / yr.data[0] :
+               yl.data[1] / yr.data[1];
+    Scalar norm = yl.data[2] * yl.data[1] - yl.data[3] * yl.data[0];
+    norm -= s * s * (yr.data[2] * yr.data[1] - yr.data[3] * yr.data[0]);
     if (norm > 0) {
         norm = sqrt(norm);
     } else {
@@ -229,17 +230,17 @@ Iterator findSector(const Scalar &x, Iterator a, Iterator b) {
 template<typename Scalar>
 typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
         const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
-    shared_ptr<vector<Y<Scalar>>> steps = make_shared<vector<Y<Scalar>>>(
+    shared_ptr<vector<Y<Scalar >>> steps = make_shared<vector<Y<Scalar >>>(
             std::move(propagationSteps(*this, E, left, right)));
 
     return {[this, E, steps](const Scalar &x) {
         auto sector = findSector(x, sectors.begin(), sectors.end());
         int sectorIndex = sector - sectors.begin();
 
-        if ((**sector).backward) {
-            return (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x);
-        } else {
+        if ((**sector).direction == forward) {
             return (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x);
+        } else {
+            return (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x);
         }
     }, [this, E, steps](const Array<Scalar, Dynamic, 1> &x) {
         Eigen::Index n = x.size();
@@ -256,10 +257,10 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
                 sector = findSector(x[i], sector + 1, sectors.end());
                 sectorIndex = sector - sectors.begin();
             }
-            if ((**sector).backward) {
-                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]);
-            } else {
+            if ((**sector).direction == forward) {
                 ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x[i]);
+            } else {
+                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]);
             }
 
         }

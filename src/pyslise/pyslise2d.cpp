@@ -1,10 +1,7 @@
 #include "module.h"
 
 void pyslise2d(py::module &m) {
-    py::class_<AbstractMatslise2D<double>>(m, "AbstractPyslise2D")
-            .def("firstEigenvalue", [](const Matslise2D<> &se2d) -> double {
-                return se2d.firstEigenvalue();
-            })
+    py::class_<AbstractMatslise2D<double>, shared_ptr<AbstractMatslise2D<double>>>(m, "AbstractPyslise2D")
             .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
 
@@ -92,17 +89,18 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 :param float E: the eigenvalue.
 
 :returns: a list of functions (depending on multiplicity) each taking a x-value and a y-value and returning the value, the x-derivative and the y-derivative of that eigenfunction in (x, y).
-)"""", py::arg("E"));
+)"""", py::arg("E"))
+            .def("estimateIndex", &AbstractMatslise2D<double>::estimateIndex, py::arg("E"));
 
 
-    py::class_<Matslise2D<>, AbstractMatslise2D<double>>(m, "Pyslise2D")
+    py::class_<Matslise2D<>, AbstractMatslise2D<double>, shared_ptr<Matslise2D<double>>>(m, "Pyslise2D")
             .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymin, double ymax,
                              bool symmetric,
                              int x_count, double x_tol,
                              int y_count, double y_tol,
-                             double tol,
-                             int N, int grid_points) {
+                             double tol, int N, int stepsPerSector) {
+                     py::gil_scoped_release release;
                      if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
                      }
@@ -121,20 +119,26 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                          else
                              throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
                      }
-                     Options1<> o1;
+                     Matslise2D<>::Config config;
+                     config.tolerance = tol;
+                     config.basisSize = N;
+                     config.xSymmetric = symmetric;
+                     config.stepsPerSector = stepsPerSector;
+
                      if (x_count != -1)
-                         o1.sectorCount(x_count);
+                         config.xSectorBuilder = sector_builder::uniform<Matslise<>>(x_count);
                      else
-                         o1.tolerance(x_tol);
-                     Options2<> o2;
-                     o2.N(N)
-                             .gridPoints(grid_points)
-                             .nested(o1.symmetric(symmetric));
+                         config.xSectorBuilder = sector_builder::automatic<Matslise<>>(x_tol);
+
                      if (y_count != -1)
-                         o2.sectorCount(y_count);
+                         config.ySectorBuilder = sector_builder::uniform<Matslise2D<>>(y_count);
                      else
-                         o2.tolerance(y_tol);
-                     return make_unique<Matslise2D<>>(V, Rectangle<2, double>{{xmin, xmax}, ymin, ymax}, o2);
+                         config.ySectorBuilder = sector_builder::automatic<Matslise2D<>>(y_tol);
+
+                     return make_unique<Matslise2D<>>([V](double x, double y) -> double {
+                         py::gil_scoped_acquire acquire;
+                         return V(x, y);
+                     }, Rectangle<double, 2>{xmin, xmax, ymin, ymax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -158,8 +162,7 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("symmetric") = false,
                  py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
-                 py::arg("tolerance") = -1,
-                 py::arg("N") = 12, py::arg("grid_points") = 60)
+                 py::arg("tolerance") = -1, py::arg("N") = 12, py::arg("steps_per_sector") = 3)
             .def("matchingError", [](const Matslise2D<> &se2d, double const &E) -> pair<double, double> {
                 return se2d.matchingError(E);
             }, R""""(\
@@ -179,34 +182,36 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
             .def("__propagate",
                  [](const Matslise2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
                          pair<MatrixXd, MatrixXd> {
-                     Y<double, Dynamic> y0(m.N);
-                     y0.getY(0) = y;
-                     y0.getY(1) = dy;
+                     Y<double, Dynamic> y0(m.config.basisSize);
+                     y0.block() = y;
+                     y0.block(dX) = dy;
                      return unpackY(m.propagate(E, y0, a, b)).first;
                  },
                  py::arg("E"), py::arg("y"), py::arg("dy"), py::arg("a"), py::arg("b"))
-            .def_readonly("__N", &Matslise2D<>::N, "The number of basis functions used on each sector")
+            .def_property_readonly("__N", [](const Matslise2D<> &m) {
+                return m.config.basisSize;
+            }, "The number of basis functions used on each sector")
             .def_property_readonly("__M", [](Matslise2D<> &p) -> vector<MatrixXd> * {
-                auto l = new vector<MatrixXd>(static_cast<vector<MatrixXd>::size_type>(p.sectorCount - 1));
-                for (int i = 0; i < p.sectorCount - 1; ++i)
+                auto l = new vector<MatrixXd>(static_cast<vector<MatrixXd>::size_type>(p.sectors.size() - 1));
+                for (unsigned long i = 0; i < p.sectors.size() - 1; ++i)
                     l->at(i) = p.M[i];
                 return l;
             })
-            .def_property_readonly("__sectors", [](Matslise2D<> &p) -> std::vector<Matslise2D<>::Sector *> {
-                vector<Matslise2D<>::Sector *> l(p.sectorCount);
-                for (int i = 0; i < p.sectorCount; ++i)
-                    l[i] = p.sectors[i];
-                return l;
+            .def_property_readonly("__matchpoint", [](const Matslise2D<> &p) -> double {
+                return p.sectors[p.matchIndex]->max;
+            })
+            .def_property_readonly("__sectors", [](const Matslise2D<> &p) {
+                return p.sectors;
             });
 
-    py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>>(m, "Pyslise2DHalf")
+    py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>, shared_ptr<Matslise2DHalf<double>>>(m, "Pyslise2DHalf")
             .def(py::init([](const function<double(double, double)> &V,
                              double xmin, double xmax, double ymax,
                              bool symmetric,
                              int x_count, double x_tol,
                              int y_count, double y_tol,
-                             double tol,
-                             int N, int grid_points) {
+                             double tol, int N, int stepsPerSector) {
+                     py::gil_scoped_release release;
                      if (x_count != -1 && x_tol != -1) {
                          throw invalid_argument("Not both 'x_count' and 'x_tol' can be set.");
                      }
@@ -225,20 +230,26 @@ Just like Pyslise2D::calculateError(E) computes this function the discontinuity 
                          else
                              throw invalid_argument("One of 'y_count' and 'y_tol' must be set.");
                      }
-                     Options1<> o1;
+                     Matslise2D<>::Config config;
+                     config.tolerance = tol;
+                     config.basisSize = N;
+                     config.xSymmetric = symmetric;
+                     config.stepsPerSector = stepsPerSector;
+
                      if (x_count != -1)
-                         o1.sectorCount(x_count);
+                         config.xSectorBuilder = sector_builder::uniform<Matslise<>>(x_count);
                      else
-                         o1.tolerance(x_tol);
-                     Options2<> o2;
-                     o2.N(N)
-                             .gridPoints(grid_points)
-                             .nested(o1.symmetric(symmetric));
+                         config.xSectorBuilder = sector_builder::automatic<Matslise<>>(x_tol);
+
                      if (y_count != -1)
-                         o2.sectorCount(y_count);
+                         config.ySectorBuilder = sector_builder::uniform<Matslise2D<>>(y_count);
                      else
-                         o2.tolerance(y_tol);
-                     return make_unique<Matslise2DHalf<>>(V, Rectangle<2, double>{{xmin, xmax}, -ymax, ymax}, o2);
+                         config.ySectorBuilder = sector_builder::automatic<Matslise2D<>>(y_tol);
+
+                     return make_unique<Matslise2DHalf<>>([V](double x, double y) -> double {
+                         py::gil_scoped_acquire acquire;
+                         return V(x, y);
+                     }, Rectangle<double, 2>{xmin, xmax, -ymax, ymax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -262,16 +273,24 @@ The next set of parameters are more advanced and can be useful to tweak when the
                  py::arg("symmetric") = false,
                  py::arg("x_count") = -1, py::arg("x_tolerance") = -1,
                  py::arg("y_count") = -1, py::arg("y_tolerance") = -1,
-                 py::arg("tolerance") = -1,
-                 py::arg("N") = 12, py::arg("grid_points") = 60);
+                 py::arg("tolerance") = -1, py::arg("N") = 12, py::arg("steps_per_sector") = 3);
 
     py::class_<Matslise2D<>::Sector, std::unique_ptr<Matslise2D<>::Sector, py::nodelete>>(m, "Pyslise2DSector")
             .def_property_readonly("eigenvalues", [](Matslise2D<>::Sector &s) -> vector<double> * {
-                auto l = new vector<double>(s.se2d->N);
+                auto l = new vector<double>(s.se2d->config.basisSize);
                 for (unsigned long i = 0; i < l->size(); ++i)
                     l->at(i) = s.eigenvalues[i];
                 return l;
             })
+            .def("error", &Matslise2D<>::Sector::error)
+            .def("estimateIndex",
+                 [](const Matslise2D<>::Sector &sector, double E, const MatrixXd &y, const MatrixXd &dy) -> Index {
+                     Y<double, Dynamic> y0(sector.se2d->config.basisSize);
+                     y0.block() = y;
+                     y0.block(dX) = dy;
+                     return sector.propagateWithIndex(E, y0).second;
+                 },
+                 py::arg("E"), py::arg("y"), py::arg("dy"))
             .def_property_readonly("matslise",
                                    [](Matslise2D<>::Sector &s) -> AbstractMatslise<double> * {
                                        return s.matslise.get();

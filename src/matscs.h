@@ -6,11 +6,6 @@
 #include <vector>
 #include <functional>
 
-#define MATSCS_HMAX_delta 7
-#define MATSCS_ETA_delta 3
-#define MATSCS_ETA_h 6
-#define MATSCS_N 9
-
 namespace matslise {
     template<typename _Scalar=double>
     class Matscs {
@@ -20,7 +15,8 @@ namespace matslise {
         typedef Eigen::Matrix<std::complex<Scalar>, Eigen::Dynamic, Eigen::Dynamic> MatrixXcs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, 1> ArrayXs;
         typedef Eigen::Array<Scalar, Eigen::Dynamic, Eigen::Dynamic> ArrayXXs;
-        static const int order = 10;
+        static constexpr int order = MATSCS_HMAX_delta - 1;
+        static constexpr bool refineSectors = false;
 
         class Sector;
 
@@ -32,7 +28,7 @@ namespace matslise {
         int matchIndex;
     public:
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
-               int n, const Scalar &xmin, const Scalar &xmax, SectorBuilder<Matscs<Scalar>> sectorBuilder) :
+               int n, const Scalar &xmin, const Scalar &xmax, SectorBuilder <Matscs<Scalar>> sectorBuilder) :
                 V(V), n(n), xmin(xmin), xmax(xmax) {
             auto sectorsBuild = sectorBuilder(this, xmin, xmax);
             sectors = std::move(sectorsBuild.sectors);
@@ -70,23 +66,24 @@ namespace matslise {
     public:
 
         class Sector {
-        private:
-            int n;
         public:
+            const Eigen::Index n;
             static const bool expensive = false;
 
             Eigen::Array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_delta, MATSCS_HMAX_delta>
                     t_coeff;
-            Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> t_coeff_h[MATSCS_ETA_h];
+            std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_ETA_h> t_coeff_h;
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> diagonalize;
             std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> vs;
             Scalar min, max, h;
-            bool backward;
+            Direction direction = none;
 
-            Sector(const Matscs *problem, const Scalar &min, const Scalar &max, bool backward = false);
+            Sector(const Matscs *problem, const Scalar &min, const Scalar &max, Direction);
 
             Sector(const std::array<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, MATSCS_N> &vs,
-                   const Scalar &min, const Scalar &max, bool backward = false);
+                   const Scalar &min, const Scalar &max, Direction);
+
+            void setDirection(Direction);
 
             void calculateTCoeffs();
 

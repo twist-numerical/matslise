@@ -5,15 +5,15 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 message("Matslise")
 if (MSVC)
     add_compile_options(
-    /wd4267 # possible loss of data size_t -> int
-    /wd4244 # possible loss of data size_t -> int
-    /wd4661 # no suitable definition provided for explicit template instantiation request
-    /wd4820 #'bytes' bytes padding added after construct 'member_name'
-    /wd4464  # relative include path contains '..'
-    /DNOMINMAX
-    /D_USE_MATH_DEFINES
-    /bigobj)
-else()
+            /wd4267 # possible loss of data size_t -> int
+            /wd4244 # possible loss of data size_t -> int
+            /wd4661 # no suitable definition provided for explicit template instantiation request
+            /wd4820 #'bytes' bytes padding added after construct 'member_name'
+            /wd4464  # relative include path contains '..'
+            /DNOMINMAX
+            /D_USE_MATH_DEFINES
+            /bigobj)
+else ()
     add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
     OPTION(OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
     IF (OPTIMIZE)
@@ -24,9 +24,11 @@ endif ()
 
 SET(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
-        matscs/matscs.cpp matscs/sector.cpp
-        matslise2d/halfrange.cpp matslise2d/eigenvalues.cpp matslise2d/eigenfunctions.cpp
-        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp schrodinger.h
+        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
+        matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
+        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
+        matslise3d/matslise3d.cpp matslise3d/sector.cpp
+        matsliseNd/matsliseNd.cpp matsliseNd/sector.cpp
         util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
 
 if (DEFINED EMSCRIPTEN)
@@ -46,10 +48,26 @@ else ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
-    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h
+    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h formula_constants.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
     install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
+
+    OPTION(PROFILE "Compile with parallel algorithms." OFF)
+    if (PROFILE)
+        ADD_DEFINITIONS(-DMATSLISE_PROFILING)
+    ENDIF (PROFILE)
+
+    OPTION(PARALLEL "Compile with parallel algorithms." OFF)
+    IF (PARALLEL)
+        if (PROFILE)
+            message("only one of 'parallel' or 'profile' can be on, ignoring 'parallel'")
+        else ()
+            ADD_DEFINITIONS(-DMATSLISE_parallel -DEIGEN_DONT_PARALLELIZE)
+            find_package(OpenMP REQUIRED)
+            target_link_libraries(matslise PUBLIC OpenMP::OpenMP_CXX)
+        ENDIF ()
+    ENDIF (PARALLEL)
 
     OPTION(LONG_DOUBLE "Option description" OFF)
     IF (LONG_DOUBLE)
@@ -88,6 +106,7 @@ else ()
                         m
                         Threads::Threads
                         ${CMAKE_DL_LIBS}
+                        ${CMAKE_DL_LIBS}
                         ${BLAS_LIBRARIES})
             endforeach ()
             add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
@@ -102,8 +121,11 @@ else ()
         add_subdirectory(../cmake/pybind11 pybind11)
         message("-- python: ${PYTHON_EXECUTABLE}")
         pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
-                pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp)
+                pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
         target_link_libraries(pyslise PRIVATE ${libraries})
+        IF (PARALLEL)
+            target_link_libraries(pyslise PUBLIC OpenMP::OpenMP_CXX)
+        ENDIF (PARALLEL)
 
         configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
         configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)

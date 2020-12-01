@@ -59,8 +59,8 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
                      ArrayXd ys(ysY.size());
                      ArrayXd dys(ysY.size());
                      for (Eigen::Index i = 0; i < ysY.size(); ++i) {
-                         ys[i] = ysY[i].y[0];
-                         dys[i] = ysY[i].y[1];
+                         ys[i] = ysY[i].y()[0];
+                         dys[i] = ysY[i].y()[1];
                      }
                      return make_tuple(ys, dys);
                  }, R""""(\
@@ -81,7 +81,7 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
                      function<Y<>(double)> calculator = m.eigenfunction(E, make_y(left), make_y(right), index);
                      return [calculator](double x) -> pair<double, double> {
                          Y<> y = calculator(x);
-                         return make_pair(y.y[0], y.y[1]);
+                         return make_pair(y.y()[0], y.y()[1]);
                      };
                  }, R""""(\
 Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
@@ -94,7 +94,7 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
 )"""",
                  py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
             .def_property_readonly("domain", [](const AbstractMatslise<double> &matslise) {
-                return std::pair<double, double>(matslise.domain.min, matslise.domain.max);
+                return std::pair<double, double>(matslise.domain.min(), matslise.domain.max());
             });
 
 
@@ -123,7 +123,7 @@ Note: only one of steps and tolerance have to be set.
                      Y<> y0;
                      double theta;
                      tie(y0, theta) = m.propagate(E, make_y(y), a, b);
-                     return make_tuple(y0.y, theta);
+                     return make_tuple(y0.y(), theta);
                  }, R""""(\
 For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b.
 
@@ -141,7 +141,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                      Y<> y0;
                      double theta;
                      tie(y0, theta) = m.propagate(E, Y<>(y, dy), a, b);
-                     return make_tuple(y0.y, y0.dy, theta);
+                     return make_tuple(y0.y(), y0.ydE(), theta);
                  }, R""""(\
 For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b. In this method the derivative with respect to E is also calculated.
 
@@ -182,7 +182,9 @@ Note: only one of steps and tolerance have to be set.
     py::class_<Matslise<>::Sector>(m, "PysliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
             .def_readonly("max", &Matslise<>::Sector::max)
-            .def_readonly("backward", &Matslise<>::Sector::backward)
+            .def_property_readonly("forward", [](const Matslise<>::Sector &s) -> bool {
+                return s.direction == Direction::forward;
+            })
             .def_property_readonly("v", [](const Matslise<>::Sector &s) -> vector<double> {
                 vector<double> r(MATSLISE_N);
                 for (int i = 0; i < MATSLISE_N; ++i)

@@ -1,97 +1,16 @@
 #include "../matslise.h"
 #include <map>
+#include "../util/matching.h"
 
 using namespace Eigen;
 using namespace matslise;
 using namespace std;
 
-template<typename Scalar>
-Array<Scalar, Dynamic, 1> cec_cce(const Y<Scalar, Dynamic, Dynamic> &y) {
-    return ((y).getdY(0).transpose() * (y).getY(1) - (y).getY(0).transpose() * (y).getdY(1)).diagonal().array();
-}
-
-template<typename Scalar>
-vector<Y<Scalar, Dynamic>>
-Matslise2D<Scalar>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, const Scalar &E) const {
-    auto *steps = new Y<Scalar, Dynamic>[sectorCount + 1];
-    auto *endSteps = new Y<Scalar, Dynamic>[sectorCount];
-
-    steps[0] = yLeft;
-    steps[sectorCount] = dirichletBoundary;
-    auto *U = new MatrixXs[sectorCount];
-
-    for (int i = sectorCount - 1; i > matchIndex; --i) {
-        endSteps[i] = i < sectorCount - 1 ? (MatrixXs)(M[i].transpose()) * steps[i + 1] : steps[i + 1];
-        if (i + 1 < sectorCount)
-            U[i + 1] = conditionY(endSteps[i]);
-        steps[i] = sectors[i]->propagate(E, endSteps[i], sectors[i]->max, sectors[i]->min, true);
-    }
-    const Y<Scalar, Dynamic> matchRight = steps[matchIndex + 1];
-
-    U[0] = MatrixXs::Identity(N, N);
-    for (int i = 0; i <= matchIndex; ++i) {
-        endSteps[i] = sectors[i]->propagate(E, steps[i], sectors[i]->min, sectors[i]->max, true);
-        steps[i + 1] = M[i] * endSteps[i];
-        U[i + 1] = conditionY(steps[i + 1]);
-    }
-    const Y<Scalar, Dynamic> matchLeft = steps[matchIndex + 1];
-
-    ColPivHouseholderQR<MatrixXs> left_solver(matchLeft.getY(0).transpose());
-    ColPivHouseholderQR<MatrixXs> right_solver(matchRight.getY(0).transpose());
-    FullPivLU<MatrixXs> lu(
-            left_solver.solve(matchLeft.getY(1).transpose()).transpose()
-            - right_solver.solve(matchRight.getY(1).transpose()).transpose());
-    lu.setThreshold(1e-4);
-
-    vector<Y<Scalar, Dynamic>> elements;
-    if (lu.dimensionOfKernel() > 0) {
-        elements.resize(sectorCount + 1);
-        MatrixXs kernel = lu.kernel();
-
-        MatrixXs left = matchLeft.getY(0).colPivHouseholderQr().solve(kernel);
-        MatrixXs right = matchRight.getY(0).colPivHouseholderQr().solve(kernel);
-
-        Y<Scalar, Dynamic> elementMatchRight = matchRight * right;
-
-        ArrayXs normalizer = ArrayXs::Zero(left.cols(), 1);
-        for (int i = matchIndex + 1; i >= 0; --i) {
-            elements[i] = steps[i] * left;
-            if (i <= matchIndex)
-                normalizer += cec_cce(endSteps[i] * left) - cec_cce(elements[i]);
-            if (i > 0) {
-                U[i].template triangularView<Upper>().
-                        template solveInPlace<OnTheLeft>(left);
-            }
-        }
-
-        for (int i = matchIndex + 1; i < sectorCount; ++i) {
-            elements[static_cast<size_t>(i + 1)] = endSteps[i] * right;
-            normalizer += cec_cce(elements[i + 1]) -
-                          cec_cce(i > matchIndex + 1 ? steps[i] * right : elementMatchRight);
-            if (i + 1 < sectorCount) {
-                U[i + 1].template triangularView<Upper>().
-                        template solveInPlace<OnTheLeft>(right);
-            }
-        }
-
-        normalizer = normalizer.unaryExpr([](const Scalar &s) -> Scalar {
-            return s <= 0 ? 1 : Scalar(1.) / sqrt(s);
-        });
-
-        for (int i = 0; i <= sectorCount; ++i) {
-            elements[static_cast<size_t>(i)] *= normalizer.matrix().asDiagonal();
-        }
-    }
-    delete[] steps;
-    delete[] endSteps;
-    delete[] U;
-    return elements;
-}
 
 template<typename Scalar>
 Index findSectorIndex(const Matslise2D<Scalar> *matslise2D, const Scalar &y) {
     Eigen::Index a = 0;
-    Eigen::Index b = matslise2D->sectorCount;
+    Eigen::Index b = matslise2D->sectors.size();
     while (a + 1 < b) {
         Eigen::Index c = (a + b) / 2;
         if (y < matslise2D->sectors[c]->min)
@@ -108,40 +27,41 @@ template<typename Scalar>
 template<bool withDerivative>
 vector<Eigenfunction2D<Scalar, withDerivative>>
 Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &E) const {
-    shared_ptr<vector<Y<Scalar, Dynamic>>> steps
-            = make_shared<vector<Y<Scalar, Dynamic>>>(move(eigenfunctionSteps(left, E)));
+    shared_ptr<vector<Y<Scalar, Dynamic>>> steps = make_shared<vector<Y<Scalar, Dynamic>>>(
+            move(MatsliseND<Scalar, Matslise2DSector<Scalar>>::eigenfunctionSteps(left, E)));
     vector<Eigenfunction2D<Scalar, withDerivative>> eigenfunctions;
     if (!steps->empty()) {
-        Eigen::Index cols = (*steps)[0].getY(0).cols();
+        Eigen::Index cols = (*steps)[0].block().cols();
         eigenfunctions.reserve(cols);
         for (Eigen::Index column = 0; column < cols; ++column) {
             eigenfunctions.push_back(
                     {
                             [E, steps, column, this](const Scalar &x, const Scalar &y)
                                     -> typename Eigenfunction2D<Scalar, withDerivative>::ScalarReturn {
+                                MATSLISE_SCOPED_TIMER("2D eigenfunction scalar");
                                 Index sectorIndex = findSectorIndex(this, y);
                                 const Sector *sector = sectors[sectorIndex];
 
                                 Y<Scalar, Dynamic, 1> c =
-                                        sector->backward
-                                        ? sector->propagate(E, (*steps)[sectorIndex + 1].col(column),
-                                                            sector->max, y, true)
-                                        : sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y, true);
+                                        sector->direction == forward
+                                        ? sector->propagate(E, (*steps)[sectorIndex].col(column), sector->min, y)
+                                        : sector->propagate(E, (*steps)[sectorIndex + 1].col(column), sector->max, y);
 
                                 if constexpr (withDerivative) {
                                     ArrayXs b, b_x;
                                     tie(b, b_x) = sector->template basis<true>(x);
                                     return {
-                                            c.getY(0).dot(b.matrix()),
-                                            c.getY(0).dot(b_x.matrix()),
-                                            c.getY(1).dot(b.matrix())
+                                            c.block().dot(b.matrix()),
+                                            c.block().dot(b_x.matrix()),
+                                            c.block(YDiff::dX).dot(b.matrix())
                                     };
                                 } else {
-                                    return c.getY(0).dot(sector->template basis<false>(x).matrix());
+                                    return c.block().dot(sector->template basis<false>(x).matrix());
                                 }
                             },
                             [E, steps, column, this](const ArrayXs &x, const ArrayXs &y)
                                     -> typename Eigenfunction2D<Scalar, withDerivative>::ArrayReturn {
+                                MATSLISE_SCOPED_TIMER("2D eigenfunction array");
                                 typedef typename std::conditional<withDerivative, std::pair<ArrayXXs, ArrayXXs>, ArrayXXs>::type BasisType;
                                 map<Index, BasisType> bases;
                                 Index sectorIndex = 0;
@@ -167,27 +87,27 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
                                         }
                                     }
 
-                                    if (sector->backward) {
-                                        c = sector->propagate(
-                                                E, (*steps)[static_cast<size_t>(sectorIndex + 1)].col(column),
-                                                sector->max, v, true);
-                                    } else {
+                                    if (sector->direction == forward) {
                                         c = sector->propagate(
                                                 E, (*steps)[static_cast<size_t>(sectorIndex)].col(column),
                                                 sector->min, v, true);
+                                    } else {
+                                        c = sector->propagate(
+                                                E, (*steps)[static_cast<size_t>(sectorIndex + 1)].col(column),
+                                                sector->max, v, true);
                                     }
 
 
                                     if constexpr (withDerivative) {
-                                        MatrixXs phi = get<0>(*basis).matrix() * c.getY(0);
-                                        MatrixXs phi_x = get<1>(*basis).matrix() * c.getY(0);
-                                        MatrixXs phi_y = get<0>(*basis).matrix() * c.getY(1);
+                                        MatrixXs phi = get<0>(*basis).matrix() * c.block();
+                                        MatrixXs phi_x = get<1>(*basis).matrix() * c.block();
+                                        MatrixXs phi_y = get<0>(*basis).matrix() * c.block(YDiff::dX);
 
                                         get<0>(result).col(i) = phi;
                                         get<1>(result).col(i) = phi_x;
                                         get<2>(result).col(i) = phi_y;
                                     } else {
-                                        result.col(i) = (*basis).matrix() * c.getY(0);
+                                        result.col(i) = (*basis).matrix() * c.block();
                                     }
                                 }
 

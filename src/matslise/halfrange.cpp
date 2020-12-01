@@ -20,8 +20,8 @@ MatsliseHalf<Scalar>::MatsliseHalf(
 template<typename Scalar>
 inline bool isEven(const MatsliseHalf<Scalar> *hr, Scalar E, const Y<Scalar> &side, int index) {
     if (index == -1) {
-        Scalar error0 = get<0>(hr->ms->matchingError(E, Y<Scalar>({1, 0}, {0, 0}), side));
-        Scalar error1 = get<0>(hr->ms->matchingError(E, Y<Scalar>({0, 1}, {0, 0}), side));
+        Scalar error0 = get<0>(hr->ms->matchingError(E, Y<Scalar>::Neumann(), side));
+        Scalar error1 = get<0>(hr->ms->matchingError(E, Y<Scalar>::Dirichlet(), side));
         return abs(error0) < abs(error1);
     }
     return bool(index % 2 == 0);
@@ -29,7 +29,7 @@ inline bool isEven(const MatsliseHalf<Scalar> *hr, Scalar E, const Y<Scalar> &si
 
 template<typename Scalar>
 inline Y<Scalar> getY0(bool even) {
-    return Y<Scalar>({even ? 1 : 0, even ? 0 : 1}, {0, 0});
+    return even ? Y<Scalar>::Neumann() : Y<Scalar>::Dirichlet();
 }
 
 
@@ -74,8 +74,7 @@ MatsliseHalf<Scalar>::eigenfunction(const Scalar &E, const Y<Scalar> &side, int 
                 static const Scalar SQRT1_2 = sqrt(Scalar(.5));
                 for (Eigen::Index i = 0; i < negatives; ++i) {
                     Scalar f = (even ? 1 : -1) * SQRT1_2;
-                    ys[negatives - 1 - i].y = f * DiagonalMatrix<Scalar, 2>(1, -1) * yNeg[i].y;
-                    ys[negatives - 1 - i].dy = f * DiagonalMatrix<Scalar, 2>(1, -1) * yNeg[i].dy;
+                    (ys[negatives - 1 - i] = yNeg[i] * f).reverse();
                 }
                 for (Eigen::Index i = negatives; i < n; ++i)
                     ys[i] = yPos[i - negatives] * SQRT1_2;
@@ -114,16 +113,16 @@ template<typename Scalar>
 vector<pair<int, Scalar>>
 MatsliseHalf<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &side) const {
     return mergeEigenvalues(
-            ms->eigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>({1, 0}, {0, 0}), side),
-            ms->eigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>({0, 1}, {0, 0}), side));
+            ms->eigenvaluesByIndex(Imin / 2 + Imin % 2, Imax / 2 + Imax % 2, Y<Scalar>::Neumann(), side),
+            ms->eigenvaluesByIndex(Imin / 2, Imax / 2, Y<Scalar>::Dirichlet(), side));
 }
 
 template<typename Scalar>
 vector<pair<int, Scalar>>
 MatsliseHalf<Scalar>::eigenvalues(
         const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side) const {
-    return mergeEigenvalues(ms->eigenvalues(Emin, Emax, Y<Scalar>({1, 0}, {0, 0}), side),
-                            ms->eigenvalues(Emin, Emax, Y<Scalar>({0, 1}, {0, 0}), side));
+    return mergeEigenvalues(ms->eigenvalues(Emin, Emax, Y<Scalar>::Neumann(), side),
+                            ms->eigenvalues(Emin, Emax, Y<Scalar>::Dirichlet(), side));
 }
 
 template<typename Scalar>

@@ -1,8 +1,11 @@
 #include <iostream>
 #include <map>
+#include <queue>
 #include "../matslise.h"
 #include "../util/quadrature.h"
 #include "../util/find_sector.h"
+#include "../util/scoped_timer.h"
+#include "../util/matching.h"
 
 using namespace Eigen;
 using namespace matslise;
@@ -20,14 +23,14 @@ Array<Scalar, Dynamic, 1> getGrid(const Scalar &min, const Scalar &max, int coun
 
 template<typename Scalar>
 Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential,
-                               const matslise::Rectangle<2, Scalar> &domain,
-                               const Options2<Scalar> &_options):
-        AbstractMatslise2D<Scalar>(potential, domain), N(_options._N), options(_options) {
-    dirichletBoundary = Y<Scalar, Eigen::Dynamic>::Dirichlet(N);
-    auto sectorsBuild = options._builder(this, domain.min, domain.max);
+                               const matslise::Rectangle<Scalar, 2> &domain, const Config &_config):
+        AbstractMatslise2D<Scalar>(potential, domain), MatsliseND<Scalar, Sector>(_config.basisSize), config(_config) {
+    MATSLISE_SCOPED_TIMER("2D constructor");
+    auto sectorsBuild = sector_builder::getOrAutomatic<Matslise2D<Scalar>, false>(
+            _config.ySectorBuilder, _config.tolerance)(this, domain.template min<1>(), domain.template max<1>());
     sectors = std::move(sectorsBuild.sectors);
     matchIndex = sectorsBuild.matchIndex;
-    sectorCount = sectors.size();
+    Index sectorCount = sectors.size();
     for (auto &sector : sectors)
         sector->quadratures.reset();
 
@@ -35,7 +38,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 
     map<pair<int, int>, ArrayXXs> prev;
     map<pair<int, int>, ArrayXXs> next;
-    Scalar xWidth = domain.template getMax<0>() - domain.template getMin<0>();
+    Scalar xWidth = domain.template max<0>() - domain.template min<0>();
     for (int k = 0; k < sectorCount - 1; ++k) {
         if (k > 0) {
             prev = std::move(next);
@@ -43,10 +46,10 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
         }
 
         M.push_back(move(
-                gauss_konrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
+                gauss_kronrod::adaptive<Scalar, MatrixXs, true>([&, k](const ArrayXs &x) {
                     int depth = static_cast<int>(round(log2(xWidth / (x[x.size() - 1] - x[0]))));
                     int offset = static_cast<int>(round(
-                            (x[0] - domain.template getMin<0>()) / (xWidth / (1 << depth))));
+                            (x[0] - domain.template min<0>()) / (xWidth / (1 << depth))));
                     pair<int, int> key{depth, offset};
                     if (prev.find(key) == prev.end())
                         prev[key] = sectors[k]->template basis<false>(x);
@@ -58,7 +61,7 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
                         result(i) = nextBasis.row(i).matrix().transpose() * prevBasis.row(i).matrix();
                     }
                     return result;
-                }, domain.template getMin<0>(), domain.template getMax<0>(), 1e-8, [](const MatrixXs &v) {
+                }, domain.template min<0>(), domain.template max<0>(), 1e-8, [](const MatrixXs &v) {
                     return v.array().abs().maxCoeff();
                 })
         ));
@@ -67,118 +70,19 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 
 template<typename Scalar>
 Matslise2D<Scalar>::~Matslise2D() {
-    for (int i = 0; i < sectorCount; ++i)
-        delete sectors[i];
+    for (auto &sector : sectors)
+        delete sector;
 }
+
 
 template<typename Scalar>
-typename Matslise2D<Scalar>::MatrixXs Matslise2D<Scalar>::conditionY(Y<Scalar, Dynamic> &y) const {
-    MatrixXs U = y.getY(0).partialPivLu().matrixLU();
-    U.template triangularView<StrictlyLower>().setZero();
-    U.template triangularView<Upper>().
-            template solveInPlace<OnTheRight>(y.y);
-    U.template triangularView<Upper>().
-            template solveInPlace<OnTheRight>(y.dy);
-    return U;
+Scalar Matslise2D<Scalar>::estimatePotentialMinimum() const {
+    auto iterator = this->sectors.begin();
+    Scalar minimal = (*iterator++)->matslise->estimatePotentialMinimum();
+    for (; iterator != this->sectors.end(); ++iterator)
+        minimal = min(minimal, (*iterator)->matslise->estimatePotentialMinimum());
+    return minimal;
 }
 
-template<typename Scalar>
-pair<typename Matslise2D<Scalar>::MatrixXs, typename Matslise2D<Scalar>::MatrixXs>
-Matslise2D<Scalar>::matchingErrorMatrix(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
-    Y<Scalar, Dynamic> yl = yLeft;
-    for (int i = 0; i <= matchIndex; ++i) {
-        yl = M[i] * sectors[i]->propagate(E, yl, sectors[i]->min, sectors[i]->max, use_h);
-        conditionY(yl);
-    }
-    Y<Scalar, Dynamic> yr = sectors[sectorCount - 1]->propagate(
-            E, dirichletBoundary, sectors[sectorCount - 1]->max, sectors[sectorCount - 1]->min, use_h);
-    conditionY(yr);
-    for (int i = sectorCount - 2; i > matchIndex; --i) {
-        yr = sectors[i]->propagate(E, (MatrixXs)(M[i].transpose()) * yr, sectors[i]->max, sectors[i]->min, use_h);
-        conditionY(yr);
-    }
-
-
-    ColPivHouseholderQR<MatrixXs> left_solver(yl.getY(0).transpose());
-    ColPivHouseholderQR<MatrixXs> right_solver(yr.getY(0).transpose());
-    MatrixXs Ul = left_solver.solve(yl.getY(1).transpose()).transpose();
-    MatrixXs Ur = right_solver.solve(yr.getY(1).transpose()).transpose();
-    return make_pair(
-            Ul - Ur,
-            left_solver.solve((yl.getdY(1) - Ul * yl.getdY(0)).transpose()).transpose()
-            - right_solver.solve((yr.getdY(1) - Ur * yr.getdY(0)).transpose()).transpose()
-    );
-}
-
-template<typename Scalar>
-Y<Scalar, Dynamic>
-Matslise2D<Scalar>::propagate(
-        const Scalar &E, const Y<Scalar, Dynamic> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
-    if (!domain.contains(1, a) || !domain.contains(1, b))
-        throw runtime_error("Matscs::propagate(): a and b should be in the interval");
-    Y<Scalar, Dynamic> y = y0;
-    int sectorIndex = find_sector<Matslise2D<Scalar>>(this, a);
-    int direction = a < b ? 1 : -1;
-    Sector *sector;
-    do {
-        sector = sectors[sectorIndex];
-        if (direction == -1 && sectorIndex < sectorCount - 1)
-            y = (MatrixXs)(M[sectorIndex].transpose()) * y;
-        y = sector->propagate(E, y, a, b, use_h);
-        conditionY(y);
-        if (direction == 1)
-            y = M[sectorIndex] * y;
-        sectorIndex += direction;
-    } while (!sector->contains(b));
-    return y;
-}
-
-template<typename Scalar>
-vector<pair<Scalar, Scalar>> Matslise2D<Scalar>::matchingErrors(
-        const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
-    pair<MatrixXs, MatrixXs> error_matrix = matchingErrorMatrix(yLeft, E, use_h);
-    EigenSolver<MatrixXs> solver(N);
-
-    solver.compute(error_matrix.first, true);
-
-    multimap<Scalar, int> rightMap;
-    Array<Scalar, Dynamic, 1> eigenvaluesRight = solver.eigenvalues().array().real();
-    for (int i = 0; i < N; ++i)
-        rightMap.insert({eigenvaluesRight[i], i});
-    MatrixXs right = solver.eigenvectors().real();
-
-    multimap<Scalar, int> leftMap;
-    solver.compute(error_matrix.first.transpose(), true);
-    Array<Scalar, Dynamic, 1> eigenvaluesLeft = solver.eigenvalues().array().real();
-    for (int i = 0; i < N; ++i)
-        leftMap.insert({eigenvaluesLeft[i], i});
-    MatrixXs left = solver.eigenvectors().transpose().real();
-
-
-    vector<pair<Scalar, Scalar>> errors;
-    for (auto leftI = leftMap.begin(), rightI = rightMap.begin();
-         leftI != leftMap.end() && rightI != rightMap.end();
-         ++leftI, ++rightI) {
-        int &li = leftI->second;
-        int &ri = rightI->second;
-        errors.push_back({eigenvaluesLeft[li],
-                          (left.row(li) * error_matrix.second * right.col(ri) /
-                           (left.row(li) * right.col(ri)))[0]});
-    }
-
-    return errors;
-}
-
-template<typename Scalar>
-pair<Scalar, Scalar>
-Matslise2D<Scalar>::matchingError(const Y<Scalar, Eigen::Dynamic> &yLeft, const Scalar &E, bool use_h) const {
-    vector<pair<Scalar, Scalar>> errors = matchingErrors(yLeft, E, use_h);
-    return *min_element(errors.begin(), errors.end(), [](
-            const std::pair<Scalar, Scalar> &a, const std::pair<Scalar, Scalar> &b) -> bool {
-        if (abs(a.first) > 100 || abs(b.first) > 100)
-            return abs(a.first) < abs(b.first);
-        return abs(a.first / a.second) < abs(b.first / b.second);
-    });
-}
 
 #include "../util/instantiate.h"

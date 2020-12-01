@@ -30,7 +30,7 @@ if (DEFINED EMSCRIPTEN)
     option(NODE_BIN "Binary directory of node installation. Make sure 'ava' is installed." "")
     add_custom_target(matslise_test
             COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} npm link ava
-            COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} ava --verbose -T 2m
+            COMMAND ${CMAKE_COMMAND} -E env PATH=$ENV{PATH}:${NODE_BIN} ava --verbose -T 5m
             DEPENDS matslise_test_copy_files
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test-js)
 else ()
@@ -60,8 +60,10 @@ else ()
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp
             matscs/propagatePsi.cpp matscs/propagateTheta.cpp
-            se2d/henon.cpp se2d/ixaru.cpp se2d/zero.cpp se2d/quartic.cpp se2d/derivatives.cpp
-            util/quadrature.cpp util/calculateEta.cpp
+            matslise2d/henon.cpp matslise2d/ixaru.cpp matslise2d/zero.cpp matslise2d/quartic.cpp matslise2d/derivatives.cpp
+            matslise2d/coulomb.cpp matslise2d/pentagon.cpp
+            matslise3d/coulomb.cpp matslise3d/harmonic_oscillator.cpp
+            util/quadrature.cpp util/calculateEta.cpp util/rectangle.cpp util/heap.cpp
             main.cpp)
 
     find_package(OpenMP)

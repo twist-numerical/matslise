@@ -12,13 +12,13 @@ using boost::multiprecision::float128;
 using namespace Eigen;
 using namespace quadrature;
 
-namespace quadrature::gauss_konrod {
+namespace quadrature::gauss_kronrod {
     template<typename Scalar>
     const Array<Scalar, 31, 1> abscissae = (Array<Scalar, 31, 1>()
             << -0.998002298693397060285172840152271l, -0.987992518020485428489565718586613l, -0.967739075679139134257347978784337l, -0.937273392400705904307758947710209l, -0.897264532344081900882509656454496l, -0.848206583410427216200648320774217l, -0.790418501442465932967649294817947l, -0.724417731360170047416186054613938l, -0.650996741297416970533735895313275l, -0.570972172608538847537226737253911l, -0.485081863640239680693655740232351l, -0.394151347077563369897207370981045l, -0.299180007153168812166780024266389l, -0.201194093997434522300628303394596l, -0.101142066918717499027074231447392l, 0.000000000000000000000000000000000l, 0.101142066918717499027074231447392l, 0.201194093997434522300628303394596l, 0.299180007153168812166780024266389l, 0.394151347077563369897207370981045l, 0.485081863640239680693655740232351l, 0.570972172608538847537226737253911l, 0.650996741297416970533735895313275l, 0.724417731360170047416186054613938l, 0.790418501442465932967649294817947l, 0.848206583410427216200648320774217l, 0.897264532344081900882509656454496l, 0.937273392400705904307758947710209l, 0.967739075679139134257347978784337l, 0.987992518020485428489565718586613l, 0.998002298693397060285172840152271l
     ).finished();
     template<typename Scalar>
-    const Array<Scalar, 31, 1> weightsKonrod = (Array<Scalar, 31, 1>()
+    const Array<Scalar, 31, 1> weightsKronrod = (Array<Scalar, 31, 1>()
             << 0.005377479872923348987792051430128l, 0.015007947329316122538374763075807l, 0.025460847326715320186874001019653l, 0.035346360791375846222037948478360l, 0.044589751324764876608227299373280l, 0.053481524690928087265343147239430l, 0.062009567800670640285139230960803l, 0.069854121318728258709520077099147l, 0.076849680757720378894432777482659l, 0.083080502823133021038289247286104l, 0.088564443056211770647275443693774l, 0.093126598170825321225486872747346l, 0.096642726983623678505179907627589l, 0.099173598721791959332393173484603l, 0.100769845523875595044946662617570l, 0.101330007014791549017374792767493l, 0.100769845523875595044946662617570l, 0.099173598721791959332393173484603l, 0.096642726983623678505179907627589l, 0.093126598170825321225486872747346l, 0.088564443056211770647275443693774l, 0.083080502823133021038289247286104l, 0.076849680757720378894432777482659l, 0.069854121318728258709520077099147l, 0.062009567800670640285139230960803l, 0.053481524690928087265343147239430l, 0.044589751324764876608227299373280l, 0.035346360791375846222037948478360l, 0.025460847326715320186874001019653l, 0.015007947329316122538374763075807l, 0.005377479872923348987792051430128l
     ).finished();
     template<typename Scalar>
@@ -34,7 +34,7 @@ namespace quadrature::gauss_konrod {
     ).finished();
 
     template<>
-    const Eigen::Array<float128, 31, 1> weightsKonrod<float128> = (Array<float128, 31, 1>()
+    const Eigen::Array<float128, 31, 1> weightsKronrod<float128> = (Array<float128, 31, 1>()
             << 0.005377479872923348987792051430128q, 0.015007947329316122538374763075807q, 0.025460847326715320186874001019653q, 0.035346360791375846222037948478360q, 0.044589751324764876608227299373280q, 0.053481524690928087265343147239430q, 0.062009567800670640285139230960803q, 0.069854121318728258709520077099147q, 0.076849680757720378894432777482659q, 0.083080502823133021038289247286104q, 0.088564443056211770647275443693774q, 0.093126598170825321225486872747346q, 0.096642726983623678505179907627589q, 0.099173598721791959332393173484603q, 0.100769845523875595044946662617570q, 0.101330007014791549017374792767493q, 0.100769845523875595044946662617570q, 0.099173598721791959332393173484603q, 0.096642726983623678505179907627589q, 0.093126598170825321225486872747346q, 0.088564443056211770647275443693774q, 0.083080502823133021038289247286104q, 0.076849680757720378894432777482659q, 0.069854121318728258709520077099147q, 0.062009567800670640285139230960803q, 0.053481524690928087265343147239430q, 0.044589751324764876608227299373280q, 0.035346360791375846222037948478360q, 0.025460847326715320186874001019653q, 0.015007947329316122538374763075807q, 0.005377479872923348987792051430128q
     ).finished();
 
@@ -46,7 +46,7 @@ namespace quadrature::gauss_konrod {
 
 
     template<typename Scalar, typename Value>
-    inline std::pair<Value, Scalar> applyGaussKonrod(
+    inline std::pair<Value, Scalar> applyGaussKronrod(
             const std::function<Eigen::Array<Value, Eigen::Dynamic, 1>(
                     const Eigen::Array<Scalar, Eigen::Dynamic, 1> &)> &f, Scalar a, Scalar b,
             const std::function<Scalar(const Value &)> &error) {
@@ -56,13 +56,13 @@ namespace quadrature::gauss_konrod {
         Value valueKonrad;
         Value valueGauss;
         if constexpr(std::is_same<Scalar, Value>::value) {
-            valueKonrad = (weightsKonrod<Scalar> * y).sum();
+            valueKonrad = (weightsKronrod<Scalar> * y).sum();
             valueGauss = (weightsGauss<Scalar> *
                           Eigen::Map<Eigen::Array<Value, 15, 1>, 0, Eigen::InnerStride<2>>(y.data() + 1)).sum();
         } else {
-            valueKonrad = weightsKonrod<Scalar>(0) * y(0);
+            valueKonrad = weightsKronrod<Scalar>(0) * y(0);
             for (Index i = 1; i < 31; ++i)
-                valueKonrad += weightsKonrod<Scalar>(i) * y(i);
+                valueKonrad += weightsKronrod<Scalar>(i) * y(i);
 
             valueGauss = weightsGauss<Scalar>(0) * y(1);
             for (Index i = 1; i < 15; ++i)
@@ -74,10 +74,10 @@ namespace quadrature::gauss_konrod {
     }
 
     template<typename Scalar, typename Value>
-    inline std::pair<Value, Scalar> applyGaussKonrod(
+    inline std::pair<Value, Scalar> applyGaussKronrod(
             const std::function<Value(const Scalar &)> &f, Scalar a, Scalar b,
             const std::function<Scalar(const Value &)> &error) {
-        return applyGaussKonrod((std::function<Eigen::Array<Value, Eigen::Dynamic, 1>(
+        return applyGaussKronrod((std::function<Eigen::Array<Value, Eigen::Dynamic, 1>(
                 const Eigen::Array<Scalar, Eigen::Dynamic, 1> &)>) [&](
                 const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) -> Eigen::Array<Value, Eigen::Dynamic, 1> {
             return x.unaryExpr(f);
@@ -95,7 +95,7 @@ namespace quadrature::gauss_konrod {
             return std::get<2>(a).second < std::get<2>(b).second;
         };
         std::vector<Item> heap;
-        std::pair<Value, Scalar> onInterval = applyGaussKonrod<Scalar, Value>(f, a, b, error);
+        std::pair<Value, Scalar> onInterval = applyGaussKronrod<Scalar, Value>(f, a, b, error);
         heap.push_back({a, b, onInterval});
         Scalar totalError = onInterval.second;
         while (totalError > tolerance) {
@@ -105,12 +105,12 @@ namespace quadrature::gauss_konrod {
             totalError -= onInterval.second;
             Scalar c = (a + b) / 2;
 
-            onInterval = applyGaussKonrod(f, a, c, error);
+            onInterval = applyGaussKronrod(f, a, c, error);
             totalError += onInterval.second;
             heap.push_back({a, c, onInterval});
             std::push_heap(heap.begin(), heap.end(), comp);
 
-            onInterval = applyGaussKonrod(f, c, b, error);
+            onInterval = applyGaussKronrod(f, c, b, error);
             totalError += onInterval.second;
             heap.push_back({c, b, onInterval});
             std::push_heap(heap.begin(), heap.end(), comp);
@@ -125,7 +125,7 @@ namespace quadrature::gauss_konrod {
 
 
 #define INSTANTIATE_GK_BULK(Scalar, Value, bulk) \
-template Value quadrature::gauss_konrod::adaptive<Scalar, Value, bulk>( \
+template Value quadrature::gauss_kronrod::adaptive<Scalar, Value, bulk>( \
     const std::function<std::conditional<bulk, Eigen::Array<Value, Eigen::Dynamic, 1>, Value>::type( \
         const std::conditional<bulk, Eigen::Array<Scalar, Eigen::Dynamic, 1>, Scalar>::type &)> &, \
     Scalar, Scalar, const Scalar &, const std::function<Scalar(const Value &)> &);\

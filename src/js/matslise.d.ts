@@ -45,13 +45,11 @@ declare class MatsliseHalf extends AbstractMatslise {
 
 declare class AbstractMatslise2D {
 
-    firstEigenvalue(): number;
+    eigenvalue(E: number): [number, number];
 
-    eigenvalue(E: number): number;
+    eigenvalues(emin: number, emax: number): { index: number, value: number, multiplicity: number }[];
 
-    eigenvalues(emin: number, emax: number): number[];
-
-    eigenvaluesByIndex(imin: number, imax: number): number[];
+    eigenvaluesByIndex(imin: number, imax: number): { index: number, value: number, multiplicity: number }[];
 
     eigenvalueError(E: number): number;
 
@@ -69,12 +67,11 @@ declare class Matslise2D extends AbstractMatslise2D {
         ymax: number,
         options: {
             tolerance?: number;
-            sectorCount?: number;
-            nested?: {
-                symmetric?: boolean;
-                tolerance?: number;
-                sectorCount?: number;
-            }
+            xSectorCount?: number;
+            xTolerance?: number;
+            ySectorCount?: number;
+            yTolerance?: number;
+            xSymmetric?: boolean;
         }
     );
 }
@@ -87,12 +84,11 @@ declare class Matslise2DHalf extends AbstractMatslise2D {
         ymax: number,
         options: {
             tolerance?: number;
-            sectorCount?: number;
-            nested?: {
-                symmetric?: boolean;
-                tolerance?: number;
-                sectorCount?: number;
-            }
+            xSectorCount?: number;
+            xTolerance?: number;
+            ySectorCount?: number;
+            yTolerance?: number;
+            xSymmetric?: boolean;
         }
     );
 }

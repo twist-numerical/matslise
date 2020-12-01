@@ -2,6 +2,7 @@
 #define MATSLISE_SECTORBUILDER_H
 
 #include <vector>
+#include <optional>
 #include <type_traits>
 #include <functional>
 
@@ -21,8 +22,16 @@ namespace matslise {
         template<typename Problem>
         SectorBuilder<Problem> uniform(int sectorCount);
 
-        template<typename Problem>
+        template<typename Problem, bool parallel = false>
         SectorBuilder<Problem> automatic(const typename Problem::Scalar &tolerance);
+
+        template<typename Problem, bool parallel = false>
+        SectorBuilder<Problem> getOrAutomatic(const std::optional<SectorBuilder<Problem>> &sectorBuilder,
+                                              const typename Problem::Scalar &tolerance) {
+            if (sectorBuilder.has_value())
+                return sectorBuilder.value();
+            return automatic<Problem, parallel>(tolerance);
+        }
     }
 }
 

@@ -16,12 +16,14 @@ Value approxDiff(const std::function<Value(double)> &f, double x, double h = 1e-
 }
 
 TEST_CASE("E derivative of matchingErrorMatrix", "[matslise2d][derivatives][e_derivative]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2D<> p(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5, 5}, -5, 5},
-            Options2<>().tolerance(1e-5).N(10).nested(Options1<>().tolerance(1e-7)));
+            {-5., 5., -5., 5.}, config);
 
     MatrixXd mat, diff;
     for (double E = 0.1; E < 20; E += 0.2) {
@@ -34,17 +36,19 @@ TEST_CASE("E derivative of matchingErrorMatrix", "[matslise2d][derivatives][e_de
 }
 
 TEST_CASE("Derivatives of eigenfunctions", "[matslise2d][y_derivative][derivatives][x_derivative]") {
+    Matslise2D<>::Config config;
+    config.tolerance = 1e-6;
+
     Matslise2D<> p(
             [](double x, double y) -> double {
                 return (1 + x * x) * (1 + y * y);
             },
-            {{-5, 5}, -5, 5},
-            Options2<>().tolerance(1e-6).N(10).nested(Options1<>().tolerance(1e-7)));
+            {-5., 5., -5., 5.}, config);
 
     double step = .4;
     double phi, phi_x, phi_y, a_phi_x, a_phi_y;
     for (double E : {3.19, 5.5, 7.55, 8., 8.45, 9.9, 11.3, 12.1, 12.2, 13.9}) {
-        E = p.eigenvalue(E);
+        E = p.eigenvalue(E).first;
         INFO("E: " << E);
         for (const auto &f : p.eigenfunctionWithDerivatives(E))
             for (double x = -5 + step / 2; x < 5; x += step)

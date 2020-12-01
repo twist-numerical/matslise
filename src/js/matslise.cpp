@@ -9,7 +9,7 @@ void bind_matslise() {
     class_<std::function<Y<>(double)>>("EigenfunctionCalculator")
             .function("eval",
                       optional_override([](std::function<Y<>(double)> &self, double x) -> Vector2d {
-                          return self(x).y;
+                          return self(x).y();
                       }));
 
     class_<AbstractMatslise<double>>("AbstractMatslise")
@@ -33,7 +33,7 @@ void bind_matslise() {
                         Array<Y<double>, Dynamic, 1> array = m.eigenfunction(
                                 E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index)(val2ArrayXd(x));
                         return ArrayXd2val(array.unaryExpr([](const Y<double> &y) -> double {
-                            return y.y(0);
+                            return y.block(YDiff::None)(0);
                         }));
                     }))
             .function("eigenvaluesByIndex", optional_override(
@@ -62,7 +62,7 @@ void bind_matslise() {
                         double theta;
                         tie(y0, theta) = m.propagate(E, Y<>(y, {0, 0}), a, b);
                         val rv(val::object());
-                        rv.set("y", val(y0.y));
+                        rv.set("y", val((Vector2d) y0.y()));
                         rv.set("theta", val(theta));
                         return rv;
                     }))

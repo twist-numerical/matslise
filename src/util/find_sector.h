@@ -4,7 +4,7 @@
 namespace matslise {
     template<typename Problem>
     int find_sector(const Problem *ms, typename Problem::Scalar point) {
-        int a = 0, b = ms->sectorCount, c;
+        int a = 0, b = ms->sectors.size(), c;
         while (!ms->sectors[c = a + (b - a) / 2]->contains(point)) {
             if (c == a)
                 return -1;
