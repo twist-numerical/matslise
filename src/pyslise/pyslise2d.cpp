@@ -1,6 +1,15 @@
 #include "module.h"
+#include "pybind11/operators.h"
 
 void pyslise2d(py::module &m) {
+    py::class_<Eigenfunction2D<double>>(m, "Eigenfunction2D")
+            .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, double x, double y) {
+                return eigenfunction(x, y);
+            })
+            .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, const ArrayXd &x, const ArrayXd &y) {
+                return eigenfunction(x, y);
+            });
+
     py::class_<AbstractMatslise2D<double>, shared_ptr<AbstractMatslise2D<double>>>(m, "AbstractPyslise2D")
             .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched. It keeps executing this algorithm until either the number of iterations is reached or the error drops below tolerance.
@@ -35,22 +44,8 @@ Estimate an error of a given eigenvalue by using a lower order method.
 :returns: the estimated error for the given eigenvalue.
 )"""", py::arg("E"))
             .def("eigenfunction",
-                 [](const AbstractMatslise2D<double> &se2d, double E, const ArrayXd &x, const ArrayXd &y)
-                         -> vector<ArrayXXd> {
-                     vector<ArrayXXd> result;
-                     for (auto &f : se2d.eigenfunction(E))
-                         result.push_back(f(x, y));
-                     return result;
-                 }, R""""(\
-Compute all the corresponding eigenfunctions for a given eigenvalue. Most of the time this will return a singleton list. But it is possible that this eigenvalue has a higher multiplicity, so more eigenfunctions will be returned. On the other hand, when the given value for E isn't an eigenvalue then there doesn't exist an eigenfunction, so the returned list will be empty.
-
-:param float E: the eigenvalue to compute eigenfunctions for.
-:param [float] x y: the x and y values of the points to evaluate the eigenfunctions in.
-:returns: a list of len(x) by len(y) grids of values. In each grid the value on position i, j is that eigenfunction evaluated in point x[i], y[j].
-)"""", py::arg("E"), py::arg("x"), py::arg("y"))
-            .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E) -> vector<function<double(double, double)>> {
-                     vector<function<double(double, double)>> result;
+                 [](const Matslise2D<> &se2d, double E) -> vector<Eigenfunction2D<double>> {
+                     vector<Eigenfunction2D<double>> result;
                      for (auto &f : se2d.eigenfunction(E))
                          result.push_back(f);
                      return result;
