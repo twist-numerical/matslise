@@ -48,10 +48,12 @@ else ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
-    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h formula_constants.h
+    install(FILES matslise.h matscs.h matslise2d.h matslise3d.h matsliseNd.h formula_constants.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
-    install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h
+    install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h util/scoped_timer.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
+    install(FILES matslise2d/basisQuadrature.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/matslise2d)
 
     OPTION(PROFILE "Compile with parallel algorithms." OFF)
     if (PROFILE)
