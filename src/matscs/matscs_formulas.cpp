@@ -1,8 +1,5 @@
 #include "./matscs_formulas.h"
 
-// The linker doesn't like this function at all
-// #pragma GCC optimize ("O2")
-
 template<typename Scalar>
 void calculate_tcoeff_matrix(
         int n,

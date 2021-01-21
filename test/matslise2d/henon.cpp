@@ -55,6 +55,7 @@ TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][heno
     config.xSymmetric = true;
     config.stepsPerSector = 1;
 
+
     Matslise2D<> problem(
             [](double x, double y) -> double {
                 return (x * x + y * y) + 1 / (2. * sqrt(5.)) * y * (x * x - y * y / 3);
@@ -120,6 +121,7 @@ TEST_CASE("Eigenfunctions henon extended", "[matslise2d][eigenfunctions][henon][
     Matslise2D<>::Config config;
     config.basisSize = 18;
     config.tolerance = 1e-8;
+
     config.stepsPerSector = 1;
     config.xSymmetric = true;
 

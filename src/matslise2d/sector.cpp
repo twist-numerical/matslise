@@ -24,7 +24,6 @@ vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise
     for (Index i = 0; i < steps; ++i) {
         Scalar min = sector.min + i * h;
         Scalar max = sector.max - (steps - i - 1) * h;
-
         matscs.emplace_back(
                 legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
                         [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
