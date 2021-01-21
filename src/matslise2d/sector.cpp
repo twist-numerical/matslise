@@ -24,7 +24,7 @@ vector<typename Matscs<Scalar>::Sector> initializeMatscs(const typename Matslise
     for (Index i = 0; i < steps; ++i) {
         Scalar min = sector.min + i * h;
         Scalar max = sector.max - (steps - i - 1) * h;
-        // cout << min << ", " << max << endl; To many calls
+
         matscs.emplace_back(
                 legendre::getCoefficients<MATSCS_N, Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>, Scalar>(
                         [&](Scalar y) -> Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> {
@@ -49,14 +49,14 @@ Matslise2DSector<Scalar>::Matslise2DSector(const Matslise2D<Scalar> *se2d, const
                 vbar_fun, se2d->domain.template max<0>(), se2d->config.tolerance,
                 sector_builder::getOrAutomatic<Matslise<Scalar>, false>(
                         se2d->config.xSectorBuilder, se2d->config.tolerance));
-        quadratures = std::make_shared<BasisQuadrature<Scalar, 8, true>>(
+        quadratures = std::make_shared<BasisQuadrature<Scalar, MATSLISE2D_DELTA_V_DEGREE, true>>(
                 static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms);
     } else {
         matslise = std::make_shared<Matslise<Scalar>>(
                 vbar_fun, se2d->domain.template min<0>(), se2d->domain.template max<0>(), se2d->config.tolerance,
                 sector_builder::getOrAutomatic<Matslise<Scalar>, false>(
                         se2d->config.xSectorBuilder, se2d->config.tolerance));
-        quadratures = std::make_shared<BasisQuadrature<Scalar, 8, false>>(
+        quadratures = std::make_shared<BasisQuadrature<Scalar, MATSLISE2D_DELTA_V_DEGREE, false>>(
                 static_cast<const Matslise<Scalar> *>(matslise.get()));
     }
 
