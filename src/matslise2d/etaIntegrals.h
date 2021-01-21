@@ -1,18 +1,18 @@
-//
-// Created by toon on 5/19/20.
-//
-
 #ifndef MATSLISE_ETAINTEGRALS_H
 #define MATSLISE_ETAINTEGRALS_H
 
 #include "../util/calculateEta.h"
 
 #define MATSLISE_INTEGRATE_delta (2*MATSLISE_HMAX_delta)
+#define MATSLISE_INTEGRATE_eta_rows (MATSLISE_ETA_delta*MATSLISE_ETA_delta) // ((MATSLISE_HMAX_delta/2+1)*(MATSLISE_HMAX_delta/2 + 2)/2)
 
 
 inline constexpr Eigen::Index ETA_index(Eigen::Index i, Eigen::Index j) {
+    // Fancy indexing to improve memory locality
+    // Instead of the classical row by row, this uses a diagonal approach for indexing
+    // return i + (j * MATSLISE_ETA_delta);
     Eigen::Index n = i + j;
-    Eigen::Index t = n * (n + 1) / 2 + i; //i + (j * MATSLISE_ETA_delta);
+    Eigen::Index t = n * (n + 1) / 2 + i;
     if (i + j >= MATSLISE_ETA_delta) {
         Eigen::Index k = i + j - MATSLISE_ETA_delta + 1;
         t -= k * k;
@@ -20,20 +20,21 @@ inline constexpr Eigen::Index ETA_index(Eigen::Index i, Eigen::Index j) {
     return t;
 }
 
-template<typename Scalar, Eigen::Index N>
-Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> etaProduct(
+template<typename Scalar>
+Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic> etaProduct(
         const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &u,
         const Eigen::Array<Scalar, MATSLISE_ETA_delta, MATSLISE_HMAX_delta> &v) {
 
-    Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> uv
-            = Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic>
-            ::Zero(MATSLISE_ETA_delta * MATSLISE_ETA_delta, N);
+    Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic> uv
+            = Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic>
+            ::Zero(MATSLISE_INTEGRATE_eta_rows, MATSLISE_INTEGRATE_delta);
 
     for (int i = 0; i < MATSLISE_ETA_delta; ++i)
         for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
             Eigen::Index ij = ETA_index(i, j);
+            if (ij >= MATSLISE_INTEGRATE_eta_rows) break;
             for (int ni = 0; ni < MATSLISE_HMAX_delta; ++ni)
-                for (int nj = 0; nj < MATSLISE_HMAX_delta && ni + nj < N; ++nj)
+                for (int nj = 0; nj < MATSLISE_HMAX_delta && ni + nj < MATSLISE_INTEGRATE_delta; ++nj)
                     uv(ij, ni + nj) += u(i, ni) * v(j, nj);
         }
     return uv;
@@ -108,11 +109,11 @@ Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> integrateEtaTaylor(
 }
 
 template<typename Scalar, bool equal>
-Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic>
+Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic>
 eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
-    Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic> I
-            = Eigen::Array<Scalar, MATSLISE_ETA_delta * MATSLISE_ETA_delta, Eigen::Dynamic>
-            ::Zero(MATSLISE_ETA_delta * MATSLISE_ETA_delta, MATSLISE_INTEGRATE_delta);
+    Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic> I
+            = Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic>
+            ::Zero(MATSLISE_INTEGRATE_eta_rows, MATSLISE_INTEGRATE_delta);
 
     Scalar Z1 = delta * delta * dZ1;
     Scalar Z2 = delta * delta * dZ2;
@@ -149,12 +150,14 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
                         dZ2 * stepUp(1).template bottomRows<MATSLISE_INTEGRATE_delta - 2>()
                         + (2 * j + 1) * curr.template topRows<MATSLISE_INTEGRATE_delta - 2>();
                 stepUp(1) = curr;
-                if (i < MATSLISE_ETA_delta && j < MATSLISE_ETA_delta)
-                    I.row(ETA_index(i, j)) = stepUp(0);
+                Eigen::Index ij = ETA_index(i, j);
+                if (i < MATSLISE_ETA_delta && j < MATSLISE_ETA_delta && ij < MATSLISE_INTEGRATE_eta_rows)
+                    I.row(ij) = stepUp(0);
             }
         }
         return I;
-    } else if (abs(Z1) < 0.5) {
+    }
+    else if (abs(Z1) < 0.5) {
         Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, 2, 2> step;
         Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> e8
                 = integrateEtaTaylor<Scalar, CalculateEtaData<Scalar>::taylor_degree>(
@@ -182,8 +185,9 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
 
             Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, 1, 2> stepUp = step.row(0);
             for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
-                if (i < MATSLISE_ETA_delta)
-                    I.row(ETA_index(i, j)) = stepUp(0);
+                Eigen::Index ij = ETA_index(i, j);
+                if (i < MATSLISE_ETA_delta && ij < MATSLISE_INTEGRATE_eta_rows)
+                    I.row(ij) = stepUp(0);
                 Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1> curr = stepUp(1);
                 stepUp(1)(0) = 0;
                 stepUp(1)(1) = 0;
@@ -195,7 +199,8 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
         }
 
         return I;
-    } else if (abs(Z2) < 0.5) {
+    }
+    else if (abs(Z2) < 0.5) {
         Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, 2, 2> step;
         Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> e8
                 = integrateEtaTaylor<Scalar, CalculateEtaData<Scalar>::taylor_degree>(
@@ -219,8 +224,9 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
                         dZ2 * stepUp(1).template bottomRows<MATSLISE_INTEGRATE_delta - 2>()
                         + (2 * j + 1) * curr.template topRows<MATSLISE_INTEGRATE_delta - 2>();
                 stepUp(1) = curr;
-                if (i < MATSLISE_ETA_delta && j < MATSLISE_ETA_delta)
-                    I.row(ETA_index(i, j)) = stepUp(0);
+                Eigen::Index ij = ETA_index(i, j);
+                if (i < MATSLISE_ETA_delta && j < MATSLISE_ETA_delta && ij < MATSLISE_INTEGRATE_eta_rows)
+                    I.row(ij) = stepUp(0).transpose();
             }
             {
                 for (int j = 0; j < 2; ++j) {
@@ -236,14 +242,15 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
         }
 
         return I;
-    } else {
+    }
+    else {
         Scalar I000, I101, I011, I112;
 
         if (equal) {
             Eigen::Array<Scalar, 2, 1> eta = calculateEta<Scalar, 2>(delta * delta * dZ1);
 
             I(ETA_index(0, 0), 0) = I000 = (delta * eta[0] * eta[1] + delta) / 2;
-            I(ETA_index(0, 1), 1) = I(ETA_index(1, 0), 1) = I101 = I011 = (eta[0] * eta[0] - 1) / (2 * dZ1);
+            I(ETA_index(0, 1), 1) = I(ETA_index(1, 0), 1) = I101 = I011 = delta * delta * eta[1] * eta[1] / 2;
             I(ETA_index(1, 1), 2) = I112 = (delta * eta[0] * eta[1] - delta) / (2 * dZ1);
         } else {
             Scalar denominator = 1 / (dZ1 - dZ2);
@@ -288,13 +295,18 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
 
         for (int i = 0; i < MATSLISE_ETA_delta; ++i) {
             if (i > 1) {
-                for (int j = 0; j < 2; ++j)
-                    I.row(ETA_index(i, j)).template tail<MATSLISE_INTEGRATE_delta - 2>()
+                for (int j = 0; j < 2; ++j) {
+                    Eigen::Index ij = ETA_index(i, j);
+                    if (ij >= MATSLISE_INTEGRATE_eta_rows) break;
+                    I.row(ij).template tail<MATSLISE_INTEGRATE_delta - 2>()
                             = ((I.row(ETA_index(i - 2, j)) - (2 * i - 3) * I.row(ETA_index(i - 1, j))) / dZ1)
                             .template head<MATSLISE_INTEGRATE_delta - 2>();
+                }
             }
             for (int j = 2; j < MATSLISE_ETA_delta; ++j) {
-                I.row(ETA_index(i, j)).template tail<MATSLISE_INTEGRATE_delta - 2>()
+                Eigen::Index ij = ETA_index(i, j);
+                if (ij >= MATSLISE_INTEGRATE_eta_rows) break;
+                I.row(ij).template tail<MATSLISE_INTEGRATE_delta - 2>()
                         = ((I.row(ETA_index(i, j - 2)) - (2 * j - 3) * I.row(ETA_index(i, j - 1))) / dZ2)
                         .template head<MATSLISE_INTEGRATE_delta - 2>();
             }

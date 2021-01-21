@@ -120,7 +120,7 @@ namespace matslise {
             Scalar tolerance = 1e-6;
             bool xSymmetric = false;
             Eigen::Index basisSize = 12;
-            Eigen::Index stepsPerSector = 3;
+            Eigen::Index stepsPerSector = 2;
             std::optional<SectorBuilder<Matslise<Scalar>, Scalar>> xSectorBuilder;
             std::optional<SectorBuilder<Matslise2D<Scalar>, Scalar>> ySectorBuilder;
         };

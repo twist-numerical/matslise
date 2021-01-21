@@ -51,8 +51,10 @@ TEST_CASE("Eigenfunctions henon (flipped)", "[matslise2d][eigenfunctions][henon]
 
 TEST_CASE("Eigenfunctions henon (symmetric)", "[matslise2d][eigenfunctions][henon][symmetric][auto]") {
     Matslise2D<>::Config config;
-    config.tolerance = 1e-10;
+    config.tolerance = 1e-8;
     config.xSymmetric = true;
+    config.stepsPerSector = 1;
+
 
     Matslise2D<> problem(
             [](double x, double y) -> double {
@@ -117,8 +119,9 @@ const vector<tuple<Index, double, Index>> HENON_MORE_EIGENVALUES{
 
 TEST_CASE("Eigenfunctions henon extended", "[matslise2d][eigenfunctions][henon][half][auto][slow]") {
     Matslise2D<>::Config config;
-    config.basisSize = 20;
-    config.tolerance = 1e-9;
+    config.basisSize = 18;
+    config.tolerance = 1e-8;
+
     config.stepsPerSector = 1;
     config.xSymmetric = true;
 

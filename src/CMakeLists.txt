@@ -48,10 +48,28 @@ else ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
-    install(FILES matslise.h matscs.h matslise2d.h schrodinger.h formula_constants.h
+    install(FILES matslise.h matscs.h matslise2d.h matslise3d.h matsliseNd.h formula_constants.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
-    install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h
+    install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h util/scoped_timer.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
+    install(FILES matslise2d/basisQuadrature.h
+            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/matslise2d)
+
+    OPTION(PROFILE "Compile with parallel algorithms." OFF)
+    if (PROFILE)
+        ADD_DEFINITIONS(-DMATSLISE_PROFILING)
+    ENDIF (PROFILE)
+
+    OPTION(PARALLEL "Compile with parallel algorithms." OFF)
+    IF (PARALLEL)
+        if (PROFILE)
+            message("only one of 'parallel' or 'profile' can be on, ignoring 'parallel'")
+        else ()
+            ADD_DEFINITIONS(-DMATSLISE_parallel -DEIGEN_DONT_PARALLELIZE)
+            find_package(OpenMP REQUIRED)
+            target_link_libraries(matslise PUBLIC OpenMP::OpenMP_CXX)
+        ENDIF ()
+    ENDIF (PARALLEL)
 
     OPTION(PROFILE "Compile with parallel algorithms." OFF)
     if (PROFILE)

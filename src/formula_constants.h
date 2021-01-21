@@ -6,9 +6,12 @@
 #define MATSLISE_ETA_h 10
 #define MATSLISE_N 16
 
-#define MATSCS_HMAX_delta 11
-#define MATSCS_ETA_delta 6
-#define MATSCS_ETA_h 7
-#define MATSCS_N 11
+#define MATSCS_HMAX_delta 10
+#define MATSCS_ETA_delta 5
+#define MATSCS_ETA_h 6
+#define MATSCS_N 9
+
+#define MATSLISE2D_DELTA_V_DEGREE 8
+
 
 #endif
