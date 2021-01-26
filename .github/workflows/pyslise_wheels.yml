@@ -141,7 +141,7 @@ jobs:
           pip install wheel
       - name: install pyslise
         run: |
-          pip install ../pyslise_wheel/pyslise-*-cp${${{ matrix.python-version }}/./}-*-manylinux2010_x86_64.whl
+          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*-manylinux2010_x86_64.whl
       - uses: actions/checkout@v2
       - name: test pyslise
         run: |
