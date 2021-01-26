@@ -136,7 +136,7 @@ jobs:
       - run: mkdir build
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
-        run: |
+        run: | # The runner has issues with lto: "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `"
           cmake -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `

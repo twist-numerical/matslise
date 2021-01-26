@@ -76,10 +76,10 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 
     py::class_ < Matslise2D<>, AbstractMatslise2D < double >, shared_ptr < Matslise2D < double >> > (m, "Pyslise2D", R""""(\
 >>> p_ixaru = Pyslise2D(lambda x, y: (1+x*x)*(1+y*y), -5.5,5.5, -5.5,5.5)
->>> [(i, round(E, 4), m) for i, E, m in p_ixaru.eigenvaluesByIndex(0, 4)]
+>>> [(int(i), round(E, 4), int(m)) for i, E, m in p_ixaru.eigenvaluesByIndex(0, 4)]
 [(0, 3.1959, 1), (1, 5.5267, 2), (3, 7.5578, 1), (4, 8.0313, 1)]
 >>> p_henon = Pyslise2D(lambda x, y: (x*x + y*y) + 2*0.11180339887*y*(x*x-y*y/3), -11,11, -11,11, x_symmetric=True)
->>> [(i, round(E, 4), m) for i, E, m in p_henon.eigenvaluesByIndex(0, 4)]
+>>> [(int(i), round(E, 4), int(m)) for i, E, m in p_henon.eigenvaluesByIndex(0, 4)]
 [(0, 1.9972, 1), (1, 3.9802, 2), (3, 5.9125, 1), (4, 5.9707, 2)]
 )"""")
             .def(py::init([](const function<double(double, double)> &V,

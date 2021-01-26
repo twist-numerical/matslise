@@ -1,9 +1,9 @@
 name: Build pyslise.whl
 
-on:
-  push:
-    tags:
-      - v3.*
+on: [push]
+#  push:
+#    tags:
+#      - v3.*
 
 
 jobs:
@@ -52,6 +52,7 @@ jobs:
         run: |
           cmake -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DEigen3_DIR="$(resolve-path ../../eigen/build)" `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
           cmake --build . --target build_wheel --config Release
