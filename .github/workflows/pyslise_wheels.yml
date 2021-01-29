@@ -4,9 +4,6 @@ on: [ push ]
 #  push:
 #    tags:
 #      - v3.*
-env:
-  python_versions: |
-    ["2.7", "3.5", "3.6", "3.7", "3.8", "3.9"]
 
 jobs:
   build_wheel:
@@ -15,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2019, macos-10.15 ]
-        python-version: ${{ fromJSON(env.python_versions) }}
+        python-version:  [2.7, 3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - name: Cache Eigen3
         id: cache-eigen3_3
@@ -82,7 +79,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2019, macos-10.15 ]
-        python-version: ${{ fromJSON(env.python_versions) }}
+        python-version:  [2.7, 3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -129,7 +126,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ${{ fromJSON(env.python_versions) }}
+        python-version:  [2.7, 3.5, 3.6, 3.7, 3.8, 3.9]
     steps:
       - uses: actions/download-artifact@v2
         with:
