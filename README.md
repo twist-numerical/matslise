@@ -1,12 +1,12 @@
 # Matslise
 
-This is the C++ version of matslise. For the original Matlab version, see [1].
+This [1] is the C++ version of Matslise [2].
 
 Matslise is a collection of algorithms to solve the one and two dimensional time-independent Schrödinger equations. These algorithms are based upon constant perturbation methods to efficiently solve these eigenvalue problems.
 
-The code (and name) is based on Matslise [1]. This is a feature-rich matlab library for solving the one dimensional time independent Schrödinger equation.
+The code (and name) is based on Matslise [1][2]. This is a feature-rich matlab library for solving the one dimensional time independent Schrödinger equation.
 
-To solve the two dimensional problem an algorithm is developed on the basis of a method proposed by Ixaru [2].
+To solve the two dimensional problem an algorithm is developed on the basis of a method proposed by Ixaru [3].
 
 This implementation is developed in C++ with a focus on efficiency. This code is precompiled for 64 bit windows and linux and packaged in python wheels.
 
@@ -77,5 +77,6 @@ cmake --build . --target matslise_test
 - lapack (especially from mkl) does allocate some buffers. Because these are never freed this can cause valgrind to suspect memory leaks. See  (https://stackoverflow.com/questions/36197527/insight-as-to-why-valgrind-shows-memory-leak-for-intels-mkl-lapacke)
 
 ## Bibliography
-* **[1]** Ledoux, Veerle, and Marnix Van Daele. “MATSLISE 2.0 : A Matlab Toolbox for Sturm-Liouville Computations.” ACM TRANSACTIONS ON MATHEMATICAL SOFTWARE 42, no. 4 (2016): 18.
-* **[2]** Ixaru, L. Gr. “New Numerical Method for the Eigenvalue Problem of the 2D Schrödinger Equation.” Computer Physics Communications 181 (October 1, 2010): 1738–42. https://doi.org/10.1016/j.cpc.2010.06.031.
+* **[1]** Baeyens, Toon, and Marnix Van Daele. “The Fast and Accurate Computation of Eigenvalues and Eigenfunctions of Time-Independent One-Dimensional Schrödinger Equations.” Computer Physics Communications, August 26, 2020, 107568. https://doi.org/10.1016/j.cpc.2020.107568.
+* **[2]** Ledoux, Veerle, and Marnix Van Daele. “MATSLISE 2.0 : A Matlab Toolbox for Sturm-Liouville Computations.” ACM TRANSACTIONS ON MATHEMATICAL SOFTWARE 42, no. 4 (2016): 18.
+* **[3]** Ixaru, L. Gr. “New Numerical Method for the Eigenvalue Problem of the 2D Schrödinger Equation.” Computer Physics Communications 181 (October 1, 2010): 1738–42. https://doi.org/10.1016/j.cpc.2010.06.031.
