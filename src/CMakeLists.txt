@@ -1,5 +1,5 @@
 set(CMAKE_CXX_STANDARD 17)
-set(PYSLISE_VERSION "3.0.1dev")
+set(PYSLISE_VERSION "3.1.0")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 message("Matslise")

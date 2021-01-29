@@ -11,8 +11,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-18.04, macos-10.15]
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        os: [ windows-2019, macos-10.15 ]
+        python-version:  [2.7, 3.6, 3.7, 3.8, 3.9]
     steps:
       - name: Cache Eigen3
         id: cache-eigen3_3
@@ -51,6 +51,7 @@ jobs:
         run: |
           cmake -G "MinGW Makefiles" `
             -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DEigen3_DIR="$(resolve-path ../../eigen/build)" `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
           cmake --build . --target build_wheel --config Release
@@ -77,10 +78,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-18.04, macos-10.15]
-        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+        os: [ windows-2019, macos-10.15 ]
+        python-version:  [2.7, 3.6, 3.7, 3.8, 3.9]
     steps:
-      - uses: actions/download-artifact@v2-preview
+      - uses: actions/download-artifact@v2
         with:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
           path: ../pyslise_wheel
@@ -102,3 +103,64 @@ jobs:
       - name: test pyslise
         run: |
           python test/pyslise/test_docs.py --verbose
+  build_wheel_manylinux:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        with:
+          repository: "pybind/pybind11"
+          path: "cmake/pybind11"
+      - run: mkdir build
+      - name: run docker manylinux
+        run: |
+          docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux2010_x86_64 /opt/matslise/docker_build.sh
+      - uses: actions/upload-artifact@v2-preview
+        with:
+          name: pyslise_manylinux2010
+          path: ./wheelhouse/*.whl
+  test_wheel_manylinux:
+    if: always()
+    runs-on: ubuntu-18.04
+    needs: build_wheel_manylinux
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:  [2.7, 3.6, 3.7, 3.8, 3.9]
+    steps:
+      - uses: actions/download-artifact@v2
+        with:
+          name: pyslise_manylinux2010
+          path: ../pyslise_wheel
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: |
+          pip install wheel
+      - name: install pyslise
+        run: |
+          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*-manylinux2010_x86_64.whl
+      - uses: actions/checkout@v2
+      - name: test pyslise
+        run: |
+          python test/pyslise/test_docs.py --verbos
+  upload_wheels:
+    if: always()
+    runs-on: ubuntu-18.04
+    needs: [ test_wheel, test_wheel_manylinux ]
+    steps:
+      - uses: actions/download-artifact@v2 # download all artifacts
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.9
+      - name: "Install twine"
+        run: |
+          pip install twine
+      - name: "Check all wheels"
+        run: |
+         twine check **/*.whl
+      - name: "Upload to pypi"
+        run: |
+          twine upload -u __token__ -p ${{ secrets.PYPI_TOKEN }} **/*.whl
