@@ -1,9 +1,9 @@
 name: Build pyslise.whl
 
-on: [ push ]
-#  push:
-#    tags:
-#      - v3.*
+on:
+  push:
+    tags:
+      - v3.*
 
 jobs:
   build_wheel:
