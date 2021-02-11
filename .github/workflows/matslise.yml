@@ -1,6 +1,6 @@
 name: Build and test
 
-on: [push]
+on: [ push ]
 
 jobs:
   matslise_test:
@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-18.04, macos-10.15]
+        os: [ windows-2019, ubuntu-18.04, macos-10.15 ]
     steps:
       - name: Cache Eigen3
         id: cache-eigen3_3
@@ -99,8 +99,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-2019, ubuntu-18.04, macos-10.15]
-        python-version: [2.7, 3.7]
+        os: [ windows-2019, ubuntu-18.04, macos-10.15 ]
+        python-version: [ 2.7, 3.7 ]
     steps:
       - name: Cache Eigen3
         id: cache-eigen3_3
@@ -129,10 +129,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install setuptools wheel
       - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
         with:
-          repository: "pybind/pybind11"
-          path: "cmake/pybind11"
+          submodules: recursive
       - run: mkdir build
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)

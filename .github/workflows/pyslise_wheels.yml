@@ -41,10 +41,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - run: pip install setuptools wheel
       - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
         with:
-          repository: "pybind/pybind11"
-          path: "cmake/pybind11"
+          submodules: recursive
       - run: mkdir build
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
@@ -107,10 +105,8 @@ jobs:
     runs-on: ubuntu-18.04
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
         with:
-          repository: "pybind/pybind11"
-          path: "cmake/pybind11"
+          submodules: recursive
       - run: mkdir build
       - name: run docker manylinux
         run: |

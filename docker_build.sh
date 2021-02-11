@@ -22,5 +22,5 @@ for py in ${pythons[@]}; do
 
     /opt/python/cp37-cp37m/bin/cmake --build . --target build_wheel --config Release -- -j 6
 
-    auditwheel repair src/dist/*$(py)*.whl --plat manylinux2010_x86_64 -w /opt/matslise/wheelhouse
+    auditwheel repair src/dist/*${py}*.whl --plat manylinux2010_x86_64 -w /opt/matslise/wheelhouse
 done
