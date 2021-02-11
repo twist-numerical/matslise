@@ -4,6 +4,18 @@
 #include "module.h"
 
 void pyslise(py::module &m) {
+    py::class_<AbstractMatslise<double>::Eigenfunction>(m, "Eigenfunction")
+            .def("__call__", [](const AbstractMatslise<double>::Eigenfunction &eigenfunction, double x) {
+                Y<> y = eigenfunction(x);
+                return make_pair(y.y()[0], y.y()[1]);
+            })
+            .def("__call__", [](const AbstractMatslise<double>::Eigenfunction &eigenfunction, const ArrayXd &x)
+                    -> pair<ArrayXd, ArrayXd> {
+                Array<Y<>, Dynamic, 1> array = eigenfunction(x);
+                return make_pair(array.unaryExpr([](const Y<> &y) { return y.y()[0]; }),
+                                 array.unaryExpr([](const Y<> &y) { return y.y()[1]; }));
+            });
+
     py::class_<AbstractMatslise<double>>(m, "AbstractPyslise")
             .def("eigenvalues",
                  [](AbstractMatslise<double> &m, double Emin, double Emax, const Vector2d &left,
@@ -74,15 +86,28 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
 )"""",
                  py::arg("E"), py::arg("xs"), py::arg("left"), py::arg("right") = optional<Vector2d>(),
                  py::arg("index") = -1)
+            .def("eigenfunction",
+                 [](AbstractMatslise<double> &m, double E, const Vector2d &left,
+                    const optional<Vector2d> &_right, int index)
+                         -> AbstractMatslise<double>::Eigenfunction {
+                     const Vector2d &right = _right ? *_right : left;
+                     return m.eigenfunction(E, make_y(left), make_y(right), index);
+                 }, R""""(\
+Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
+
+:param float E: the eigenvalue.
+:param (float,float) left, right: the boundary conditions.
+:param xs: the points to calculate the eigenfunction for.
+
+:returns: a pair of lists which each a length of len(xs). The first list contains the values of the eigenfunction in the points xs. The second contains the derivative of the eigenfunction in those points.
+)"""",
+                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(),
+                 py::arg("index") = -1, py::keep_alive<0, 1>())
             .def("eigenfunctionCalculator",
                  [](AbstractMatslise<double> &m, double E, const Vector2d &left,
-                    const optional<Vector2d> &_right, int index) -> function<pair<double, double>(double)> {
+                    const optional<Vector2d> &_right, int index) -> AbstractMatslise<double>::Eigenfunction {
                      const Vector2d &right = _right ? *_right : left;
-                     function<Y<>(double)> calculator = m.eigenfunction(E, make_y(left), make_y(right), index);
-                     return [calculator](double x) -> pair<double, double> {
-                         Y<> y = calculator(x);
-                         return make_pair(y.y()[0], y.y()[1]);
-                     };
+                     return m.eigenfunction(E, make_y(left), make_y(right), index);
                  }, R""""(\
 Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
 
@@ -92,7 +117,8 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
 
 :returns: a function that takes a value and returns a tuple with the eigenfunction and derivative in that value.
 )"""",
-                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
+                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1,
+                 py::keep_alive<0, 1>())
             .def_property_readonly("domain", [](const AbstractMatslise<double> &matslise) {
                 return std::pair<double, double>(matslise.domain.min(), matslise.domain.max());
             });
@@ -100,9 +126,13 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
 
     py::class_<Matslise<>, AbstractMatslise<double>>(m, "Pyslise", R""""(\
 >>> from math import pi, cos
+>>> import numpy as np
 >>> p = Pyslise(lambda x: 2*cos(2*x), 0, pi, 1e-8)
 >>> i, E = p.eigenvaluesByIndex(0, 1, (0,1))[0]
 >>> abs(E - -0.1102488054219) < 1e-6
+True
+>>> f = p.eigenfunction(E, left=(0,1), index=i)
+>>> all(abs(f(x)[0] - p.eigenfunction(E, [x], left=(0,1), index=i)[0][0]) < 1e-6 for x in np.linspace(0, pi, 100))
 True
 )"""")
             .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
