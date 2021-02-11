@@ -11,7 +11,7 @@ git checkout 3.3
 /opt/python/cp37-cp37m/bin/cmake ..
 
 # pyslise
-pythons=(cp27-cp27mu cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39)
+pythons=(cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39)
 for py in ${pythons[@]}; do
     mkdir /opt/matslise-build-${py}
     cd /opt/matslise-build-${py}
