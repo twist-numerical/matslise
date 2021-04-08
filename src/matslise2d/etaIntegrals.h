@@ -81,7 +81,7 @@ template<typename Scalar, int degree>
 Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> integrateEtaTaylor(
         const Scalar &delta,
         const Scalar &dZ1, const Scalar &dZ2, const Scalar *taylor) {
-    Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> I
+    Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> _I
             = Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2>::Zero();
 
     Eigen::Array<Scalar, 2, 1> eta = calculateEta<Scalar, 2>(delta * delta * dZ1);
@@ -100,18 +100,18 @@ Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 2> integrateEtaTaylor(
         for (int k = std::max(0, i - MATSLISE_INTEGRATE_delta + 1); k <= degree && 2 * k <= i; ++k) {
             Scalar dZ2k = powInt(dZ2, k);
             if (2 * k < i)
-                I(i - 2 * k - 1, 0) += dZ2k * taylor[k] * xi_i;
-            I(i - 2 * k, 1) += dZ2k * taylor[k] * eta0_i;
+                _I(i - 2 * k - 1, 0) += dZ2k * taylor[k] * xi_i;
+            _I(i - 2 * k, 1) += dZ2k * taylor[k] * eta0_i;
         }
     }
 
-    return I;
+    return _I;
 }
 
 template<typename Scalar, bool equal>
 Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic>
 eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
-    Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic> I
+    Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic> _I
             = Eigen::Array<Scalar, MATSLISE_INTEGRATE_eta_rows, Eigen::Dynamic>
             ::Zero(MATSLISE_INTEGRATE_eta_rows, MATSLISE_INTEGRATE_delta);
 
@@ -152,10 +152,10 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
                 stepUp(1) = curr;
                 Eigen::Index ij = ETA_index(i, j);
                 if (i < MATSLISE_ETA_delta && j < MATSLISE_ETA_delta && ij < MATSLISE_INTEGRATE_eta_rows)
-                    I.row(ij) = stepUp(0);
+                    _I.row(ij) = stepUp(0);
             }
         }
-        return I;
+        return _I;
     }
     else if (abs(Z1) < 0.5) {
         Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, 2, 2> step;
@@ -187,7 +187,7 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
             for (int j = 0; j < MATSLISE_ETA_delta; ++j) {
                 Eigen::Index ij = ETA_index(i, j);
                 if (i < MATSLISE_ETA_delta && ij < MATSLISE_INTEGRATE_eta_rows)
-                    I.row(ij) = stepUp(0);
+                    _I.row(ij) = stepUp(0);
                 Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1> curr = stepUp(1);
                 stepUp(1)(0) = 0;
                 stepUp(1)(1) = 0;
@@ -198,7 +198,7 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
             }
         }
 
-        return I;
+        return _I;
     }
     else if (abs(Z2) < 0.5) {
         Eigen::Array<Eigen::Array<Scalar, MATSLISE_INTEGRATE_delta, 1>, 2, 2> step;
@@ -226,7 +226,7 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
                 stepUp(1) = curr;
                 Eigen::Index ij = ETA_index(i, j);
                 if (i < MATSLISE_ETA_delta && j < MATSLISE_ETA_delta && ij < MATSLISE_INTEGRATE_eta_rows)
-                    I.row(ij) = stepUp(0).transpose();
+                    _I.row(ij) = stepUp(0).transpose();
             }
             {
                 for (int j = 0; j < 2; ++j) {
@@ -241,7 +241,7 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
             }
         }
 
-        return I;
+        return _I;
     }
     else {
         Scalar I000, I101, I011, I112;
@@ -249,18 +249,18 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
         if (equal) {
             Eigen::Array<Scalar, 2, 1> eta = calculateEta<Scalar, 2>(delta * delta * dZ1);
 
-            I(ETA_index(0, 0), 0) = I000 = (delta * eta[0] * eta[1] + delta) / 2;
-            I(ETA_index(0, 1), 1) = I(ETA_index(1, 0), 1) = I101 = I011 = delta * delta * eta[1] * eta[1] / 2;
-            I(ETA_index(1, 1), 2) = I112 = (delta * eta[0] * eta[1] - delta) / (2 * dZ1);
+            _I(ETA_index(0, 0), 0) = I000 = (delta * eta[0] * eta[1] + delta) / 2;
+            _I(ETA_index(0, 1), 1) = _I(ETA_index(1, 0), 1) = I101 = I011 = delta * delta * eta[1] * eta[1] / 2;
+            _I(ETA_index(1, 1), 2) = I112 = (delta * eta[0] * eta[1] - delta) / (2 * dZ1);
         } else {
             Scalar denominator = 1 / (dZ1 - dZ2);
             Eigen::Array<Scalar, 2, 1> eta1 = calculateEta<Scalar, 2>(Z1);
             Eigen::Array<Scalar, 2, 1> eta2 = calculateEta<Scalar, 2>(Z2);
 
-            I(ETA_index(0, 0), 0) = I000 = denominator * delta * (dZ1 * eta1[1] * eta2[0] - dZ2 * eta1[0] * eta2[1]);
-            I(ETA_index(1, 0), 1) = I101 = denominator * (eta1[0] * eta2[0] - Z2 * eta1[1] * eta2[1] - 1);
-            I(ETA_index(0, 1), 1) = I011 = -denominator * (eta1[0] * eta2[0] - Z1 * eta1[1] * eta2[1] - 1);
-            I(ETA_index(1, 1), 2) = I112 = denominator * delta * (eta1[0] * eta2[1] - eta1[1] * eta2[0]);
+            _I(ETA_index(0, 0), 0) = I000 = denominator * delta * (dZ1 * eta1[1] * eta2[0] - dZ2 * eta1[0] * eta2[1]);
+            _I(ETA_index(1, 0), 1) = I101 = denominator * (eta1[0] * eta2[0] - Z2 * eta1[1] * eta2[1] - 1);
+            _I(ETA_index(0, 1), 1) = I011 = -denominator * (eta1[0] * eta2[0] - Z1 * eta1[1] * eta2[1] - 1);
+            _I(ETA_index(1, 1), 2) = I112 = denominator * delta * (eta1[0] * eta2[1] - eta1[1] * eta2[0]);
         }
 
         int lastN = 100;// MATSLISE_INTEGRATE_delta - 3;
@@ -281,12 +281,12 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
             I10n = (y1 + y2 * dZ2) / n;
 
             if (n - 1 < MATSLISE_INTEGRATE_delta)
-                I(ETA_index(0, 0), n - 1) = I00n;
+                _I(ETA_index(0, 0), n - 1) = I00n;
             if (n + 1 < MATSLISE_INTEGRATE_delta)
-                I(ETA_index(1, 1), n + 1) = I11n;
+                _I(ETA_index(1, 1), n + 1) = I11n;
             if (n < MATSLISE_INTEGRATE_delta) {
-                I(ETA_index(0, 1), n) = I01n;
-                I(ETA_index(1, 0), n) = I10n;
+                _I(ETA_index(0, 1), n) = I01n;
+                _I(ETA_index(1, 0), n) = I10n;
             }
 
             dn /= delta;
@@ -298,21 +298,21 @@ eta_integrals(const Scalar &delta, const Scalar &dZ1, const Scalar &dZ2) {
                 for (int j = 0; j < 2; ++j) {
                     Eigen::Index ij = ETA_index(i, j);
                     if (ij >= MATSLISE_INTEGRATE_eta_rows) break;
-                    I.row(ij).template tail<MATSLISE_INTEGRATE_delta - 2>()
-                            = ((I.row(ETA_index(i - 2, j)) - (2 * i - 3) * I.row(ETA_index(i - 1, j))) / dZ1)
+                    _I.row(ij).template tail<MATSLISE_INTEGRATE_delta - 2>()
+                            = ((_I.row(ETA_index(i - 2, j)) - (2 * i - 3) * _I.row(ETA_index(i - 1, j))) / dZ1)
                             .template head<MATSLISE_INTEGRATE_delta - 2>();
                 }
             }
             for (int j = 2; j < MATSLISE_ETA_delta; ++j) {
                 Eigen::Index ij = ETA_index(i, j);
                 if (ij >= MATSLISE_INTEGRATE_eta_rows) break;
-                I.row(ij).template tail<MATSLISE_INTEGRATE_delta - 2>()
-                        = ((I.row(ETA_index(i, j - 2)) - (2 * j - 3) * I.row(ETA_index(i, j - 1))) / dZ2)
+                _I.row(ij).template tail<MATSLISE_INTEGRATE_delta - 2>()
+                        = ((_I.row(ETA_index(i, j - 2)) - (2 * j - 3) * _I.row(ETA_index(i, j - 1))) / dZ2)
                         .template head<MATSLISE_INTEGRATE_delta - 2>();
             }
         }
 
-        return I;
+        return _I;
     }
 }
 
