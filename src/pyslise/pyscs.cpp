@@ -36,6 +36,6 @@ void pyscs(py::module &m) {
                  })
             .def("propagatePsi", &Matscs<>::propagatePsi)
             .def("__sector", [](Matscs<> &p, int i) -> Matscs<>::Sector * {
-                return p.sectors[i];
+                return p.sectors[i].get();
             }, py::return_value_policy::reference);
 }

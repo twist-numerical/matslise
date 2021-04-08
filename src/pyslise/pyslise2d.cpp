@@ -2,7 +2,7 @@
 #include "pybind11/operators.h"
 
 void pyslise2d(py::module &m) {
-    py::class_ < Eigenfunction2D < double >> (m, "Eigenfunction2D")
+    py::class_<Eigenfunction2D<double >>(m, "Eigenfunction2D")
             .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, double x, double y) {
                 return eigenfunction(x, y);
             })
@@ -10,7 +10,7 @@ void pyslise2d(py::module &m) {
                 return eigenfunction(x, y);
             });
 
-    py::class_ < Eigenfunction2D < double, true >> (m, "Eigenfunction2DWithDerivatives")
+    py::class_<Eigenfunction2D<double, true >>(m, "Eigenfunction2DWithDerivatives")
             .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, double x, double y) {
                 return eigenfunction(x, y);
             })
@@ -18,7 +18,7 @@ void pyslise2d(py::module &m) {
                 return eigenfunction(x, y);
             });
 
-    py::class_ < AbstractMatslise2D < double > , shared_ptr < AbstractMatslise2D < double >> > (m, "AbstractPyslise2D")
+    py::class_<AbstractMatslise2D<double>, shared_ptr<AbstractMatslise2D<double >>>(m, "AbstractPyslise2D")
             .def("eigenvalue", &AbstractMatslise2D<double>::eigenvalue, R""""(\
 By using the algorithm of Newton-Raphson the closest eigenvalue around ``start`` will be searched.
 
@@ -46,8 +46,8 @@ Estimate an error of a given eigenvalue by using a lower order method.
 :returns: the estimated error for the given eigenvalue.
 )"""", py::arg("E"))
             .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E) -> vector <Eigenfunction2D<double>> {
-                     vector <Eigenfunction2D<double>> result;
+                 [](const Matslise2D<> &se2d, double E) -> vector<Eigenfunction2D<double>> {
+                     vector<Eigenfunction2D<double>> result;
                      for (auto &f : se2d.eigenfunction(E))
                          result.push_back(f);
                      return result;
@@ -59,8 +59,8 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 :returns: a list of functions (depending on multiplicity) each taking a x-value and a y-value (or a two lists to evaluate a grid) and returning the value of that eigenfunction in (x, y).
 )"""", py::arg("E"))
             .def("eigenfunctionWithDerivatives",
-                 [](const Matslise2D<> &se2d, double E) -> vector <Eigenfunction2D<double, true>> {
-                     vector <Eigenfunction2D<double, true>> result;
+                 [](const Matslise2D<> &se2d, double E) -> vector<Eigenfunction2D<double, true>> {
+                     vector<Eigenfunction2D<double, true>> result;
                      for (auto &f : se2d.eigenfunctionWithDerivatives(E))
                          result.push_back(f);
                      return result;
@@ -74,7 +74,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
             .def("estimateIndex", &AbstractMatslise2D<double>::estimateIndex, py::arg("E"));
 
 
-    py::class_ < Matslise2D<>, AbstractMatslise2D < double >, shared_ptr < Matslise2D < double >> > (m, "Pyslise2D", R""""(\
+    py::class_<Matslise2D<>, AbstractMatslise2D<double>, shared_ptr<Matslise2D<double >>>(m, "Pyslise2D", R""""(\
 >>> p_ixaru = Pyslise2D(lambda x, y: (1+x*x)*(1+y*y), -5.5,5.5, -5.5,5.5)
 >>> [(int(i), round(E, 4), int(m)) for i, E, m in p_ixaru.eigenvaluesByIndex(0, 4)]
 [(0, 3.1959, 1), (1, 5.5267, 2), (3, 7.5578, 1), (4, 8.0313, 1)]
@@ -126,7 +126,7 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
                      return make_unique<Matslise2D<>>([V](double x, double y) -> double {
                          py::gil_scoped_acquire acquire;
                          return V(x, y);
-                     }, Rectangle < double, 2 > {xmin, xmax, ymin, ymax}, config);
+                     }, Rectangle<double, 2>{xmin, xmax, ymin, ymax}, config);
                  }),
                  R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the given Schrödinger equation on the domain. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods when the object is created will never evaluate V.
@@ -159,7 +159,7 @@ Compute the error given a guess for E. This error is the result of the requireme
 :param float E: the guessed eigenvalue.
 :returns: A tuple with the computed error and the derivative of that error with respect to E.
 )"""", py::arg("E"))
-            .def("__matchingErrors", [](const Matslise2D<> &se2d, double E) -> vector <pair<double, double>> {
+            .def("__matchingErrors", [](const Matslise2D<> &se2d, double E) -> vector<pair<double, double>> {
                 return se2d.matchingErrors(E);
             }, R""""(\
 Just like Pyslise2D::matchingError(E) computes this function the discontinuity of the eigenfunction. The corresponding eigenfunction will be continuous once any of the N returned values is zero.
@@ -169,7 +169,7 @@ Just like Pyslise2D::matchingError(E) computes this function the discontinuity o
 )"""", py::arg("E"))
             .def("__propagate",
                  [](const Matslise2D<> &m, double E, const MatrixXd &y, const MatrixXd &dy, double a, double b) ->
-                         pair <MatrixXd, MatrixXd> {
+                         pair<MatrixXd, MatrixXd> {
                      Y<double, Dynamic> y0(m.config.basisSize);
                      y0.block() = y;
                      y0.block(dX) = dy;
@@ -179,7 +179,7 @@ Just like Pyslise2D::matchingError(E) computes this function the discontinuity o
             .def_property_readonly("__N", [](const Matslise2D<> &m) {
                 return m.config.basisSize;
             }, "The number of basis functions used on each sector")
-            .def_property_readonly("__M", [](Matslise2D<> &p) -> vector <MatrixXd> * {
+            .def_property_readonly("__M", [](Matslise2D<> &p) -> vector<MatrixXd> * {
                 auto l = new vector<MatrixXd>(static_cast<vector<MatrixXd>::size_type>(p.sectors.size() - 1));
                 for (unsigned long i = 0; i < p.sectors.size() - 1; ++i)
                     l->at(i) = p.M[i];
@@ -188,8 +188,11 @@ Just like Pyslise2D::matchingError(E) computes this function the discontinuity o
             .def_property_readonly("__matchpoint", [](const Matslise2D<> &p) -> double {
                 return p.sectors[p.matchIndex]->max;
             })
-            .def_property_readonly("__sectors", [](const Matslise2D<> &p) {
-                return p.sectors;
+            .def_property_readonly("__sectors", [](const Matslise2D<> &p) -> vector<Matslise2D<>::Sector *> {
+                vector<Matslise2D<>::Sector *> v;
+                for(auto &s : p.sectors)
+                    v.emplace_back(s.get());
+                return v;
             });
 
     py::class_<Matslise2DHalf<>, AbstractMatslise2D<double>, shared_ptr<Matslise2DHalf<double>>>(m, "Pyslise2DHalf")
@@ -256,17 +259,17 @@ The next set of parameters are more advanced. Tweaking these can be useful when 
 :param int N: the number of used basis functions on each sector. Defaults to 12.
 :param int steps_per_sector: the number of steps that will be taken per sector (in de y-direction). Defaults to 2.
 )"""",
-                         py::arg("V"),
-                         py::arg("xmin"), py::arg("xmax"),
-                         py::arg("ymax"),
-                         py::arg("x_symmetric") = false,
-                         py::arg("x_count") = -1,
-                         py::arg("x_tolerance") = -1,
-                         py::arg("y_count") = -1,
-                         py::arg("y_tolerance") = -1,
-                         py::arg("tolerance") = 1e-7,
-                         py::arg("N") = 12,
-                         py::arg("steps_per_sector") = 2);
+                 py::arg("V"),
+                 py::arg("xmin"), py::arg("xmax"),
+                 py::arg("ymax"),
+                 py::arg("x_symmetric") = false,
+                 py::arg("x_count") = -1,
+                 py::arg("x_tolerance") = -1,
+                 py::arg("y_count") = -1,
+                 py::arg("y_tolerance") = -1,
+                 py::arg("tolerance") = 1e-7,
+                 py::arg("N") = 12,
+                 py::arg("steps_per_sector") = 2);
 
     py::class_<Matslise2D<>::Sector, std::unique_ptr<Matslise2D<>::Sector, py::nodelete>>(m, "Pyslise2DSector")
             .def_property_readonly("eigenvalues", [](Matslise2D<>::Sector &s) -> vector<double> * {

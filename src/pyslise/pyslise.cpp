@@ -192,14 +192,14 @@ For a given E and initial condition in point a, propagate the solution of the Sc
             .def_readonly("__sectorCount", &Matslise<>::sectorCount)
             .def_readonly("__matchIndex", &Matslise<>::matchIndex)
             .def("__sector", [](Matslise<> &p, int i) -> Matslise<>::Sector * {
-                return p.sectors[i];
+                return p.sectors[i].get();
             }, py::return_value_policy::reference);
 
     py::class_<MatsliseHalf<>, AbstractMatslise<double>>(m, "PysliseHalf")
             .def(py::init([](const function<double(double)> &V, double xmax, double tolerance) {
                 return new MatsliseHalf<>(V, xmax, tolerance);
             }), R""""(\
-In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
+In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initialisation. Calling other methods after the object is created never will evaluate V.
 
 Note: only one of steps and tolerance have to be set.
 

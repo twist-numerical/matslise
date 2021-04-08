@@ -143,8 +143,11 @@ Just like Pyslise3D::calculateError(E) computes this function the discontinuity 
             .def_property_readonly("__M", [](Matslise3D<> &p) -> vector<MatrixXd> {
                 return p.M;
             })
-            .def_property_readonly("__sectors", [](Matslise3D<> &p) -> std::vector<Matslise3D<>::Sector *> {
-                return p.sectors;
+            .def_property_readonly("__sectors", [](const Matslise3D<> &p) -> vector<Matslise3D<>::Sector *> {
+                vector<Matslise3D<>::Sector *> v;
+                for (auto &s : p.sectors)
+                    v.emplace_back(s.get());
+                return v;
             });
 
     py::class_<Matslise3D<>::Sector, std::unique_ptr<Matslise3D<>::Sector, py::nodelete>>(m, "Pyslise3DSector")
