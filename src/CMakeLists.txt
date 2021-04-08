@@ -135,31 +135,34 @@ else ()
     message("-- Eigen3 version ${Eigen3_VERSION}")
     target_link_libraries(matslise PUBLIC ${libraries})
 
-    if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/pybind11/CMakeLists.txt)
-        add_subdirectory(../cmake/pybind11 pybind11)
-        message("-- python: ${PYTHON_EXECUTABLE}")
-        pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
-                pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
-        target_link_libraries(pyslise PRIVATE ${libraries})
-        IF (PARALLEL)
-            target_link_libraries(pyslise PUBLIC OpenMP::OpenMP_CXX)
-        ENDIF (PARALLEL)
+    OPTION(WITH_PYTHON "Also build the python bindings" ON)
+    if (WITH_PYTHON)
+        if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/pybind11/CMakeLists.txt)
+            add_subdirectory(../cmake/pybind11 pybind11)
+            message("-- python: ${PYTHON_EXECUTABLE}")
+            pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
+                    pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
+            target_link_libraries(pyslise PRIVATE ${libraries})
+            IF (PARALLEL)
+                target_link_libraries(pyslise PUBLIC OpenMP::OpenMP_CXX)
+            ENDIF (PARALLEL)
 
-        configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
-        configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)
-        add_custom_target(build_wheel
-                COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                ${PYTHON_EXECUTABLE} setup.py bdist_wheel
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        add_dependencies(build_wheel pyslise)
+            configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
+            configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)
+            add_custom_target(build_wheel
+                    COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
+                    ${PYTHON_EXECUTABLE} setup.py bdist_wheel
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+            add_dependencies(build_wheel pyslise)
 
-        add_custom_target(pyslise_install
-                # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
-                COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed .
-                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        add_dependencies(pyslise_install pyslise)
-    else ()
-        message("To enable for python make sure pybind11 is available in /cmake/pybind11.")
+            add_custom_target(pyslise_install
+                    # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
+                    COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
+                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed .
+                    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+            add_dependencies(pyslise_install pyslise)
+        else ()
+            message("To enable python bindings, make sure pybind11 is available in /cmake/pybind11. Or disable the python bindings with -DWITH_PYTHON=OFF")
+        endif ()
     endif ()
 endif (DEFINED EMSCRIPTEN)
