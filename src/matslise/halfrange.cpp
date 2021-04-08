@@ -14,7 +14,7 @@ MatsliseHalf<Scalar>::MatsliseHalf(
         function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance,
         SectorBuilder<Matslise<Scalar>> sectorBuilder
 ): AbstractMatslise<Scalar>(V, {-xmax, xmax}) {
-    ms = new Matslise<Scalar>(V, 0, xmax, tolerance, sectorBuilder);
+    ms.reset(new Matslise<Scalar>(V, 0, xmax, tolerance, sectorBuilder));
 }
 
 template<typename Scalar>
@@ -123,11 +123,6 @@ MatsliseHalf<Scalar>::eigenvalues(
         const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &side) const {
     return mergeEigenvalues(ms->eigenvalues(Emin, Emax, Y<Scalar>::Neumann(), side),
                             ms->eigenvalues(Emin, Emax, Y<Scalar>::Dirichlet(), side));
-}
-
-template<typename Scalar>
-MatsliseHalf<Scalar>::~MatsliseHalf() {
-    delete ms;
 }
 
 #include "../util/instantiate.h"

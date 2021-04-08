@@ -69,13 +69,6 @@ Matslise2D<Scalar>::Matslise2D(const function<Scalar(Scalar, Scalar)> &potential
 }
 
 template<typename Scalar>
-Matslise2D<Scalar>::~Matslise2D() {
-    for (auto &sector : sectors)
-        delete sector;
-}
-
-
-template<typename Scalar>
 Scalar Matslise2D<Scalar>::estimatePotentialMinimum() const {
     auto iterator = this->sectors.begin();
     Scalar minimal = (*iterator++)->matslise->estimatePotentialMinimum();

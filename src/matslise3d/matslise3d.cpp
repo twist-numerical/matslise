@@ -41,10 +41,4 @@ Matslise3D<Scalar>::Matslise3D(
     }
 }
 
-template<typename Scalar>
-Matslise3D<Scalar>::~Matslise3D() {
-    for (auto &sector : sectors)
-        delete sector;
-}
-
 #include "../util/instantiate.h"

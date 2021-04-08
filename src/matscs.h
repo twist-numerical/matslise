@@ -24,7 +24,7 @@ namespace matslise {
         int n;
         Scalar xmin, xmax;
         int sectorCount;
-        std::vector<Matscs::Sector *> sectors;
+        std::vector<matslise::value_ptr<Matscs::Sector>> sectors;
         int matchIndex;
     public:
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
@@ -61,7 +61,7 @@ namespace matslise {
                 const Scalar &E, const matslise::Y<Scalar, Eigen::Dynamic, 1> &left,
                 const matslise::Y<Scalar, Eigen::Dynamic, 1> &right);
 
-        ~Matscs();
+        ~Matscs() = default;
 
     public:
 

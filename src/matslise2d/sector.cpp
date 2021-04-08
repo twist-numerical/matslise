@@ -49,7 +49,7 @@ Matslise2DSector<Scalar>::Matslise2DSector(const Matslise2D<Scalar> *se2d, const
                 sector_builder::getOrAutomatic<Matslise<Scalar>, false>(
                         se2d->config.xSectorBuilder, se2d->config.tolerance));
         quadratures = std::make_shared<BasisQuadrature<Scalar, MATSLISE2D_DELTA_V_DEGREE, true>>(
-                static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms);
+                static_cast<const MatsliseHalf<Scalar> *>(matslise.get())->ms.get());
     } else {
         matslise = std::make_shared<Matslise<Scalar>>(
                 vbar_fun, se2d->domain.template min<0>(), se2d->domain.template max<0>(), se2d->config.tolerance,

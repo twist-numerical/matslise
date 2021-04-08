@@ -12,6 +12,7 @@
 #include "util/y.h"
 #include "util/sectorbuilder.h"
 #include "util/rectangle.h"
+#include "util/value_ptr.h"
 #include "./formula_constants.h"
 
 namespace matslise {
@@ -110,7 +111,7 @@ namespace matslise {
     class Matslise : public AbstractMatslise<_Scalar> {
     public:
         typedef _Scalar Scalar;
-        static constexpr int order = MATSLISE_HMAX_delta-1;
+        static constexpr int order = MATSLISE_HMAX_delta - 1;
         static constexpr bool refineSectors = false;
 
         class Sector;
@@ -121,7 +122,7 @@ namespace matslise {
 
         int sectorCount;
         int matchIndex;
-        std::vector<Matslise::Sector *> sectors;
+        std::vector<matslise::value_ptr<Matslise::Sector>> sectors;
 
         Scalar tolerance;
     public:
@@ -137,6 +138,9 @@ namespace matslise {
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();
+            Scalar &v0Match = sectors[matchIndex]->vs[0];
+            for (auto &s : sectors)
+                s->v0Match = v0Match;
         }
 
         std::pair<matslise::Y<Scalar>, Scalar>
@@ -172,7 +176,7 @@ namespace matslise {
         Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
                                     const matslise::Y<Scalar> &right, int index = -1) const override;
 
-        virtual ~Matslise();
+        virtual ~Matslise() = default;
 
     public:
         class Sector {
@@ -181,7 +185,7 @@ namespace matslise {
 
             Eigen::Array<Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign>, MATSLISE_ETA_delta, MATSLISE_HMAX_delta, Eigen::DontAlign> t_coeff;
             Eigen::Matrix<Scalar, 2, 2, Eigen::DontAlign> t_coeff_h[MATSLISE_ETA_h];
-            const Matslise<Scalar> *s;
+            Scalar v0Match = 0;
             std::array<Scalar, MATSLISE_N> vs;
             Scalar min, max, h;
             Direction direction = none;
@@ -224,7 +228,7 @@ namespace matslise {
         typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
 
     public:
-        const Matslise<Scalar> *ms;
+        matslise::value_ptr<const Matslise<Scalar>> ms;
     public:
         MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance)
                 : MatsliseHalf(V, xmax, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {}
@@ -254,7 +258,7 @@ namespace matslise {
 
         Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
 
-        virtual ~MatsliseHalf();
+        virtual ~MatsliseHalf() = default;
     };
 }
 

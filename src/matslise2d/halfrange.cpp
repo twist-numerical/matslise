@@ -15,14 +15,9 @@ Matslise2DHalf<Scalar>::Matslise2DHalf(const function<Scalar(const Scalar &, con
         : AbstractMatslise2D<Scalar>(V, domain) {
     Rectangle<Scalar, 2> halfDomain = domain;
     halfDomain.template min<1>() = 0;
-    se2d = new Matslise2D<Scalar>(V, halfDomain, config);
+    se2d.reset(new Matslise2D<Scalar>(V, halfDomain, config));
     neumannBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Neumann(config.basisSize);
     dirichletBoundary = Y<Scalar, Eigen::Dynamic, Eigen::Dynamic>::Dirichlet(config.basisSize);
-}
-
-template<typename Scalar>
-Matslise2DHalf<Scalar>::~Matslise2DHalf() {
-    delete se2d;
 }
 
 template<typename Scalar>

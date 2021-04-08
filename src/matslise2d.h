@@ -137,7 +137,7 @@ namespace matslise {
         Matslise2D(const std::function<Scalar(Scalar, Scalar)> &potential,
                    const matslise::Rectangle<Scalar, 2> &domain, const Config &config = Config());
 
-        virtual ~Matslise2D();
+        virtual ~Matslise2D() = default;
 
         using MatsliseND<Scalar, Sector>::propagate;
         using MatsliseND<Scalar, Sector>::matchingErrorMatrix;
@@ -206,7 +206,7 @@ namespace matslise {
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> neumannBoundary;
         Y<Scalar, Eigen::Dynamic, Eigen::Dynamic> dirichletBoundary;
 
-        Matslise2D<Scalar> *se2d;
+        value_ptr<Matslise2D<Scalar>> se2d;
 
         using AbstractMatslise2D<Scalar>::domain;
         using AbstractMatslise2D<Scalar>::potential;
@@ -215,7 +215,7 @@ namespace matslise {
         Matslise2DHalf(const std::function<Scalar(const Scalar &, const Scalar &)> &potential,
                        const Rectangle<Scalar, 2> &domain, const Config &config);
 
-        virtual ~Matslise2DHalf();
+        virtual ~Matslise2DHalf() = default;
 
         Scalar estimatePotentialMinimum() const override {
             return se2d->estimatePotentialMinimum();

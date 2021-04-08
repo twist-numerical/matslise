@@ -28,15 +28,15 @@ SectorBuilder<Problem> sector_builder::uniform(int sectorCount) {
         Scalar h = (max - min) / sectorCount;
 
         if (sectorCount == 1) {
-            return {{new Sector(problem, min, max, forward)}, 0};
+            return {{value_ptr<Sector>(new Sector(problem, min, max, forward))}, 0};
         }
 
-        std::vector<Sector *> sectors;
+        std::vector<value_ptr<Sector>> sectors;
         sectors.resize(sectorCount);
 #ifdef MATSLISE_parallel
 #pragma omp parallel for shared(min, h)
         for (int i = 0; i < sectorCount; ++i) {
-            sectors[i] = new Sector(problem, min + i * h, max - (sectorCount - i - 1) * h, none);
+            sectors[i].reset(new Sector(problem, min + i * h, max - (sectorCount - i - 1) * h, none));
         }
         int matchIndex = 0;
         for (int i = 1; i < sectorCount; ++i) {
@@ -50,16 +50,16 @@ SectorBuilder<Problem> sector_builder::uniform(int sectorCount) {
         }
 
 #else
-        sectors[0] = new Sector(problem, min, min + h, forward);
-        sectors[sectorCount - 1] = new Sector(problem, min + (sectorCount - 1) * h, max, backward);
+        sectors[0].reset(new Sector(problem, min, min + h, forward));
+        sectors[sectorCount - 1].reset(new Sector(problem, min + (sectorCount - 1) * h, max, backward));
         int i = 0, j = sectorCount - 1;
         while (i + 1 != j) {
             if (Sector::compare(*sectors[j], *sectors[i])) {
                 ++i;
-                sectors[i] = new Sector(problem, min + i * h, min + (i + 1) * h, forward);
+                sectors[i].reset(new Sector(problem, min + i * h, min + (i + 1) * h, forward));
             } else {
                 --j;
-                sectors[j] = new Sector(problem, min + j * h, min + (j + 1) * h, backward);
+                sectors[j].reset(new Sector(problem, min + j * h, min + (j + 1) * h, backward));
             }
         }
         int matchIndex = i;
@@ -157,34 +157,36 @@ SectorBuilder<Problem> automaticSequential(const typename Problem::Scalar &toler
     typedef typename Problem::Sector Sector;
     return [tolerance](const Problem *problem, const Scalar &min, const Scalar &max)
             -> SectorBuilderReturn<Problem> {
-        std::vector<typename Problem::Sector *> forward;
-        std::vector<typename Problem::Sector *> backward;
+        std::vector<value_ptr<typename Problem::Sector>> forward;
+        std::vector<value_ptr<typename Problem::Sector>> backward;
         // It shouldn't be the true middle
         Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
         Scalar forwardH = .33 * (max - min);
         Scalar backwardH = forwardH;
-        forward.push_back(automaticNextSector(problem, forwardH, min, mid, tolerance, Direction::forward));
-        backward.push_back(automaticNextSector(problem, backwardH, mid, max, tolerance, Direction::backward));
+        forward.emplace_back(automaticNextSector(problem, forwardH, min, mid, tolerance, Direction::forward));
+        backward.emplace_back(automaticNextSector(problem, backwardH, mid, max, tolerance, Direction::backward));
 
 
         while (forward.back()->max != backward.back()->min) {
-            if (Sector::compare(*backward.back(), *forward.back()))
-                forward.push_back(automaticNextSector(
+            if (Sector::compare(*backward.back(), *forward.back())) {
+                forward.emplace_back(automaticNextSector(
                         problem, forwardH, forward.back()->max,
                         backward.back()->min, tolerance, Direction::forward));
-            else
-                backward.push_back(automaticNextSector(
+            } else {
+                backward.emplace_back(automaticNextSector(
                         problem, backwardH, forward.back()->max,
                         backward.back()->min, tolerance, Direction::backward));
+            }
         }
 
         int matchIndex = forward.size() - 1;
-        forward.insert(forward.end(), backward.rbegin(), backward.rend());
+        forward.insert(forward.end(), make_move_iterator(backward.rbegin()), make_move_iterator(backward.rend()));
         return {std::move(forward), matchIndex};
     };
 };
 
 #ifdef MATSLISE_parallel
+
 template<typename Problem>
 SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &tolerance) {
     typedef typename Problem::Scalar Scalar;
@@ -251,8 +253,8 @@ SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &toleran
         SectorBuilderReturn<Problem> result;
         result.sectors.reserve(heap.size());
         for (auto &item : heap.data())
-            result.sectors.push_back(std::get<1>(item));
-        std::sort(result.sectors.begin(), result.sectors.end(), [](Sector *a, Sector *b) {
+            result.sectors.template emplace_back().reset(std::get<1>(item));
+        std::sort(result.sectors.begin(), result.sectors.end(), [](const value_ptr<Sector> &a, const value_ptr<Sector> &b) {
             return a->min < b->min;
         });
 
@@ -271,6 +273,7 @@ SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &toleran
         return result;
     };
 }
+
 #endif
 
 template<typename Problem, bool parallel>

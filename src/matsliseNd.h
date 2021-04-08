@@ -46,7 +46,7 @@ namespace matslise {
 
         Eigen::Index basisSize;
         std::vector<MatrixXs> M;
-        std::vector<_Sector *> sectors;
+        std::vector<matslise::value_ptr<_Sector>> sectors;
         int matchIndex;
         Y <Scalar, Eigen::Dynamic> dirichletBoundary;
 

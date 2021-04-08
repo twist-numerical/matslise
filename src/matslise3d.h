@@ -62,7 +62,7 @@ namespace matslise {
         std::vector<ArrayXXs> eigenfunctions_grid;
         Direction direction = none;
 
-        Matslise3DSector(const Matslise3D<Scalar> *matslise3d) :MatsliseNDSector<Scalar>(), matslise3d(matslise3d) {}
+        Matslise3DSector(const Matslise3D<Scalar> *matslise3d) : MatsliseNDSector<Scalar>(), matslise3d(matslise3d) {}
 
         Matslise3DSector(const Matslise3D<Scalar> *matslise3d, const Scalar &min, const Scalar &max, Direction);
 
@@ -122,7 +122,7 @@ namespace matslise {
         Matslise3D(const std::function<Scalar(Scalar, Scalar, Scalar)> &potential,
                    const matslise::Rectangle<Scalar, 3> &domain, const Config &config = Config());
 
-        virtual ~Matslise3D();
+        virtual ~Matslise3D() = default;
 
         using MatsliseND<Scalar, Sector>::propagate;
         using MatsliseND<Scalar, Sector>::matchingErrorMatrix;

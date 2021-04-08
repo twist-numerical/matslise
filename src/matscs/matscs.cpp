@@ -18,12 +18,15 @@ Matscs<Scalar>::propagateColumn(const Scalar &E, const Y<Scalar, Dynamic, r> &_y
     Y<Scalar, Dynamic, r> y = _y;
     int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
-    Sector *sector;
+
     do {
-        sector = sectors[sectorIndex];
+        const value_ptr<Sector> &sector = sectors[sectorIndex];
         y = sector->propagateColumn(E, y, a, b, use_h);
+        if (sector->contains(b))
+            break;
         sectorIndex += direction;
-    } while (!sector->contains(b));
+    } while (sectorIndex >= 0 && sectorIndex < (long) sectors.size());
+
     return y;
 }
 
@@ -36,15 +39,17 @@ Matscs<Scalar>::propagate(const Scalar &E, const Y<Scalar, Dynamic> &_y,
     Y<Scalar, Dynamic> y = _y;
     int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
-    Sector *sector;
     Scalar dTheta;
     Scalar argdet = 0;
     do {
-        sector = sectors[sectorIndex];
+        const value_ptr<Sector> &sector = sectors[sectorIndex];
         tie(y, dTheta) = sector->propagate(E, y, a, b, use_h);
         argdet += dTheta;
+        if (sector->contains(b))
+            break;
         sectorIndex += direction;
-    } while (!sector->contains(b));
+    } while (sectorIndex >= 0 && sectorIndex < (long) sectors.size());
+
     return {y, argdet};
 }
 
@@ -55,19 +60,16 @@ Matrix<Scalar, Dynamic, Dynamic> Matscs<Scalar>::propagatePsi(
 
     int sectorIndex = find_sector<Matscs<Scalar>>(this, a);
     int direction = a < b ? 1 : -1;
-    Sector *sector;
-    do {
-        sector = sectors[sectorIndex];
-        psi = sector->propagatePsi(E, psi, a, b);
-        sectorIndex += direction;
-    } while (!sector->contains(b));
-    return psi;
-}
 
-template<typename Scalar>
-Matscs<Scalar>::~Matscs() {
-    for (int i = 0; i < sectorCount; ++i)
-        delete sectors[i];
+    do {
+        const value_ptr<Sector> &sector = sectors[sectorIndex];
+        psi = sector->propagatePsi(E, psi, a, b);
+        if (sector->contains(b))
+            break;
+        sectorIndex += direction;
+    } while (sectorIndex >= 0 && sectorIndex < (long) sectors.size());
+
+    return psi;
 }
 
 template<typename Scalar>
@@ -82,7 +84,7 @@ vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::eigenfunction(const Scalar &E, vecto
 
     Y<Scalar, Dynamic> y(n);
     for (int i = 0; iterator != x.end(); ++iterator) {
-        Sector *const &sector = sectors[i];
+        const value_ptr<Sector> &sector = sectors[i];
         while (*iterator > sector->max) {
             y = sector->calculateT(E) * y;
             ++i;

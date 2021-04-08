@@ -21,7 +21,7 @@ int sign(const Scalar &s) {
 
 template<typename Scalar>
 Matslise<Scalar>::Sector::Sector(const Matslise<Scalar> *s, const Scalar &min, const Scalar &max, Direction direction)
-        : s(s), min(min), max(max), direction(direction) {
+        : min(min), max(max), direction(direction) {
     h = max - min;
     vs = legendre::getCoefficients<MATSLISE_N>(s->potential, min, max);
     if (direction == backward) {
@@ -104,7 +104,6 @@ Scalar rescale(const Scalar &theta, const Scalar &sigma) {
 
 template<typename Scalar>
 Scalar Matslise<Scalar>::Sector::theta0(const Scalar &E, const Y<Scalar> &y0) const {
-    Scalar &v0Match = s->sectors[s->matchIndex]->vs[0];
     Scalar scaling = E - v0Match > 1 ? sqrt(E - v0Match) : 1;
     if (E > vs[0]) {
         Scalar omega = sqrt(E - vs[0]);
@@ -118,7 +117,6 @@ Scalar Matslise<Scalar>::Sector::theta0(const Scalar &E, const Y<Scalar> &y0) co
 template<typename Scalar>
 Scalar Matslise<Scalar>::Sector::prufer(
         const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const {
-    Scalar &v0Match = s->sectors[s->matchIndex]->vs[0];
     Scalar scaling = E - v0Match > 1 ? sqrt(E - v0Match) : 1;
     if (E > vs[0]) {
         // page 56 (PhD Ledoux)

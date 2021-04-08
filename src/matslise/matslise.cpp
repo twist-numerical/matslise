@@ -18,17 +18,18 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
         throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<Scalar> y = _y;
     Scalar dTheta;
-    int sectorIndex = find_sector<Matslise<Scalar>>(this, a);
+    long sectorIndex = find_sector<Matslise<Scalar>>(this, a);
     Scalar theta = sectors[sectorIndex]->theta0(E, y);
     if (theta < 0 || (a > b && theta == 0))
         theta += constants<Scalar>::PI;
-    Sector *sector;
     do {
-        sector = sectors[sectorIndex];
+        const value_ptr<Sector> &sector = sectors[sectorIndex];
         tie(y, dTheta) = sector->template propagate<true>(E, y, a, b, use_h);
         theta += dTheta;
+        if (sector->contains(b))
+            break;
         sectorIndex += a < b ? 1 : -1;
-    } while (!sector->contains(b));
+    } while (sectorIndex >= 0 && sectorIndex < (long) sectors.size());
     return {y, theta};
 }
 
@@ -174,25 +175,19 @@ Matslise<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &left, const 
 }
 
 template<typename Scalar>
-Matslise<Scalar>::~Matslise() {
-    for (int i = 0; i < sectorCount; ++i)
-        delete sectors[i];
-}
-
-template<typename Scalar>
 vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
                                    const Y<Scalar> &left, const Y<Scalar> &right) {
     vector<Y<Scalar>> ys(ms.sectorCount + 1);
     ys[0] = left;
     for (int i = 0; i <= ms.matchIndex; ++i) {
-        typename Matslise<Scalar>::Sector *sector = ms.sectors[i];
+        const value_ptr<typename Matslise<Scalar>::Sector> &sector = ms.sectors[i];
         ys[i + 1] = sector->template propagate<false>(E, ys[i], sector->min, sector->max);
     }
     Y<Scalar> yl = ys[ms.matchIndex + 1];
 
     ys[ms.sectorCount] = right;
     for (int i = ms.sectorCount - 1; i > ms.matchIndex; --i) {
-        typename Matslise<Scalar>::Sector *sector = ms.sectors[i];
+        const value_ptr<typename Matslise<Scalar>::Sector> &sector = ms.sectors[i];
         ys[i] = sector->template propagate<false>(E, ys[i + 1], sector->max, sector->min);
     }
     Y<Scalar> &yr = ys[ms.matchIndex + 1];

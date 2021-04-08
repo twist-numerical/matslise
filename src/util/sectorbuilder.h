@@ -5,11 +5,12 @@
 #include <optional>
 #include <type_traits>
 #include <functional>
+#include "value_ptr.h"
 
 namespace matslise {
     template<typename Problem>
     struct SectorBuilderReturn {
-        std::vector<typename Problem::Sector *> sectors;
+        std::vector<matslise::value_ptr<typename Problem::Sector>> sectors;
         // The index of the sector left of the matching point
         int matchIndex;
     };
