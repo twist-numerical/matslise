@@ -24,4 +24,9 @@ TEST_CASE("rectangle", "[util][rectangle]") {
     REQUIRE(r.min(2) == 0);
     REQUIRE(r.max(2) == r.max<2>());
     REQUIRE(r.max(2) == 30);
+
+    REQUIRE(r.contains({1.,-6.,6.}));
+    REQUIRE(!r.contains({11.,-6.,6.}));
+    REQUIRE(!r.contains({1.,-60.,6.}));
+    REQUIRE(!r.contains({1.,-6.,31.}));
 }

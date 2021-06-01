@@ -161,6 +161,24 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
             REQUIRE(Approx(dy3[i]).margin(1e-12) == result[i].data[1]);
         }
     }
+
+    {
+        auto eigenpairs = ms.eigenpairsByIndex(3, 4, ystart, ystart);
+        REQUIRE(eigenpairs.size() == 1);
+        REQUIRE(get<0>(eigenpairs.at(0)) == 3);
+        double e = get<1>(eigenpairs.at(0));
+
+        REQUIRE(Approx(16.03297008140580).margin(1e-12) == e);
+        Array<Y<double>, Dynamic, 1> result = get<2>(eigenpairs.at(0))(x);
+        REQUIRE(result.size() == static_cast<long>(y0.size()));
+        for (Eigen::Index i = result.size() - 1; i >= 0; --i)
+            result[i] *= dy3[0] / result[0].data[1];
+
+        for (Eigen::Index i = 0; i < result.size(); ++i) {
+            REQUIRE(Approx(y3[i]).margin(1e-12) == result[i].data[0]);
+            REQUIRE(Approx(dy3[i]).margin(1e-12) == result[i].data[1]);
+        }
+    }
 }
 
 #ifdef MATSLISE_long_double

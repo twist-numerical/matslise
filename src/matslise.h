@@ -81,6 +81,15 @@ namespace matslise {
             return eigenvaluesByIndex(Imin, Imax, side, side);
         };
 
+        virtual std::vector<std::tuple<int, Scalar, Eigenfunction>>
+        eigenpairsByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
+                          const matslise::Y<Scalar> &right) const;
+
+        virtual std::vector<std::tuple<int, Scalar, Eigenfunction>>
+        eigenpairsByIndex(int Imin, int Imax, const matslise::Y<Scalar> &side) const {
+            return eigenpairsByIndex(Imin, Imax, side, side);
+        };
+
         virtual Scalar
         eigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
                         const matslise::Y<Scalar> &right, int index = -1) const {

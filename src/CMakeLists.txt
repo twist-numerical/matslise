@@ -23,7 +23,7 @@ else ()
 endif ()
 
 SET(MATSLISE_SRC
-        matslise/matslise.cpp matslise/halfrange.cpp matslise/sector.cpp
+        matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/sector.cpp
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
         matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
         matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp

@@ -67,6 +67,13 @@ namespace matslise {
             return min<axis>() <= v && v <= max<axis>();
         }
 
+        constexpr bool contains(const std::array<Scalar, n> &point) const {
+            for (int i = 0; i < n; ++i)
+                if (!contains(i, point[i]))
+                    return false;
+            return true;
+        }
+
         Scalar diameter() const {
             if constexpr(n == 1)
                 return abs(max<0>() - min<0>());
