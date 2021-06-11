@@ -3,9 +3,9 @@
 #include <tuple>
 #include <algorithm>
 #include "../catch.hpp"
-#include "../../src/matslise.h"
-#include "../../src/util/eigen.h"
-#include "../../src/util/constants.h"
+#include "../../matslise/matslise.h"
+#include "../../matslise/util/eigen.h"
+#include "../../matslise/util/constants.h"
 #include "test_problem.h"
 
 

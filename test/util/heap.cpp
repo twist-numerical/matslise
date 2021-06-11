@@ -1,5 +1,5 @@
 #include "../catch.hpp"
-#include "../../src/util/heap.h"
+#include "../../matslise/util/heap.h"
 
 using namespace matslise;
 

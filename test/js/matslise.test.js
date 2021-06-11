@@ -1,5 +1,5 @@
 const test = require('ava');
-const Module = require('../src/matslise');
+const Module = require('../matslise/matslise');
 
 const correct = [-0.110248816992, 3.917024772998, 9.047739259809, 16.032970081406, 25.020840823290,
     36.014289910628, 49.010418249424, 64.007937189250, 81.006250326633, 100.005050675159,

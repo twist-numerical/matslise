@@ -2,7 +2,7 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/matslise.h"
+#include "../../matslise/matslise.h"
 #include "test_problem.h"
 
 

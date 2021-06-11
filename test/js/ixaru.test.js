@@ -1,5 +1,5 @@
 const test = require('ava');
-const Module = require('../src/matslise');
+const Module = require('../matslise/matslise');
 
 const correct = [
     [0, 3.1959181, 1],

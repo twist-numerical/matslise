@@ -34,14 +34,13 @@ Y<Scalar, Dynamic> MatsliseND<Scalar, Sector>::propagate(
             y = (MatrixXs)(M[sectorIndex].transpose()) * y;
         y = sector->propagate(E, y, a, b, use_h);
         if (sector->contains(b)) break;
-        conditionY(y);
+        // conditionY(y);
         if (direction == 1)
             y = M[sectorIndex] * y;
         sectorIndex += direction;
     }
     return y;
 }
-
 
 template<typename Scalar, typename Sector>
 pair<typename MatsliseND<Scalar, Sector>::MatrixXs, typename MatsliseND<Scalar, Sector>::MatrixXs>

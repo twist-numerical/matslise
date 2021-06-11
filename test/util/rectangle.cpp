@@ -1,5 +1,5 @@
 #include "../catch.hpp"
-#include "../../src/util/rectangle.h"
+#include "../../matslise/util/rectangle.h"
 
 using namespace matslise;
 

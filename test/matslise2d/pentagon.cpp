@@ -1,8 +1,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/util/constants.h"
-#include "../../src/matslise.h"
+#include "../../matslise/util/constants.h"
+#include "../../matslise/matslise.h"
 #include "checkOrthonormality.h"
 
 

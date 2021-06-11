@@ -1,5 +1,5 @@
 #include "../catch.hpp"
-#include "../../src/matslise3d.h"
+#include "../../matslise/matslise3d.h"
 #include <iostream>
 
 using namespace matslise;

@@ -2,8 +2,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/matslise.h"
-#include "../../src/util/quadrature.h"
+#include "../../matslise/matslise.h"
+#include "../../matslise/util/quadrature.h"
 
 
 using namespace std;

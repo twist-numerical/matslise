@@ -2,8 +2,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/matslise.h"
-#include "../../src/util/calculateEta.h"
+#include "../../matslise/matslise.h"
+#include "../../matslise/util/calculateEta.h"
 
 using namespace std;
 using namespace Eigen;

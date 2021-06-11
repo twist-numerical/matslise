@@ -2,8 +2,8 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../src/matslise.h"
-#include "../../src/util/constants.h"
+#include "../../matslise/matslise.h"
+#include "../../matslise/util/constants.h"
 #include "test_problem.h"
 
 

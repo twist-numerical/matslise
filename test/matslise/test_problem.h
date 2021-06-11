@@ -5,8 +5,8 @@
 #ifndef MATSLISE_TEST_PROBLEM_H
 #define MATSLISE_TEST_PROBLEM_H
 
-#include "../../src/matslise.h"
-#include "../../src/util/quadrature.h"
+#include "../../matslise/matslise.h"
+#include "../../matslise/util/quadrature.h"
 #include "../catch.hpp"
 
 using namespace quadrature;

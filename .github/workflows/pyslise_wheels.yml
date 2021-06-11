@@ -68,7 +68,7 @@ jobs:
       - uses: actions/upload-artifact@v2-preview
         with:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
-          path: ./build/src/dist/*.whl
+          path: ./build/matslise/dist/*.whl
   test_wheel:
     if: always()
     runs-on: ${{ matrix.os }}

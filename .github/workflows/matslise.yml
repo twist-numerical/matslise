@@ -202,4 +202,4 @@ jobs:
       - uses: actions/upload-artifact@v2-preview
         with:
           name: matslise_wasm
-          path: ./build/src/matslise.*
+          path: ./build/matslise/matslise.*
