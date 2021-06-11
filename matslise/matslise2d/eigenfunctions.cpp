@@ -1,4 +1,4 @@
-#include "../matslise.h"
+#include "../matslise2d.h"
 #include <map>
 #include "../util/matching.h"
 
@@ -121,4 +121,4 @@ Matslise2D<Scalar>::eigenfunction(const Y<Scalar, Dynamic> &left, const Scalar &
     return eigenfunctions;
 }
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

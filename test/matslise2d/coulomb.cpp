@@ -1,11 +1,11 @@
 #include "../catch.hpp"
-#include "../../matslise/matslise3d.h"
+#include "../../matslise/matslise2d.h"
 #include <iostream>
 
 using namespace matslise;
 using namespace std;
 
-TEST_CASE("2D: coulomb", "[matslise3d][coulomb][slow]") {
+TEST_CASE("2D: coulomb", "[matslise2d][coulomb][slow]") {
     // https://arxiv.org/pdf/0904.0939.pdf
 
     Matslise2D<>::Config config;

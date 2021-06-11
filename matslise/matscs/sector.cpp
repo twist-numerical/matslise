@@ -1,5 +1,5 @@
 #include <functional>
-#include "../matslise.h"
+#include "../matscs.h"
 #include "matscs_formulas.h"
 #include "../util/legendre.h"
 #include "../util/calculateEta.h"
@@ -314,4 +314,4 @@ Matscs<Scalar>::Sector::propagateColumn<r>(\
 INSTANTIATE_PROPAGATE(Scalar, 1)\
 INSTANTIATE_PROPAGATE(Scalar, -1)
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

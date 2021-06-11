@@ -3,7 +3,7 @@
 #include <tuple>
 #include "../catch.hpp"
 #include "../../matslise/util/legendre.h"
-#include "../../matslise/matslise.h"
+#include "../../matslise/matslise2d.h"
 #include "../../matslise/matslise2d/etaIntegrals.h"
 #include "../../matslise/matslise2d/basisQuadrature.h"
 #include "checkOrthonormality.h"

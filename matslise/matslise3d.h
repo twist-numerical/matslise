@@ -2,6 +2,9 @@
 #define MATSLISE_MATSLISE3D_H
 
 #include "matslise.h"
+#include "matscs.h"
+#include "matslise2d.h"
+#include "matsliseNd.h"
 #include "util/rectangle.h"
 
 namespace matslise {

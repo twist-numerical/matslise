@@ -1,6 +1,6 @@
 #include <complex>
 #include <queue>
-#include "../matslise.h"
+#include "../matsliseNd.h"
 #include "../util/constants.h"
 #include "../util/calculateEta.h"
 
@@ -36,7 +36,7 @@ propagateWithIndexOnSector(const typename Matscs<Scalar>::Sector &sector, const 
                            const Y<Scalar, Eigen::Dynamic> &y0, Array<Scalar, Dynamic, 1> &&angles) {
     MATSLISE_SCOPED_TIMER("ND index of sector");
     Index n = sector.n;
-    using ArrayXs = typename Matslise2D<Scalar>::ArrayXs;
+    using ArrayXs = Array<Scalar, Dynamic, 1>;
     using MatrixXs = Matrix<Scalar, Dynamic, Dynamic>;
 
     Index zeros = 0;
@@ -140,4 +140,4 @@ MatsliseNDSector<Scalar>::propagate<r>( \
 INSTANTIATE_PROPAGATE(Scalar, 1)\
 INSTANTIATE_PROPAGATE(Scalar, -1)
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

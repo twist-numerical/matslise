@@ -2,7 +2,7 @@
 #include <set>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../matslise/matslise.h"
+#include "../../matslise/matslise2d.h"
 #include "../../matslise/util/quadrature.h"
 #include "checkOrthonormality.h"
 #include "../../matslise/util/constants.h"

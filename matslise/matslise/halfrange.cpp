@@ -125,4 +125,4 @@ MatsliseHalf<Scalar>::eigenvalues(
                             ms->eigenvalues(Emin, Emax, Y<Scalar>::Dirichlet(), side));
 }
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

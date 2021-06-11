@@ -5,6 +5,8 @@
 #ifndef MATSLISE_MATSLISEND_H
 #define MATSLISE_MATSLISEND_H
 
+#include "matslise.h"
+#include "matscs.h"
 #include "./util/eigen.h"
 
 namespace matslise {

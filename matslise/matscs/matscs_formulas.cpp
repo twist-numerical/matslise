@@ -425,7 +425,7 @@ void calculate_tcoeff_matrix(
     tH[5].block(n, n, n, n) += h10 * (0.1875*v0_v0_v4+-0.003125*v0_v0_v0_v2+-0.375*v0_v4_v0+0.1875*v4_v0_v0+0.0178571428571*v1_v2_v1+-0.00208333333333*v0_v0_v1_v1+0.003125*v2_v0_v0_v0+-0.107142857143*v1_v3_v0+0.375*v2_v4+-0.267857142857*v3_v3+-0.0214285714286*v2_v0_v2+0.00625*v0_v1_v1_v0+-0.0267857142857*v2_v2_v0+12.375*v6_v0+0.0714285714286*v0_v1_v3+-0.00625*v1_v1_v0_v0+0.00357142857143*v2_v1_v1+0.009375*v0_v0_v2_v0+0.0357142857143*v1_v0_v3+0.00625*v1_v0_v1_v0+-0.009375*v0_v2_v0_v0+-0.116071428571*v3_v1_v0+-12.375*v0_v6+-0.00208333333333*v1_v0_v0_v1+-1.125*v5_v1+0.0482142857143*v0_v2_v2+0.0357142857143*v3_v0_v1+0.375*v4_v2+0.00357142857143*v1_v1_v2+-1.125*v1_v5+0.0803571428571*v0_v3_v1+-0.00208333333333*v0_v1_v0_v1);
 };
 
-#define INSTANTIATE_MATSLISE(Scalar) \
+#define INSTANTIATE_MORE(Scalar) \
 template void calculate_tcoeff_matrix<Scalar>(int, Scalar h, const std::array<Eigen::Matrix<Scalar, -1, -1>, MATSCS_N> &, Eigen::Array<Eigen::Matrix<Scalar, -1, -1>, MATSCS_ETA_delta, MATSCS_HMAX_delta> &, std::array<Eigen::Matrix<Scalar, -1, -1>, MATSCS_ETA_h> &);
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

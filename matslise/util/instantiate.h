@@ -1,10 +1,12 @@
-#ifndef MATSLISE_INSTANTIATE_H
-#define MATSLISE_INSTANTIATE_H
-
 #ifndef INSTANTIATE_MORE
 #define INSTANTIATE_MORE(Scalar)
 #endif
 
+#ifndef INSTANTIATE_MATSLISE
+#define INSTANTIATE_MATSLISE(Scalar)
+#endif
+
+/*
 #ifndef INSTANTIATE_MATSLISE
 #define INSTANTIATE_MATSLISE(Scalar)\
 template class matslise::Matslise<Scalar>;\
@@ -19,14 +21,18 @@ template class matslise::MatsliseNDSector<Scalar>;\
 template class matslise::MatsliseND<Scalar, matslise::Matslise2DSector<Scalar>>;\
 template class matslise::MatsliseND<Scalar, matslise::Matslise3DSector<Scalar>>;\
 INSTANTIATE_MORE(Scalar)
-
 #endif
+ */
 
-INSTANTIATE_MATSLISE(double)
+#define INSTANTIATE_ALL(Scalar) \
+INSTANTIATE_MATSLISE(Scalar) \
+INSTANTIATE_MORE(Scalar)
+
+INSTANTIATE_ALL(double)
 
 #ifdef MATSLISE_long_double
 
-INSTANTIATE_MATSLISE(long double)
+INSTANTIATE_ALL(long double)
 
 #endif
 
@@ -34,8 +40,6 @@ INSTANTIATE_MATSLISE(long double)
 
 #include <boost/multiprecision/float128.hpp>
 
-INSTANTIATE_MATSLISE(boost::multiprecision::float128)
+INSTANTIATE_ALL(boost::multiprecision::float128)
 
 #endif
-
-#endif //MATSLISE_INSTANTIATE_H

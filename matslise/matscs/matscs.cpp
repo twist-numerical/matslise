@@ -1,5 +1,5 @@
 #include <functional>
-#include "../matslise.h"
+#include "../matscs.h"
 #include "../util/find_sector.h"
 
 #define EPS (1.e-12)
@@ -102,6 +102,9 @@ vector<Y<Scalar, Dynamic>> *Matscs<Scalar>::eigenfunction(const Scalar &E, vecto
     return ys;
 }
 
+
+#include "../util/sectorbuilder.impl.h"
+
 #define INSTANTIATE_PROPAGATE(Scalar, r)\
 template Y<Scalar, Dynamic, r>\
 Matscs<Scalar>::propagateColumn<r>(\
@@ -109,6 +112,7 @@ Matscs<Scalar>::propagateColumn<r>(\
 
 #define INSTANTIATE_MORE(Scalar)\
 INSTANTIATE_PROPAGATE(Scalar, 1)\
-INSTANTIATE_PROPAGATE(Scalar, -1)
+INSTANTIATE_PROPAGATE(Scalar, -1)\
+INSTANTIATE_SECTOR_BUILDER(Matscs<Scalar>)
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

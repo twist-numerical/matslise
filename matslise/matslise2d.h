@@ -2,6 +2,8 @@
 #define MATSLISE_MATSLISE2D_H
 
 #include "util/rectangle.h"
+#include "matslise.h"
+#include "matscs.h"
 #include "matslise2d/basisQuadrature.h"
 #include "matsliseNd.h"
 

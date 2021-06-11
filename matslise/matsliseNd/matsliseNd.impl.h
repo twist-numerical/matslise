@@ -1,6 +1,6 @@
 #include <complex>
 #include <queue>
-#include "../matslise.h"
+#include "../matsliseNd.h"
 #include "../util/constants.h"
 #include "../util/calculateEta.h"
 #include "../util/find_sector.h"
@@ -303,5 +303,3 @@ MatsliseND<Scalar, Sector>::eigenfunctionSteps(const Y<Scalar, Dynamic> &yLeft, 
     delete[] U;
     return elements;
 }
-
-#include "../util/instantiate.h"

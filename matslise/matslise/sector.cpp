@@ -235,4 +235,4 @@ Matslise<Scalar>::Sector::propagate<withPrufer>( \
 INSTANTIATE_PROPAGATE(Scalar, false) \
 INSTANTIATE_PROPAGATE(Scalar, true)
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

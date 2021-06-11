@@ -269,4 +269,10 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
     }};
 }
 
-#include "../util/instantiate.h"
+
+#include "../util/sectorbuilder.impl.h"
+
+#define INSTANTIATE_MORE(Scalar) \
+INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>)
+
+#include "instantiate.h"

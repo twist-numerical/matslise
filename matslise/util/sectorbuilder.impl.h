@@ -75,9 +75,9 @@ typename Problem::Sector *automaticNextSector(
         const typename Problem::Scalar &tolerance, Direction direction) {
     typedef typename Problem::Scalar Scalar;
     typedef typename Problem::Sector Sector;
-    Scalar xmin = direction == forward ? left : right - h;
-    Scalar xmax = direction == forward ? left + h : right;
-    if (direction == forward && xmax > right) {
+    Scalar xmin = direction == Direction::forward ? left : right - h;
+    Scalar xmax = direction == Direction::forward ? left + h : right;
+    if (direction == Direction::forward && xmax > right) {
         xmax = right;
     } else if (direction == backward && xmin < left) {
         xmin = left;
@@ -89,7 +89,7 @@ typename Problem::Sector *automaticNextSector(
     while (error > tolerance && steps < 10 && h > 1e-3) {
         ++steps;
         h *= std::max(Scalar(.1), .99 * Scalar(pow(tolerance / error, Scalar(1. / (Problem::order - 1)))));
-        if (direction == forward) {
+        if (direction == Direction::forward) {
             xmax = xmin + h;
         } else {
             xmin = xmax - h;
@@ -120,7 +120,7 @@ typename Problem::Sector *automaticNextSector(
                     xmax = right;
                 } else {
                     h *= pow(tolerance / error, 1. / (Problem::order - 1));
-                    if (direction == forward) {
+                    if (direction == Direction::forward) {
                         xmax = xmin + h;
                         if (xmax > right)
                             xmax = right;
@@ -293,11 +293,3 @@ SectorBuilder<Problem> sector_builder::automatic(const typename Problem::Scalar 
 template SectorBuilder<Problem> sector_builder::uniform<Problem>(int); \
 template SectorBuilder<Problem> sector_builder::automatic<Problem, false>(const Problem::Scalar&); \
 template SectorBuilder<Problem> sector_builder::automatic<Problem, true>(const Problem::Scalar&);
-
-#define INSTANTIATE_MORE(Scalar) \
-INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>) \
-INSTANTIATE_SECTOR_BUILDER(Matscs<Scalar>) \
-INSTANTIATE_SECTOR_BUILDER(Matslise2D<Scalar>) \
-INSTANTIATE_SECTOR_BUILDER(Matslise3D<Scalar>)
-
-#include "./instantiate.h"

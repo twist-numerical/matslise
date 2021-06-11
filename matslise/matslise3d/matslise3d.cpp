@@ -1,4 +1,4 @@
-#include "../matslise.h"
+#include "../matslise3d.h"
 #include "../util/quadrature.h"
 #include "../util/scoped_timer.h"
 #include <map>
@@ -41,4 +41,12 @@ Matslise3D<Scalar>::Matslise3D(
     }
 }
 
-#include "../util/instantiate.h"
+
+#include "../util/sectorbuilder.impl.h"
+#include "../matsliseNd/matsliseNd.impl.h"
+
+#define INSTANTIATE_MORE(Scalar) \
+INSTANTIATE_SECTOR_BUILDER(Matslise3D<Scalar>) \
+template class matslise::MatsliseND<Scalar, matslise::Matslise2DSector<Scalar>>;
+
+#include "instantiate.h"

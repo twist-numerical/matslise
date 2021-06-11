@@ -1,4 +1,4 @@
-#include "../matslise.h"
+#include "../matslise2d.h"
 #include "./etaIntegrals.h"
 #include "../util/legendre.h"
 #include "../util/scoped_timer.h"
@@ -204,4 +204,4 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
     template class matslise::BasisQuadrature<Scalar, MATSLISE2D_DELTA_V_DEGREE, true>; \
     template class matslise::BasisQuadrature<Scalar, MATSLISE2D_DELTA_V_DEGREE, false>;
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

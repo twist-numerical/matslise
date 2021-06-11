@@ -3,6 +3,7 @@
 
 #include "../formula_constants.h"
 #include "../util/eigen.h"
+#include "../matscs.h"
 #include <array>
 
 template<typename Scalar>

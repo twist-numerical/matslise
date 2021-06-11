@@ -22,14 +22,37 @@ else ()
     ENDIF (OPTIMIZE)
 endif ()
 
-SET(MATSLISE_SRC
+set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/sector.cpp
-        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp
-        matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
-        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
-        matslise3d/matslise3d.cpp matslise3d/sector.cpp
-        matsliseNd/matsliseNd.cpp matsliseNd/sector.cpp
-        util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.cpp)
+        util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.impl.h)
+
+option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
+option(MATSLISE_2D "Build matslise for 2D equations" ON)
+option(MATSLISE_3D "Build matslise for 3D equations" OFF)
+
+if (MATSLISE_3D)
+    set(MATSLISE_2D ON)
+endif ()
+if (MATSLISE_2D)
+    set(MATSLISE_MATSCS ON)
+endif ()
+
+if (MATSLISE_MATSCS)
+    set(MATSLISE_SRC ${MATSLISE_SRC}
+            matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
+endif ()
+
+if (MATSLISE_2D)
+    set(MATSLISE_SRC ${MATSLISE_SRC}
+            matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
+            matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
+            matsliseNd/sector.cpp)
+endif ()
+
+if (MATSLISE_3D)
+    set(MATSLISE_SRC ${MATSLISE_SRC}
+            matslise3d/matslise3d.cpp matslise3d/sector.cpp)
+endif ()
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_SRC})

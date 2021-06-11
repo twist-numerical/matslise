@@ -24,4 +24,4 @@ AbstractMatslise<Scalar>::eigenpairsByIndex(int Imin, int Imax, const Y<Scalar> 
 }
 
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

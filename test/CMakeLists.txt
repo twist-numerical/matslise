@@ -56,16 +56,40 @@ else ()
         endif ()
     ENDIF (QUADMATH)
 
-    add_executable(matslise_test EXCLUDE_FROM_ALL
+    option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
+    option(MATSLISE_2D "Build matslise for 2D equations" ON)
+    option(MATSLISE_3D "Build matslise for 3D equations" OFF)
+
+    if (MATSLISE_3D)
+        set(MATSLISE_2D ON)
+    endif ()
+    if (MATSLISE_2D)
+        set(MATSLISE_MATSCS ON)
+    endif ()
+
+
+    set(MATSLISE_TEST_SRC
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
-            matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp
-            matscs/propagatePsi.cpp matscs/propagateTheta.cpp
-            matslise2d/henon.cpp matslise2d/ixaru.cpp matslise2d/zero.cpp matslise2d/quartic.cpp
-            matslise2d/derivatives.cpp matslise2d/coulomb.cpp matslise2d/pentagon.cpp matslise2d/twoSextic.cpp
-            matslise2d/quadrature.cpp
-            matslise3d/coulomb.cpp matslise3d/harmonic_oscillator.cpp
-            util/quadrature.cpp util/calculateEta.cpp util/rectangle.cpp util/heap.cpp
-            main.cpp)
+            matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp)
+
+    if (MATSLISE_MATSCS)
+        set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
+                matscs/propagatePsi.cpp matscs/propagateTheta.cpp)
+    endif ()
+
+    if (MATSLISE_2D)
+        set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
+                matslise2d/henon.cpp matslise2d/ixaru.cpp matslise2d/zero.cpp matslise2d/quartic.cpp
+                matslise2d/derivatives.cpp matslise2d/coulomb.cpp matslise2d/pentagon.cpp matslise2d/twoSextic.cpp
+                matslise2d/quadrature.cpp)
+    endif ()
+    if (MATSLISE_3D)
+        set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
+                matslise3d/coulomb.cpp matslise3d/harmonic_oscillator.cpp
+                util/quadrature.cpp util/calculateEta.cpp util/rectangle.cpp util/heap.cpp)
+    endif ()
+
+    add_executable(matslise_test EXCLUDE_FROM_ALL ${MATSLISE_TEST_SRC} main.cpp)
 
     find_package(OpenMP)
     if (OpenMP_CXX_FOUND)

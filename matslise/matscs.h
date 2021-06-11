@@ -5,6 +5,7 @@
 #include <array>
 #include <vector>
 #include <functional>
+#include "matslise.h"
 
 namespace matslise {
     template<typename _Scalar=double>

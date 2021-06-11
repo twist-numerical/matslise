@@ -1,7 +1,7 @@
 #include <iostream>
 #include <map>
 #include <queue>
-#include "../matslise.h"
+#include "../matslise2d.h"
 #include "../util/quadrature.h"
 #include "../util/find_sector.h"
 #include "../util/scoped_timer.h"
@@ -78,4 +78,10 @@ Scalar Matslise2D<Scalar>::estimatePotentialMinimum() const {
 }
 
 
-#include "../util/instantiate.h"
+#include "../util/sectorbuilder.impl.h"
+#include "../matsliseNd/matsliseNd.impl.h"
+
+#define INSTANTIATE_MORE(Scalar) \
+INSTANTIATE_SECTOR_BUILDER(Matslise2D<Scalar>);
+
+#include "instantiate.h"

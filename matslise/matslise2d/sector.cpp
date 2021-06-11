@@ -1,7 +1,7 @@
 #include <iostream>
 #include <complex>
 #include <queue>
-#include "../matslise.h"
+#include "../matslise2d.h"
 #include "../util/quadrature.h"
 #include "../util/legendre.h"
 #include "../util/horner.h"
@@ -175,6 +175,6 @@ Matslise2DSector<Scalar>::basis<r>(const Matslise2DSector<Scalar>::ArrayXs &) co
 
 #define INSTANTIATE_MORE(Scalar)\
 INSTANTIATE_BASIS(Scalar, false)\
-INSTANTIATE_BASIS(Scalar, true)
+INSTANTIATE_BASIS(Scalar, true) \
 
-#include "../util/instantiate.h"
+#include "instantiate.h"

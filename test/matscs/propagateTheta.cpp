@@ -2,7 +2,7 @@
 #include <vector>
 #include <tuple>
 #include "../catch.hpp"
-#include "../../matslise/matslise.h"
+#include "../../matslise/matscs.h"
 
 
 using namespace matslise;

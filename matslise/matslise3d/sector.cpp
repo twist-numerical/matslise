@@ -1,4 +1,4 @@
-#include "../matslise.h"
+#include "../matslise3d.h"
 #include "../util/legendre.h"
 #include "../util/quadrature.h"
 
@@ -154,4 +154,4 @@ Matslise3DSector<Scalar> *Matslise3DSector<Scalar>::refine(
     return sector;
 }
 
-#include "../util/instantiate.h"
+#include "./instantiate.h"

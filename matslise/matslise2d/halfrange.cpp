@@ -1,6 +1,6 @@
 #include <iostream>
 #include <map>
-#include "../matslise.h"
+#include "../matslise2d.h"
 #include "../util/quadrature.h"
 #include "../util/constants.h"
 
@@ -178,4 +178,4 @@ vector<Eigenfunction2D<Scalar, withDerivatives>> Matslise2DHalf<Scalar>::eigenfu
 }
 
 
-#include "../util/instantiate.h"
+#include "instantiate.h"
