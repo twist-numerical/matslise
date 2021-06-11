@@ -24,7 +24,17 @@ endif ()
 
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/sector.cpp
-        util/quadrature.cpp util/calculateEta.cpp util/sectorbuilder.impl.h)
+        util/quadrature.cpp util/calculateEta.cpp)
+set(MATSLISE_MATSCS_SRC
+        matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
+set(MATSLISE_2D_SRC
+        matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
+        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
+        matsliseNd/sector.cpp)
+set(MATSLISE_3D_SRC
+        matslise3d/matslise3d.cpp matslise3d/sector.cpp)
+
+set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC} ${MATSLISE_2D_SRC} ${MATSLISE_3D_SRC})
 
 option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
 option(MATSLISE_2D "Build matslise for 2D equations" ON)
@@ -32,30 +42,19 @@ option(MATSLISE_3D "Build matslise for 3D equations" OFF)
 
 if (MATSLISE_3D)
     set(MATSLISE_2D ON)
+    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_3D_SRC})
 endif ()
 if (MATSLISE_2D)
     set(MATSLISE_MATSCS ON)
+    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_2D_SRC})
 endif ()
 
 if (MATSLISE_MATSCS)
-    set(MATSLISE_SRC ${MATSLISE_SRC}
-            matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
-endif ()
-
-if (MATSLISE_2D)
-    set(MATSLISE_SRC ${MATSLISE_SRC}
-            matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
-            matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
-            matsliseNd/sector.cpp)
-endif ()
-
-if (MATSLISE_3D)
-    set(MATSLISE_SRC ${MATSLISE_SRC}
-            matslise3d/matslise3d.cpp matslise3d/sector.cpp)
+    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
 endif ()
 
 if (DEFINED EMSCRIPTEN)
-    add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_SRC})
+    add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_FULL_SRC})
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
@@ -147,7 +146,7 @@ else ()
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/pybind11/CMakeLists.txt)
             add_subdirectory(../cmake/pybind11 pybind11)
             message("-- python: ${PYTHON_EXECUTABLE}")
-            pybind11_add_module(pyslise MODULE ${MATSLISE_SRC}
+            pybind11_add_module(pyslise MODULE ${MATSLISE_FULL_SRC}
                     pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
             target_link_libraries(pyslise PRIVATE ${libraries})
             IF (PARALLEL)
