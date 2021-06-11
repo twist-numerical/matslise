@@ -229,6 +229,8 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
             std::move(propagationSteps(*this, E, left, right)));
 
     return {[this, E, steps](const Scalar &x) {
+        if (x < domain.template min<0>() || x > domain.template max<0>())
+            return Y<Scalar>();
         auto sector = findSector(x, sectors.begin(), sectors.end());
         int sectorIndex = sector - sectors.begin();
 
@@ -245,6 +247,10 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
         int sectorIndex = 0;
         auto sector = sectors.begin();
         for (Eigen::Index i = 0; i < n; ++i) {
+            if (x[i] < domain.template min<0>() || x[i] > domain.template max<0>()) {
+                ys[i] = Y<Scalar>();
+                continue;
+            }
             if (x[i] < (**sector).min) {
                 sector = findSector(x[i], sectors.begin(), sector);
                 sectorIndex = sector - sectors.begin();
