@@ -8,7 +8,7 @@
 using namespace emscripten;
 
 inline val transformEigenvalues(const std::vector<std::pair<int, double>> &values) {
-    val result(val::array());
+    val result{val::array()};
 
     for (std::pair<int, double> value: values)
         result.call<val>("push", val(value));
