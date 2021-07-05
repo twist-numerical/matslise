@@ -228,7 +228,7 @@ SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &toleran
                             {
 
                                 Sector *newSector = refineSector(*sector, problem, bounds.first, bounds.second,
-                                                                 forward);
+                                                                 Direction::forward);
                                 Scalar newError = depth < maxDepth ? newSector->error() : 0;
                                 if (!(newError < 100 * tolerance)) { // (! . < .) also correct for nan
                                     newError = 100 * tolerance;
@@ -254,9 +254,10 @@ SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &toleran
         result.sectors.reserve(heap.size());
         for (auto &item : heap.data())
             result.sectors.template emplace_back().reset(std::get<1>(item));
-        std::sort(result.sectors.begin(), result.sectors.end(), [](const value_ptr<Sector> &a, const value_ptr<Sector> &b) {
-            return a->min < b->min;
-        });
+        std::sort(result.sectors.begin(), result.sectors.end(),
+                  [](const value_ptr<Sector> &a, const value_ptr<Sector> &b) {
+                      return a->min < b->min;
+                  });
 
         auto match = result.sectors.begin();
         for (auto i = match + 1; i != result.sectors.end(); ++i) {
@@ -267,7 +268,7 @@ SectorBuilder<Problem> automaticParallel(const typename Problem::Scalar &toleran
 
 #pragma omp parallel for
         for (int i = 0; i < result.matchIndex; ++i) {
-            result.sectors[i]->setDirection(i <= result.matchIndex ? forward : backward);
+            result.sectors[i]->setDirection(i <= result.matchIndex ? Direction::forward : Direction::backward);
         }
 
         return result;
