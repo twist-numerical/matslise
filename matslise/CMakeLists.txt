@@ -2,6 +2,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(PYSLISE_VERSION "3.1.1")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
+cmake_policy(SET CMP0077 NEW)
+
 message("Matslise")
 if (MSVC)
     add_compile_options(
