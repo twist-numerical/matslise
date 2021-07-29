@@ -1,11 +1,5 @@
-#include <array>
 #include <vector>
-#include <queue>
 #include "../matslise.h"
-#include "matslise_formulas.h"
-#include "../util/theta.h"
-#include "../util/constants.h"
-#include "../util/find_sector.h"
 
 using namespace matslise;
 using namespace std;
