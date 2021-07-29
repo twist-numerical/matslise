@@ -2,6 +2,7 @@ set(CMAKE_CXX_STANDARD 17)
 find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
+cmake_policy(SET CMP0077 NEW)
 
 message("Matslise test")
 if (MSVC)
