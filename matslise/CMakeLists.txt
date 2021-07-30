@@ -68,7 +68,12 @@ if (DEFINED EMSCRIPTEN)
 else ()
     set(libraries Eigen3::Eigen)
 
-    add_library(matslise ${MATSLISE_SRC})
+    option(MATSLISE_STATIC "Build matslise as a static library" OFF)
+    if (MATSLISE_STATIC)
+        add_library(matslise STATIC ${MATSLISE_SRC})
+    else ()
+        add_library(matslise ${MATSLISE_SRC})
+    endif ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
