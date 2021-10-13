@@ -114,15 +114,15 @@ Scalar Matslise<Scalar>::Sector::theta0(const Scalar &E, const Y<Scalar> &y0) co
     }
 }
 
-template<typename Scalar>
-Scalar Matslise<Scalar>::Sector::prufer(
-        const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const {
-    Scalar scaling = E - v0Match > 1 ? sqrt(E - v0Match) : 1;
-    if (E > vs[0]) {
+template<typename Scalar, typename Y0, typename Y1>
+Scalar pruferHelper(const typename Matslise<Scalar>::Sector &sector, const Scalar &E, const Scalar &delta,
+                    const Y0 &y0, const Y1 &y1) {
+    Scalar scaling = E - sector.v0Match > 1 ? sqrt(E - sector.v0Match) : 1;
+    if (E > sector.vs[0]) {
         // page 56 (PhD Ledoux)
-        Scalar omega = sqrt(E - vs[0]);
-        Scalar theta0 = atan_safe(y0.data[0] * omega, y0.data[1]);
-        Scalar phi_star = atan_safe(y1.data[0] * omega, y1.data[1]);
+        Scalar omega = sqrt(E - sector.vs[0]);
+        Scalar theta0 = atan_safe(y0[0] * omega, y0[1]);
+        Scalar phi_star = atan_safe(y1[0] * omega, y1[1]);
         Scalar phi_bar = omega * delta + theta0;
         phi_bar -= floor(phi_bar / constants<Scalar>::PI) * constants<Scalar>::PI;
         Scalar theta1 = phi_star - phi_bar;
@@ -139,9 +139,9 @@ Scalar Matslise<Scalar>::Sector::prufer(
 
         return rescale(theta1, scaling / omega) - rescale(theta0, scaling / omega);
     } else {
-        Scalar theta0 = atan_safe(scaling * y0.data[0], y0.data[1]);
-        Scalar theta1 = atan_safe(scaling * y1.data[0], y1.data[1]);
-        if (y0.data[0] * y1.data[0] >= 0) {
+        Scalar theta0 = atan_safe(scaling * y0[0], y0[1]);
+        Scalar theta1 = atan_safe(scaling * y1[0], y1[1]);
+        if (y0[0] * y1[0] >= 0) {
             int signTheta0 = theta0 == 0 ? 1 : sign(theta0);
             int signTheta1 = theta1 == 0 ? -1 : sign(theta1);
             if (signTheta0 * signTheta1 < 0)
@@ -154,9 +154,26 @@ Scalar Matslise<Scalar>::Sector::prufer(
     }
 }
 
+template<typename Scalar>
+template<int cols>
+typename std::conditional<cols == 1, Scalar, Eigen::Array<Scalar, cols, 1>>::type
+Matslise<Scalar>::Sector::prufer(const Scalar &E, const Scalar &delta, const Y<Scalar, 1, cols> &y0,
+                                 const Y<Scalar, 1, cols> &y1) const {
+    if constexpr (cols == 1) {
+        return pruferHelper(*this, E, delta, y0.y(), y1.y());
+    } else {
+        Eigen::Array<Scalar, cols, 1> r;
+        for (int i = 0; i < cols; ++i) {
+            r[i] = pruferHelper(*this, E, delta, y0.col(i).y(), y1.col(i).y());
+        }
+        return r;
+    }
+}
+
 template<typename Scalar, bool withPrufer, int cols>
-void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
-                    const Scalar &E, Y<Scalar, 1, cols> &y, Scalar delta, bool use_h, Scalar &theta) {
+void propagateDelta(
+        const typename Matslise<Scalar>::Sector *sector, const Scalar &E, Y<Scalar, 1, cols> &y, Scalar delta,
+        bool use_h, Eigen::Array<Scalar, cols, 1> &theta) {
     if (sector->direction == backward)
         delta *= -1;
     bool direction = delta >= 0;
@@ -175,19 +192,22 @@ void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
         y.reverse();
 
     if constexpr(withPrufer) {
-        static_assert(cols == 1);
         theta += direction != (sector->direction == backward) ?
-                 sector->prufer(E, delta, y0, y) : -sector->prufer(E, delta, y, y0);
+                 sector->template prufer<cols>(E, delta, y0, y) : -sector->template prufer<cols>(E, delta, y, y0);
     }
 }
 
 template<typename Scalar>
 template<bool withPrufer, int cols>
-typename conditional<withPrufer, std::pair<Y<Scalar, 1, cols>, Scalar>, Y<Scalar, 1, cols>>::type
+typename std::conditional<withPrufer,
+        std::pair<Y<Scalar, 1, cols>, Eigen::Array<Scalar, cols, 1>>,
+        Y<Scalar, 1, cols>
+>::type
 Matslise<Scalar>::Sector::propagate(
         const Scalar &E, const Y<Scalar, 1, cols> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
     Y<Scalar, 1, cols> y = y0;
-    Scalar argdet = 0;
+    Eigen::Array<Scalar, cols, 1> argdet;
+    argdet = decltype(argdet)::Zero();
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (direction == forward) {
             if (a > min)
@@ -201,9 +221,9 @@ Matslise<Scalar>::Sector::propagate(
                 propagateDelta<Scalar, withPrufer, cols>(this, E, y, b - max, use_h, argdet);
         }
     }
-    if constexpr(withPrufer)
+    if constexpr(withPrufer) {
         return {y, argdet};
-    else
+    } else
         return y;
 }
 
@@ -229,12 +249,13 @@ Scalar Matslise<Scalar>::Sector::error() const {
 }
 
 #define INSTANTIATE_PROPAGATE(Scalar, withPrufer, cols) \
-template typename conditional<withPrufer, pair<Y<Scalar, 1, cols>, Scalar>, Y<Scalar, 1, cols>>::type \
+template typename conditional<withPrufer, pair<Y<Scalar, 1, cols>, Eigen::Array<Scalar, cols, 1>>, Y<Scalar, 1, cols>>::type \
 Matslise<Scalar>::Sector::propagate<withPrufer, cols>( \
     const Scalar&, const Y<Scalar, 1, cols>&, const Scalar&, const Scalar&, bool) const;
 
 #define INSTANTIATE_MORE(Scalar) \
 INSTANTIATE_PROPAGATE(Scalar, true, 1) \
+INSTANTIATE_PROPAGATE(Scalar, true, 2) \
 INSTANTIATE_PROPAGATE(Scalar, false, 1) \
 INSTANTIATE_PROPAGATE(Scalar, false, 2)
 

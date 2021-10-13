@@ -152,8 +152,10 @@ namespace matslise {
                 s->v0Match = v0Match;
         }
 
-        std::pair<matslise::Y<Scalar>, Scalar>
-        propagate(const Scalar &E, const matslise::Y<Scalar> &y, const Scalar &a, const Scalar &b,
+        template<int cols = 1>
+        std::pair<matslise::Y<Scalar, 1, cols>,
+                typename std::conditional<cols == 1, Scalar, Eigen::Array<Scalar, cols, 1>>::type>
+        propagate(const Scalar &E, const matslise::Y<Scalar, 1, cols> &y, const Scalar &a, const Scalar &b,
                   bool use_h = true) const;
 
         std::tuple<Scalar, Scalar, Scalar>
@@ -214,13 +216,19 @@ namespace matslise {
             T<Scalar> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
             template<bool withPrufer, int cols = 1>
-            typename std::conditional<withPrufer, std::pair<matslise::Y<Scalar, 1, cols>, Scalar>, matslise::Y<Scalar, 1, cols>>::type
+            typename std::conditional<withPrufer,
+                    std::pair<Y<Scalar, 1, cols>, Eigen::Array<Scalar, cols, 1>>,
+                    Y<Scalar, 1, cols>
+            >::type
             propagate(const Scalar &E, const Y<Scalar, 1, cols> &y0, const Scalar &a, const Scalar &b,
                       bool use_h = true) const;
 
             Scalar theta0(const Scalar &E, const Y<Scalar> &y0) const;
 
-            Scalar prufer(const Scalar &E, const Scalar &delta, const Y<Scalar> &y0, const Y<Scalar> &y1) const;
+            template<int col>
+            typename std::conditional<col == 1, Scalar, Eigen::Array<Scalar, col, 1>>::type
+            prufer(const Scalar &E, const Scalar &delta, const Y<Scalar, 1, col> &y0,
+                   const Y<Scalar, 1, col> &y1) const;
 
             Scalar error() const;
 
@@ -279,10 +287,13 @@ namespace matslise {
         PeriodicMatslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                          const Scalar &tolerance = 1e-8) : matslise{V, xmin, xmax, tolerance} {}
 
-        Y<Scalar, 1, 2> propagate(const Scalar &E, const Y<Scalar, 1, 2> &y0,
-                                  const Scalar &a, const Scalar &b, bool use_h = true) const;
 
-        std::pair<Scalar, Scalar> matchingError(const Scalar &E, bool use_h = true) const;
+        std::pair<matslise::Y<Scalar, 1, 2>, Eigen::Array<Scalar, 2, 1>>
+        propagate(const Scalar &E, const matslise::Y<Scalar, 1, 2> &y0,
+                  const Scalar &a, const Scalar &b, bool use_h = true) const;
+
+        std::tuple<Eigen::Matrix<Scalar, 2, 2>, Eigen::Matrix<Scalar, 2, 2>, Eigen::Array<Scalar, 2, 1>>
+        matchingError(const Scalar &E, bool use_h = true) const;
     };
 }
 

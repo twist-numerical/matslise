@@ -221,7 +221,7 @@ Note: only one of steps and tolerance have to be set.
 )"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8)
             .def("propagate",
                  [](PeriodicMatslise<> &m, double E, const Matrix2d &y, double a, double b) -> Matrix2d {
-                     return m.propagate(E, make_y(y), a, b).y();
+                     return m.propagate(E, make_y(y), a, b).first.y();
                  }, R""""(\
 For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b.
 
@@ -235,7 +235,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                  py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
             .def("__error",
                  [](PeriodicMatslise<> &m, double E)
-                         -> pair<double, double> {
+                         -> tuple<Matrix2d, Matrix2d, Array2d> {
                      return m.matchingError(E);
                  },
                  py::arg("E"));

@@ -12,16 +12,22 @@ using namespace std;
 using namespace Eigen;
 
 template<typename Scalar>
-pair<Y<Scalar>, Scalar>
-Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &a, const Scalar &b, bool use_h) const {
+template<int cols>
+pair<Y<Scalar, 1, cols>, typename conditional<cols == 1, Scalar, Eigen::Array<Scalar, cols, 1>>::type>
+Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar, 1, cols> &_y,
+                            const Scalar &a, const Scalar &b, bool use_h) const {
     if (!domain.contains(a) || !domain.contains(b))
         throw runtime_error("Matslise::propagate(): a and b should be in the interval");
-    Y<Scalar> y = _y;
-    Scalar dTheta;
+    Y<Scalar, 1, cols> y = _y;
+    Eigen::Array<Scalar, cols, 1> dTheta;
     long sectorIndex = find_sector<Matslise<Scalar>>(this, a);
-    Scalar theta = sectors[sectorIndex]->theta0(E, y);
-    if (theta < 0 || (a > b && theta == 0))
-        theta += constants<Scalar>::PI;
+    Eigen::Array<Scalar, cols, 1> theta;
+    for (int i = 0; i < cols; ++i) {
+        Scalar t = sectors[sectorIndex]->theta0(E, y.col(i));
+        if (t < 0 || (a > b && t == 0))
+            t += constants<Scalar>::PI;
+        theta[i] = t;
+    }
     do {
         const value_ptr<Sector> &sector = sectors[sectorIndex];
         tie(y, dTheta) = sector->template propagate<true>(E, y, a, b, use_h);
@@ -30,7 +36,10 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar> &_y, const Scalar &
             break;
         sectorIndex += a < b ? 1 : -1;
     } while (sectorIndex >= 0 && sectorIndex < (long) sectors.size());
-    return {y, theta};
+    if constexpr (cols == 1)
+        return {y, theta[0]};
+    else
+        return {y, theta};
 }
 
 template<typename Scalar>
@@ -272,7 +281,13 @@ typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
 
 #include "../util/sectorbuilder.impl.h"
 
+#define INSTANTIATE_PROPAGATE(Scalar, cols) \
+template pair<Y<Scalar, 1, cols>, typename conditional<cols == 1, Scalar, Eigen::Array<Scalar, cols, 1>>::type> \
+Matslise<Scalar>::propagate<cols>(const Scalar &, const Y<Scalar, 1, cols> &, const Scalar &, const Scalar &, bool) const; \
+
 #define INSTANTIATE_MORE(Scalar) \
-INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>)
+INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>) \
+INSTANTIATE_PROPAGATE(Scalar, 1) \
+INSTANTIATE_PROPAGATE(Scalar, 2)
 
 #include "instantiate.h"
