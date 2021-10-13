@@ -30,6 +30,12 @@ namespace matslise {
             return y;
         }
 
+        static Y<Scalar, _dimension, n2> Periodic(Eigen::Index N = _dimension) {
+            Y<Scalar, _dimension, n2> y(N);
+            y.y() = Eigen::Matrix<Scalar, n2, _cols>::Identity(2 * N, 2 * N);
+            return y;
+        }
+
         void reverse() {
             block(dX) *= -1;
             block(dXdE) *= -1;

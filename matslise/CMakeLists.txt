@@ -25,7 +25,8 @@ else ()
 endif ()
 
 set(MATSLISE_SRC
-        matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/sector.cpp
+        matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
+        matslise/sector.cpp
         util/quadrature.cpp util/calculateEta.cpp)
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
@@ -35,6 +36,7 @@ set(MATSLISE_2D_SRC
         matsliseNd/sector.cpp)
 set(MATSLISE_3D_SRC
         matslise3d/matslise3d.cpp matslise3d/sector.cpp)
+set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp)
 
 set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC} ${MATSLISE_2D_SRC} ${MATSLISE_3D_SRC})
 
@@ -45,14 +47,20 @@ option(MATSLISE_3D "Build matslise for 3D equations" OFF)
 if (MATSLISE_3D)
     set(MATSLISE_2D ON)
     set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_3D_SRC})
+    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyslise3d.cpp)
+    add_compile_definitions(WITH_MATSLISE_3D)
 endif ()
 if (MATSLISE_2D)
     set(MATSLISE_MATSCS ON)
     set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_2D_SRC})
+    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyslise2d.cpp)
+    add_compile_definitions(WITH_MATSLISE_2D)
 endif ()
 
 if (MATSLISE_MATSCS)
     set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
+    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyscs.cpp)
+    add_compile_definitions(WITH_MATSCS)
 endif ()
 
 if (DEFINED EMSCRIPTEN)
@@ -153,8 +161,7 @@ else ()
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/pybind11/CMakeLists.txt)
             add_subdirectory(../cmake/pybind11 pybind11)
             message("-- python: ${PYTHON_EXECUTABLE}")
-            pybind11_add_module(pyslise MODULE ${MATSLISE_FULL_SRC}
-                    pyslise/module.cpp pyslise/pyslise.cpp pyslise/pyscs.cpp pyslise/pyslise2d.cpp pyslise/pyslise3d.cpp)
+            pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} ${PYSLISE_SRC})
             target_link_libraries(pyslise PRIVATE ${libraries})
             IF (PARALLEL)
                 target_link_libraries(pyslise PUBLIC OpenMP::OpenMP_CXX)

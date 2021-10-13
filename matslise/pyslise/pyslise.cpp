@@ -209,6 +209,37 @@ Note: only one of steps and tolerance have to be set.
 :param int tolerance: automatically choose steps with at least the given accuracy.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("tolerance") = 1e-8);
 
+
+    py::class_<PeriodicMatslise<>>(m, "PyslisePeriodic", R""""(\
+)"""")
+            .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
+                return new PeriodicMatslise<>(V, min, max, tolerance);
+            }), R""""(\
+:param (float)->float V: the potential.
+:param float min, max: the ends of the domain.
+:param int tolerance: automatically choose steps with at least the given accuracy.
+)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8)
+            .def("propagate",
+                 [](PeriodicMatslise<> &m, double E, const Matrix2d &y, double a, double b) -> Matrix2d {
+                     return m.propagate(E, make_y(y), a, b).y();
+                 }, R""""(\
+For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b.
+
+:param float E: the fixed eigenvalue to use. This value doesn't have to be a true eigenvalue.
+:param (float,float) y: the initial condition in point a.
+:param float a: the start of the propagation.
+:param float b: the point in which the solution is sought.
+
+:returns: a tuple of length two. The first element is a tuple with the value and the derivative in the point b. The second element is the angle found by the Prüfer transformation.
+)"""",
+                 py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
+            .def("__error",
+                 [](PeriodicMatslise<> &m, double E)
+                         -> pair<double, double> {
+                     return m.matchingError(E);
+                 },
+                 py::arg("E"));
+
     py::class_<Matslise<>::Sector>(m, "PysliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
             .def_readonly("max", &Matslise<>::Sector::max)

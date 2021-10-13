@@ -213,9 +213,10 @@ namespace matslise {
 
             T<Scalar> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
-            template<bool withPrufer>
-            typename std::conditional<withPrufer, std::pair<matslise::Y<Scalar>, Scalar>, matslise::Y<Scalar>>::type
-            propagate(const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, bool use_h = true) const;
+            template<bool withPrufer, int cols = 1>
+            typename std::conditional<withPrufer, std::pair<matslise::Y<Scalar, 1, cols>, Scalar>, matslise::Y<Scalar, 1, cols>>::type
+            propagate(const Scalar &E, const Y<Scalar, 1, cols> &y0, const Scalar &a, const Scalar &b,
+                      bool use_h = true) const;
 
             Scalar theta0(const Scalar &E, const Y<Scalar> &y0) const;
 
@@ -268,6 +269,20 @@ namespace matslise {
         Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
 
         virtual ~MatsliseHalf() = default;
+    };
+
+    template<typename Scalar=double>
+    class PeriodicMatslise {
+    public:
+        Matslise<Scalar> matslise;
+
+        PeriodicMatslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
+                         const Scalar &tolerance = 1e-8) : matslise{V, xmin, xmax, tolerance} {}
+
+        Y<Scalar, 1, 2> propagate(const Scalar &E, const Y<Scalar, 1, 2> &y0,
+                                  const Scalar &a, const Scalar &b, bool use_h = true) const;
+
+        std::pair<Scalar, Scalar> matchingError(const Scalar &E, bool use_h = true) const;
     };
 }
 

@@ -154,9 +154,9 @@ Scalar Matslise<Scalar>::Sector::prufer(
     }
 }
 
-template<typename Scalar, bool withPrufer>
+template<typename Scalar, bool withPrufer, int cols>
 void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
-                    const Scalar &E, Y<Scalar> &y, Scalar delta, bool use_h, Scalar &theta) {
+                    const Scalar &E, Y<Scalar, 1, cols> &y, Scalar delta, bool use_h, Scalar &theta) {
     if (sector->direction == backward)
         delta *= -1;
     bool direction = delta >= 0;
@@ -165,7 +165,7 @@ void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
     if (delta > sector->h)
         delta = sector->h;
 
-    Y<Scalar> y0 = y;
+    Y<Scalar, 1, cols> y0 = y;
     (void) y0; // Unused when not 'withPrufer'
     const T<Scalar> &t = sector->calculateT(E, delta, use_h);
     if (sector->direction == backward)
@@ -174,29 +174,31 @@ void propagateDelta(const typename Matslise<Scalar>::Sector *sector,
     if (sector->direction == backward)
         y.reverse();
 
-    if constexpr(withPrufer)
+    if constexpr(withPrufer) {
+        static_assert(cols == 1);
         theta += direction != (sector->direction == backward) ?
                  sector->prufer(E, delta, y0, y) : -sector->prufer(E, delta, y, y0);
+    }
 }
 
 template<typename Scalar>
-template<bool withPrufer>
-typename conditional<withPrufer, std::pair<Y<Scalar>, Scalar>, Y<Scalar>>::type
+template<bool withPrufer, int cols>
+typename conditional<withPrufer, std::pair<Y<Scalar, 1, cols>, Scalar>, Y<Scalar, 1, cols>>::type
 Matslise<Scalar>::Sector::propagate(
-        const Scalar &E, const Y<Scalar> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
-    Y<Scalar> y = y0;
+        const Scalar &E, const Y<Scalar, 1, cols> &y0, const Scalar &a, const Scalar &b, bool use_h) const {
+    Y<Scalar, 1, cols> y = y0;
     Scalar argdet = 0;
     if (!((a >= max && b >= max) || (a <= min && b <= min))) {
         if (direction == forward) {
             if (a > min)
-                propagateDelta<Scalar, withPrufer>(this, E, y, min - a, use_h, argdet);
+                propagateDelta<Scalar, withPrufer, cols>(this, E, y, min - a, use_h, argdet);
             if (b > min)
-                propagateDelta<Scalar, withPrufer>(this, E, y, b - min, use_h, argdet);
+                propagateDelta<Scalar, withPrufer, cols>(this, E, y, b - min, use_h, argdet);
         } else {
             if (a < max)
-                propagateDelta<Scalar, withPrufer>(this, E, y, max - a, use_h, argdet);
+                propagateDelta<Scalar, withPrufer, cols>(this, E, y, max - a, use_h, argdet);
             if (b < max)
-                propagateDelta<Scalar, withPrufer>(this, E, y, b - max, use_h, argdet);
+                propagateDelta<Scalar, withPrufer, cols>(this, E, y, b - max, use_h, argdet);
         }
     }
     if constexpr(withPrufer)
@@ -211,7 +213,7 @@ Scalar Matslise<Scalar>::Sector::error() const {
             (calculateT(vs[0], true).t - calculateT(vs[0], false).t).array() *
             (Array<Scalar, 2, 2>() << 1, 1 / h, h, 1).finished()
     ).cwiseAbs().maxCoeff();
-    if (MATSLISE_N < 16)
+    if constexpr (MATSLISE_N < 16)
         return e_loc0;
     Scalar h12 = pow(h, 12);
     Scalar e_locu = 0.0024 * abs(vs[15]) * h12 * h * h * h + 2.5e-5 * vs[7] * vs[7] * h12 * h * h +
@@ -226,13 +228,14 @@ Scalar Matslise<Scalar>::Sector::error() const {
     return std::max(e_loc0, std::max(e_locu, std::max(e_locup, e_locv)));
 }
 
-#define INSTANTIATE_PROPAGATE(Scalar, withPrufer) \
-template typename conditional<withPrufer, pair<Y<Scalar>, Scalar>, Y<Scalar>>::type \
-Matslise<Scalar>::Sector::propagate<withPrufer>( \
-    const Scalar&, const Y<Scalar>&, const Scalar&, const Scalar&, bool) const;
+#define INSTANTIATE_PROPAGATE(Scalar, withPrufer, cols) \
+template typename conditional<withPrufer, pair<Y<Scalar, 1, cols>, Scalar>, Y<Scalar, 1, cols>>::type \
+Matslise<Scalar>::Sector::propagate<withPrufer, cols>( \
+    const Scalar&, const Y<Scalar, 1, cols>&, const Scalar&, const Scalar&, bool) const;
 
 #define INSTANTIATE_MORE(Scalar) \
-INSTANTIATE_PROPAGATE(Scalar, false) \
-INSTANTIATE_PROPAGATE(Scalar, true)
+INSTANTIATE_PROPAGATE(Scalar, true, 1) \
+INSTANTIATE_PROPAGATE(Scalar, false, 1) \
+INSTANTIATE_PROPAGATE(Scalar, false, 2)
 
 #include "instantiate.h"

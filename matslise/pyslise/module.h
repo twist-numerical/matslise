@@ -19,13 +19,13 @@ using namespace Eigen;
 using namespace std;
 using namespace matslise;
 
-
-inline Y<> make_y(const Vector2d &value) {
-    return Y<>(value, {0, 0});
+template<int cols=1>
+inline Y<double, 1, cols> make_y(const Matrix<double, 2, cols> &value) {
+    return Y<double, 1, cols>(value, Matrix<double, 2, cols>::Zero());
 }
 
 inline Y<> packY(const tuple<double, double> &t) {
-    return make_y({get<0>(t), get<1>(t)});
+    return make_y<1>({get<0>(t), get<1>(t)});
 }
 
 inline Y<double, Dynamic> packY(const tuple<MatrixXd, MatrixXd> &t) {

@@ -71,7 +71,7 @@ else ()
 
     set(MATSLISE_TEST_SRC
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
-            matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp)
+            matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp matslise/periodic.cpp)
 
     if (MATSLISE_MATSCS)
         set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
