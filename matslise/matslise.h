@@ -292,7 +292,7 @@ namespace matslise {
         propagate(const Scalar &E, const matslise::Y<Scalar, 1, 2> &y0,
                   const Scalar &a, const Scalar &b, bool use_h = true) const;
 
-        std::tuple<Eigen::Matrix<Scalar, 2, 2>, Eigen::Matrix<Scalar, 2, 2>, Eigen::Array<Scalar, 2, 1>>
+        std::tuple<Scalar, Scalar, Eigen::Array<Scalar, 2, 1>>
         matchingError(const Scalar &E, bool use_h = true) const;
     };
 }

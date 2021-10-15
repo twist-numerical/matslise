@@ -235,7 +235,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                  py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
             .def("__error",
                  [](PeriodicMatslise<> &m, double E)
-                         -> tuple<Matrix2d, Matrix2d, Array2d> {
+                         -> tuple<double, double, Array2d> {
                      return m.matchingError(E);
                  },
                  py::arg("E"));
