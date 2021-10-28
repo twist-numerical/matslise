@@ -6,14 +6,11 @@
 void pyslise(py::module &m) {
     py::class_<AbstractMatslise<double>::Eigenfunction>(m, "Eigenfunction")
             .def("__call__", [](const AbstractMatslise<double>::Eigenfunction &eigenfunction, double x) {
-                Y<> y = eigenfunction(x);
-                return make_pair(y.y()[0], y.y()[1]);
+                return eigenfunction(x);
             })
             .def("__call__", [](const AbstractMatslise<double>::Eigenfunction &eigenfunction, const ArrayXd &x)
-                    -> pair<ArrayXd, ArrayXd> {
-                Array<Y<>, Dynamic, 1> array = eigenfunction(x);
-                return make_pair(array.unaryExpr([](const Y<> &y) { return y.y()[0]; }),
-                                 array.unaryExpr([](const Y<> &y) { return y.y()[1]; }));
+                    -> Array<double, 2, Dynamic> {
+                return eigenfunction(x).transpose();
             });
 
     py::class_<AbstractMatslise<double>>(m, "AbstractPyslise")
@@ -65,16 +62,10 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
             .def("eigenfunction",
                  [](AbstractMatslise<double> &m, double E, const ArrayXd &xs, const Vector2d &left,
                     const optional<Vector2d> &_right, int index)
-                         -> tuple<ArrayXd, ArrayXd> {
+                         -> Array<double, 2, Dynamic> {
                      const Vector2d &right = _right ? *_right : left;
-                     auto ysY = m.eigenfunction(E, make_y(left), make_y(right), index)(xs);
-                     ArrayXd ys(ysY.size());
-                     ArrayXd dys(ysY.size());
-                     for (Eigen::Index i = 0; i < ysY.size(); ++i) {
-                         ys[i] = ysY[i].y()[0];
-                         dys[i] = ysY[i].y()[1];
-                     }
-                     return make_tuple(ys, dys);
+                     Array<double, Dynamic, 2> ys = (*m.eigenfunction(E, make_y(left), make_y(right), index))(xs);
+                     return ys.transpose();
                  }, R""""(\
 Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
 
@@ -89,7 +80,7 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
             .def("eigenfunction",
                  [](AbstractMatslise<double> &m, double E, const Vector2d &left,
                     const optional<Vector2d> &_right, int index)
-                         -> AbstractMatslise<double>::Eigenfunction {
+                         -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
                      const Vector2d &right = _right ? *_right : left;
                      return m.eigenfunction(E, make_y(left), make_y(right), index);
                  }, R""""(\
@@ -105,7 +96,8 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
                  py::arg("index") = -1, py::keep_alive<0, 1>())
             .def("eigenfunctionCalculator",
                  [](AbstractMatslise<double> &m, double E, const Vector2d &left,
-                    const optional<Vector2d> &_right, int index) -> AbstractMatslise<double>::Eigenfunction {
+                    const optional<Vector2d> &_right, int index)
+                         -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
                      const Vector2d &right = _right ? *_right : left;
                      return m.eigenfunction(E, make_y(left), make_y(right), index);
                  }, R""""(\

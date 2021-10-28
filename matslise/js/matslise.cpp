@@ -6,35 +6,30 @@ using namespace std;
 using namespace Eigen;
 
 void bind_matslise() {
-    class_<std::function<Y<>(double)>>("EigenfunctionCalculator")
+    class_<Matslise<double>::Eigenfunction>("EigenfunctionCalculator")
             .function("eval",
-                      optional_override([](std::function<Y<>(double)> &self, double x) -> Vector2d {
-                          return self(x).y();
+                      optional_override([](const Matslise<double>::Eigenfunction &self, double x) -> Vector2d {
+                          return self(x);
                       }));
 
     class_<AbstractMatslise<double>>("AbstractMatslise")
             .function("eigenfunction", optional_override(
                     [](const AbstractMatslise<double> &m, double E, const Vector2d &left, const Vector2d &right,
-                       int index = -1) ->
-                            val {
-                        std::function<Y<>(double)> calculator =
-                                m.eigenfunction(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index);
+                       int index = -1) -> val {
                         return val::global("Function")
                                 .new_(string("calculator"), string(
                                         "var f = function(x) { return calculator.eval(x); };"
                                         "f.delete = function() { calculator.delete(); };"
                                         "return f;")
-                                )(calculator);
+                                )(m.eigenfunction(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index));
                     }))
             .function("computeEigenfunction", optional_override(
                     [](const AbstractMatslise<double> &m, double E, const Vector2d &left, const Vector2d &right,
                        const val &x, int index = -1) ->
                             val {
-                        Array<Y<double>, Dynamic, 1> array = m.eigenfunction(
-                                E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index)(val2ArrayXd(x));
-                        return ArrayXd2val(array.unaryExpr([](const Y<double> &y) -> double {
-                            return y.block(YDiff::None)(0);
-                        }));
+                        Array<double, Dynamic, 2> array = (*m.eigenfunction(
+                                E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index))(val2ArrayXd(x));
+                        return ArrayXd2val(array.col(0));
                     }))
             .function("eigenvaluesByIndex", optional_override(
                     [](const AbstractMatslise<double> &m, int Imin, int Imax, const Vector2d &left,
