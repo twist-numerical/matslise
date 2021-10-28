@@ -34,11 +34,11 @@ TEST_CASE("HR: sanity checks eigenfunctions", "[halfrange][matslise][mathieu]") 
             {(ArrayXd(3) << -1, 0, 1).finished()}
     }) {
         for (const double E : eigenvalues) {
-            Array<Y<>, Dynamic, 1> fs = ms.eigenfunction(E, y0)(xs);
+            Array<double, Dynamic, 2> fs = (*ms.eigenfunction(E, y0))(xs);
 
-            function<Y<>(double)> f = ms.eigenfunction(E, y0);
+            unique_ptr<Matslise<>::Eigenfunction> f = ms.eigenfunction(E, y0);
             for (Index i = 0; i < xs.size(); ++i) {
-                CHECK((fs[i].y().array().abs() - f(xs[i]).y().array().abs()).abs().maxCoeff() < 1e-8);
+                CHECK((fs.row(i).abs().transpose() - (*f)(xs[i]).abs()).abs().maxCoeff() < 1e-8);
             }
         }
     }
@@ -105,12 +105,12 @@ TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctio
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart);
     for (pair<int, double> ie : eigenvalues) {
         double e = ie.second;
-        function<Y<double>(double)> f = ms.eigenfunction(e, ystart);
+        unique_ptr<Matslise<>::Eigenfunction> f = ms.eigenfunction(e, ystart);
 
         int n = 61;
         double v = 0;
         for (int i = 0; i < n; ++i) {
-            double q = f((i + .5) / n * constants<double>::PI - constants<double>::PI / 2).data[0];
+            double q = (*f)((i + .5) / n * constants<double>::PI - constants<double>::PI / 2)(0);
             v += q * q;
         }
         v *= constants<double>::PI / n;

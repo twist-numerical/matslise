@@ -36,20 +36,14 @@ namespace matslise {
                 : potential(potential), domain(domain) {
         }
 
-        struct Eigenfunction {
+        class Eigenfunction {
         public:
-            std::function<Y<Scalar>(const Scalar &)> f_scalar;
-            std::function<Eigen::Array<Y<Scalar>, Eigen::Dynamic, 1>(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &)>
-                    f_array;
+            virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const = 0;
 
-            Y<Scalar> operator()(const Scalar &x) const {
-                return f_scalar(x);
-            }
+            virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
+            operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const = 0;
 
-            Eigen::Array<Y<Scalar>, Eigen::Dynamic, 1>
-            operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const {
-                return f_array(x);
-            }
+            virtual ~Eigenfunction() = default;
         };
 
     public:
@@ -81,11 +75,11 @@ namespace matslise {
             return eigenvaluesByIndex(Imin, Imax, side, side);
         };
 
-        virtual std::vector<std::tuple<int, Scalar, Eigenfunction>>
+        virtual std::vector<std::tuple<int, Scalar, std::unique_ptr<Eigenfunction>>>
         eigenpairsByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                           const matslise::Y<Scalar> &right) const;
 
-        virtual std::vector<std::tuple<int, Scalar, Eigenfunction>>
+        virtual std::vector<std::tuple<int, Scalar, std::unique_ptr<Eigenfunction>>>
         eigenpairsByIndex(int Imin, int Imax, const matslise::Y<Scalar> &side) const {
             return eigenpairsByIndex(Imin, Imax, side, side);
         };
@@ -101,14 +95,14 @@ namespace matslise {
             return eigenvalueError(E, left, left, index);
         };
 
-        virtual Eigenfunction eigenfunction(
+        virtual std::unique_ptr<Eigenfunction> eigenfunction(
                 const Scalar &E, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right,
                 int index = -1) const {
             checkSymmetry(left, right);
             return eigenfunction(E, right, index);
         };
 
-        virtual Eigenfunction eigenfunction(
+        virtual std::unique_ptr<Eigenfunction> eigenfunction(
                 const Scalar &E, const matslise::Y<Scalar> &left, int index = -1) const {
             return eigenfunction(E, left, left, index);
         };
@@ -184,8 +178,8 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::eigenfunction;
 
-        Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
-                                    const matslise::Y<Scalar> &right, int index = -1) const override;
+        std::unique_ptr<Eigenfunction> eigenfunction(const Scalar &E, const matslise::Y<Scalar> &left,
+                                                     const matslise::Y<Scalar> &right, int index = -1) const override;
 
         virtual ~Matslise() = default;
 
@@ -274,7 +268,8 @@ namespace matslise {
 
         using AbstractMatslise<Scalar>::eigenfunction;
 
-        Eigenfunction eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
+        std::unique_ptr<Eigenfunction>
+        eigenfunction(const Scalar &E, const matslise::Y<Scalar> &side, int index = -1) const override;
 
         virtual ~MatsliseHalf() = default;
     };

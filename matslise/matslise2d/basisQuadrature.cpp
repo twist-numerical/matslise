@@ -128,11 +128,11 @@ void matslise::BasisQuadrature<Scalar, hmax, halfrange>::calculateQuadData(
         y0.reserve(N);
         for (auto &f : sector2d.eigenfunctions) {
             if (sector1d->direction == forward) {
-                Y<Scalar> y = f(sector1d->min);
-                y0.emplace_back(y.data(0), y.data(1));
+                Array<Scalar, 2, 1> y = (*f)(sector1d->min);
+                y0.emplace_back(y(0), y(1));
             } else {
-                Y<Scalar> y = f(sector1d->max);
-                y0.emplace_back(y.data(0), -y.data(1));
+                Array<Scalar, 2, 1> y = (*f)(sector1d->max);
+                y0.emplace_back(y(0), -y(1));
             }
         }
 

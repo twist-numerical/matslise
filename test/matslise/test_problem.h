@@ -45,16 +45,16 @@ void testOrthogonality(
     for (const auto &iE:  eigenvalues) {
         INFO("Checking eigenvalue " << iE.first << ": " << iE.second);
 
-        Eigen::Array<matslise::Y<Scalar>, Eigen::Dynamic, 1> f_xs = problem.eigenfunction(
-                iE.second, left, right, iE.first)(xs);
-        std::function<matslise::Y<Scalar>(Scalar)> f = problem.eigenfunction(iE.second, left, right, iE.first);
+        Eigen::Array<Scalar, Eigen::Dynamic, 2> f_xs = (*problem.eigenfunction(
+                iE.second, left, right, iE.first))(xs);
+        std::unique_ptr<typename matslise::AbstractMatslise<Scalar>::Eigenfunction> f
+                = problem.eigenfunction(iE.second, left, right, iE.first);
 
         for (int i = 0; i < xs.rows(); ++i) {
-            CHECK(Approx(f_xs[i].data[0]).margin(tolerance) == f(xs[i]).data[0]);
+            CHECK(Approx(f_xs(i, 0)).margin(tolerance) == (*f)(xs[i])(0));
         }
 
-        evaluated.emplace_back(f_xs.template unaryExpr<std::function<Scalar(const matslise::Y<Scalar> &)>>(
-                [&](const matslise::Y<Scalar> &y) { return y.data[0]; }));
+        evaluated.emplace_back(f_xs.col(0));
     }
 
     {

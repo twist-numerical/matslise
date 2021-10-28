@@ -34,54 +34,65 @@ inline Y<Scalar> getY0(bool even) {
 
 
 template<typename Scalar>
-typename MatsliseHalf<Scalar>::Eigenfunction
+class EigenfunctionHalf : public AbstractMatslise<Scalar>::Eigenfunction {
+public:
+    bool even;
+    unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction> eigenfunction;
+
+    EigenfunctionHalf(bool even, unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction> f)
+            : even(even), eigenfunction(std::move(f)) {
+    }
+
+    virtual Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
+        Array<Scalar, 2, 1> c = (*eigenfunction)(x < 0 ? -x : x);
+        c *= sqrt(Scalar(.5));
+        if (x < 0 && !even)
+            c *= -1;
+        return c;
+    }
+
+    virtual Array<Scalar, Dynamic, 2>
+    operator()(const Array<Scalar, Dynamic, 1> &x) const override {
+        Eigen::Index n = x.size();
+        for (Eigen::Index i = 1; i < n; ++i)
+            if (x[i - 1] > x[i])
+                throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
+
+        Eigen::Index negatives = 0;
+        for (Eigen::Index i = 0; i < n; ++i)
+            if (x[i] < 0)
+                negatives = i + 1;
+
+        Array<Scalar, Dynamic, 1> xNeg(negatives);
+        Array<Scalar, Dynamic, 1> xPos(n - negatives);
+
+        for (Eigen::Index i = 0; i < negatives; ++i)
+            xNeg[i] = -x[negatives - 1 - i];
+
+        for (Eigen::Index i = negatives; i < n; ++i)
+            xPos[i - negatives] = x[i];
+
+        Array<Scalar, Dynamic, 2> yNeg, yPos, ys(n, 2);
+        yNeg = (*eigenfunction)(xNeg);
+        yPos = (*eigenfunction)(xPos);
+
+        static const Scalar SQRT1_2 = sqrt(Scalar(.5));
+        for (Eigen::Index i = 0; i < negatives; ++i) {
+            Scalar f = (even ? 1 : -1) * SQRT1_2;
+            (ys.row(negatives - 1 - i) = yNeg.row(i) * f)[1] *= -1;
+        }
+        for (Eigen::Index i = negatives; i < n; ++i)
+            ys.row(i) = yPos.row(i - negatives) * SQRT1_2;
+
+        return ys;
+    }
+};
+
+template<typename Scalar>
+typename std::unique_ptr<typename MatsliseHalf<Scalar>::Eigenfunction>
 MatsliseHalf<Scalar>::eigenfunction(const Scalar &E, const Y<Scalar> &side, int index) const {
     bool even = isEven(this, E, side, index);
-    const typename AbstractMatslise<Scalar>::Eigenfunction calculator
-            = ms->eigenfunction(E, getY0<Scalar>(even), side);
-    return {
-            [calculator, even](Scalar x) -> Y<Scalar> {
-                Y<Scalar> c = calculator(x < 0 ? -x : x);
-                c *= sqrt(Scalar(.5));
-                if (x < 0 && !even)
-                    c *= -1;
-                return c;
-            },
-            [calculator, even](Array<Scalar, Dynamic, 1> x) -> Array<Y<Scalar>, Dynamic, 1> {
-                Eigen::Index n = x.size();
-                for (Eigen::Index i = 1; i < n; ++i)
-                    if (x[i - 1] > x[i])
-                        throw runtime_error("Matslise::computeEigenfunction(): x has to be sorted");
-
-                Eigen::Index negatives = 0;
-                for (Eigen::Index i = 0; i < n; ++i)
-                    if (x[i] < 0)
-                        negatives = i + 1;
-
-                Array<Scalar, Dynamic, 1> xNeg(negatives);
-                Array<Scalar, Dynamic, 1> xPos(n - negatives);
-
-                for (Eigen::Index i = 0; i < negatives; ++i)
-                    xNeg[i] = -x[negatives - 1 - i];
-
-                for (Eigen::Index i = negatives; i < n; ++i)
-                    xPos[i - negatives] = x[i];
-
-                Array<Y<Scalar>, Dynamic, 1> yNeg, yPos, ys(n);
-                yNeg = calculator(xNeg);
-                yPos = calculator(xPos);
-
-                static const Scalar SQRT1_2 = sqrt(Scalar(.5));
-                for (Eigen::Index i = 0; i < negatives; ++i) {
-                    Scalar f = (even ? 1 : -1) * SQRT1_2;
-                    (ys[negatives - 1 - i] = yNeg[i] * f).reverse();
-                }
-                for (Eigen::Index i = negatives; i < n; ++i)
-                    ys[i] = yPos[i - negatives] * SQRT1_2;
-
-                return ys;
-            }
-    };
+    return std::make_unique<EigenfunctionHalf<Scalar>>(even, ms->eigenfunction(E, getY0<Scalar>(even), side));
 }
 
 template<typename Scalar>

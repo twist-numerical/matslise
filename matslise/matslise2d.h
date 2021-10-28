@@ -82,7 +82,7 @@ namespace matslise {
         Scalar ybar;
 
         std::vector<Scalar> eigenvalues;
-        std::vector<typename Matslise<Scalar>::Eigenfunction> eigenfunctions;
+        std::vector<std::shared_ptr<typename Matslise<Scalar>::Eigenfunction>> eigenfunctions;
         Direction direction = none;
 
         Matslise2DSector(const Matslise2D<Scalar> *_se2d) : se2d(_se2d) {};

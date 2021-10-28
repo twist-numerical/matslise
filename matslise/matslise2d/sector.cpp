@@ -72,7 +72,7 @@ Matslise2DSector<Scalar>::Matslise2DSector(const Matslise2D<Scalar> *se2d, const
         tie(index, E) = index_eigv[static_cast<unsigned long>(i)];
         eigenvalues[i] = E;
         // TODO: check i == index
-        eigenfunctions[i] = matslise->eigenfunction(E, Y<Scalar>::Dirichlet(), index);
+        eigenfunctions[i] = std::move(matslise->eigenfunction(E, Y<Scalar>::Dirichlet(), index));
     }
 
     matscs = initializeMatscs<Scalar>(*this);
@@ -121,16 +121,10 @@ Matslise2DSector<Scalar>::basis(const typename Matslise2DSector<Scalar>::ArrayXs
     if constexpr(withDerivatives)
         b_x.resize(size, N);
     for (int i = 0; i < N; ++i) {
-        Array<Y<Scalar>, Dynamic, 1> ys = eigenfunctions[i](x);
-        b.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
-                [](const Y<Scalar> &y) -> Scalar {
-                    return y.data[0];
-                });
+        Array<Scalar, Dynamic, 2> ys = (*eigenfunctions[i])(x);
+        b.col(i) = ys.col(0);
         if constexpr(withDerivatives)
-            b_x.col(i) = ys.template unaryExpr<std::function<Scalar(const Y<Scalar> &)>>(
-                    [](const Y<Scalar> &y) -> Scalar {
-                        return y.data[1];
-                    });
+            b_x.col(i) = ys.col(1);
     }
     if constexpr(withDerivatives)
         return {b, b_x};
@@ -151,10 +145,10 @@ Matslise2DSector<Scalar>::basis(const Scalar &x) const {
 
     const Index &N = se2d->config.basisSize;
     for (Index i = 0; i < N; ++i) {
-        Y<Scalar> y = this->eigenfunctions[i](x);
-        b[i] = y.data[0];
+        Array<Scalar, 2, 1> y = (*this->eigenfunctions[i])(x);
+        b[i] = y[0];
         if constexpr (withDerivatives)
-            b_x[i] = y.data[1];
+            b_x[i] = y[1];
     }
     if constexpr (withDerivatives)
         return {b, b_x};

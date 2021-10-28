@@ -232,50 +232,67 @@ Iterator findSector(const Scalar &x, Iterator a, Iterator b) {
 }
 
 template<typename Scalar>
-typename Matslise<Scalar>::Eigenfunction Matslise<Scalar>::eigenfunction(
-        const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
-    shared_ptr<vector<Y<Scalar >>> steps = make_shared<vector<Y<Scalar >>>(
-            std::move(propagationSteps(*this, E, left, right)));
+class MEigenfunction : public Matslise<Scalar>::Eigenfunction {
+public:
+    const Matslise<Scalar> *matslise;
+    Scalar E;
+    vector<Y<Scalar>> steps;
 
-    return {[this, E, steps](const Scalar &x) {
-        if (x < domain.template min<0>() || x > domain.template max<0>())
-            return Y<Scalar>();
-        auto sector = findSector(x, sectors.begin(), sectors.end());
-        int sectorIndex = sector - sectors.begin();
+    MEigenfunction(const Matslise<Scalar> *matslise,
+                   const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right) : matslise(matslise), E(E) {
+        steps = propagationSteps(*matslise, E, left, right);
+    }
 
-        if ((**sector).direction == forward) {
-            return (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x);
+    virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
+        if (x < matslise->domain.template min<0>() || x > matslise->domain.template max<0>())
+            return Eigen::Array<Scalar, 2, 1>::Zero();
+        auto sector = findSector(x, matslise->sectors.begin(), matslise->sectors.end());
+        int sectorIndex = sector - matslise->sectors.begin();
+
+        if ((**sector).direction == matslise::forward) {
+            return (**sector).template propagate<false>(E, steps[sectorIndex], (**sector).min, x).y();
         } else {
-            return (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x);
+            return (**sector).template propagate<false>(E, steps[sectorIndex + 1], (**sector).max, x).y();
         }
-    }, [this, E, steps](const Array<Scalar, Dynamic, 1> &x) {
+    };
+
+    virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
+    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
         Eigen::Index n = x.size();
 
-        Array<Y<Scalar>, Dynamic, 1> ys(n);
+        Array<Scalar, Dynamic, 2> ys(n, 2);
 
         int sectorIndex = 0;
-        auto sector = sectors.begin();
+        auto sector = matslise->sectors.begin();
         for (Eigen::Index i = 0; i < n; ++i) {
-            if (x[i] < domain.template min<0>() || x[i] > domain.template max<0>()) {
-                ys[i] = Y<Scalar>();
+            if (x[i] < matslise->domain.template min<0>() || x[i] > matslise->domain.template max<0>()) {
+                ys.row(i).setZero();
                 continue;
             }
             if (x[i] < (**sector).min) {
-                sector = findSector(x[i], sectors.begin(), sector);
-                sectorIndex = sector - sectors.begin();
+                sector = findSector(x[i], matslise->sectors.begin(), sector);
+                sectorIndex = sector - matslise->sectors.begin();
             } else if (x[i] > (**sector).max) {
-                sector = findSector(x[i], sector + 1, sectors.end());
-                sectorIndex = sector - sectors.begin();
+                sector = findSector(x[i], sector + 1, matslise->sectors.end());
+                sectorIndex = sector - matslise->sectors.begin();
             }
-            if ((**sector).direction == forward) {
-                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex], (**sector).min, x[i]);
+            if ((**sector).direction == matslise::forward) {
+                ys.row(i) = (**sector).template propagate<false>(E, steps[sectorIndex], (**sector).min, x[i])
+                        .y();
             } else {
-                ys[i] = (**sector).template propagate<false>(E, (*steps)[sectorIndex + 1], (**sector).max, x[i]);
+                ys.row(i) = (**sector).template propagate<false>(E, steps[sectorIndex + 1], (**sector).max, x[i])
+                        .y();
             }
 
         }
         return ys;
-    }};
+    };
+};
+
+template<typename Scalar>
+unique_ptr<typename Matslise<Scalar>::Eigenfunction> Matslise<Scalar>::eigenfunction(
+        const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
+    return std::make_unique<MEigenfunction<Scalar>>(this, E, left, right);
 }
 
 
