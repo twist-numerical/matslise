@@ -279,6 +279,8 @@ namespace matslise {
     public:
         Matslise<Scalar> matslise;
 
+        using Eigenfunction = typename AbstractMatslise<Scalar>::Eigenfunction;
+
         PeriodicMatslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                          const Scalar &tolerance = 1e-8) : matslise{V, xmin, xmax, tolerance} {}
 
@@ -289,6 +291,8 @@ namespace matslise {
 
         std::tuple<Scalar, Scalar, Eigen::Array<Scalar, 2, 1>>
         matchingError(const Scalar &E, bool use_h = true) const;
+
+        std::vector<std::unique_ptr<Eigenfunction>> eigenfunction(const Scalar &E) const;
     };
 }
 

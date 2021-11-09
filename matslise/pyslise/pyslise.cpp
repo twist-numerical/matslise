@@ -3,6 +3,28 @@
 
 #include "module.h"
 
+template<typename Scalar>
+class PeriodicEigenfunctionWrapper : public PeriodicMatslise<Scalar>::Eigenfunction {
+public:
+    std::shared_ptr<PeriodicMatslise<Scalar>> periodic;
+    std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction> eigenfunction;
+
+    PeriodicEigenfunctionWrapper(
+            std::shared_ptr<PeriodicMatslise<Scalar>> parent,
+            std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction> eigenfunction) :
+            periodic(std::move(parent)), eigenfunction(std::move(eigenfunction)) {
+    }
+
+    virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
+        return (*eigenfunction)(x);
+    };
+
+    virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
+    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
+        return (*eigenfunction)(x);
+    }
+};
+
 void pyslise(py::module &m) {
     py::class_<AbstractMatslise<double>::Eigenfunction>(m, "Eigenfunction")
             .def("__call__", [](const AbstractMatslise<double>::Eigenfunction &eigenfunction, double x) {
@@ -201,19 +223,19 @@ Note: only one of steps and tolerance have to be set.
 :param int tolerance: automatically choose steps with at least the given accuracy.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("tolerance") = 1e-8);
 
-
-    py::class_<PeriodicMatslise<>>(m, "PyslisePeriodic", R""""(\
+    py::class_<PeriodicMatslise<>, shared_ptr<PeriodicMatslise<>>>(m, "PyslisePeriodic", R""""(\
 )"""")
             .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
-                return new PeriodicMatslise<>(V, min, max, tolerance);
+                return std::make_shared<PeriodicMatslise<>>(V, min, max, tolerance);
             }), R""""(\
 :param (float)->float V: the potential.
 :param float min, max: the ends of the domain.
 :param int tolerance: automatically choose steps with at least the given accuracy.
 )"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8)
             .def("propagate",
-                 [](PeriodicMatslise<> &m, double E, const Matrix2d &y, double a, double b) -> Matrix2d {
-                     return m.propagate(E, make_y(y), a, b).first.y();
+                 [](const std::shared_ptr<PeriodicMatslise<>> &m, double E, const Matrix2d &y, double a,
+                    double b) -> Matrix2d {
+                     return m->propagate(E, make_y(y), a, b).first.y();
                  }, R""""(\
 For a given E and initial condition in point a, propagate the solution of the Schrödinger equation to the point b.
 
@@ -226,10 +248,20 @@ For a given E and initial condition in point a, propagate the solution of the Sc
 )"""",
                  py::arg("E"), py::arg("y"), py::arg("a"), py::arg("b"))
             .def("__error",
-                 [](PeriodicMatslise<> &m, double E)
+                 [](const shared_ptr<PeriodicMatslise<>> &m, double E)
                          -> tuple<double, double, Array2d> {
-                     return m.matchingError(E);
+                     return m->matchingError(E);
                  },
+                 py::arg("E"))
+            .def("eigenfunction",
+                 [](const shared_ptr<PeriodicMatslise<>> &m, double E)
+                         -> vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> {
+                     vector<std::unique_ptr<PeriodicMatslise<>::Eigenfunction>> fs;
+                     fs.reserve(2);
+                     for (auto &f : m->eigenfunction(E))
+                         fs.emplace_back(std::make_unique<PeriodicEigenfunctionWrapper<double>>(m, std::move(f)));
+                     return fs;
+                 }, "",
                  py::arg("E"));
 
     py::class_<Matslise<>::Sector>(m, "PysliseSector")

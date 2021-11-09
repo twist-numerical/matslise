@@ -33,4 +33,37 @@ PeriodicMatslise<Scalar>::matchingError(const Scalar &E, bool use_h) const {
     return make_tuple(error, dError, theta);
 }
 
+template<typename Scalar>
+vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>
+PeriodicMatslise<Scalar>::eigenfunction(const Scalar &E) const {
+    Array<Scalar, 2, 1> thetaL, thetaR;
+    Scalar &match = matslise.sectors[matslise.matchIndex]->max;
+    Y<Scalar, 1, 2> l = propagate(E, Y<Scalar, 1, 2>::Periodic(), matslise.domain.min(), match).first;
+    Y<Scalar, 1, 2> r = propagate(E, Y<Scalar, 1, 2>::Periodic(), matslise.domain.max(), match).first;
+    Matrix<Scalar, 2, 2> err = (l.y() - r.y());
+    cout << err << endl;
+
+    EigenSolver<Matrix<Scalar, 2, 2>> solver(err, true);
+    Matrix<complex<Scalar>, 2, 1> eigenvalues = solver.eigenvalues();
+    Matrix<complex<Scalar>, 2, 2> eigenvectors = solver.eigenvectors();
+
+    vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>> result;
+    cout << "eigenvalues: "<< eigenvalues.transpose() << endl;
+    cout << eigenvectors << endl;
+    cout << endl;
+    result.reserve(2);
+    if (norm(eigenvalues[0]) < 1e-4) {
+        Y<> boundary;
+        boundary.y() = eigenvectors.col(0).real();
+        result.emplace_back(matslise.eigenfunction(E, boundary, boundary));
+    }
+    if (norm(eigenvalues[1]) < 1e-4) {
+        Y<> boundary;
+        boundary.y() = eigenvectors.col(1).real();
+        result.emplace_back(matslise.eigenfunction(E, boundary, boundary));
+    }
+
+    return result;
+}
+
 #include "instantiate.h"
