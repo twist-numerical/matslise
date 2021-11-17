@@ -289,10 +289,13 @@ namespace matslise {
         propagate(const Scalar &E, const matslise::Y<Scalar, 1, 2> &y0,
                   const Scalar &a, const Scalar &b, bool use_h = true) const;
 
-        std::tuple<Scalar, Scalar, Eigen::Array<Scalar, 2, 1>>
+        std::pair<matslise::Y<Scalar, 1, 2>, Eigen::Array<Scalar, 2, 1>>
         matchingError(const Scalar &E, bool use_h = true) const;
 
         std::vector<std::unique_ptr<Eigenfunction>> eigenfunction(const Scalar &E) const;
+
+        std::vector<std::tuple<int, Scalar, std::vector<std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>>>
+        eigenpairsByIndex(int iMin, int iMax) const;
     };
 }
 

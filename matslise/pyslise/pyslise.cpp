@@ -25,6 +25,15 @@ public:
     }
 };
 
+template<typename Scalar>
+pair<Scalar, Scalar> calculatePeriodicMatchingError(const Y<Scalar, 1, 2> &yError) {
+    auto err = yError.y();
+    auto dErr = yError.ydE();
+    Scalar error = err(0, 0) * err(1, 1) - err(0, 1) * err(1, 0);
+    Scalar dError = dErr(0, 0) * err(1, 1) + err(0, 0) * dErr(1, 1) - dErr(0, 1) * err(1, 0) - err(0, 1) * dErr(1, 0);
+    return {error, dError};
+}
+
 void pyslise(py::module &m) {
     py::class_<AbstractMatslise<double>::Eigenfunction>(m, "Eigenfunction")
             .def("__call__", [](const AbstractMatslise<double>::Eigenfunction &eigenfunction, double x) {
@@ -250,9 +259,28 @@ For a given E and initial condition in point a, propagate the solution of the Sc
             .def("__error",
                  [](const shared_ptr<PeriodicMatslise<>> &m, double E)
                          -> tuple<double, double, Array2d> {
-                     return m->matchingError(E);
+                     auto error = m->matchingError(E);
+                     return std::tuple_cat(calculatePeriodicMatchingError<double>(error.first),
+                                           std::tuple<Array2d>{error.second});
                  },
                  py::arg("E"))
+            .def("eigenpairsByIndex",
+                 [](const shared_ptr<PeriodicMatslise<>> &m, int iMin, int iMax)
+                         -> vector<tuple<int, double, vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>>>> {
+                     vector<tuple<int, double, vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>>>> result;
+                     auto pairs = m->eigenpairsByIndex(iMin, iMax);
+                     result.reserve(pairs.size());
+                     for (auto &eigenpair : pairs) {
+                         vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> eigenfunctions;
+                         eigenfunctions.reserve(get<2>(eigenpair).size());
+                         for (auto &f : get<2>(eigenpair))
+                             eigenfunctions.emplace_back(std::make_unique<PeriodicEigenfunctionWrapper<double>>(
+                                     m, std::move(f)));
+                         result.emplace_back(get<0>(eigenpair), get<1>(eigenpair), std::move(eigenfunctions));
+                     }
+                     return result;
+                 }, "",
+                 py::arg("iMin"), py::arg("iMax"))
             .def("eigenfunction",
                  [](const shared_ptr<PeriodicMatslise<>> &m, double E)
                          -> vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> {
