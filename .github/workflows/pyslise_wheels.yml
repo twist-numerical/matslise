@@ -12,7 +12,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2019, macos-10.15 ]
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
     steps:
       - name: Cache Eigen3
         id: cache-eigen3_3
@@ -77,7 +77,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2019, macos-10.15 ]
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -122,7 +122,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ 3.6, 3.7, 3.8, 3.9 ]
+        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
     steps:
       - uses: actions/download-artifact@v2
         with:
@@ -136,7 +136,7 @@ jobs:
           pip install wheel
       - name: install pyslise
         run: |
-          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*-manylinux2010_x86_64.whl
+          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*manylinux2010_x86_64.whl
       - uses: actions/checkout@v2
       - name: test pyslise
         run: |

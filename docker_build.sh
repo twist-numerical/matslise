@@ -11,7 +11,7 @@ git checkout 3.3
 /opt/python/cp37-cp37m/bin/cmake ..
 
 # pyslise
-pythons=(cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39)
+pythons=(cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310)
 for py in ${pythons[@]}; do
     mkdir /opt/matslise-build-${py}
     cd /opt/matslise-build-${py}
@@ -22,5 +22,5 @@ for py in ${pythons[@]}; do
 
     /opt/python/cp37-cp37m/bin/cmake --build . --target build_wheel --config Release -- -j 6
 
-    auditwheel repair src/dist/*${py}*.whl --plat manylinux2010_x86_64 -w /opt/matslise/wheelhouse
+    auditwheel repair matslise/dist/*${py}*.whl --plat manylinux2010_x86_64 -w /opt/matslise/wheelhouse
 done
