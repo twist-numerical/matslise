@@ -157,12 +157,12 @@ PeriodicMatslise<Scalar>::eigenfunction(const Scalar &E) const {
     cout << endl;
     result.reserve(2);
     if (norm(eigenvalues[0]) < 1e-4) {
-        Y<> boundary;
+        Y<Scalar> boundary;
         boundary.y() = eigenvectors.col(0).real();
         result.emplace_back(matslise.eigenfunction(E, boundary, boundary));
     }
     if (norm(eigenvalues[1]) < 1e-4) {
-        Y<> boundary;
+        Y<Scalar> boundary;
         boundary.y() = eigenvectors.col(1).real();
         result.emplace_back(matslise.eigenfunction(E, boundary, boundary));
     }
