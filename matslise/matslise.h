@@ -296,6 +296,8 @@ namespace matslise {
 
         std::vector<std::tuple<int, Scalar, std::vector<std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>>>
         eigenpairsByIndex(int iMin, int iMax) const;
+
+        std::vector<std::tuple<int, Scalar, int>> eigenvaluesByIndex(int iMin, int iMax) const;
     };
 }
 

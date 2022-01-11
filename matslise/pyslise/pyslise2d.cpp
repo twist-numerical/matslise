@@ -1,21 +1,34 @@
 #include "module.h"
 #include "pybind11/operators.h"
 
+template<typename Scalar, bool withDerivatives = false>
+class Eigenfunction2DWrapper {
+public:
+    std::shared_ptr<AbstractMatslise2D<Scalar>> parent;
+    Eigenfunction2D<Scalar, withDerivatives> eigenfunction;
+
+    Eigenfunction2DWrapper(
+            std::shared_ptr<AbstractMatslise2D<Scalar>> parent,
+            const Eigenfunction2D<Scalar, withDerivatives> &eigenfunction) :
+            parent(std::move(parent)), eigenfunction(eigenfunction) {
+    }
+};
+
 void pyslise2d(py::module &m) {
-    py::class_<Eigenfunction2D<double >>(m, "Eigenfunction2D")
-            .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, double x, double y) {
-                return eigenfunction(x, y);
+    py::class_<Eigenfunction2DWrapper<double>>(m, "Eigenfunction2D")
+            .def("__call__", [](const Eigenfunction2DWrapper<double> &f, double x, double y) {
+                return f.eigenfunction(x, y);
             })
-            .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, const ArrayXd &x, const ArrayXd &y) {
-                return eigenfunction(x, y);
+            .def("__call__", [](const Eigenfunction2DWrapper<double> &f, const ArrayXd &x, const ArrayXd &y) {
+                return f.eigenfunction(x, y);
             });
 
-    py::class_<Eigenfunction2D<double, true >>(m, "Eigenfunction2DWithDerivatives")
-            .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, double x, double y) {
-                return eigenfunction(x, y);
+    py::class_<Eigenfunction2DWrapper<double, true >>(m, "Eigenfunction2DWithDerivatives")
+            .def("__call__", [](const Eigenfunction2DWrapper<double, true> &f, double x, double y) {
+                return f.eigenfunction(x, y);
             })
-            .def("__call__", [](const Eigenfunction2D<double> &eigenfunction, const ArrayXd &x, const ArrayXd &y) {
-                return eigenfunction(x, y);
+            .def("__call__", [](const Eigenfunction2DWrapper<double, true> &f, const ArrayXd &x, const ArrayXd &y) {
+                return f.eigenfunction(x, y);
             });
 
     py::class_<AbstractMatslise2D<double>, shared_ptr<AbstractMatslise2D<double >>>(m, "AbstractPyslise2D")
@@ -46,10 +59,10 @@ Estimate an error of a given eigenvalue by using a lower order method.
 :returns: the estimated error for the given eigenvalue.
 )"""", py::arg("E"))
             .def("eigenfunction",
-                 [](const Matslise2D<> &se2d, double E) -> vector<Eigenfunction2D<double>> {
-                     vector<Eigenfunction2D<double>> result;
-                     for (auto &f : se2d.eigenfunction(E))
-                         result.push_back(f);
+                 [](const shared_ptr<Matslise2D<>> &se2d, double E) -> vector<Eigenfunction2DWrapper<double>> {
+                     vector<Eigenfunction2DWrapper<double>> result;
+                     for (auto &f : se2d->eigenfunction(E))
+                         result.emplace_back(se2d, f);
                      return result;
                  }, R""""(\
 Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
@@ -59,10 +72,10 @@ Returns a list if eigenfunctions corresponding to the eigenvalue E as python fun
 :returns: a list of functions (depending on multiplicity) each taking a x-value and a y-value (or a two lists to evaluate a grid) and returning the value of that eigenfunction in (x, y).
 )"""", py::arg("E"))
             .def("eigenfunctionWithDerivatives",
-                 [](const Matslise2D<> &se2d, double E) -> vector<Eigenfunction2D<double, true>> {
-                     vector<Eigenfunction2D<double, true>> result;
-                     for (auto &f : se2d.eigenfunctionWithDerivatives(E))
-                         result.push_back(f);
+                 [](const shared_ptr<Matslise2D<>> &se2d, double E) -> vector<Eigenfunction2DWrapper<double, true>> {
+                     vector<Eigenfunction2DWrapper<double, true>> result;
+                     for (auto &f : se2d->eigenfunctionWithDerivatives(E))
+                         result.emplace_back(se2d, f);
                      return result;
                  }, R""""(\
 Returns a list if eigenfunctions corresponding to the eigenvalue E as python functions. The returned functions can be evaluated in all the points in the domain.
@@ -190,7 +203,7 @@ Just like Pyslise2D::matchingError(E) computes this function the discontinuity o
             })
             .def_property_readonly("__sectors", [](const Matslise2D<> &p) -> vector<Matslise2D<>::Sector *> {
                 vector<Matslise2D<>::Sector *> v;
-                for(auto &s : p.sectors)
+                for (auto &s : p.sectors)
                     v.emplace_back(s.get());
                 return v;
             });
