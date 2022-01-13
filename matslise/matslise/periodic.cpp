@@ -40,46 +40,52 @@ pair<Scalar, Scalar> calculateMatchingError(const Y<Scalar, 1, 2> &yError) {
     return {error, dError};
 }
 
-template<typename Scalar, typename UnderEstimation>
-Scalar binarySearch(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, UnderEstimation under) {
-    while (eMax - eMin > 1e-10) {
-        Scalar e = (eMin + eMax) / 2;
-        if (under(ms->matchingError(e))) {
-            eMin = e;
-        } else {
-            eMax = e;
-        }
+template<typename T>
+bool same_sign(const T &a, const T &b) {
+    return (a < 0 && b < 0) || (a > 0 && b > 0);
+}
+
+template<typename Scalar, typename Func, typename FuncRet = decltype(declval<Func>()(declval<Scalar>()))>
+Scalar binarySearch(Scalar eMin, Scalar eMax, const Func &f, const Scalar &eps, FuncRet fMin) {
+    Scalar mid = (eMin + eMax) / 2;
+    while (eMax - eMin > eps) {
+        FuncRet fMid = f(mid);
+        if (same_sign(fMin, fMid)) {
+            fMin = fMid;
+            eMin = mid;
+        } else
+            eMax = mid;
+        mid = (eMin + eMax) / 2;
     }
 
     return (eMin + eMax) / 2;
 }
 
+template<typename Scalar, typename Func>
+Scalar binarySearch(Scalar eMin, Scalar eMax, const Func &f, const Scalar &eps) {
+    return binarySearch<Scalar, Func>(eMin, eMax, f, eps, f(eMin));
+}
+
 template<typename Scalar>
-Scalar withinInterval(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax) {
-    Scalar fMin, fMax;
-    fMin = calculateMatchingError(ms->matchingError(eMin).first).first;
-    fMax = calculateMatchingError(ms->matchingError(eMax).first).first;
-    if (fMin * fMax >= 0) {
-        return abs(fMin) < abs(fMax) ? eMin : eMax;
-    }
+pair<Scalar, Scalar> eigenvaluePair(const PeriodicMatslise<Scalar> *ms, Scalar Emin, Scalar Emax, Scalar eps) {
+    Scalar h = 0.01 * (Emax - Emin);
+    auto fError = [ms](Scalar E) {
+        return calculateMatchingError(ms->matchingError(E).first).first;
+    };
+    Scalar minError = fError(Emin);
+    Scalar fMin = (fError(Emin + h) - minError) / h;
 
-    bool segment = true;
-    while (eMax - eMin > 1e-6) {
-        Scalar e = segment ? (fMax * eMin - fMin * eMax) / (fMax - fMin) : (eMin + eMax) / 2;
-        segment = !segment;
-        Scalar f = calculateMatchingError(ms->matchingError(e).first).first;
-        if (f == 0)
-            return e;
-        if (f * fMin < 0) {
-            eMax = e;
-            fMax = f;
-        } else {
-            eMin = e;
-            fMin = f;
-        }
-    }
+    Scalar mid = binarySearch(Emin, Emax, [ms](Scalar E) {
+        return calculateMatchingError(ms->matchingError(E).first).second;
+    }, eps, fMin);
 
-    return (eMin + eMax) / 2;
+    Scalar midError = fError(mid);
+    if (same_sign(minError, midError)) {
+        if (abs(midError) > eps) cout << "PeriodicMatslise::eigenvaluePair wrong result" << endl;
+        return {mid, mid};
+    } else {
+        return {binarySearch(Emin, mid, fError, eps, minError), binarySearch(mid, Emax, fError, eps, midError)};
+    }
 }
 
 template<typename Scalar, bool with_eigenfunctions>
@@ -89,47 +95,62 @@ struct EigenpairsReturn {
 
 template<typename Scalar, bool with_eigenfunctions>
 typename EigenpairsReturn<Scalar, with_eigenfunctions>::type
-eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, int iMin, int iMax) {
-    Y<Scalar, 1, 2> boundary = Y<Scalar, 1, 2>::Periodic();
+eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, int iMin, int iMax, Scalar eps) {
+    const Y<Scalar, 1, 2> boundary = Y<Scalar, 1, 2>::Periodic();
     typename EigenpairsReturn<Scalar, with_eigenfunctions>::type result;
-    Scalar nextLow = binarySearch<Scalar>(ms, eMin, eMax, [iMin](const pair<Y<Scalar, 1, 2>, Array<Scalar, 2, 1>> &t) {
-        return t.second.minCoeff() < iMin;
-    });
-    for (int i = iMin; i < iMax; ++i) {
-        Scalar eLow = nextLow;
-        Scalar eHigh = binarySearch<Scalar>(ms, eLow, eMax, [i](const pair<Y<Scalar, 1, 2>, Array<Scalar, 2, 1>> &t) {
-            return t.second.maxCoeff() < i + 1;
-        });
-        // cout << "Searching between " << eLow << " and " << eHigh << endl;
-        Scalar e = withinInterval<Scalar>(ms, eLow, eHigh);
-        nextLow = binarySearch<Scalar>(ms, eHigh, eMax, [i](const pair<Y<Scalar, 1, 2>, Array<Scalar, 2, 1>> &t) {
-            return t.second.minCoeff() < i + 1;
-        });
-
-        bool isDouble = i % 2 == 1 && nextLow - e < 1e-8;
+    auto addToResult = [&](int i, Scalar E, bool isDouble) {
         if constexpr (with_eigenfunctions) {
             auto &eigenfunctions = get<2>(
-                    result.emplace_back(i, e, vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>()));
+                    result.emplace_back(i, E, vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>()));
 
             if (isDouble) {
                 // double eigenvalue
                 eigenfunctions.reserve(2);
-                eigenfunctions.emplace_back(ms->matslise.eigenfunction(e, boundary.col(0), boundary.col(0)));
-                eigenfunctions.emplace_back(ms->matslise.eigenfunction(e, boundary.col(1), boundary.col(1)));
+                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, boundary.col(0), boundary.col(0)));
+                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, boundary.col(1), boundary.col(1)));
             } else {
-                EigenSolver<Matrix<Scalar, 2, 2>> solver(ms->matchingError(e).first.y(), true);
+                EigenSolver<Matrix<Scalar, 2, 2>> solver(ms->matchingError(E).first.y(), true);
                 Eigen::Index kernelIndex;
                 solver.eigenvalues().array().abs().minCoeff(&kernelIndex);
 
                 Y<Scalar> y = boundary * (Matrix<Scalar, 2, 1>) solver.eigenvectors().real().col(kernelIndex);
 
                 eigenfunctions.reserve(1);
-                eigenfunctions.emplace_back(ms->matslise.eigenfunction(e, y, y));
+                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, y, y));
             }
         } else {
-            result.emplace_back(i, e, isDouble ? 2 : 1);
+            result.emplace_back(i, E, isDouble ? 2 : 1);
         }
-        if (isDouble) ++i;
+    };
+
+    assert(iMin == 0 || iMin % 2 == 1);
+    int i = iMin;
+    auto findLow = [&](Scalar E) {
+        return ms->matchingError(E).second.minCoeff() - i;
+    };
+    auto findHigh = [&](Scalar E) {
+        return ms->matchingError(E).second.maxCoeff() - i - 2;
+    };
+
+    if (i == 0) {
+        ++i;
+        Scalar high = binarySearch<Scalar>(eMin, eMax, findLow, eps);
+        Scalar E = binarySearch(eMin, high, [ms](Scalar E) {
+            return calculateMatchingError(ms->matchingError(E).first).first;
+        }, eps);
+        addToResult(0, E, false);
+    }
+    Scalar low = eMin;
+    for (; i < iMax; i += 2) {
+        low = binarySearch<Scalar>(low, eMax, findLow, eps);
+        Scalar high = binarySearch<Scalar>(low, eMax, findHigh, eps);
+        pair<Scalar, Scalar> p = eigenvaluePair(ms, low, high, eps);
+        if (p.second - p.first < eps) {
+            addToResult(i, (p.first + p.second) / 2, true);
+        } else {
+            addToResult(i, p.first, false);
+            addToResult(i + 1, p.second, false);
+        }
     }
     return result;
 }
@@ -140,13 +161,18 @@ eigenpairsByIndexHelper(const PeriodicMatslise<Scalar> *ms, int iMin, int iMax) 
     Scalar eMin = -1;
     Scalar eMax = 1;
 
+    if (iMin > 0 && iMin % 2 == 0)
+        --iMin;
+    if (iMax % 2 == 0)
+        ++iMax;
+
     while (ms->matchingError(eMin).second.minCoeff() > iMin)
         eMin *= 2;
 
     while (ms->matchingError(eMax).second.maxCoeff() < iMax + 1)
         eMax *= 2;
-    return eigenpairsHelper<Scalar, with_eigenfunctions>(ms, eMin, eMax, iMin, iMax);
 
+    return eigenpairsHelper<Scalar, with_eigenfunctions>(ms, eMin, eMax, iMin, iMax, 1e-8);
 }
 
 template<typename Scalar>

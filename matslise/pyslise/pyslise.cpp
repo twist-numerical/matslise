@@ -281,6 +281,8 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                      return result;
                  }, "",
                  py::arg("iMin"), py::arg("iMax"))
+            .def("eigenvaluesByIndex", &PeriodicMatslise<>::eigenvaluesByIndex,
+                 "", py::arg("iMin"), py::arg("iMax"))
             .def("eigenfunction",
                  [](const shared_ptr<PeriodicMatslise<>> &m, double E)
                          -> vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> {
