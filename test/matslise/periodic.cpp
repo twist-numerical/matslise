@@ -68,9 +68,10 @@ TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
     PeriodicMatslise<> matslise([](double x) { return 10 * cos(2 * x); }, 0, M_PI, 1e-6);
 
     for (auto &interval  : std::vector<std::pair<int, int>>
-            {{2,  9},
-             {10, 21},
-             {30, 41}}) {
+            {{1,  8},
+             {9,  14},
+             {15, 20},
+             {29, 40}}) {
         int low, high;
         tie(low, high) = interval;
 

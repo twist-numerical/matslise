@@ -99,6 +99,7 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
     const Y<Scalar, 1, 2> boundary = Y<Scalar, 1, 2>::Periodic();
     typename EigenpairsReturn<Scalar, with_eigenfunctions>::type result;
     auto addToResult = [&](int i, Scalar E, bool isDouble) {
+        if (i < iMin || i >= iMax || E < eMin || E >= eMax) return;
         if constexpr (with_eigenfunctions) {
             auto &eigenfunctions = get<2>(
                     result.emplace_back(i, E, vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>()));
@@ -123,33 +124,32 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
         }
     };
 
-    assert(iMin == 0 || iMin % 2 == 1);
-    int i = iMin;
+    int i = iMin - (iMin % 2);
     auto findLow = [&](Scalar E) {
-        return ms->matchingError(E).second.minCoeff() - i;
+        return ms->matchingError(E).second.minCoeff() - i + 1;
     };
     auto findHigh = [&](Scalar E) {
-        return ms->matchingError(E).second.maxCoeff() - i - 2;
+        return ms->matchingError(E).second.maxCoeff() - i - 1;
     };
 
     if (i == 0) {
-        ++i;
-        Scalar high = binarySearch<Scalar>(eMin, eMax, findLow, eps);
+        Scalar high = binarySearch<Scalar>(eMin, eMax, findHigh, eps);
         Scalar E = binarySearch(eMin, high, [ms](Scalar E) {
             return calculateMatchingError(ms->matchingError(E).first).first;
         }, eps);
         addToResult(0, E, false);
+        i += 2;
     }
     Scalar low = eMin;
-    for (; i < iMax; i += 2) {
+    for (; i <= iMax + 1; i += 2) {
         low = binarySearch<Scalar>(low, eMax, findLow, eps);
         Scalar high = binarySearch<Scalar>(low, eMax, findHigh, eps);
         pair<Scalar, Scalar> p = eigenvaluePair(ms, low, high, eps);
         if (p.second - p.first < eps) {
-            addToResult(i, (p.first + p.second) / 2, true);
+            addToResult(i - 1, (p.first + p.second) / 2, true);
         } else {
-            addToResult(i, p.first, false);
-            addToResult(i + 1, p.second, false);
+            addToResult(i - 1, p.first, false);
+            addToResult(i, p.second, false);
         }
     }
     return result;
@@ -161,15 +161,10 @@ eigenpairsByIndexHelper(const PeriodicMatslise<Scalar> *ms, int iMin, int iMax) 
     Scalar eMin = -1;
     Scalar eMax = 1;
 
-    if (iMin > 0 && iMin % 2 == 0)
-        --iMin;
-    if (iMax % 2 == 0)
-        ++iMax;
-
-    while (ms->matchingError(eMin).second.minCoeff() > iMin)
+    while (ms->matchingError(eMin).second.minCoeff() > std::max(iMin - 1, 0))
         eMin *= 2;
 
-    while (ms->matchingError(eMax).second.maxCoeff() < iMax + 1)
+    while (ms->matchingError(eMax).second.maxCoeff() < iMax + 2)
         eMax *= 2;
 
     return eigenpairsHelper<Scalar, with_eigenfunctions>(ms, eMin, eMax, iMin, iMax, 1e-8);
