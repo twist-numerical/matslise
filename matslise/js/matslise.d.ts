@@ -58,46 +58,9 @@ declare class AbstractMatslise2D {
     delete(): void;
 }
 
-declare class Matslise2D extends AbstractMatslise2D {
-    constructor(
-        potential: (x: number, y: number) => number,
-        xmin: number,
-        xmax: number,
-        ymin: number,
-        ymax: number,
-        options: {
-            tolerance?: number;
-            xSectorCount?: number;
-            xTolerance?: number;
-            ySectorCount?: number;
-            yTolerance?: number;
-            xSymmetric?: boolean;
-        }
-    );
-}
-
-declare class Matslise2DHalf extends AbstractMatslise2D {
-    constructor(
-        potential: (x: number, y: number) => number,
-        xmin: number,
-        xmax: number,
-        ymax: number,
-        options: {
-            tolerance?: number;
-            xSectorCount?: number;
-            xTolerance?: number;
-            ySectorCount?: number;
-            yTolerance?: number;
-            xSymmetric?: boolean;
-        }
-    );
-}
-
 declare interface matslise {
     Matslise: typeof Matslise;
     MatsliseHalf: typeof MatsliseHalf;
-    Matslise2D: typeof Matslise2D;
-    Matslise2DHalf: typeof Matslise2DHalf;
 }
 
 export default class MatsliseModule {

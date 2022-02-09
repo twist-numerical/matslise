@@ -22,13 +22,5 @@ EMSCRIPTEN_BINDINGS(module) {
             .field("first", &pair<double, double>::first)
             .field("second", &pair<double, double>::second);
 
-    class_<std::function<double(double, double)>>("EigenfunctionCalculator2D")
-            .function("eval",
-                      optional_override([](std::function<double(double, double)> &self, double x, double y) -> double {
-                          return self(x, y);
-                      }));
-
     bind_matslise();
-
-    bind_matslise2d();
 }

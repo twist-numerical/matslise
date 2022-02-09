@@ -30,32 +30,11 @@ set(MATSLISE_SRC
         util/quadrature.cpp util/calculateEta.cpp)
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
-set(MATSLISE_2D_SRC
-        matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
-        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
-        matsliseNd/sector.cpp)
-set(MATSLISE_3D_SRC
-        matslise3d/matslise3d.cpp matslise3d/sector.cpp)
 set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp)
 
-set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC} ${MATSLISE_2D_SRC} ${MATSLISE_3D_SRC})
+set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
 
 option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
-option(MATSLISE_2D "Build matslise for 2D equations" ON)
-option(MATSLISE_3D "Build matslise for 3D equations" OFF)
-
-if (MATSLISE_3D)
-    set(MATSLISE_2D ON)
-    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_3D_SRC})
-    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyslise3d.cpp)
-    add_compile_definitions(WITH_MATSLISE_3D)
-endif ()
-if (MATSLISE_2D)
-    set(MATSLISE_MATSCS ON)
-    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_2D_SRC})
-    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyslise2d.cpp)
-    add_compile_definitions(WITH_MATSLISE_2D)
-endif ()
 
 if (MATSLISE_MATSCS)
     set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
@@ -64,7 +43,7 @@ if (MATSLISE_MATSCS)
 endif ()
 
 if (DEFINED EMSCRIPTEN)
-    add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_FULL_SRC})
+    add_executable(matslise js/module.cpp js/matslise.cpp ${MATSLISE_FULL_SRC})
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
@@ -85,12 +64,10 @@ else ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
-    install(FILES matslise.h matscs.h matslise2d.h matslise3d.h matsliseNd.h formula_constants.h
+    install(FILES matslise.h matscs.h matsliseNd.h formula_constants.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
     install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h util/scoped_timer.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
-    install(FILES matslise2d/basisQuadrature.h
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/matslise2d)
 
     OPTION(PROFILE "Compile with profiling information." OFF)
     if (PROFILE)

@@ -78,18 +78,6 @@ else ()
                 matscs/propagatePsi.cpp matscs/propagateTheta.cpp)
     endif ()
 
-    if (MATSLISE_2D)
-        set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
-                matslise2d/henon.cpp matslise2d/ixaru.cpp matslise2d/zero.cpp matslise2d/quartic.cpp
-                matslise2d/derivatives.cpp matslise2d/coulomb.cpp matslise2d/pentagon.cpp matslise2d/twoSextic.cpp
-                matslise2d/quadrature.cpp)
-    endif ()
-    if (MATSLISE_3D)
-        set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
-                matslise3d/coulomb.cpp matslise3d/harmonic_oscillator.cpp
-                util/quadrature.cpp util/calculateEta.cpp util/rectangle.cpp util/heap.cpp)
-    endif ()
-
     add_executable(matslise_test EXCLUDE_FROM_ALL ${MATSLISE_TEST_SRC} main.cpp)
 
     find_package(OpenMP)
