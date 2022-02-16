@@ -82,7 +82,7 @@ TEST_CASE("calculate eta", "[util][eta]") {
 }
 
 
-#ifdef MATSLISE_long_double
+#ifdef MATSLISE_LONG_DOUBLE
 
 TEST_CASE("calculate eta (long)", "[util][eta][long]") {
     testEta<long double>(
@@ -159,7 +159,7 @@ TEST_CASE("calculate eta (long)", "[util][eta][long]") {
 
 #endif
 
-#ifdef MATSLISE_float128
+#ifdef MATSLISE_QUADMATH
 
 #include <boost/multiprecision/float128.hpp>
 

@@ -181,7 +181,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
     }
 }
 
-#ifdef MATSLISE_long_double
+#ifdef MATSLISE_LONG_DOUBLE
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (long)", "[matslise][mathieu][auto][long]") {
     Matslise<long double> ms(&mathieu<long double>, 0, constants<long double>::PI, 1e-8);
@@ -195,7 +195,7 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto) (long)", "[matslise][m
 
 #endif
 
-#ifdef MATSLISE_float128
+#ifdef MATSLISE_QUADMATH
 
 #include <boost/multiprecision/float128.hpp>
 

@@ -16,7 +16,7 @@ const double CalculateEtaData<double>::taylor_eta9[8] = {
 
 };
 
-#ifdef MATSLISE_long_double
+#ifdef MATSLISE_LONG_DOUBLE
 
 template<>
 const long double CalculateEtaData<long double>::taylor_eta8[12] = {
@@ -34,7 +34,7 @@ const long double CalculateEtaData<long double>::taylor_eta9[12] = {
 };
 #endif
 
-#ifdef MATSLISE_float128
+#ifdef MATSLISE_QUADMATH
 
 template<>
 const boost::multiprecision::float128 CalculateEtaData<boost::multiprecision::float128>::taylor_eta8[16] = {
