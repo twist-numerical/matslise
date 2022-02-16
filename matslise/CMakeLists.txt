@@ -26,8 +26,8 @@ endif ()
 
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
-        matslise/sector.cpp
-        util/quadrature.cpp util/calculateEta.cpp)
+        matslise/sector.cpp util/calculateEta.cpp)
+
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
 set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp)
@@ -85,13 +85,13 @@ else ()
         ENDIF ()
     ENDIF (PARALLEL)
 
-    OPTION(LONG_DOUBLE "Option description" OFF)
-    IF (LONG_DOUBLE)
-        ADD_DEFINITIONS(-DMATSLISE_long_double)
-    ENDIF (LONG_DOUBLE)
+    OPTION(MATSLISE_LONG_DOUBLE "Option description" OFF)
+    IF (MATSLISE_LONG_DOUBLE)
+        ADD_DEFINITIONS(-DMATSLISE_LONG_DOUBLE)
+    ENDIF (MATSLISE_LONG_DOUBLE)
 
-    OPTION(QUADMATH "Option description" OFF)
-    IF (QUADMATH)
+    OPTION(MATSLISE_QUADMATH "Option description" OFF)
+    IF (MATSLISE_QUADMATH)
         find_package(Boost REQUIRED)
         if (Boost_FOUND)
             add_definitions(-DBOOST)
@@ -99,11 +99,11 @@ else ()
 
             find_package(Quadmath)
             if (Quadmath_FOUND)
-                add_definitions(-DMATSLISE_float128)
+                add_definitions(-DMATSLISE_QUADMATH)
                 list(APPEND libraries Quadmath::quadmath)
             endif ()
         endif ()
-    ENDIF (QUADMATH)
+    ENDIF (MATSLISE_QUADMATH)
 
     OPTION(USE_MKL "Use the Intel's MKL if available" OFF)
     if (USE_MKL)
@@ -121,7 +121,6 @@ else ()
                 target_link_libraries(${target} PUBLIC
                         m
                         Threads::Threads
-                        ${CMAKE_DL_LIBS}
                         ${CMAKE_DL_LIBS}
                         ${BLAS_LIBRARIES})
             endforeach ()

@@ -15,10 +15,10 @@ Eigen::Array<Scalar, Eigen::Dynamic, 1> lobatto_grid(Eigen::Index intervals, Sca
     Scalar h = (max - min) / intervals;
     Scalar x1 = Scalar{.5} * h * (Scalar{1} - Scalar{1} / sqrt(Scalar{5}));
     Scalar x2 = h - x1;
+    Scalar a = min;
     for (Eigen::Index i = 0; i < intervals; ++i) {
-        Scalar a = min + i * h;
-        Scalar mid = a + h / 2;
         grid.middleRows(3 * i, 3) << a, a + x1, a + x2;
+        a += h;
     }
     grid[3 * intervals] = max;
     return grid;

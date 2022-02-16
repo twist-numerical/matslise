@@ -84,7 +84,7 @@ jobs:
         run: |
           cmake .. -DCMAKE_BUILD_TYPE=Release \
             -DEigen3_DIR="$(pwd)/../../eigen/build" \
-            -DLONG_DOUBLE=ON -DQUADMATH=ON -DMATSLISE_3D=ON
+            -DMATSLISE_LONG_DOUBLE=ON -DMATSLISE_QUADMATH=ON
           cmake --build . --target matslise_test --config Release -- -j 3
         working-directory: ./build
       - name: Run tests
