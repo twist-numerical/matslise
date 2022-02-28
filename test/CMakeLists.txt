@@ -60,6 +60,7 @@ else ()
     option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
 
     set(MATSLISE_TEST_SRC
+            util/legendre.cpp util/rectangle.cpp util/heap.cpp util/calculateEta.cpp
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp matslise/periodic.cpp)
 
