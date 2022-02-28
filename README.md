@@ -38,7 +38,7 @@ When building from source you will always need a compiler and CMake. On Windows 
 
 Other than those Matslise has only one required dependency: [Eigen](http://eigen.tuxfamily.org). A recent version satisfies.
 
-If you have a package manager (apt/brew/pacman/...) Eigen can be installed via those tools. If that doesn't work installing eigen [from source](https://bitbucket.org/eigen/eigen/src/default/INSTALL) is very easy. Make sure you follow the steps for CMake.
+If you have a package manager (apt/brew/pacman/...) Eigen can be installed via those tools. If that doesn't work installing eigen [from source](https://bitbucket.org/eigen/eigen/src/default/INSTALL) is not that difficult. Make sure you follow the steps for CMake.
 
 ### Building
 ```
@@ -62,8 +62,8 @@ The next thing to do is pick a target. What do you want to build?
 When configuring CMake (`cmake ..`), it is possible to add some configuration options:
 - `-DPYTHON_EXECUTABLE=path/to/python` enables you to build for other python installs on your system.
 - `-DEigen3_DIR=path/to/eigen3/cmake` if a suitable eigen is not found automatically, one can be specified.
-- `-DLONG_DOUBLE=OFF` when `OFF` is changed to `ON` matslise will also be compiled for the type `long double`.
-- `-DQUADMATH=OFF` when `OFF` is changed to `ON` matslise will also be compiled for a quadruple precision type. For this to work Boost is needed.
+- `-DMATSLISE_LONG_DOUBLE=OFF` when `OFF` is changed to `ON` matslise will also be compiled for the type `long double`.
+- `-DMATSLISE_QUADMATH=OFF` when `OFF` is changed to `ON` matslise will also be compiled for a quadruple precision type. For this to work Boost is needed.
 
 For example: running the tests, also with the other floating point types:
 ```

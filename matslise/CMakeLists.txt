@@ -26,36 +26,15 @@ endif ()
 
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
-        matslise/sector.cpp
-        util/quadrature.cpp util/calculateEta.cpp)
+        matslise/sector.cpp util/calculateEta.cpp)
+
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
-set(MATSLISE_2D_SRC
-        matslise2d/halfrange.cpp matslise2d/eigenfunctions.cpp
-        matslise2d/matslise2d.cpp matslise2d/sector.cpp matslise2d/basisQuadrature.cpp
-        matsliseNd/sector.cpp)
-set(MATSLISE_3D_SRC
-        matslise3d/matslise3d.cpp matslise3d/sector.cpp)
 set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp)
 
-set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC} ${MATSLISE_2D_SRC} ${MATSLISE_3D_SRC})
+set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
 
 option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
-option(MATSLISE_2D "Build matslise for 2D equations" ON)
-option(MATSLISE_3D "Build matslise for 3D equations" OFF)
-
-if (MATSLISE_3D)
-    set(MATSLISE_2D ON)
-    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_3D_SRC})
-    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyslise3d.cpp)
-    add_compile_definitions(WITH_MATSLISE_3D)
-endif ()
-if (MATSLISE_2D)
-    set(MATSLISE_MATSCS ON)
-    set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_2D_SRC})
-    set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyslise2d.cpp)
-    add_compile_definitions(WITH_MATSLISE_2D)
-endif ()
 
 if (MATSLISE_MATSCS)
     set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
@@ -64,7 +43,7 @@ if (MATSLISE_MATSCS)
 endif ()
 
 if (DEFINED EMSCRIPTEN)
-    add_executable(matslise js/module.cpp js/matslise.cpp js/matslise2d.cpp ${MATSLISE_FULL_SRC})
+    add_executable(matslise js/module.cpp js/matslise.cpp ${MATSLISE_FULL_SRC})
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
@@ -85,12 +64,10 @@ else ()
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)
-    install(FILES matslise.h matscs.h matslise2d.h matslise3d.h matsliseNd.h formula_constants.h
+    install(FILES matslise.h matscs.h matsliseNd.h formula_constants.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise)
     install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h util/scoped_timer.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
-    install(FILES matslise2d/basisQuadrature.h
-            DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/matslise2d)
 
     OPTION(PROFILE "Compile with profiling information." OFF)
     if (PROFILE)
@@ -108,28 +85,28 @@ else ()
         ENDIF ()
     ENDIF (PARALLEL)
 
-    OPTION(LONG_DOUBLE "Option description" OFF)
-    IF (LONG_DOUBLE)
-        ADD_DEFINITIONS(-DMATSLISE_long_double)
-    ENDIF (LONG_DOUBLE)
+    OPTION(MATSLISE_LONG_DOUBLE "Option description" OFF)
+    IF (MATSLISE_LONG_DOUBLE)
+        ADD_DEFINITIONS(-DMATSLISE_LONG_DOUBLE)
+    ENDIF (MATSLISE_LONG_DOUBLE)
 
-    OPTION(QUADMATH "Option description" OFF)
-    IF (QUADMATH)
+    OPTION(MATSLISE_QUADMATH "Option description" OFF)
+    IF (MATSLISE_QUADMATH)
         find_package(Boost REQUIRED)
         if (Boost_FOUND)
             add_definitions(-DBOOST)
             include_directories(${Boost_INCLUDE_DIRS})
 
-            find_package(Quadmath)
+            find_package(Quadmath REQUIRED)
             if (Quadmath_FOUND)
-                add_definitions(-DMATSLISE_float128)
+                add_definitions(-DMATSLISE_QUADMATH)
                 list(APPEND libraries Quadmath::quadmath)
             endif ()
         endif ()
-    ENDIF (QUADMATH)
+    ENDIF (MATSLISE_QUADMATH)
 
-    OPTION(USE_MKL "Use the Intel's MKL if available" OFF)
-    if (USE_MKL)
+    OPTION(MATSLISE_USE_MKL "Use the Intel's MKL if available" OFF)
+    if (MATSLISE_USE_MKL)
         find_package(MKL)
         if (MKL_FOUND)
             set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
@@ -144,7 +121,6 @@ else ()
                 target_link_libraries(${target} PUBLIC
                         m
                         Threads::Threads
-                        ${CMAKE_DL_LIBS}
                         ${CMAKE_DL_LIBS}
                         ${BLAS_LIBRARIES})
             endforeach ()

@@ -43,7 +43,7 @@ TEST_CASE("coffey_evans beta=25", "[matslise][coffey_evans]") {
 }
 
 
-#ifdef MATSLISE_long_double
+#ifdef MATSLISE_LONG_DOUBLE
 
 TEST_CASE("coffey_evans beta=20 (long)", "[matslise][coffey_evans][long]") {
     const long double B = 20.l;

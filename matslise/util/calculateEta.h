@@ -13,13 +13,13 @@ struct CalculateEtaData {
 template<>
 inline const int CalculateEtaData<double>::taylor_degree = 7;
 
-#ifdef MATSLISE_long_double
+#ifdef MATSLISE_LONG_DOUBLE
 template<>
 inline const int CalculateEtaData<long double>::taylor_degree = 11;
 #endif
 
 
-#ifdef MATSLISE_float128
+#ifdef MATSLISE_QUADMATH
 #include <boost/multiprecision/float128.hpp>
 
 template<>

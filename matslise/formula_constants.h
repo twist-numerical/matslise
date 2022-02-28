@@ -11,7 +11,4 @@
 #define MATSCS_ETA_h 6
 #define MATSCS_N 9
 
-#define MATSLISE2D_DELTA_V_DEGREE 8
-
-
 #endif

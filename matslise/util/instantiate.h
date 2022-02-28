@@ -30,13 +30,13 @@ INSTANTIATE_MORE(Scalar)
 
 INSTANTIATE_ALL(double)
 
-#ifdef MATSLISE_long_double
+#ifdef MATSLISE_LONG_DOUBLE
 
 INSTANTIATE_ALL(long double)
 
 #endif
 
-#ifdef MATSLISE_float128
+#ifdef MATSLISE_QUADMATH
 
 #include <boost/multiprecision/float128.hpp>
 

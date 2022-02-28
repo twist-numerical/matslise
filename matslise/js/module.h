@@ -3,7 +3,6 @@
 
 #include <emscripten/bind.h>
 #include "../matslise.h"
-#include "../matslise2d.h"
 
 using namespace emscripten;
 
