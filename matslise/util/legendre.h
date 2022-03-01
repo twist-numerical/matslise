@@ -2,6 +2,7 @@
 #define SCHRODINGER_LEGENDRE_H
 
 #include "./eigen.h"
+#include "./polynomial.h"
 
 namespace matslise::legendre {
     template<typename Scalar, int n>
@@ -30,7 +31,7 @@ namespace matslise::legendre {
                     -1, 240, -14280, 371280, -5290740, 46558512, -271591320, 1097450640, -3155170590, 6544057520, -9816086280, 10546208400, -7909656300, 3931426800, -1163381400, 155117520
     ).finished();
 
-    template<int n, typename Scalar, typename D=Scalar>
+    template<typename Scalar, int n, typename D=Scalar>
     class Legendre {
         static const constexpr int k = n + n % 2;
         const Scalar h;
@@ -40,28 +41,32 @@ namespace matslise::legendre {
         Legendre(const F &f, const Scalar &a, const Scalar &b)
                 : h((b - a) / 2), fs(((a + b) / 2 + nodes<Scalar, k> * h).unaryExpr(f)) {}
 
-        D integrate(int i = 0) {
+        template<bool scaled = true>
+        D integrate(int i = 0) const {
             D result = weights<Scalar, k>(i, 0) * fs[0];
             for (int j = 1; j < weights<Scalar, k>.rows(); ++j)
                 result += weights<Scalar, k>(i, j) * fs[j];
+            if constexpr(scaled)
+                result *= h;
             return result;
         }
 
-        std::array<D, n> getCoefficients() {
+        std::array<D, n> getCoefficients() const {
             std::array<D, n> coeffs;
             Scalar H(1);
             for (int i = 0; i < n; ++i) {
-                coeffs[i] = integrate(i) / H;
+                coeffs[i] = integrate<false>(i) / H;
                 H *= h;
             }
             return coeffs;
         }
 
-        std::array<D, n> asPolynomial() {
+        Polynomial<D, n> asPolynomial() const {
             static_assert(n <= 16);
 
             std::array<D, n> coeffs = getCoefficients();
-            std::array<D, n> polynomial{};
+            Polynomial<Scalar, n - 1> polynomial;
+            for (int i = 0; i < n; ++i) polynomial[i] = 0;
             Scalar H = 1;
             for (int i = 0; i < n; ++i) {
                 for (int j = 0; j <= i; ++j) {
@@ -75,7 +80,7 @@ namespace matslise::legendre {
 
     template<int n, class Scalar, class D = Scalar, typename F>
     std::array<D, n> getCoefficients(const F &f, const Scalar &a, const Scalar &b) {
-        return Legendre<n, Scalar, D>{f, a, b}.getCoefficients();
+        return Legendre<Scalar, n, D>{f, a, b}.getCoefficients();
     }
 }
 

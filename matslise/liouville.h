@@ -3,19 +3,20 @@
 
 #include "./util/eigen.h"
 #include "./util/rectangle.h"
+#include "./util/polynomial.h"
 
 namespace matslise {
     template<typename Scalar>
     class LiouvilleTransformation {
     public:
-        static constexpr const int legendrePoints = 6;
+        static constexpr const int DEGREE = 8;
 
         typedef std::function<Scalar(Scalar)> Function;
 
         const Rectangle<Scalar, 1> domain;
         const Function p, q, w;
 
-        struct RXPoint {
+        struct Piece {
             struct {
                 Scalar min;
                 Scalar max;
@@ -24,14 +25,23 @@ namespace matslise {
                 Scalar min;
                 Scalar max;
             } x;
-            std::array<Scalar, legendrePoints> legendre;
+            Polynomial<Scalar, DEGREE> r2x; // [0,1] -> [xmin, xmax]
+            Polynomial<Scalar, DEGREE> p; // [0,1] -> p
+            Polynomial<Scalar, DEGREE> w; // [0,1] -> w
+            Polynomial<Scalar, DEGREE> pwx; // [0,1] -> p(x)*w(x)
 
-            Scalar r2x(Scalar r_) const;
+            Scalar normalizeR(Scalar r_) const {
+                return (r_ - r.min) / (r.max - r.min);
+            };
+
+            Scalar normalizeX(Scalar x_) const {
+                return (x_ - x.min) / (x.max - x.min);
+            };
 
             Scalar x2r(Scalar x_) const;
         };
 
-        const std::vector<RXPoint> rxMap;
+        std::vector<Piece> pieces;
 
         LiouvilleTransformation(const Rectangle<Scalar, 1> &domain, const Function &p, const Function &q,
                                 const Function &w);
@@ -39,6 +49,12 @@ namespace matslise {
         Scalar r2x(Scalar r) const;
 
         Scalar x2r(Scalar x) const;
+
+        Scalar V(Scalar x) const;
+
+        Rectangle<Scalar, 1> xDomain() {
+            return {pieces.front().x.min, pieces.back().x.max};
+        }
     };
 
 }
