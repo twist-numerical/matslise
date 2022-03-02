@@ -7,18 +7,18 @@
 using namespace matslise;
 using namespace Eigen;
 
-double square(double x) {
+inline double square(double x) {
     return x * x;
 }
 
-TEST_CASE("Test liouville transformation", "[liouville]") {
+TEST_CASE("Symbolic test liouville transformation", "[liouville]") {
     double rMin = 0.1;
     double rMax = 1.3;
     LiouvilleTransformation<double> transformation{
             {rMin, rMax},
-            {[](double r) { return std::cos(r); }},
-            {[](double) { return 0; }},
-            {[](double r) { return std::tan(r) * std::sin(r); }}
+            [](double r) { return std::cos(r); },
+            [](double) { return 0; },
+            [](double r) { return std::tan(r) * std::sin(r); }
     };
 
     for (double r = rMin; r < rMax; r += 0.01) {

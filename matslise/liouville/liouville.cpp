@@ -11,8 +11,8 @@ struct SimplePiece {
     Scalar min;
     Scalar max;
 
-    Legendre<Scalar, LiouvilleTransformation<Scalar>::DEGREE> p;
-    Legendre<Scalar, LiouvilleTransformation<Scalar>::DEGREE> w;
+    Legendre<Scalar, LiouvilleTransformation<Scalar>::DEGREE + 1> p;
+    Legendre<Scalar, LiouvilleTransformation<Scalar>::DEGREE + 1> w;
 
     SimplePiece(const LiouvilleTransformation<Scalar> &lt, Scalar rMin, Scalar rMax)
             : min(rMin), max(rMax), p(lt.p, rMin, rMax), w(lt.w, rMin, rMax) {
@@ -35,6 +35,16 @@ Scalar x2r_impl(const decltype(LiouvilleTransformation<Scalar>::Piece::r2x) &r2x
 }
 
 template<typename Scalar>
+Scalar r2xIntegral(const SimplePiece<Scalar> piece) {
+    const auto &p = piece.p.asPolynomial();
+    const auto &w = piece.w.asPolynomial();
+
+    return decltype(piece.p){
+            [&p, &w](Scalar r) { return std::sqrt(w(r) / p(r)); }, 0, 1
+    }.integrate() * (piece.max - piece.min);
+}
+
+template<typename Scalar>
 void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<Scalar> &sp) {
     if ((sp.max - sp.min) > 1e-8) {
         Scalar rMid = (sp.min + sp.max) / 2;
@@ -45,7 +55,11 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
         Scalar pBest = left.p.integrate() + right.p.integrate();
         Scalar wBest = left.w.integrate() + right.w.integrate();
 
-        if (std::abs(pBest - sp.p.integrate()) > 1e-13 || std::abs(wBest - sp.w.integrate()) > 1e-13) {
+        if (
+                std::abs(pBest - sp.p.integrate()) > 1e-13
+                || std::abs(wBest - sp.w.integrate()) > 1e-13
+                || std::abs(r2xIntegral(left) + r2xIntegral(right) - r2xIntegral(sp)) > 1e-13
+                ) {
             // subdivide
             constructPiecewise(lt, left);
             constructPiecewise(lt, right);

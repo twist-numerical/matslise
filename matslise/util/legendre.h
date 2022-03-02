@@ -36,6 +36,9 @@ namespace matslise::legendre {
         static const constexpr int k = n + n % 2;
         const Scalar h;
         const Eigen::Array<D, k, 1> fs;
+
+        mutable std::optional<std::array<D, n>> coefficientsCache;
+        mutable std::optional<Polynomial<D, n - 1>> polynomialCache;
     public:
         template<typename F>
         Legendre(const F &f, const Scalar &a, const Scalar &b)
@@ -51,8 +54,9 @@ namespace matslise::legendre {
             return result;
         }
 
-        std::array<D, n> getCoefficients() const {
-            std::array<D, n> coeffs;
+        const std::array<D, n> &getCoefficients() const {
+            if (coefficientsCache) return *coefficientsCache;
+            auto &coeffs = coefficientsCache.template emplace();
             Scalar H(1);
             for (int i = 0; i < n; ++i) {
                 coeffs[i] = integrate<false>(i) / H;
@@ -61,11 +65,12 @@ namespace matslise::legendre {
             return coeffs;
         }
 
-        Polynomial<D, n> asPolynomial() const {
+        const Polynomial<D, n - 1> &asPolynomial() const {
             static_assert(n <= 16);
+            if (polynomialCache) return *polynomialCache;
+            auto &polynomial = polynomialCache.template emplace();
 
             std::array<D, n> coeffs = getCoefficients();
-            Polynomial<Scalar, n - 1> polynomial;
             for (int i = 0; i < n; ++i) polynomial[i] = 0;
             Scalar H = 1;
             for (int i = 0; i < n; ++i) {
