@@ -52,7 +52,7 @@ namespace matslise {
 
         Scalar V(Scalar x) const;
 
-        Rectangle<Scalar, 1> xDomain() {
+        Rectangle<Scalar, 1> xDomain() const {
             return {pieces.front().x.min, pieces.back().x.max};
         }
     };

@@ -1,6 +1,6 @@
 #include <utility>
 
-
+#include "../liouville.h"
 #include "module.h"
 
 template<typename Scalar>
@@ -293,6 +293,32 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                      return fs;
                  }, "",
                  py::arg("E"));
+
+    py::class_<LiouvilleTransformation<double>>(m, "LiouvilleTransformation")
+            .def(py::init([](const function<double(double)> &p, const function<double(double)> &q,
+                             const function<double(double)> &w, double min, double max) {
+                return LiouvilleTransformation<double>({min, max}, p, q, w);
+            }), R""""(\
+)"""", py::arg("p"), py::arg("q"), py::arg("w"), py::arg("min"), py::arg("max"))
+            .def("V", &LiouvilleTransformation<double>::V, py::arg("x"))
+            .def("r2x", &LiouvilleTransformation<double>::r2x, py::arg("r"))
+            .def("x2r", &LiouvilleTransformation<double>::x2r, py::arg("x"))
+            .def_property_readonly("rDomain", [](const LiouvilleTransformation<double> &lt) {
+                return std::pair{lt.domain.min(), lt.domain.max()};
+            })
+            .def_property_readonly("xDomain", [](const LiouvilleTransformation<double> &lt) {
+                auto domain = lt.xDomain();
+                return std::pair{domain.min(), domain.max()};
+            })
+            .def_property_readonly("pieces", [](const LiouvilleTransformation<double> &lt) {
+                std::vector<std::pair<double, double>> r;
+                r.reserve(lt.pieces.size());
+                std::transform(lt.pieces.begin(), lt.pieces.end(), std::back_inserter(r), [](auto p) {
+                    return std::pair{p.r.min, p.r.max};
+                });
+                return r;
+            });
+
 
     py::class_<Matslise<>::Sector>(m, "PysliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
