@@ -6,18 +6,6 @@
 using namespace matslise;
 using namespace matslise::legendre;
 
-template<typename Scalar>
-struct SimplePiece {
-    Scalar min;
-    Scalar max;
-
-    Legendre<Scalar, LiouvilleTransformation<Scalar>::DEGREE + 1> p;
-    Legendre<Scalar, LiouvilleTransformation<Scalar>::DEGREE + 1> w;
-
-    SimplePiece(const LiouvilleTransformation<Scalar> &lt, Scalar rMin, Scalar rMax)
-            : min(rMin), max(rMax), p(lt.p, rMin, rMax), w(lt.w, rMin, rMax) {
-    }
-};
 
 template<typename Scalar>
 Scalar x2r_impl(const decltype(LiouvilleTransformation<Scalar>::Piece::r2x) &r2x, Scalar x_) {
@@ -35,15 +23,55 @@ Scalar x2r_impl(const decltype(LiouvilleTransformation<Scalar>::Piece::r2x) &r2x
 }
 
 template<typename Scalar>
-Scalar pwIntegral(const SimplePiece<Scalar> piece) {
+struct SimplePiece {
+    static constexpr const int DEGREE = LiouvilleTransformation<Scalar>::DEGREE;
+    const Scalar min;
+    const Scalar max;
+
+    const Legendre<Scalar, DEGREE + 1> p;
+    const Legendre<Scalar, DEGREE + 1> w;
+
+    SimplePiece(const LiouvilleTransformation<Scalar> &lt, Scalar rMin, Scalar rMax)
+            : min(rMin), max(rMax), p(lt.p, rMin, rMax), w(lt.w, rMin, rMax) {
+    }
+
+private:
+    mutable std::optional<Polynomial<Scalar, DEGREE >> r2x_cache;
+public:
+    const Polynomial<Scalar, DEGREE> &r2x() const {
+        if (r2x_cache) return *r2x_cache;
+        const auto &pp = p.asPolynomial();
+        const auto &pw = w.asPolynomial();
+        auto &r2x = r2x_cache.emplace(Legendre<Scalar, DEGREE>{
+                [&pp, &pw](Scalar r) { return std::sqrt(pw(r) / pp(r)); }, 0, 1
+        }.asPolynomial().integral());
+        r2x *= (max - min);
+        return r2x;
+    }
+
+private:
+    mutable std::optional<Polynomial<Scalar, DEGREE >> x2r_cache;
+public:
+    const Polynomial<Scalar, DEGREE> &x2r() const {
+        if (x2r_cache) return *x2r_cache;
+
+        const Polynomial<Scalar, DEGREE> &r2x_p = r2x();
+
+        return x2r_cache.emplace(Legendre<Scalar, DEGREE + 1>{
+                [&r2x_p](Scalar x) {
+                    return x2r_impl(r2x_p, x);
+                }, 0, r2x_p(1)
+        }.asPolynomial());
+    }
+};
+
+template<typename Scalar>
+Scalar pwIntegral(const SimplePiece<Scalar> &piece) {
     const constexpr int DEGREE = LiouvilleTransformation<Scalar>::DEGREE;
     const auto &p = piece.p.asPolynomial();
     const auto &w = piece.w.asPolynomial();
 
-    Polynomial<Scalar, DEGREE> r2x = Legendre<Scalar, DEGREE - 1>{
-            [&p, &w](Scalar r) { return std::sqrt(w(r) / p(r)); }, 0, 1
-    }.asPolynomial().integral();
-    r2x *= (piece.max - piece.min);
+    const Polynomial<Scalar, DEGREE> &r2x = piece.r2x();
 
     return Legendre<Scalar, DEGREE>{
             [&p, &w, &r2x](Scalar x) {
@@ -52,6 +80,17 @@ Scalar pwIntegral(const SimplePiece<Scalar> piece) {
             }, 0, r2x(1)
     }.integrate();
 }
+
+template<typename Scalar>
+Scalar r2xIntegral(const SimplePiece<Scalar> &piece) {
+    return piece.r2x().integral(1) * (piece.max - piece.min);
+}
+
+template<typename Scalar>
+Scalar x2rIntegral(const SimplePiece<Scalar> &piece) {
+    return piece.x2r().integral(1) * (piece.max - piece.min);
+}
+
 
 template<typename Scalar>
 void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<Scalar> &sp) {
@@ -67,6 +106,8 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
         if (
                 std::abs(pBest - sp.p.integrate()) > 1e-13
                 || std::abs(wBest - sp.w.integrate()) > 1e-13
+                || std::abs(r2xIntegral(left) + r2xIntegral(right) - r2xIntegral(sp)) > 1e-11
+                // || std::abs(x2rIntegral(left) + x2rIntegral(right) - x2rIntegral(sp)) > 1e-11
                 || std::abs(pwIntegral(left) + pwIntegral(right) - pwIntegral(sp)) > 1e-11
                 ) {
             // subdivide
@@ -81,10 +122,7 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
 
     Polynomial<Scalar, DEGREE> p = sp.p.asPolynomial();
     Polynomial<Scalar, DEGREE> w = sp.w.asPolynomial();
-    Polynomial<Scalar, DEGREE> r2x = Legendre<Scalar, DEGREE - 1>{
-            [&p, &w](Scalar r) { return std::sqrt(w(r) / p(r)); }, 0, 1
-    }.asPolynomial().integral();
-    r2x *= (sp.max - sp.min);
+    Polynomial<Scalar, DEGREE> r2x = sp.r2x();
     r2x += Polynomial<Scalar, 0>{xMin};
     Scalar xMax = r2x(1);
 

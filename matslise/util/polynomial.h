@@ -118,6 +118,15 @@ namespace matslise {
             return r;
         }
 
+        Scalar integral(Scalar x) const {
+            Scalar r = 0;
+            for (int i = degree; i >= 0; --i) {
+                Scalar f = coefficients[i] / (i + 1);
+                r = r * x + f;
+            }
+            return r * x;
+        }
+
         Eigen::Index size() const {
             return coefficients.size();
         }
