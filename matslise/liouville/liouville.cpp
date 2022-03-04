@@ -82,13 +82,13 @@ Scalar pwIntegral(const SimplePiece<Scalar> &piece) {
 }
 
 template<typename Scalar>
-Scalar r2xIntegral(const SimplePiece<Scalar> &piece) {
-    return piece.r2x().integral(1) * (piece.max - piece.min);
+Scalar r2xIntegral(const SimplePiece<Scalar> &piece, Scalar shift = 0) {
+    return (piece.r2x().integral(1) + shift) * (piece.max - piece.min);
 }
 
 template<typename Scalar>
-Scalar x2rIntegral(const SimplePiece<Scalar> &piece) {
-    return piece.x2r().integral(1) * (piece.max - piece.min);
+Scalar x2rIntegral(const SimplePiece<Scalar> &piece, Scalar shift = 0) {
+    return (piece.x2r().integral(1) + shift) * (piece.max - piece.min) * (piece.r2x()(1) - piece.r2x()(0));
 }
 
 
@@ -106,8 +106,8 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
         if (
                 std::abs(pBest - sp.p.integrate()) > 1e-13
                 || std::abs(wBest - sp.w.integrate()) > 1e-13
-                || std::abs(r2xIntegral(left) + r2xIntegral(right) - r2xIntegral(sp)) > 1e-11
-                // || std::abs(x2rIntegral(left) + x2rIntegral(right) - x2rIntegral(sp)) > 1e-11
+                || std::abs(r2xIntegral(left) + r2xIntegral(right, left.r2x()(1)) - r2xIntegral(sp)) > 1e-11
+                || std::abs(x2rIntegral(left) + x2rIntegral(right, left.max) - x2rIntegral(sp)) > 1e-8
                 || std::abs(pwIntegral(left) + pwIntegral(right) - pwIntegral(sp)) > 1e-11
                 ) {
             // subdivide
