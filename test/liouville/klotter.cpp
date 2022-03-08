@@ -24,15 +24,19 @@ TEST_CASE("Klotter with liouville transformation", "[liouville]") {
             [](double x) { return square(8 * constants<double>::PI / (3 * x * x * x)); }
     };
 
-    std::cout << "Pieces: " << transformation.pieces.size() << std::endl;
+    // std::cout << "Pieces: " << transformation.pieces.size() << std::endl;
 
     Matslise<double> m{[&](double x) { return transformation.V(x); }, transformation.xDomain().min(),
                        transformation.xDomain().max()};
 
     auto eigenvalues = m.eigenvaluesByIndex(0, 20, Y<double>::Dirichlet());
-    for (auto &iE : eigenvalues) {
+    Eigen::Index i = 0;
+    for (auto &iE: eigenvalues) {
         double exact = square(iE.first + 1);
-        std::cout << "E" << iE.first << ": " << iE.second << ", error: " << (iE.second - exact) << std::endl;
+        REQUIRE(i == iE.first);
+        REQUIRE(Approx(exact).epsilon(1e-6) == iE.second);
+        ++i;
+        // std::cout << "E" << iE.first << ": " << iE.second << ", error: " << (iE.second - exact) << std::endl;
     }
 
 }

@@ -28,7 +28,7 @@ namespace matslise {
             Polynomial<Scalar, DEGREE> r2x; // [0,1] -> [xmin, xmax]
             Polynomial<Scalar, DEGREE> p; // [0,1] -> p(r)
             Polynomial<Scalar, DEGREE> w; // [0,1] -> w(r)
-            Polynomial<Scalar, DEGREE> pwx; // [0,1] -> p(x)*w(x)
+            Polynomial<Scalar, DEGREE + 2> pwx; // [0,1] -> p(x)*w(x)
 
             Scalar normalizeR(Scalar r_) const {
                 return (r_ - r.min) / (r.max - r.min);
@@ -51,6 +51,8 @@ namespace matslise {
         Scalar x2r(Scalar x) const;
 
         Scalar V(Scalar x) const;
+
+        Scalar pwx(Scalar x) const;
 
         Rectangle<Scalar, 1> xDomain() const {
             return {pieces.front().x.min, pieces.back().x.max};

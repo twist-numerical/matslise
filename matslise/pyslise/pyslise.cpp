@@ -303,6 +303,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
             .def("V", &LiouvilleTransformation<double>::V, py::arg("x"))
             .def("r2x", &LiouvilleTransformation<double>::r2x, py::arg("r"))
             .def("x2r", &LiouvilleTransformation<double>::x2r, py::arg("x"))
+            .def("pwx", &LiouvilleTransformation<double>::pwx, py::arg("x"))
             .def_property_readonly("rDomain", [](const LiouvilleTransformation<double> &lt) {
                 return std::pair{lt.domain.min(), lt.domain.max()};
             })

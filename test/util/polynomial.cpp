@@ -1,5 +1,6 @@
 #include "../catch.hpp"
 #include "../../matslise/util/polynomial.h"
+#include "fEquals.h"
 
 using namespace matslise;
 
@@ -14,6 +15,15 @@ TEST_CASE("Test Polynomial", "[util][polynomial]") {
 
     REQUIRE(a.integral() == Polynomial<int, 4>{{0, 1, 1, 1, 1}});
 
+    REQUIRE(a * 2 == Polynomial<int, 3>{2, 4, 6, 8});
+    REQUIRE(3 * a == Polynomial<int, 3>{3, 6, 9, 12});
+    REQUIRE((3 * a) / 3 == a);
+
+    REQUIRE(a - 2 == Polynomial<int, 3>{-1, 2, 3, 4});
+    REQUIRE(3 + a == Polynomial<int, 3>{4, 2, 3, 4});
+
+    REQUIRE((3 * (a - 9)) / 2 == ((9 - a) * -3) / 2);
+
 
     Polynomial<int, 2> b({5, 4, 3});
 
@@ -23,12 +33,7 @@ TEST_CASE("Test Polynomial", "[util][polynomial]") {
 
     Polynomial<double, 5> c{{5, 14, 26, 38, 25, 12}};
 
-    auto dc = c.derivative();
-    auto ddc = c.derivative<2>();
-    for (double x = -10; x <= 10; ++x) {
-        REQUIRE(Approx(c.derivative<0>(x)) == c(x));
-        REQUIRE(Approx(c.derivative<1>(x)) == dc(x));
-        REQUIRE(Approx(c.derivative<2>(x)) == ddc(x));
-    }
-
+    fEquals<double>([&c](double x) { return c.derivative<0>(x); }, c, -10, 10);
+    fEquals<double>([&c](double x) { return c.derivative<1>(x); }, c.derivative(), -10, 10);
+    fEquals<double>([&c](double x) { return c.derivative<2>(x); }, c.template derivative<2>(), -10, 10);
 }

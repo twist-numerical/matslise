@@ -10,7 +10,7 @@ using namespace matslise::legendre;
 template<typename Scalar>
 Scalar x2r_impl(const decltype(LiouvilleTransformation<Scalar>::Piece::r2x) &r2x, Scalar x_) {
     Scalar low = 0, high = 1;
-    while (high - low > 1e-8) {
+    while (high - low > 1e-15) {
         Scalar mid = (high + low) / 2;
         Scalar fMid = r2x(mid);
         if (fMid > x_) {
@@ -73,12 +73,13 @@ Scalar pwIntegral(const SimplePiece<Scalar> &piece) {
 
     const Polynomial<Scalar, DEGREE> &r2x = piece.r2x();
 
-    return Legendre<Scalar, DEGREE>{
+    return (Legendre<Scalar, DEGREE>{
             [&p, &w, &r2x](Scalar x) {
                 Scalar r = x2r_impl(r2x, x);
-                return p(r) * w(r);
+                Scalar pw = p(r) * w(r);
+                return std::abs(pw);
             }, 0, r2x(1)
-    }.integrate();
+    }.integrate());
 }
 
 template<typename Scalar>
@@ -88,9 +89,17 @@ Scalar r2xIntegral(const SimplePiece<Scalar> &piece, Scalar shift = 0) {
 
 template<typename Scalar>
 Scalar x2rIntegral(const SimplePiece<Scalar> &piece, Scalar shift = 0) {
-    return (piece.x2r().integral(1) + shift) * (piece.max - piece.min) * (piece.r2x()(1) - piece.r2x()(0));
+    return (piece.x2r().integral(1) * (piece.max - piece.min) + shift) * (piece.r2x()(1) - piece.r2x()(0));
 }
 
+
+template<typename Scalar>
+Scalar relError(const Scalar &exact, const Scalar &estimate) {
+    Scalar err = exact - estimate;
+    if (exact > 1 || exact < -1)
+        err /= exact;
+    return std::abs(err);
+}
 
 template<typename Scalar>
 void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<Scalar> &sp) {
@@ -104,11 +113,11 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
         Scalar wBest = left.w.integrate() + right.w.integrate();
 
         if (
-                std::abs(pBest - sp.p.integrate()) > 1e-13
-                || std::abs(wBest - sp.w.integrate()) > 1e-13
-                || std::abs(r2xIntegral(left) + r2xIntegral(right, left.r2x()(1)) - r2xIntegral(sp)) > 1e-11
-                || std::abs(x2rIntegral(left) + x2rIntegral(right, left.max) - x2rIntegral(sp)) > 1e-8
-                || std::abs(pwIntegral(left) + pwIntegral(right) - pwIntegral(sp)) > 1e-11
+                relError(pBest, sp.p.integrate()) > 1e-15
+                || relError(wBest, sp.w.integrate()) > 1e-15
+                // || relError(r2xIntegral(left) + r2xIntegral(right, left.r2x()(1)), r2xIntegral(sp)) > 1e-14
+                // || relError(x2rIntegral(left) + x2rIntegral(right, left.max - left.min), x2rIntegral(sp)) > 1e-14
+                || relError(pwIntegral(left) + pwIntegral(right), pwIntegral(sp)) > 1e-14
                 ) {
             // subdivide
             constructPiecewise(lt, left);
@@ -123,6 +132,12 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
     Polynomial<Scalar, DEGREE> p = sp.p.asPolynomial();
     Polynomial<Scalar, DEGREE> w = sp.w.asPolynomial();
     Polynomial<Scalar, DEGREE> r2x = sp.r2x();
+    Polynomial<Scalar, DEGREE + 2> pwx = Legendre<Scalar, DEGREE + 3>{
+            [&p, &w, &r2x](Scalar x) {
+                Scalar r = x2r_impl(r2x, x);
+                return p(r) * w(r);
+            }, 0, r2x(1)
+    }.asPolynomial();
     r2x += Polynomial<Scalar, 0>{xMin};
     Scalar xMax = r2x(1);
 
@@ -133,12 +148,7 @@ void constructPiecewise(LiouvilleTransformation<Scalar> &lt, const SimplePiece<S
                     .r2x = r2x,
                     .p = p,
                     .w = w,
-                    .pwx = Legendre<Scalar, DEGREE>{
-                            [&p, &w, &r2x](Scalar x) {
-                                Scalar r = x2r_impl(r2x, x);
-                                return p(r) * w(r);
-                            }, xMin, xMax
-                    }.asPolynomial(),
+                    .pwx =pwx,
             });
 }
 
@@ -178,6 +188,11 @@ Scalar LiouvilleTransformation<Scalar>::x2r(Scalar x) const {
 }
 
 template<typename Scalar>
+inline Scalar square(const Scalar &x) {
+    return x * x;
+}
+
+template<typename Scalar>
 Scalar LiouvilleTransformation<Scalar>::V(Scalar x) const {
     auto piece = std::lower_bound(pieces.begin(), pieces.end(), x,
                                   [](const Piece &piece, const Scalar &x) { return piece.x.max <= x; });
@@ -194,7 +209,17 @@ Scalar LiouvilleTransformation<Scalar>::V(Scalar x) const {
     Scalar pw_dx = piece->pwx.derivative(nx) / h;
     Scalar pw_ddx = piece->pwx.template derivative<2>(nx) / (h * h);
 
-    return q(r) / piece->w(nr) - (3 * pw_dx * pw_dx - 4 * pw * pw_ddx) / (16 * pw * pw);
+    return q(r) / w(r) - 3 * square(pw_dx / (4 * pw)) + pw_ddx / (4 * pw);
+}
+
+template<typename Scalar>
+Scalar LiouvilleTransformation<Scalar>::pwx(Scalar x) const {
+    auto piece = std::lower_bound(pieces.begin(), pieces.end(), x,
+                                  [](const Piece &piece, const Scalar &x) { return piece.x.max <= x; });
+    if (piece == pieces.end()) --piece;
+
+    assert(piece->x.min <= x && x <= piece->x.max);
+    return piece->pwx(piece->normalizeX(x));
 }
 
 #include "./instantiate.h"
