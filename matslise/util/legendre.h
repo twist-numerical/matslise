@@ -1,6 +1,7 @@
 #ifndef SCHRODINGER_LEGENDRE_H
 #define SCHRODINGER_LEGENDRE_H
 
+#include <optional>
 #include "./eigen.h"
 #include "./polynomial.h"
 

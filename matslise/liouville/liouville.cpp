@@ -43,7 +43,7 @@ public:
         const auto &pp = p.asPolynomial();
         const auto &pw = w.asPolynomial();
         auto &r2x = r2x_cache.emplace(Legendre<Scalar, DEGREE>{
-                [&pp, &pw](Scalar r) { return std::sqrt(pw(r) / pp(r)); }, 0, 1
+                [&pp, &pw](Scalar r) { return sqrt(pw(r) / pp(r)); }, 0, 1
         }.asPolynomial().integral());
         r2x *= (max - min);
         return r2x;
@@ -77,7 +77,7 @@ Scalar pwIntegral(const SimplePiece<Scalar> &piece) {
             [&p, &w, &r2x](Scalar x) {
                 Scalar r = x2r_impl(r2x, x);
                 Scalar pw = p(r) * w(r);
-                return std::abs(pw);
+                return abs(pw);
             }, 0, r2x(1)
     }.integrate());
 }
@@ -98,7 +98,7 @@ Scalar relError(const Scalar &exact, const Scalar &estimate) {
     Scalar err = exact - estimate;
     if (exact > 1 || exact < -1)
         err /= exact;
-    return std::abs(err);
+    return abs(err);
 }
 
 template<typename Scalar>
@@ -209,7 +209,7 @@ Scalar LiouvilleTransformation<Scalar>::V(Scalar x) const {
     Scalar pw_dx = piece->pwx.derivative(nx) / h;
     Scalar pw_ddx = piece->pwx.template derivative<2>(nx) / (h * h);
 
-    return q(r) / w(r) - 3 * square(pw_dx / (4 * pw)) + pw_ddx / (4 * pw);
+    return q(r) / piece->w(nr) - 3 * square(pw_dx / (4 * pw)) + pw_ddx / (4 * pw);
 }
 
 template<typename Scalar>
