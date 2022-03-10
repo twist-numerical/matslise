@@ -2,6 +2,7 @@
 #define SCHRODINGER_LEGENDRE_H
 
 #include <optional>
+#include <array>
 #include "./eigen.h"
 #include "./polynomial.h"
 
