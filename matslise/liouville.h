@@ -1,6 +1,7 @@
 #ifndef MATSLISE_LIOUVILLE_H
 #define MATSLISE_LIOUVILLE_H
 
+#include <vector>
 #include "./util/eigen.h"
 #include "./util/rectangle.h"
 #include "./util/polynomial.h"

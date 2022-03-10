@@ -16,13 +16,16 @@ namespace matslise {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-        explicit Polynomial(const Scalar &v = 0) {
+        Polynomial() {
             coefficients = decltype(coefficients)::Zero();
+        }
+
+        explicit Polynomial(const Scalar &v) : Polynomial() {
             coefficients[0] = v;
         }
 
         constexpr Polynomial(std::initializer_list<Scalar> l) {
-            assert(l.size() <= degree+1);
+            assert(l.size() <= degree + 1);
             Eigen::Index i = 0;
             for (const Scalar &s: l)
                 coefficients[i++] = s;
