@@ -1,5 +1,5 @@
-#ifndef SCHRODINGER_LEGENDRE_H
-#define SCHRODINGER_LEGENDRE_H
+#ifndef MATSLISE_LEGENDRE_H
+#define MATSLISE_LEGENDRE_H
 
 #include <optional>
 #include <array>
@@ -93,4 +93,4 @@ namespace matslise::legendre {
 
 #include "./legendre_data.h"
 
-#endif //SCHRODINGER_LEGENDRE_H
+#endif //MATSLISE_LEGENDRE_H
