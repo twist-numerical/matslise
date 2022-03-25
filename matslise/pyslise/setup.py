@@ -41,5 +41,5 @@ setup(
     ext_modules=[CMakeExtension('pyslise')],
     cmdclass=dict(build_ext=CMakeBuild),
     zip_safe=False,
-    install_requires=[] #'numpy']
+    install_requires=['numpy']
 )
