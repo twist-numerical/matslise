@@ -60,11 +60,16 @@ void setXMin(typename LiouvilleTransformation<Scalar>::Piece &piece, Scalar xMin
 }
 
 template<typename Scalar>
-Scalar relError(const Scalar &exact, const Scalar &estimate) {
+inline Scalar relError(const Scalar &exact, const Scalar &estimate) {
     Scalar err = exact - estimate;
     if (exact > 1 || exact < -1)
         err /= exact;
     return abs(err);
+}
+
+template<typename Scalar, typename F, typename Piece=typename LiouvilleTransformation<Scalar>::Piece>
+inline Scalar pieceError(const F &f, const Piece &full, const Piece &left, const Piece &right) {
+    return relError(f(left) + f(right), f(full));
 }
 
 template<typename Scalar>
@@ -88,14 +93,19 @@ constructPiecewise(const LiouvilleTransformation<Scalar> &lt) {
         setXMin(right, left.x.max());
 
         if ((next.x.max() - next.x.min()) < 1e-8 || (
-                true //(next.x.max() - next.x.min()) < 0.1
-                && relError(right.x.max(), next.x.max()) < 1e-14
-                && relError(
-                        (left.r2x.integral(1) + right.r2x.integral(1)) / 2,
-                        next.r2x.integral(1)
-                ) < 1e-14
-                && relError(left.r2x(0.5), next.r2x(0.25)) < 1e-13
-                && relError(right.r2x(0.5), next.r2x(0.75)) < 1e-13
+                relError(right.x.max(), next.x.max()) < 1e-14
+                && pieceError<Scalar>([](const Piece &p) {
+                    return p.r2x.integral(1) * p.r.diameter();
+                }, next, left, right) < 1e-14
+                && pieceError<Scalar>([](const Piece &p) {
+                    return Legendre<Scalar, 12>([&p](Scalar x) { return p.x2r(x); }, 0, 1).integrate() * p.x.diameter();
+                }, next, left, right) < 1e-14
+                && pieceError<Scalar>([](const Piece &p) {
+                    return p.pwx.integral(1) * p.x.diameter();
+                }, next, left, right) < 1e-14
+                && pieceError<Scalar>([](const Piece &p) {
+                    return p.pwx(1) - p.pwx(0);
+                }, next, left, right) < 1e-12
         )) {
             toDo.pop_back();
             pieces.push_back(left);
@@ -147,7 +157,7 @@ Scalar LiouvilleTransformation<Scalar>::r2x(Scalar r) const {
 template<typename Scalar>
 Scalar LiouvilleTransformation<Scalar>::x2r(Scalar x) const {
     const Piece &piece = findPiece(*this, x, &Piece::x);
-    return piece.x2r(piece.normalizeR(x));
+    return piece.x2r(piece.normalizeX(x));
 }
 
 template<typename Scalar>
