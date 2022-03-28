@@ -5,6 +5,7 @@
 #include "./util/eigen.h"
 #include "./util/rectangle.h"
 #include "./util/polynomial.h"
+#include "./matslise.h"
 
 namespace matslise {
     template<typename Scalar>
@@ -21,7 +22,7 @@ namespace matslise {
             Rectangle<Scalar, 1> r;
             Rectangle<Scalar, 1> x;
 
-            Piece(const LiouvilleTransformation<Scalar> &, const Rectangle<Scalar, 1>&);
+            Piece(const LiouvilleTransformation<Scalar> &, const Rectangle<Scalar, 1> &);
 
             Polynomial<Scalar, DEGREE> r2x; // [0,1] -> [xmin, xmax]
             Polynomial<Scalar, DEGREE> p; // [0,1] -> p(r)
@@ -52,6 +53,25 @@ namespace matslise {
 
         Rectangle<Scalar, 1> xDomain() const {
             return {pieces.front().x.min(), pieces.back().x.max()};
+        }
+    };
+
+    template<typename Scalar>
+    class SturmLiouville {
+        using Function = typename LiouvilleTransformation<Scalar>::Function;
+        LiouvilleTransformation<Scalar> transformation;
+        Matslise<Scalar> matslise;
+
+        SturmLiouville(const Rectangle<Scalar, 1> &domain, const Function &p, const Function &q,
+                       const Function &w, const Scalar &tolerance)
+                : transformation(domain, p, q, w),
+                  matslise(transformation.V, transformation.xDomain(), tolerance) {
+        }
+
+        std::vector<std::pair<int, Scalar>>
+        eigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
+                           const matslise::Y<Scalar> &right) const {
+            matslise.eigenvaluesByIndex(Imin, Imax, left, right);
         }
     };
 
