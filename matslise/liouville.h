@@ -11,12 +11,13 @@ namespace matslise {
     template<typename Scalar>
     class LiouvilleTransformation {
     public:
+        using Function = std::function<Scalar(Scalar)>;
+    private:
         static constexpr const int DEGREE = 8;
 
-        typedef std::function<Scalar(Scalar)> Function;
-
-        const Rectangle<Scalar, 1> rDomain;
-        const Function p, q, w;
+        const Rectangle<Scalar, 1> m_rDomain;
+        const Function m_p, m_q, m_w;
+    public:
 
         struct Piece {
             Rectangle<Scalar, 1> r;
@@ -51,8 +52,16 @@ namespace matslise {
 
         Scalar V(Scalar x) const;
 
+        Y<Scalar> z2y(Scalar r, const Y<Scalar> &z) const;
+
+        Y<Scalar> y2z(Scalar x, const Y<Scalar> &y) const;
+
         Rectangle<Scalar, 1> xDomain() const {
             return {pieces.front().x.min(), pieces.back().x.max()};
+        }
+
+        const Rectangle<Scalar, 1> &rDomain() const {
+            return m_rDomain;
         }
     };
 
@@ -61,17 +70,21 @@ namespace matslise {
         using Function = typename LiouvilleTransformation<Scalar>::Function;
         LiouvilleTransformation<Scalar> transformation;
         Matslise<Scalar> matslise;
-
+    public:
         SturmLiouville(const Rectangle<Scalar, 1> &domain, const Function &p, const Function &q,
                        const Function &w, const Scalar &tolerance)
                 : transformation(domain, p, q, w),
-                  matslise(transformation.V, transformation.xDomain(), tolerance) {
+                  matslise([&](Scalar x) { return transformation.V(x); },
+                           transformation.xDomain(), tolerance) {
         }
 
         std::vector<std::pair<int, Scalar>>
         eigenvaluesByIndex(int Imin, int Imax, const matslise::Y<Scalar> &left,
                            const matslise::Y<Scalar> &right) const {
-            matslise.eigenvaluesByIndex(Imin, Imax, left, right);
+            return matslise.eigenvaluesByIndex(
+                    Imin, Imax,
+                    transformation.z2y(transformation.rDomain().min(), left),
+                    transformation.z2y(transformation.rDomain().max(), right));
         }
     };
 

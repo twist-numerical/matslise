@@ -130,7 +130,7 @@ namespace matslise {
         Scalar tolerance;
     public:
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
-                 const Scalar &tolerance = 1e-8) : Matslise(V, {xmin, xmax}, tolerance) {}
+                 const Scalar &tolerance = 1e-8) : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance) {}
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
                  const Scalar &tolerance = 1e-8)
@@ -138,7 +138,7 @@ namespace matslise {
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                  const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
-                : Matslise(V, {xmin, xmax}, tolerance, sectorBuilder) {}
+                : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance, sectorBuilder) {}
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
                  const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
