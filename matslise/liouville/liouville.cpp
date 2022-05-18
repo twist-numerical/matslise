@@ -181,8 +181,9 @@ Scalar LiouvilleTransformation<Scalar>::V(Scalar x) const {
     return m_q(r) / piece.w(nr) - 3 * square(pw_dx / (4 * pw)) + pw_ddx / (4 * pw);
 }
 
+/*
 template<typename Scalar>
-Y<Scalar> LiouvilleTransformation<Scalar>::z2y(Scalar r, const Y<Scalar> &z) const {
+Y<Scalar> LiouvilleTransformation<Scalar>::transformY(const Scalar &r, const Y<Scalar> &z) const {
     Y<Scalar> y = z;
 
     const Piece &piece = findPiece(*this, r, &Piece::r);
@@ -227,6 +228,27 @@ Y<Scalar> LiouvilleTransformation<Scalar>::y2z(Scalar x, const Y<Scalar> &y) con
     z.block(dXdE) *= dx;
 
     return z;
+}
+*/
+
+template<typename Scalar>
+Y<Scalar> LiouvilleTransformation<Scalar>::transformY(const Scalar &r, const Y<Scalar> &yr) const {
+    const Piece &piece = findPiece(*this, r, &Piece::r);
+
+    Scalar nr = piece.normalizeR(r);
+    Scalar x = piece.r2x(nr);
+    Scalar nx = piece.normalizeX(x);
+
+    Scalar dr = 1 / (piece.r2x.derivative(nr) / piece.r.diameter());
+    Scalar f = -0.25 * (piece.pwx.derivative(nx) / piece.pwx(nx) / piece.x.diameter());
+
+    Y<Scalar> yx(yr);
+
+    yx.block(dX) = dr * yr.block(dX) - f * yr.block(None);
+    yx.block(dXdE) = dr * yr.block(dXdE) - f * yr.block(dE);
+
+    std::cerr << yx.y() << std::endl;
+    return yx;
 }
 
 #include "./instantiate.h"

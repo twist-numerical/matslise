@@ -52,9 +52,8 @@ namespace matslise {
 
         Scalar V(Scalar x) const;
 
-        Y<Scalar> z2y(Scalar r, const Y<Scalar> &z) const;
-
-        Y<Scalar> y2z(Scalar x, const Y<Scalar> &y) const;
+        // This does not preserve scaling
+        Y<Scalar> transformY(const Scalar &r, const Y<Scalar> &yr) const;
 
         Rectangle<Scalar, 1> xDomain() const {
             return {pieces.front().x.min(), pieces.back().x.max()};
@@ -71,10 +70,10 @@ namespace matslise {
         LiouvilleTransformation<Scalar> transformation;
         Matslise<Scalar> matslise;
     public:
-        SturmLiouville(const Rectangle<Scalar, 1> &domain, const Function &p, const Function &q,
-                       const Function &w, const Scalar &tolerance)
+        SturmLiouville(const Function &p, const Function &q, const Function &w,
+                       const Rectangle<Scalar, 1> &domain, const Scalar &tolerance)
                 : transformation(domain, p, q, w),
-                  matslise([&](Scalar x) { return transformation.V(x); },
+                  matslise(std::bind(&LiouvilleTransformation<Scalar>::V, transformation, std::placeholders::_1),
                            transformation.xDomain(), tolerance) {
         }
 
@@ -83,8 +82,8 @@ namespace matslise {
                            const matslise::Y<Scalar> &right) const {
             return matslise.eigenvaluesByIndex(
                     Imin, Imax,
-                    transformation.z2y(transformation.rDomain().min(), left),
-                    transformation.z2y(transformation.rDomain().max(), right));
+                    transformation.transformY(transformation.rDomain().min(), left),
+                    transformation.transformY(transformation.rDomain().max(), right));
         }
     };
 

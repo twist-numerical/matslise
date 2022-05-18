@@ -63,6 +63,7 @@ else ()
             util/legendre.cpp util/rectangle.cpp util/heap.cpp util/calculateEta.cpp util/polynomial.cpp
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp matslise/periodic.cpp
+            matslise/sturm_liouville.cpp
             liouville/liouville.cpp liouville/klotter.cpp)
 
     if (MATSLISE_MATSCS)

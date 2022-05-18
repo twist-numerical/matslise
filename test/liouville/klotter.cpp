@@ -46,10 +46,10 @@ TEST_CASE("Klotter as Sturm-Liouville problem", "[liouville]") {
     double b = 8;
 
     SturmLiouville<double> sl{
-            {a, b},
             [](double) { return 1; },
             [](double x) { return 3 / (4 * x * x); },
             [](double x) { return square(8 * constants<double>::PI / (3 * x * x * x)); },
+            {a, b},
             1e-8
     };
 
