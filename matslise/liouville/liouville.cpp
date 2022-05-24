@@ -1,8 +1,6 @@
-#include <iostream>
 #include <vector>
 #include "../liouville.h"
 #include "../util/legendre.h"
-#include "../util/horner.h"
 
 using namespace matslise;
 using namespace matslise::legendre;
@@ -181,10 +179,9 @@ Scalar LiouvilleTransformation<Scalar>::V(Scalar x) const {
     return m_q(r) / piece.w(nr) - 3 * square(pw_dx / (4 * pw)) + pw_ddx / (4 * pw);
 }
 
-/*
 template<typename Scalar>
-Y<Scalar> LiouvilleTransformation<Scalar>::transformY(const Scalar &r, const Y<Scalar> &z) const {
-    Y<Scalar> y = z;
+Y<Scalar> LiouvilleTransformation<Scalar>::z2y(const Scalar &r, const Y<Scalar> &z) const {
+    Y<Scalar> y(z);
 
     const Piece &piece = findPiece(*this, r, &Piece::r);
     Scalar nr = piece.normalizeR(r);
@@ -193,62 +190,45 @@ Y<Scalar> LiouvilleTransformation<Scalar>::transformY(const Scalar &r, const Y<S
     Scalar h = piece.r.diameter();
     Scalar dp = piece.p.derivative(nr) / h;
     Scalar dw = piece.w.derivative(nr) / h;
-    Scalar dx_inv = sqrt(p / w);
-    Scalar sigma_inv = sqrt(dx_inv * w);
-    Scalar scaleYdx = Scalar(0.25) * (dp / p + dw / w) * dx_inv / sigma_inv;
+    Scalar xdr = sqrt(w / p);
+    Scalar sigma = 1 / sqrt(p * xdr);
+    Scalar dsigma = Scalar(-0.25) * sigma * (dp / p + dw / w);
 
-    y.block(None) *= sigma_inv;
-    y.block(dE) *= sigma_inv;
+    y.block(None) *= 1 / sigma;
+    y.block(dE) *= 1 / sigma;
 
-    y.block(dX) *= dx_inv;
-    y.block(dXdE) *= dx_inv;
-    y.block(dX) -= scaleYdx * y.block(None);
-    y.block(dXdE) -= scaleYdx * y.block(dE);
+    y.block(dX) -= dsigma * y.block(None);
+    y.block(dXdE) -= dsigma * y.block(dE);
+    y.block(dX) *= 1 / (sigma * xdr);
+    y.block(dXdE) *= 1 / (sigma * xdr);
 
     return y;
 }
 
 template<typename Scalar>
-Y<Scalar> LiouvilleTransformation<Scalar>::y2z(Scalar x, const Y<Scalar> &y) const {
-    Y<Scalar> z = y;
+Y<Scalar> LiouvilleTransformation<Scalar>::y2z(const Scalar &x, const Y<Scalar> &y) const {
+    Y<Scalar> z(y);
 
     const Piece &piece = findPiece(*this, x, &Piece::x);
-    Scalar nx = piece.normalizeX(x);
-    Scalar pw = piece.pwx(nx);
-    Scalar dpw = piece.pwx.derivative(nx) / piece.x.diameter();
-    Scalar sigma = 1 / sqrt(sqrt(pw));
-    Scalar sigma_dx = Scalar(-0.25) * dpw * sigma / pw;
-    Scalar dx = sqrt(pw / piece.p(piece.normalizeR(piece.x2r(nx))));
+    Scalar nr = piece.normalizeR(piece.x2r(piece.normalizeX(x)));
+    Scalar p = piece.p(nr);
+    Scalar w = piece.w(nr);
+    Scalar h = piece.r.diameter();
+    Scalar dp = piece.p.derivative(nr) / h;
+    Scalar dw = piece.w.derivative(nr) / h;
+    Scalar xdr = sqrt(w / p);
+    Scalar sigma = 1 / sqrt(p * xdr);
+    Scalar dsigma = Scalar(-0.25) * sigma * (dp / p + dw / w);
 
-    z *= sigma;
+    z.block(None) *= sigma;
+    z.block(dE) *= sigma;
 
-    z.block(dX) += sigma_dx * y.block(None);
-    z.block(dXdE) += sigma_dx * y.block(dE);
-    z.block(dX) *= dx;
-    z.block(dXdE) *= dx;
+    z.block(dX) *= dsigma;
+    z.block(dXdE) *= dsigma;
+    z.block(dX) += sigma * xdr * y.block(None);
+    z.block(dXdE) += sigma * xdr * y.block(dE);
 
     return z;
-}
-*/
-
-template<typename Scalar>
-Y<Scalar> LiouvilleTransformation<Scalar>::transformY(const Scalar &r, const Y<Scalar> &yr) const {
-    const Piece &piece = findPiece(*this, r, &Piece::r);
-
-    Scalar nr = piece.normalizeR(r);
-    Scalar x = piece.r2x(nr);
-    Scalar nx = piece.normalizeX(x);
-
-    Scalar dr = 1 / (piece.r2x.derivative(nr) / piece.r.diameter());
-    Scalar f = -0.25 * (piece.pwx.derivative(nx) / piece.pwx(nx) / piece.x.diameter());
-
-    Y<Scalar> yx(yr);
-
-    yx.block(dX) = dr * yr.block(dX) - f * yr.block(None);
-    yx.block(dXdE) = dr * yr.block(dXdE) - f * yr.block(dE);
-
-    std::cerr << yx.y() << std::endl;
-    return yx;
 }
 
 #include "./instantiate.h"

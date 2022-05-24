@@ -4,28 +4,6 @@
 #include "module.h"
 
 template<typename Scalar>
-class PeriodicEigenfunctionWrapper : public PeriodicMatslise<Scalar>::Eigenfunction {
-public:
-    std::shared_ptr<PeriodicMatslise<Scalar>> periodic;
-    std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction> eigenfunction;
-
-    PeriodicEigenfunctionWrapper(
-            std::shared_ptr<PeriodicMatslise<Scalar>> parent,
-            std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction> eigenfunction) :
-            periodic(std::move(parent)), eigenfunction(std::move(eigenfunction)) {
-    }
-
-    virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
-        return (*eigenfunction)(x);
-    };
-
-    virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
-    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
-        return (*eigenfunction)(x);
-    }
-};
-
-template<typename Scalar>
 pair<Scalar, Scalar> calculatePeriodicMatchingError(const Y<Scalar, 1, 2> &yError) {
     auto err = yError.y();
     auto dErr = yError.ydE();
@@ -270,12 +248,13 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                      vector<tuple<int, double, vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>>>> result;
                      auto pairs = m->eigenpairsByIndex(iMin, iMax);
                      result.reserve(pairs.size());
-                     for (auto &eigenpair : pairs) {
+                     for (auto &eigenpair: pairs) {
                          vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> eigenfunctions;
                          eigenfunctions.reserve(get<2>(eigenpair).size());
-                         for (auto &f : get<2>(eigenpair))
-                             eigenfunctions.emplace_back(std::make_unique<PeriodicEigenfunctionWrapper<double>>(
-                                     m, std::move(f)));
+                         for (auto &f: get<2>(eigenpair))
+                             eigenfunctions.emplace_back(
+                                     std::make_unique<EigenfunctionWrapper<double, PeriodicMatslise<double>>>(
+                                             m, std::move(f)));
                          result.emplace_back(get<0>(eigenpair), get<1>(eigenpair), std::move(eigenfunctions));
                      }
                      return result;
@@ -288,36 +267,12 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                          -> vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> {
                      vector<std::unique_ptr<PeriodicMatslise<>::Eigenfunction>> fs;
                      fs.reserve(2);
-                     for (auto &f : m->eigenfunction(E))
-                         fs.emplace_back(std::make_unique<PeriodicEigenfunctionWrapper<double>>(m, std::move(f)));
+                     for (auto &f: m->eigenfunction(E))
+                         fs.emplace_back(std::make_unique<EigenfunctionWrapper<double, PeriodicMatslise<double>>>
+                                                 (m, std::move(f)));
                      return fs;
                  }, "",
                  py::arg("E"));
-
-    py::class_<LiouvilleTransformation<double>>(m, "LiouvilleTransformation")
-            .def(py::init([](const function<double(double)> &p, const function<double(double)> &q,
-                             const function<double(double)> &w, double min, double max) {
-                return LiouvilleTransformation<double>({min, max}, p, q, w);
-            }), R""""(\
-)"""", py::arg("p"), py::arg("q"), py::arg("w"), py::arg("min"), py::arg("max"))
-            .def("V", &LiouvilleTransformation<double>::V, py::arg("x"))
-            .def("r2x", &LiouvilleTransformation<double>::r2x, py::arg("r"))
-            .def("x2r", &LiouvilleTransformation<double>::x2r, py::arg("x"))
-            .def_property_readonly("rDomain", [](const LiouvilleTransformation<double> &lt) {
-                return std::pair{lt.rDomain().min(), lt.rDomain().max()};
-            })
-            .def_property_readonly("xDomain", [](const LiouvilleTransformation<double> &lt) {
-                auto domain = lt.xDomain();
-                return std::pair{domain.min(), domain.max()};
-            })
-            .def_property_readonly("pieces", [](const LiouvilleTransformation<double> &lt) {
-                std::vector<std::pair<double, double>> r;
-                r.reserve(lt.pieces.size());
-                std::transform(lt.pieces.begin(), lt.pieces.end(), std::back_inserter(r), [](auto p) {
-                    return std::pair{p.r.min(), p.r.max()};
-                });
-                return r;
-            });
 
 
     py::class_<Matslise<>::Sector>(m, "PysliseSector")

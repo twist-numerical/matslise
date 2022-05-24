@@ -26,11 +26,12 @@ endif ()
 
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
-        matslise/matslise_formulas.cpp matslise/sector.cpp util/calculateEta.cpp liouville/liouville.cpp)
+        matslise/matslise_formulas.cpp matslise/sector.cpp util/calculateEta.cpp liouville/liouville.cpp
+        liouville/sturm_liouville.cpp)
 
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
-set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp)
+set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp pyslise/sturm_liouville.cpp)
 
 set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
 
@@ -154,7 +155,7 @@ else ()
             add_custom_target(pyslise_install
                     # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
                     COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed .
+                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --force-reinstall --no-deps .
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
             add_dependencies(pyslise_install pyslise)
         else ()

@@ -75,7 +75,10 @@ TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liou
 
     Y<> dirichlet = Y<>::Dirichlet();
     Y<> right;
-    right.y() << 1, -10;
+    right.y() << 2, -10;
+    // a z + b p z' = 0, a = 10, b = 1
+    // z_r = b p = 2
+    // z_r' = -a = -10
 
     std::vector<double> exact
             {{

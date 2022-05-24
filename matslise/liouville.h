@@ -52,8 +52,9 @@ namespace matslise {
 
         Scalar V(Scalar x) const;
 
-        // This does not preserve scaling
-        Y<Scalar> transformY(const Scalar &r, const Y<Scalar> &yr) const;
+        Y<Scalar> z2y(const Scalar &r, const Y<Scalar> &z) const;
+
+        Y<Scalar> y2z(const Scalar &x, const Y<Scalar> &y) const;
 
         Rectangle<Scalar, 1> xDomain() const {
             return {pieces.front().x.min(), pieces.back().x.max()};
@@ -69,7 +70,10 @@ namespace matslise {
         using Function = typename LiouvilleTransformation<Scalar>::Function;
         LiouvilleTransformation<Scalar> transformation;
         Matslise<Scalar> matslise;
+
     public:
+        typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
+
         SturmLiouville(const Function &p, const Function &q, const Function &w,
                        const Rectangle<Scalar, 1> &domain, const Scalar &tolerance)
                 : transformation(domain, p, q, w),
@@ -82,9 +86,13 @@ namespace matslise {
                            const matslise::Y<Scalar> &right) const {
             return matslise.eigenvaluesByIndex(
                     Imin, Imax,
-                    transformation.transformY(transformation.rDomain().min(), left),
-                    transformation.transformY(transformation.rDomain().max(), right));
+                    transformation.z2y(transformation.rDomain().min(), left),
+                    transformation.z2y(transformation.rDomain().max(), right));
         }
+
+        std::vector<std::tuple<int, Scalar, std::unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction>>>
+        eigenpairsByIndex(int Imin, int Imax,
+                          const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const;
     };
 
 }
