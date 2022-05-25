@@ -19,21 +19,27 @@ public:
             : transformation(transformation_), mEigenfunction(std::move(mEigenfunction_)) {
     }
 
-    Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
+    Eigen::Array<Scalar, 2, 1> operator()(const Scalar &r) const override {
         Y<Scalar> y;
+        Scalar x = transformation->r2x(r);
         y.y() = (*mEigenfunction)(x);
         return transformation->y2z(x, y).y();
     };
 
     Eigen::Array<Scalar, Eigen::Dynamic, 2>
-    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
-        auto r = (*mEigenfunction)(x);
+    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &r) const override {
+        Eigen::Array<Scalar, Eigen::Dynamic, 1> x = r.unaryExpr(
+                [&](const Scalar &r_) {
+                    return transformation->r2x(r_);
+                });
+
+        auto z = (*mEigenfunction)(x);
         Y<Scalar> y;
         for (Eigen::Index i = 0; i < r.rows(); ++i) {
-            y.y() = r.row(i);
-            r.row(i) = transformation->y2z(x(i), y).y();
+            y.y() = z.row(i);
+            z.row(i) = transformation->y2z(x(i), y).y();
         }
-        return r;
+        return z;
     };
 };
 
