@@ -1,12 +1,25 @@
-declare class AbstractMatslise {
-    delete(): void;
+type Eigenfunction = {
+    (x: number): [number, number];
 
+    (x: number[]): [number, number][];
+
+    delete(): void;
+};
+
+declare class AbstractMatslise {
     eigenvaluesByIndex(
         imin: number,
         imax: number,
         left: [number, number],
         right: [number, number]
-    ): { first: number; second: number }[];
+    ): { index: number; eigenvalue: number }[];
+
+    eigenpairsByIndex(
+        imin: number,
+        imax: number,
+        left: [number, number],
+        right: [number, number]
+    ): { index: number; eigenvalue: number; eigenfunction: Eigenfunction }[];
 
     eigenvalueError(
         E: number,
@@ -41,21 +54,6 @@ declare class MatsliseHalf extends AbstractMatslise {
         xmax: number,
         tolerance: number
     );
-}
-
-declare class AbstractMatslise2D {
-
-    eigenvalue(E: number): [number, number];
-
-    eigenvalues(emin: number, emax: number): { index: number, value: number, multiplicity: number }[];
-
-    eigenvaluesByIndex(imin: number, imax: number): { index: number, value: number, multiplicity: number }[];
-
-    eigenvalueError(E: number): number;
-
-    computeEigenfunction(E: number, x: number[], y: number[]): number[][][];
-
-    delete(): void;
 }
 
 declare interface matslise {

@@ -14,9 +14,14 @@ EMSCRIPTEN_BINDINGS(module) {
             .element(emscripten::index<0>())
             .element(emscripten::index<1>());
 
-    value_object<pair<int, double>>("PairIntDouble")
-            .field("first", &pair<int, double>::first)
-            .field("second", &pair<int, double>::second);
+    value_object<Eigenvalue>("Eigenvalue")
+            .field("index", &Eigenvalue::index)
+            .field("eigenvalue", &Eigenvalue::eigenvalue);
+
+    value_object<Eigenpair>("Eigenpair")
+            .field("index", &Eigenpair::index)
+            .field("eigenvalue", &Eigenpair::eigenvalue)
+            .field("eigenfunction", &Eigenpair::eigenfunction);
 
     value_object<pair<double, double>>("PairDoubleDouble")
             .field("first", &pair<double, double>::first)
