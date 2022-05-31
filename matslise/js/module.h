@@ -24,6 +24,16 @@ struct Eigenpair : public Eigenvalue {
             : Eigenvalue(index_, eigenvalue_), eigenfunction(eigenfunction_) {}
 };
 
+template<typename F>
+val wrapEigenfunction(F f) {
+    static val wrapper = val::global("Function").new_(std::string("calculator"), std::string(
+            "var f = function(x) { return calculator.eval(x); };"
+            "f.delete = function() { calculator.delete(); };"
+            "return f;")
+    );
+    return wrapper(std::move(f));
+}
+
 template<typename It, typename F>
 inline val toValArray(It begin, It end, F f = [](auto x) { return x; }) {
     val result{val::array()};
@@ -34,6 +44,21 @@ inline val toValArray(It begin, It end, F f = [](auto x) { return x; }) {
 
     return result;
 }
+
+template<typename Signature>
+class val2function;
+
+template<typename R, typename ... Args>
+class val2function<R(Args...)> {
+    val f;
+
+public:
+    val2function(val f_) : f(f_) {}
+
+    R operator()(Args... args) {
+        return f(val(args)...).template as<R>();
+    }
+};
 
 inline Eigen::ArrayXd val2ArrayXd(const val &a) {
     int n = a[std::string("length")].as<int>();

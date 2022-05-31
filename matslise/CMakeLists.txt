@@ -44,7 +44,7 @@ if (MATSLISE_MATSCS)
 endif ()
 
 if (DEFINED EMSCRIPTEN)
-    add_executable(matslise js/module.cpp js/matslise.cpp ${MATSLISE_FULL_SRC})
+    add_executable(matslise js/module.cpp js/matslise.cpp js/sturm_liouville.cpp ${MATSLISE_FULL_SRC})
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 

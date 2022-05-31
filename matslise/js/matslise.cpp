@@ -5,21 +5,11 @@ using namespace emscripten;
 using namespace std;
 using namespace Eigen;
 
-template<typename F>
-val wrapEigenfunction(F f) {
-    static val wrapper = val::global("Function").new_(string("calculator"), string(
-            "var f = function(x) { return calculator.eval(x); };"
-            "f.delete = function() { calculator.delete(); };"
-            "return f;")
-    );
-    return wrapper(std::move(f));
-}
-
 void bind_matslise() {
 
-    class_<Matslise<double>::Eigenfunction>("Eigenfunction")
+    class_<AbstractMatslise<double>::Eigenfunction>("Eigenfunction")
             .function("eval",
-                      optional_override([](const Matslise<double>::Eigenfunction &self, val x) -> val {
+                      optional_override([](const AbstractMatslise<double>::Eigenfunction &self, val x) -> val {
                           if (val::global("Array").call<bool>("isArray", x)) {
                               return ArrayX2d2val(self(val2ArrayXd(x)));
                           } else {
@@ -63,8 +53,7 @@ void bind_matslise() {
     class_<Matslise<>, base<AbstractMatslise<double>>>("Matslise")
             .constructor(optional_override(
                     [](val f, double min, double max, double tolerance) -> Matslise<> * {
-                        return new Matslise<>([f](double x) -> double { return f(x).as<double>(); },
-                                              min, max, tolerance);
+                        return new Matslise<>(val2function<double(double)>(f), min, max, tolerance);
                     }))
             .function("propagate", optional_override(
                     [](const Matslise<> &m, double E, const Vector2d &y, double a, double b) ->
@@ -88,8 +77,7 @@ void bind_matslise() {
     class_<MatsliseHalf<>, base<AbstractMatslise<double>>>("MatsliseHalf")
             .constructor(optional_override(
                     [](val f, double max, double tolerance) -> MatsliseHalf<> * {
-                        return new MatsliseHalf<>([f](double x) -> double { return f(x).as<double>(); }, max,
-                                                  tolerance);
+                        return new MatsliseHalf<>(val2function<double(double)>(f), max, tolerance);
                     }))
             .function("sectorPoints", optional_override(
                     [](const MatsliseHalf<> &m) -> val {
