@@ -56,9 +56,38 @@ declare class MatsliseHalf extends AbstractMatslise {
     );
 }
 
+declare class SturmLiouville {
+    constructor(
+        p: (x: number) => number,
+        q: (x: number) => number,
+        r: (x: number) => number,
+        xmin: number,
+        xmax: number,
+        tolerance: number
+    );
+
+    eigenvaluesByIndex(
+        imin: number,
+        imax: number,
+        left: [number, number],
+        right: [number, number]
+    ): { index: number; eigenvalue: number }[];
+
+    eigenpairsByIndex(
+        imin: number,
+        imax: number,
+        left: [number, number],
+        right: [number, number]
+    ): { index: number; eigenvalue: number; eigenfunction: Eigenfunction }[];
+
+    delete(): void;
+}
+
+
 declare interface matslise {
     Matslise: typeof Matslise;
     MatsliseHalf: typeof MatsliseHalf;
+    SturmLiouville: typeof SturmLiouville;
 }
 
 export default class MatsliseModule {

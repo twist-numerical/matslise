@@ -7,7 +7,7 @@ using namespace std;
 using namespace Eigen;
 
 void bind_sturm_lioville() {
-    
+
     class_<SturmLiouville<double>>("SturmLiouville")
             .constructor(optional_override(
                     [](val p, val q, val r, double min, double max, double tolerance) -> SturmLiouville<double> * {
