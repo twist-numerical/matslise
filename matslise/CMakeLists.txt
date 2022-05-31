@@ -153,9 +153,8 @@ else ()
             add_dependencies(build_wheel pyslise)
 
             add_custom_target(pyslise_install
-                    # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
                     COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --force-reinstall --no-deps .
+                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --force-reinstall .
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
             add_dependencies(pyslise_install pyslise)
         else ()
