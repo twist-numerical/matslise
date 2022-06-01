@@ -157,6 +157,11 @@ else ()
                     ${PYTHON_EXECUTABLE} -m pip install --upgrade --force-reinstall .
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
             add_dependencies(pyslise_install pyslise)
+
+            add_custom_target(pyslise_install_test
+                    COMMAND ${PYTHON_EXECUTABLE} test/pyslise/test_docs.py
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+            add_dependencies(pyslise_install_test pyslise_install)
         else ()
             message("To enable python bindings, make sure pybind11 is available in /cmake/pybind11. Or disable the python bindings with -DMATSLISE_PYTHON=OFF")
         endif ()
