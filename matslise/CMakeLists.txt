@@ -26,11 +26,12 @@ endif ()
 
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
-        matslise/sector.cpp util/calculateEta.cpp)
+        matslise/matslise_formulas.cpp matslise/sector.cpp util/calculateEta.cpp liouville/liouville.cpp
+        liouville/sturm_liouville.cpp)
 
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
-set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp)
+set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp pyslise/sturm_liouville.cpp)
 
 set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
 
@@ -43,7 +44,7 @@ if (MATSLISE_MATSCS)
 endif ()
 
 if (DEFINED EMSCRIPTEN)
-    add_executable(matslise js/module.cpp js/matslise.cpp ${MATSLISE_FULL_SRC})
+    add_executable(matslise js/module.cpp js/matslise.cpp js/sturm_liouville.cpp ${MATSLISE_FULL_SRC})
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
@@ -152,11 +153,15 @@ else ()
             add_dependencies(build_wheel pyslise)
 
             add_custom_target(pyslise_install
-                    # COMMAND ${PYTHON_EXECUTABLE} -m pip uninstall -y --verbose pyslise
                     COMMAND ${CMAKE_COMMAND} -E env PYSLISE_LIBRARY="$<TARGET_FILE:pyslise>"
-                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --ignore-installed .
+                    ${PYTHON_EXECUTABLE} -m pip install --upgrade --force-reinstall .
                     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
             add_dependencies(pyslise_install pyslise)
+
+            add_custom_target(pyslise_install_test
+                    COMMAND ${PYTHON_EXECUTABLE} test/pyslise/test_docs.py
+                    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+            add_dependencies(pyslise_install_test pyslise_install)
         else ()
             message("To enable python bindings, make sure pybind11 is available in /cmake/pybind11. Or disable the python bindings with -DMATSLISE_PYTHON=OFF")
         endif ()

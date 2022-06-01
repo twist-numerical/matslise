@@ -14,7 +14,8 @@ using namespace Eigen;
 
 template<typename Scalar>
 Matscs<Scalar>::Sector::Sector(const Matscs *s, const Scalar &min, const Scalar &max, Direction direction)
-        : Sector(legendre::getCoefficients<MATSCS_N>(s->V, min, max), min, max, direction) {
+        : Sector(legendre::getCoefficients<MATSCS_N, Scalar, Matscs<Scalar>::MatrixXs>(s->V, min, max),
+                 min, max, direction) {
 }
 
 template<typename Scalar>

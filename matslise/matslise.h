@@ -110,10 +110,10 @@ namespace matslise {
         virtual ~AbstractMatslise() = default;
     };
 
-    template<typename _Scalar=double>
-    class Matslise : public AbstractMatslise<_Scalar> {
+    template<typename Scalar_=double>
+    class Matslise : public AbstractMatslise<Scalar_> {
     public:
-        typedef _Scalar Scalar;
+        typedef Scalar_ Scalar;
         static constexpr int order = MATSLISE_HMAX_delta - 1;
         static constexpr bool refineSectors = false;
 
@@ -130,19 +130,26 @@ namespace matslise {
         Scalar tolerance;
     public:
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
+                 const Scalar &tolerance = 1e-8) : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance) {}
+
+        Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
                  const Scalar &tolerance = 1e-8)
-                : Matslise(V, xmin, xmax, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {
-        }
+                : Matslise(V, domain, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {}
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                  const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
-                : AbstractMatslise<Scalar>(V, {xmin, xmax}), tolerance(tolerance) {
+                : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance, sectorBuilder) {}
+
+        Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
+                 const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
+                : AbstractMatslise<Scalar>(V, domain),
+                  sectorCount(0), matchIndex(0), sectors(), tolerance(tolerance) {
             auto buildSectors = sectorBuilder(this, domain.min(), domain.max());
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();
             Scalar &v0Match = sectors[matchIndex]->vs[0];
-            for (auto &s : sectors)
+            for (auto &s: sectors)
                 s->v0Match = v0Match;
         }
 
@@ -234,9 +241,9 @@ namespace matslise {
         };
     };
 
-    template<typename _Scalar = double>
-    class MatsliseHalf : public AbstractMatslise<_Scalar> {
-        typedef _Scalar Scalar;
+    template<typename Scalar_ = double>
+    class MatsliseHalf : public AbstractMatslise<Scalar_> {
+        typedef Scalar_ Scalar;
         typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
 
     public:

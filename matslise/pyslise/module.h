@@ -17,7 +17,7 @@ using namespace Eigen;
 using namespace std;
 using namespace matslise;
 
-template<int cols=1>
+template<int cols = 1>
 inline Y<double, 1, cols> make_y(const Matrix<double, 2, cols> &value) {
     return Y<double, 1, cols>(value, Matrix<double, 2, cols>::Zero());
 }
@@ -47,5 +47,27 @@ inline pair<pair<MatrixXd, MatrixXd>, pair<MatrixXd, MatrixXd>> unpackY(const Y<
 inline pair<pair<double, double>, pair<double, double>> unpackY(const Y<> &y) {
     return make_pair(make_pair(y.y()[0], y.y()[1]), make_pair(y.ydE()[0], y.ydE()[1]));
 }
+
+template<typename Scalar, typename Nurse>
+class EigenfunctionWrapper : public AbstractMatslise<Scalar>::Eigenfunction {
+public:
+    std::shared_ptr<Nurse> nurse;
+    std::unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction> function;
+
+    EigenfunctionWrapper(
+            std::shared_ptr<Nurse> nurse_,
+            std::unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction> function_) :
+            nurse(std::move(nurse_)), function(std::move(function_)) {
+    }
+
+    virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
+        return (*function)(x);
+    };
+
+    virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
+    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
+        return (*function)(x);
+    }
+};
 
 #endif

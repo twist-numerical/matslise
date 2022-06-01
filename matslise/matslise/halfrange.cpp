@@ -14,7 +14,7 @@ MatsliseHalf<Scalar>::MatsliseHalf(
         function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance,
         SectorBuilder<Matslise<Scalar>> sectorBuilder
 ): AbstractMatslise<Scalar>(V, {-xmax, xmax}) {
-    ms.reset(new Matslise<Scalar>(V, 0, xmax, tolerance, sectorBuilder));
+    ms.reset(new Matslise<Scalar>(V, {Scalar(0), xmax}, tolerance, sectorBuilder));
 }
 
 template<typename Scalar>

@@ -1,29 +1,7 @@
 #include <utility>
 
-
+#include "../liouville.h"
 #include "module.h"
-
-template<typename Scalar>
-class PeriodicEigenfunctionWrapper : public PeriodicMatslise<Scalar>::Eigenfunction {
-public:
-    std::shared_ptr<PeriodicMatslise<Scalar>> periodic;
-    std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction> eigenfunction;
-
-    PeriodicEigenfunctionWrapper(
-            std::shared_ptr<PeriodicMatslise<Scalar>> parent,
-            std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction> eigenfunction) :
-            periodic(std::move(parent)), eigenfunction(std::move(eigenfunction)) {
-    }
-
-    virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
-        return (*eigenfunction)(x);
-    };
-
-    virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
-    operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
-        return (*eigenfunction)(x);
-    }
-};
 
 template<typename Scalar>
 pair<Scalar, Scalar> calculatePeriodicMatchingError(const Y<Scalar, 1, 2> &yError) {
@@ -270,12 +248,13 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                      vector<tuple<int, double, vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>>>> result;
                      auto pairs = m->eigenpairsByIndex(iMin, iMax);
                      result.reserve(pairs.size());
-                     for (auto &eigenpair : pairs) {
+                     for (auto &eigenpair: pairs) {
                          vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> eigenfunctions;
                          eigenfunctions.reserve(get<2>(eigenpair).size());
-                         for (auto &f : get<2>(eigenpair))
-                             eigenfunctions.emplace_back(std::make_unique<PeriodicEigenfunctionWrapper<double>>(
-                                     m, std::move(f)));
+                         for (auto &f: get<2>(eigenpair))
+                             eigenfunctions.emplace_back(
+                                     std::make_unique<EigenfunctionWrapper<double, PeriodicMatslise<double>>>(
+                                             m, std::move(f)));
                          result.emplace_back(get<0>(eigenpair), get<1>(eigenpair), std::move(eigenfunctions));
                      }
                      return result;
@@ -288,11 +267,13 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                          -> vector<unique_ptr<AbstractMatslise<double>::Eigenfunction>> {
                      vector<std::unique_ptr<PeriodicMatslise<>::Eigenfunction>> fs;
                      fs.reserve(2);
-                     for (auto &f : m->eigenfunction(E))
-                         fs.emplace_back(std::make_unique<PeriodicEigenfunctionWrapper<double>>(m, std::move(f)));
+                     for (auto &f: m->eigenfunction(E))
+                         fs.emplace_back(std::make_unique<EigenfunctionWrapper<double, PeriodicMatslise<double>>>
+                                                 (m, std::move(f)));
                      return fs;
                  }, "",
                  py::arg("E"));
+
 
     py::class_<Matslise<>::Sector>(m, "PysliseSector")
             .def_readonly("min", &Matslise<>::Sector::min)
