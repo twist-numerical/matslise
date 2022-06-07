@@ -93,6 +93,15 @@ namespace matslise {
         std::vector<std::tuple<int, Scalar, std::unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction>>>
         eigenpairsByIndex(int Imin, int Imax,
                           const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const;
+
+        Scalar eigenvalueError(const Scalar &E, const matslise::Y<Scalar> &left,
+                               const matslise::Y<Scalar> &right, int index = -1) const {
+            return matslise.eigenvalueError(
+                    E,
+                    transformation.z2y(transformation.rDomain().min(), left),
+                    transformation.z2y(transformation.rDomain().max(), right),
+                    index);
+        }
     };
 
 }
