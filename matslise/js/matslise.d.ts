@@ -80,6 +80,13 @@ declare class SturmLiouville {
         right: [number, number]
     ): { index: number; eigenvalue: number; eigenfunction: Eigenfunction }[];
 
+    eigenvalueError(
+        E: number,
+        left: [number, number],
+        right: [number, number],
+        index?: number
+    ): number;
+
     delete(): void;
 }
 

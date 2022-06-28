@@ -16,6 +16,7 @@ const approx = require('./approx');
         for (let i = 0; i < n; ++i) {
             t.is(i, eigenvalues[i].index);
             approx(t, (i + 1) * (i + 1), eigenvalues[i].eigenvalue);
+            t.true(slp.eigenvalueError(eigenvalues[i].eigenvalue, [0, 1], [0, 1], i) < 1e-4);
         }
 
         slp.delete();

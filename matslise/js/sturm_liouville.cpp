@@ -21,6 +21,11 @@ void bind_sturm_lioville() {
                         auto es = m.eigenvaluesByIndex(Imin, Imax, Y<>(left, {0, 0}), Y<>(right, {0, 0}));
                         return toValArray(es.begin(), es.end(), [](auto t) { return Eigenvalue(t.first, t.second); });
                     }))
+            .function("eigenvalueError", optional_override(
+                    [](const SturmLiouville<double> &m, double E, const Vector2d &left, const Vector2d &right,
+                       int index = -1) -> double {
+                        return m.eigenvalueError(E, Y<>(left, {0, 0}), Y<>(right, {0, 0}), index);
+                    }))
             .function("eigenpairsByIndex", optional_override(
                     [](const SturmLiouville<double> &m, int Imin, int Imax, const Vector2d &left,
                        const Vector2d &right) -> val {
