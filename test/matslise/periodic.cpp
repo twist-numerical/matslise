@@ -56,6 +56,26 @@ TEST_CASE("Periodic Andrews asymmetric", "[matslise][periodic]") {
     }
 }
 
+TEST_CASE("Periodic Andrews very large eigenvalues", "[matslise][periodic]") {
+    PeriodicMatslise<> matslise([](double x) { return x * x * (M_PI - x); }, 0, M_PI, 1e-6);
+
+    // All should be double
+    auto eigenvalues = matslise.eigenvaluesByIndex(10000, 10010);
+    int i, m;
+    double E;
+    int exactIndex = 9999;
+    for (const auto &iem: eigenvalues) {
+        std::tie(i, E, m) = iem;
+
+        REQUIRE(exactIndex == i);
+        REQUIRE((m == 1 || m == 2));
+        exactIndex += m;
+    }
+
+    REQUIRE(exactIndex > 10009);
+    REQUIRE(exactIndex <= 10011);
+}
+
 TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
     // https://www.cambridge.org/core/journals/anziam-journal/article/correction-of-finite-difference-eigenvalues-of-periodic-sturmliouville-problems/942FF24F2A3B577649B12D7CD17EFDDE
     std::map<int, double> exact{

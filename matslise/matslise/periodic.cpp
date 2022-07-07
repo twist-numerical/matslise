@@ -48,7 +48,7 @@ bool same_sign(const T &a, const T &b) {
 template<typename Scalar, typename Func, typename FuncRet = decltype(declval<Func>()(declval<Scalar>()))>
 Scalar binarySearch(Scalar eMin, Scalar eMax, const Func &f, const Scalar &eps, FuncRet fMin) {
     Scalar mid = (eMin + eMax) / 2;
-    while (eMax - eMin > eps) {
+    while (eMax - eMin > (abs(eMin) < 1 ? eps : eps * abs(eMin))) {
         FuncRet fMid = f(mid);
         if (same_sign(fMin, fMid)) {
             fMin = fMid;
@@ -99,7 +99,7 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
     const Y<Scalar, 1, 2> boundary = Y<Scalar, 1, 2>::Periodic();
     typename EigenpairsReturn<Scalar, with_eigenfunctions>::type result;
     auto addToResult = [&](int i, Scalar E, bool isDouble) {
-        if (i < iMin || i >= iMax || E < eMin || E >= eMax) return;
+        if ((isDouble ? i + 1 < iMin : i < iMin) || i >= iMax || E < eMin || E >= eMax) return;
         if constexpr (with_eigenfunctions) {
             auto &eigenfunctions = get<2>(
                     result.emplace_back(i, E, vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>()));
@@ -184,7 +184,7 @@ eigenpairsByIndexHelper(const PeriodicMatslise<Scalar> *ms, int iMin, int iMax) 
     Scalar eMin = -1;
     Scalar eMax = 1;
 
-    while (ms->matchingError(eMin).second.minCoeff() > std::max(iMin - 1, 0))
+    while (ms->matchingError(eMin).second.minCoeff() > std::max(iMin - 2, 0))
         eMin *= 2;
 
     while (ms->matchingError(eMax).second.maxCoeff() < iMax + 2)
