@@ -33,13 +33,26 @@ TEST_CASE("Periodic Andrews asymmetric", "[matslise][periodic]") {
 
     PeriodicMatslise<> matslise([](double x) { return x * x * (M_PI - x); }, 0, M_PI, 1e-6);
 
-    auto eigenpairs = matslise.eigenvaluesByIndex(0, 20);
-    REQUIRE(eigenpairs.size() >= 20); // All eigenvalues should be single, more may be found
-    for (int i = 0; i < 20; ++i) {
-        auto &eigenpair = eigenpairs[i];
-        REQUIRE(get<0>(eigenpair) == i);
-        REQUIRE(Approx(exact[i]).epsilon(1e-4) == get<1>(eigenpair));
-        REQUIRE(get<2>(eigenpair) == 1);
+    {
+        auto eigenvalues = matslise.eigenvaluesByIndex(0, 20);
+        REQUIRE(eigenvalues.size() >= 20); // All eigenvalues should be single, more may be found
+        for (int i = 0; i < 20; ++i) {
+            auto &eigenvalue = eigenvalues[i];
+            REQUIRE(get<0>(eigenvalue) == i);
+            REQUIRE(Approx(exact[i]).epsilon(1e-4) == get<1>(eigenvalue));
+            REQUIRE(get<2>(eigenvalue) == 1);
+        }
+    }
+
+    {
+        auto eigenvalues = matslise.eigenvalues(10, 102.59);
+        REQUIRE(eigenvalues.size() == 7); // All eigenvalues should be single, only the required ones should be found
+        auto ei = eigenvalues.begin();
+        for (int i = 3; i < 10; ++i, ++ei) {
+            REQUIRE(get<0>(*ei) == i);
+            REQUIRE(Approx(exact[i]).epsilon(1e-4) == get<1>(*ei));
+            REQUIRE(get<2>(*ei) == 1);
+        }
     }
 }
 
@@ -67,7 +80,7 @@ TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
 
     PeriodicMatslise<> matslise([](double x) { return 10 * cos(2 * x); }, 0, M_PI, 1e-6);
 
-    for (auto &interval  : std::vector<std::pair<int, int>>
+    for (auto &interval: std::vector<std::pair<int, int>>
             {{1,  8},
              {9,  14},
              {15, 20},
@@ -77,9 +90,9 @@ TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
 
         int i, m;
         double E;
-        auto pairs = matslise.eigenvaluesByIndex(low, high);
-        for (auto pair : pairs) {
-            tie(i, E, m) = pair;
+        auto eigenvalues = matslise.eigenvaluesByIndex(low, high);
+        for (auto eigenvalue: eigenvalues) {
+            tie(i, E, m) = eigenvalue;
             for (int j = i; j < i + m; ++j) {
                 REQUIRE(seen.insert(j).second);
                 auto f = exact.find(j);
@@ -90,6 +103,6 @@ TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
         }
     }
 
-    for (auto &ie : exact)
+    for (auto &ie: exact)
         REQUIRE(seen.find(ie.first) != seen.end());
 }

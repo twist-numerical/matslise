@@ -124,26 +124,40 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
         }
     };
 
-    int i = iMin - (iMin % 2);
-    auto findLow = [&](Scalar E) {
-        return ms->matchingError(E).second.minCoeff() - i + 1;
+    auto findLow = [ms](int i) {
+        return [ms, i](Scalar E) {
+            return ms->matchingError(E).second.minCoeff() - i + 1;
+        };
     };
-    auto findHigh = [&](Scalar E) {
-        return ms->matchingError(E).second.maxCoeff() - i - 1;
+    auto findHigh = [ms](int i) {
+        return [ms, i](Scalar E) {
+            return ms->matchingError(E).second.maxCoeff() - i - 1;
+        };
     };
 
+    Scalar highest = eMax;
+    for (Scalar step = 1; findHigh(iMax + 1)(highest) < 0; step *= 2)
+        highest += step;
+
+    int i = iMin - (iMin % 2);
+    Scalar low = eMin;
     if (i == 0) {
-        Scalar high = binarySearch<Scalar>(eMin, eMax, findHigh, eps);
-        Scalar E = binarySearch(eMin, high, [ms](Scalar E) {
+        for (Scalar step = 1; findHigh(i)(low) > 0; step *= 2)
+            low -= step;
+
+        Scalar high = binarySearch<Scalar>(low, highest, findHigh(i), eps);
+        Scalar E = binarySearch(low, high, [ms](Scalar E) {
             return calculateMatchingError(ms->matchingError(E).first).first;
         }, eps);
         addToResult(0, E, false);
         i += 2;
     }
-    Scalar low = eMin;
+
     for (; i <= iMax + 1; i += 2) {
-        low = binarySearch<Scalar>(low, eMax, findLow, eps);
-        Scalar high = binarySearch<Scalar>(low, eMax, findHigh, eps);
+        for (Scalar step = 1; findLow(i)(low) > 0; step *= 2)
+            low -= step;
+        low = binarySearch<Scalar>(low, highest, findLow(i), eps);
+        Scalar high = binarySearch<Scalar>(low, highest, findHigh(i), eps);
         pair<Scalar, Scalar> p = eigenvaluePair(ms, low, high, eps);
         if (p.second - p.first < eps) {
             addToResult(i - 1, (p.first + p.second) / 2, true);
@@ -153,6 +167,15 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
         }
     }
     return result;
+}
+
+template<typename Scalar, bool with_eigenfunctions>
+typename EigenpairsReturn<Scalar, with_eigenfunctions>::type
+eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, const Scalar &eMin, const Scalar &eMax) {
+    int iMin = ms->matchingError(eMin).second.minCoeff() - 1;
+    int iMax = ms->matchingError(eMax).second.maxCoeff() + 1;
+
+    return eigenpairsHelper<Scalar, with_eigenfunctions>(ms, eMin, eMax, iMin, iMax, 1e-8);
 }
 
 template<typename Scalar, bool with_eigenfunctions>
@@ -168,6 +191,18 @@ eigenpairsByIndexHelper(const PeriodicMatslise<Scalar> *ms, int iMin, int iMax) 
         eMax *= 2;
 
     return eigenpairsHelper<Scalar, with_eigenfunctions>(ms, eMin, eMax, iMin, iMax, 1e-8);
+}
+
+template<typename Scalar>
+std::vector<std::tuple<int, Scalar, std::vector<std::unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>>>
+PeriodicMatslise<Scalar>::eigenpairs(const Scalar &eMin, const Scalar &eMax) const {
+    return eigenpairsHelper<Scalar, true>(this, eMin, eMax);
+}
+
+template<typename Scalar>
+std::vector<std::tuple<int, Scalar, int>>
+PeriodicMatslise<Scalar>::eigenvalues(const Scalar &eMin, const Scalar &eMax) const {
+    return eigenpairsHelper<Scalar, false>(this, eMin, eMax);
 }
 
 template<typename Scalar>
