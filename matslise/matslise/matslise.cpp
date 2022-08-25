@@ -10,6 +10,7 @@
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
+using std::unique_ptr;
 
 template<typename Scalar>
 template<int cols>
@@ -29,10 +30,10 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar, 1, cols> &_y,
         theta[i] = t;
     }
     do {
-        const value_ptr<Sector> &sector = sectors[sectorIndex];
-        tie(y, dTheta) = sector->template propagate<true>(E, y, a, b, use_h);
+        const Sector &sector = *sectors[sectorIndex];
+        tie(y, dTheta) = sector.template propagate<true>(E, y, a, b, use_h);
         theta += dTheta;
-        if (sector->contains(b))
+        if (sector.contains(b))
             break;
         sectorIndex += a < b ? 1 : -1;
     } while (sectorIndex >= 0 && sectorIndex < (long) sectors.size());
@@ -189,15 +190,15 @@ vector<Y<Scalar>> propagationSteps(const Matslise<Scalar> &ms, Scalar E,
     vector<Y<Scalar>> ys(ms.sectorCount + 1);
     ys[0] = left;
     for (int i = 0; i <= ms.matchIndex; ++i) {
-        const value_ptr<typename Matslise<Scalar>::Sector> &sector = ms.sectors[i];
-        ys[i + 1] = sector->template propagate<false>(E, ys[i], sector->min, sector->max);
+        const typename Matslise<Scalar>::Sector &sector = *ms.sectors[i];
+        ys[i + 1] = sector.template propagate<false>(E, ys[i], sector.min, sector.max);
     }
     Y<Scalar> yl = ys[ms.matchIndex + 1];
 
     ys[ms.sectorCount] = right;
     for (int i = ms.sectorCount - 1; i > ms.matchIndex; --i) {
-        const value_ptr<typename Matslise<Scalar>::Sector> &sector = ms.sectors[i];
-        ys[i] = sector->template propagate<false>(E, ys[i + 1], sector->max, sector->min);
+        const typename Matslise<Scalar>::Sector &sector = *ms.sectors[i];
+        ys[i] = sector.template propagate<false>(E, ys[i + 1], sector.max, sector.min);
     }
     Y<Scalar> &yr = ys[ms.matchIndex + 1];
 
@@ -295,15 +296,11 @@ unique_ptr<typename Matslise<Scalar>::Eigenfunction> Matslise<Scalar>::eigenfunc
     return std::make_unique<MEigenfunction<Scalar>>(this, E, left, right);
 }
 
-
-#include "../util/sectorbuilder.impl.h"
-
 #define INSTANTIATE_PROPAGATE(Scalar, cols) \
 template pair<Y<Scalar, 1, cols>, typename conditional<cols == 1, Scalar, Eigen::Array<Scalar, cols, 1>>::type> \
 Matslise<Scalar>::propagate<cols>(const Scalar &, const Y<Scalar, 1, cols> &, const Scalar &, const Scalar &, bool) const; \
 
 #define INSTANTIATE_MORE(Scalar) \
-INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>) \
 INSTANTIATE_PROPAGATE(Scalar, 1) \
 INSTANTIATE_PROPAGATE(Scalar, 2)
 

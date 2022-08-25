@@ -4,15 +4,16 @@
 #include <memory>
 
 using namespace std;
-using namespace matslise;
 using namespace Eigen;
+using namespace matslise;
+using namespace matslise::sector_builder;
 
 #define EPS (1e-12)
 
 template<typename Scalar>
 MatsliseHalf<Scalar>::MatsliseHalf(
         function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance,
-        SectorBuilder<Matslise<Scalar>> sectorBuilder
+        const SectorBuilder<Matslise<Scalar>> &sectorBuilder
 ): AbstractMatslise<Scalar>(V, {-xmax, xmax}) {
     ms.reset(new Matslise<Scalar>(V, {Scalar(0), xmax}, tolerance, sectorBuilder));
 }

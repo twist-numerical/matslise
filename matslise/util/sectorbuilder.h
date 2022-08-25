@@ -2,38 +2,45 @@
 #define MATSLISE_SECTORBUILDER_H
 
 #include <vector>
-#include <optional>
-#include <type_traits>
-#include <functional>
-#include "value_ptr.h"
+#include <memory>
 
-namespace matslise {
+namespace matslise::sector_builder {
     template<typename Problem>
     struct SectorBuilderReturn {
-        std::vector<matslise::value_ptr<typename Problem::Sector>> sectors;
+        std::vector<std::unique_ptr<typename Problem::Sector>> sectors{};
         // The index of the sector left of the matching point
-        int matchIndex;
+        int matchIndex{};
     };
 
     template<typename Problem, typename Scalar=typename Problem::Scalar>
-    using SectorBuilder = std::function<SectorBuilderReturn<Problem>(
-            const Problem *, const Scalar &min, const Scalar &max)>;
+    class SectorBuilder {
+    public:
+        virtual SectorBuilderReturn<Problem>
+        operator()(const Problem *, const Scalar &min, const Scalar &max) const = 0;
+    };
 
-    namespace sector_builder {
-        template<typename Problem>
-        SectorBuilder<Problem> uniform(int sectorCount);
+    template<typename Problem, typename Scalar=typename Problem::Scalar>
+    class AutomaticSectorBuilder : public SectorBuilder<Problem, Scalar> {
+    public:
+        std::vector<Scalar> jumps{};
+        Scalar tolerance;
 
-        template<typename Problem, bool parallel = false>
-        SectorBuilder<Problem> automatic(const typename Problem::Scalar &tolerance);
-
-        template<typename Problem, bool parallel = false>
-        SectorBuilder<Problem> getOrAutomatic(const std::optional<SectorBuilder<Problem>> &sectorBuilder,
-                                              const typename Problem::Scalar &tolerance) {
-            if (sectorBuilder.has_value())
-                return sectorBuilder.value();
-            return automatic<Problem, parallel>(tolerance);
+        AutomaticSectorBuilder(const Scalar &tolerance_) : tolerance(tolerance_) {
         }
-    }
+
+        SectorBuilderReturn<Problem> operator()(const Problem *, const Scalar &min, const Scalar &max) const override;
+    };
+
+    template<typename Problem, typename Scalar=typename Problem::Scalar>
+    class UniformSectorBuilder : public SectorBuilder<Problem, Scalar> {
+    public:
+        int sectorCount;
+
+        UniformSectorBuilder(int sectorCount_) : sectorCount(sectorCount_) {
+        }
+
+        SectorBuilderReturn<Problem> operator()(const Problem *, const Scalar &min, const Scalar &max) const override;
+    };
 }
 
 #endif //MATSLISE_SECTORBUILDER_H

@@ -9,12 +9,13 @@
 using namespace matslise;
 using namespace std;
 using namespace Eigen;
+using namespace matslise::sector_builder;
 
 TEST_CASE("V(x) = 0", "[matslise][simple]") {
     Matslise<double> ms([](double x) -> double {
         (void) x;
         return 0;
-    }, -constants<double>::PI / 2, constants<double>::PI / 2, 1e-8, sector_builder::uniform<Matslise<>>(11));
+    }, -constants<double>::PI / 2, constants<double>::PI / 2, 1e-8, UniformSectorBuilder<Matslise<>>(11));
 
 
     Y<double> y0({0, 1}, {0, 0});

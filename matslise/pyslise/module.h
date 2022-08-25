@@ -16,6 +16,7 @@ namespace py = pybind11;
 using namespace Eigen;
 using namespace std;
 using namespace matslise;
+using namespace sector_builder;
 
 template<int cols = 1>
 inline Y<double, 1, cols> make_y(const Matrix<double, 2, cols> &value) {

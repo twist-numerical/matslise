@@ -25,11 +25,12 @@ namespace matslise {
         int n;
         Scalar xmin, xmax;
         int sectorCount;
-        std::vector<matslise::value_ptr<Matscs::Sector>> sectors;
+        std::vector<std::unique_ptr<Matscs::Sector>> sectors;
         int matchIndex;
     public:
         Matscs(std::function<Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>(Scalar)> V,
-               int n, const Scalar &xmin, const Scalar &xmax, SectorBuilder <Matscs<Scalar>> sectorBuilder) :
+               int n, const Scalar &xmin, const Scalar &xmax,
+               const sector_builder::SectorBuilder<Matscs<Scalar>> &sectorBuilder) :
                 V(V), n(n), xmin(xmin), xmax(xmax) {
             auto sectorsBuild = sectorBuilder(this, xmin, xmax);
             sectors = std::move(sectorsBuild.sectors);
@@ -92,18 +93,18 @@ namespace matslise {
                 return point <= max && point >= min;
             }
 
-            T <Scalar, Eigen::Dynamic> calculateT(const Scalar &E, bool use_h = true) const;
+            T<Scalar, Eigen::Dynamic> calculateT(const Scalar &E, bool use_h = true) const;
 
-            T <Scalar, Eigen::Dynamic> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
+            T<Scalar, Eigen::Dynamic> calculateT(const Scalar &E, const Scalar &delta, bool use_h = true) const;
 
             template<int r = Eigen::Dynamic>
-            Y <Scalar, Eigen::Dynamic, r>
-            propagateColumn(const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
+            Y<Scalar, Eigen::Dynamic, r>
+            propagateColumn(const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &a, const Scalar &b,
                             bool use_h = true) const;
 
-            std::pair<Y < Scalar, Eigen::Dynamic>, Scalar>
+            std::pair<Y<Scalar, Eigen::Dynamic>, Scalar>
 
-            propagate(const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
+            propagate(const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &a, const Scalar &b,
                       bool use_h = true) const;
 
             Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic>
@@ -119,16 +120,16 @@ namespace matslise {
             }
 
         private :
-            MatrixXcs theta(const Y <Scalar, Eigen::Dynamic> &) const;
+            MatrixXcs theta(const Y<Scalar, Eigen::Dynamic> &) const;
 
             template<int r>
-            Y <Scalar, Eigen::Dynamic, r> propagateDeltaColumn(
-                    const Scalar &E, const Y <Scalar, Eigen::Dynamic, r> &y0, const Scalar &_delta, bool use_h) const;
+            Y<Scalar, Eigen::Dynamic, r> propagateDeltaColumn(
+                    const Scalar &E, const Y<Scalar, Eigen::Dynamic, r> &y0, const Scalar &_delta, bool use_h) const;
 
-            std::pair<Y < Scalar, Eigen::Dynamic>, Scalar>
+            std::pair<Y<Scalar, Eigen::Dynamic>, Scalar>
 
             propagateDelta(
-                    const Scalar &E, const Y <Scalar, Eigen::Dynamic> &y0, const Scalar &_delta, bool use_h) const;
+                    const Scalar &E, const Y<Scalar, Eigen::Dynamic> &y0, const Scalar &_delta, bool use_h) const;
 
         };
     };

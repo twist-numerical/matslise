@@ -27,7 +27,7 @@ endif ()
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
         matslise/matslise_formulas.cpp matslise/sector.cpp util/calculateEta.cpp liouville/liouville.cpp
-        liouville/sturm_liouville.cpp)
+        liouville/sturm_liouville.cpp util/sectorbuilder.cpp)
 
 set(MATSLISE_MATSCS_SRC
         matscs/matscs.cpp matscs/sector.cpp matscs/matscs_formulas.cpp)
@@ -74,17 +74,6 @@ else ()
     if (PROFILE)
         ADD_DEFINITIONS(-DMATSLISE_PROFILING)
     ENDIF (PROFILE)
-
-    OPTION(PARALLEL "Compile with parallel algorithms." OFF)
-    IF (PARALLEL)
-        if (PROFILE)
-            message("only one of 'parallel' or 'profile' can be on, ignoring 'parallel'")
-        else ()
-            ADD_DEFINITIONS(-DMATSLISE_parallel -DEIGEN_DONT_PARALLELIZE)
-            find_package(OpenMP REQUIRED)
-            target_link_libraries(matslise PUBLIC OpenMP::OpenMP_CXX)
-        ENDIF ()
-    ENDIF (PARALLEL)
 
     OPTION(MATSLISE_LONG_DOUBLE "Option description" OFF)
     IF (MATSLISE_LONG_DOUBLE)
@@ -140,9 +129,6 @@ else ()
             message("-- python: ${PYTHON_EXECUTABLE}")
             pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} ${PYSLISE_SRC})
             target_link_libraries(pyslise PRIVATE ${libraries})
-            IF (PARALLEL)
-                target_link_libraries(pyslise PUBLIC OpenMP::OpenMP_CXX)
-            ENDIF (PARALLEL)
 
             configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
             configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)

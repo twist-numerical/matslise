@@ -10,6 +10,7 @@
 
 
 using namespace matslise;
+using namespace matslise::sector_builder;
 using namespace std;
 using namespace Eigen;
 
@@ -66,7 +67,7 @@ vector<double> correct = {-0.110248816992, 3.917024772998, 9.047739259809, 16.03
                           40000.000012500299, 40401.000012376229};
 
 TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, UniformSectorBuilder<Matslise<>>(8));
 
     testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
@@ -124,7 +125,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -2.57141674375544, -3.13821749458430, -3.10573501735402, -2.51014152163740, -1.48587759669341,
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
-    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, sector_builder::uniform<Matslise<>>(8));
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, UniformSectorBuilder<Matslise<>>(8));
     Y<double> ystart({0, 1}, {0, 0});
 
     {

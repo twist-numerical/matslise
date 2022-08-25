@@ -18,7 +18,7 @@ template class matslise::Matslise2DHalf<Scalar>;\
 template class matslise::Matslise3DSector<Scalar>;\
 template class matslise::Matslise3D<Scalar>;\
 template class matslise::MatsliseNDSector<Scalar>;\
-template class matslise::MatsliseND<Scalar, matslise::Matslise2DSector<Scalar>>;\
+template class matslise::MatsliseND<Scalar, matsl   ise::Matslise2DSector<Scalar>>;\
 template class matslise::MatsliseND<Scalar, matslise::Matslise3DSector<Scalar>>;\
 INSTANTIATE_MORE(Scalar)
 #endif

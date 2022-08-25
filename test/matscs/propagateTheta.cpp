@@ -6,6 +6,7 @@
 
 
 using namespace matslise;
+using namespace matslise::sector_builder;
 using namespace std;
 using namespace Eigen;
 
@@ -20,7 +21,7 @@ TEST_CASE("Test propagateTheta", "[matscs][propagateTheta]") {
             r(i, i) += 1 / dx;
         }
         return r;
-    }, 4, 0.1, 1, sector_builder::automatic<Matscs<>>(1e-5));
+    }, 4, 0.1, 1, AutomaticSectorBuilder<Matscs<>>(1e-5));
     double E = 14.94180054416473;
     double theta = 0;
     REQUIRE(Approx(

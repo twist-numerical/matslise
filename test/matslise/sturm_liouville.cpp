@@ -35,7 +35,7 @@ TEST_CASE("Example 1: p=1, q=0, w=(1+x)^-2", "[matslise][sturm-liouville]") {
     REQUIRE(i == 20);
 }
 
-TEST_CASE("Example 2: p=1+x², q=x²-2, w=exp(x)", "[matslise][sturm-liouville]") {
+TEST_CASE("Example 2: p=(1+x)², q=x²-2, w=exp(x)", "[matslise][sturm-liouville]") {
     // The values in the article are not accurate. This true values are from Matslise 2.0.
 
     SturmLiouville<double> sl([](double x) { return (1 + x) * (1 + x); },

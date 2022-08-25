@@ -22,7 +22,7 @@ void pyslise(py::module &m) {
                 return eigenfunction(x).transpose();
             });
 
-    py::class_<AbstractMatslise<double>>(m, "AbstractPyslise")
+    py::class_<AbstractMatslise<double>, std::shared_ptr<AbstractMatslise<double>>>(m, "AbstractPyslise")
             .def("eigenvalues",
                  [](AbstractMatslise<double> &m, double Emin, double Emax, const Vector2d &left,
                     const optional<Vector2d> &_right)
@@ -43,6 +43,32 @@ Calculate the eigenvalues in an interval [Emin; Emax]. The boundary conditions h
                     const optional<Vector2d> &_right) -> vector<pair<int, double>> {
                      const Vector2d &right = _right ? *_right : left;
                      return m.eigenvaluesByIndex(Imin, Imax, make_y(left), make_y(right));
+                 }, R""""(\
+Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
+
+:param int Imin: the first eigenvalue to find, by index.
+:param int Imax: only the first Imax eigenvalues will be considered.
+:param (float,float) left, right: the boundary conditions.
+
+:returns: a list of tuples. Each tuples contains the index and the eigenvalue with that index.
+)"""",
+                 py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("right") = optional<Vector2d>())
+            .def("eigenpairsByIndex",
+                 [](std::shared_ptr<AbstractMatslise<double>> m, int Imin, int Imax, const Vector2d &left,
+                    const optional<Vector2d> &_right)
+                         -> vector<tuple<int, double, unique_ptr<AbstractMatslise<double>::Eigenfunction>>> {
+                     const Vector2d &right = _right ? *_right : left;
+                     auto pairs = m->eigenpairsByIndex(Imin, Imax, make_y(left), make_y(right));
+                     vector<tuple<int, double, unique_ptr<AbstractMatslise<double>::Eigenfunction>>> r;
+                     for (auto &pair: pairs) {
+                         r.emplace_back(
+                                 get<0>(pair),
+                                 get<1>(pair),
+                                 make_unique<EigenfunctionWrapper<double, AbstractMatslise<double>>>(
+                                         m, std::move(get<2>(pair)))
+                         );
+                     }
+                     return r;
                  }, R""""(\
 Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue has index 0. Imin inclusive, Imax exclusive.
 
@@ -87,28 +113,12 @@ Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
                  py::arg("E"), py::arg("xs"), py::arg("left"), py::arg("right") = optional<Vector2d>(),
                  py::arg("index") = -1)
             .def("eigenfunction",
-                 [](AbstractMatslise<double> &m, double E, const Vector2d &left,
+                 [](std::shared_ptr<AbstractMatslise<double>> m, double E, const Vector2d &left,
                     const optional<Vector2d> &_right, int index)
                          -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
                      const Vector2d &right = _right ? *_right : left;
-                     return m.eigenfunction(E, make_y(left), make_y(right), index);
-                 }, R""""(\
-Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
-
-:param float E: the eigenvalue.
-:param (float,float) left, right: the boundary conditions.
-:param xs: the points to calculate the eigenfunction for.
-
-:returns: a pair of lists which each a length of len(xs). The first list contains the values of the eigenfunction in the points xs. The second contains the derivative of the eigenfunction in those points.
-)"""",
-                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(),
-                 py::arg("index") = -1, py::keep_alive<0, 1>())
-            .def("eigenfunctionCalculator",
-                 [](AbstractMatslise<double> &m, double E, const Vector2d &left,
-                    const optional<Vector2d> &_right, int index)
-                         -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
-                     const Vector2d &right = _right ? *_right : left;
-                     return m.eigenfunction(E, make_y(left), make_y(right), index);
+                     return std::make_unique<EigenfunctionWrapper<double, AbstractMatslise<double>>>(
+                             m, m->eigenfunction(E, make_y(left), make_y(right), index));
                  }, R""""(\
 Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
 
@@ -118,14 +128,30 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
 
 :returns: a function that takes a value and returns a tuple with the eigenfunction and derivative in that value.
 )"""",
-                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1,
-                 py::keep_alive<0, 1>())
+                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
+            .def("eigenfunctionCalculator",
+                 [](std::shared_ptr<AbstractMatslise<double>> m, double E, const Vector2d &left,
+                    const optional<Vector2d> &_right, int index)
+                         -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
+                     const Vector2d &right = _right ? *_right : left;
+                     return std::make_unique<EigenfunctionWrapper<double, AbstractMatslise<double>>>(
+                             m, m->eigenfunction(E, make_y(left), make_y(right), index));
+                 }, R""""(\
+Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
+
+:param float E: the eigenvalue.
+:param (float,float) left, [right]: the boundary conditions.
+:param int [index]: the index of the eigenvalue
+
+:returns: a function that takes a value and returns a tuple with the eigenfunction and derivative in that value.
+)"""",
+                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
             .def_property_readonly("domain", [](const AbstractMatslise<double> &matslise) {
                 return std::pair<double, double>(matslise.domain.min(), matslise.domain.max());
             });
 
 
-    py::class_<Matslise<>, AbstractMatslise<double>>(m, "Pyslise", R""""(\
+    py::class_<Matslise<>, AbstractMatslise<double>, shared_ptr<Matslise<>>>(m, "Pyslise", R""""(\
 >>> from math import pi, cos
 >>> import numpy as np
 >>> p = Pyslise(lambda x: 2*cos(2*x), 0, pi, 1e-8)
@@ -136,18 +162,26 @@ True
 >>> all(abs(f(x)[0] - p.eigenfunction(E, [x], left=(0,1), index=i)[0][0]) < 1e-6 for x in np.linspace(0, pi, 100))
 True
 )"""")
-            .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
-                return new Matslise<>(V, min, max, tolerance);
-            }), R""""(\
+            .def(py::init([](const function<double(double)> &V, double xmin, double xmax, double tolerance,
+                             const std::vector<double> &jumps) {
+                     AutomaticSectorBuilder<Matslise<>> sb(tolerance);
+                     sb.jumps.reserve(jumps.size());
+                     for (double jump: jumps)
+                         if (xmin < jump && jump < xmax)
+                             sb.jumps.push_back(jump);
+                     std::sort(sb.jumps.begin(), sb.jumps.end());
+                     return new Matslise<>(V, Rectangle<double, 1>{xmin, xmax}, tolerance, sb);
+                 }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
 
 Note: only one of steps and tolerance have to be set.
 
 :param (float)->float V: the potential.
 :param float min, max: the ends of the domain.
-:param int steps: the number of steps to take.
-:param int tolerance: automatically choose steps with at least the given accuracy.
-)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8)
+:param float tolerance: ensure the given accuracy.
+:param float[] jumps: positions where the potential is discontinuous
+)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8,
+                 py::arg("jumps") = std::vector<double>{})
             .def("propagate",
                  [](Matslise<> &m, double E, const Vector2d &y, double a, double b) ->
                          tuple<Vector2d, double> {
@@ -196,7 +230,7 @@ For a given E and initial condition in point a, propagate the solution of the Sc
                 return p.sectors[i].get();
             }, py::return_value_policy::reference);
 
-    py::class_<MatsliseHalf<>, AbstractMatslise<double>>(m, "PysliseHalf")
+    py::class_<MatsliseHalf<>, AbstractMatslise<double>, shared_ptr<MatsliseHalf<>>>(m, "PysliseHalf")
             .def(py::init([](const function<double(double)> &V, double xmax, double tolerance) {
                 return new MatsliseHalf<>(V, xmax, tolerance);
             }), R""""(\

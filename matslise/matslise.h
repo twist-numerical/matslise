@@ -12,7 +12,6 @@
 #include "util/y.h"
 #include "util/sectorbuilder.h"
 #include "util/rectangle.h"
-#include "util/value_ptr.h"
 #include "./formula_constants.h"
 
 namespace matslise {
@@ -125,7 +124,7 @@ namespace matslise {
 
         int sectorCount;
         int matchIndex;
-        std::vector<matslise::value_ptr<Matslise::Sector>> sectors;
+        std::vector<std::unique_ptr<Matslise::Sector>> sectors;
 
         Scalar tolerance;
     public:
@@ -134,14 +133,14 @@ namespace matslise {
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
                  const Scalar &tolerance = 1e-8)
-                : Matslise(V, domain, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {}
+                : Matslise(V, domain, tolerance, sector_builder::AutomaticSectorBuilder<Matslise<Scalar>>(tolerance)) {}
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
-                 const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
+                 const Scalar &tolerance, const sector_builder::SectorBuilder<Matslise<Scalar>> &sectorBuilder)
                 : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance, sectorBuilder) {}
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
-                 const Scalar &tolerance, SectorBuilder<Matslise<Scalar>> sectorBuilder)
+                 const Scalar &tolerance, const sector_builder::SectorBuilder<Matslise<Scalar>> &sectorBuilder)
                 : AbstractMatslise<Scalar>(V, domain),
                   sectorCount(0), matchIndex(0), sectors(), tolerance(tolerance) {
             auto buildSectors = sectorBuilder(this, domain.min(), domain.max());
@@ -247,13 +246,14 @@ namespace matslise {
         typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
 
     public:
-        matslise::value_ptr<const Matslise<Scalar>> ms;
+        std::unique_ptr<const Matslise<Scalar>> ms;
     public:
         MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance)
-                : MatsliseHalf(V, xmax, tolerance, sector_builder::automatic<Matslise<Scalar>>(tolerance)) {}
+                : MatsliseHalf(V, xmax, tolerance,
+                               sector_builder::AutomaticSectorBuilder<Matslise<Scalar>>(tolerance)) {}
 
         MatsliseHalf(std::function<Scalar(Scalar)> V, const Scalar &xmax, const Scalar &tolerance,
-                     matslise::SectorBuilder<Matslise<Scalar>> sectorBuilder);
+                     const sector_builder::SectorBuilder<Matslise<Scalar>> &sectorBuilder);
 
         Scalar estimatePotentialMinimum() const override {
             return ms->estimatePotentialMinimum();
