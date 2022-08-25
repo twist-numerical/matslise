@@ -57,7 +57,7 @@ jobs:
 
   matslise_test_float128:
     name: Test matslise (float128)
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: Cache Eigen3
         id: cache-eigen3_3

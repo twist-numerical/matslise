@@ -51,7 +51,7 @@ else ()
 
             find_package(Quadmath REQUIRED)
             if (Quadmath_FOUND)
-                add_definitions(-DMATSLISE_float128)
+                add_definitions(-DMATSLISE_QUADMATH)
                 list(APPEND libraries Quadmath::quadmath)
             endif ()
         endif ()
@@ -72,11 +72,6 @@ else ()
     endif ()
 
     add_executable(matslise_test EXCLUDE_FROM_ALL ${MATSLISE_TEST_SRC} main.cpp)
-
-    find_package(OpenMP)
-    if (OpenMP_CXX_FOUND)
-        target_link_libraries(matslise_test PUBLIC OpenMP::OpenMP_CXX)
-    endif ()
 
     OPTION(MATSLISE_USE_MKL "Use the Intel's MKL if available" OFF)
     if (USE_MKL)

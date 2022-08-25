@@ -77,7 +77,7 @@ TEST_CASE("coffey_evans beta=25 (long)", "[matslise][coffey_evans][long]") {
 
 #endif
 
-#ifdef MATSLISE_float128
+#ifdef DMATSLISE_QUADMATH
 
 #include <boost/multiprecision/float128.hpp>
 
