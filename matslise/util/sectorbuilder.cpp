@@ -30,10 +30,10 @@ UniformSectorBuilder<Problem, Scalar>::operator()(const Problem *problem, const 
     auto &sectors = r.sectors;
     sectors.resize(sectorCount);
 
-    if(sectorCount == 1) {
+    if (sectorCount == 1) {
         sectors[0].reset(new Sector(problem, min, max, forward));
         r.matchIndex = 0;
-    }else {
+    } else {
         sectors[0].reset(new Sector(problem, min, min + h, forward));
         sectors[sectorCount - 1].reset(new Sector(problem, min + (sectorCount - 1) * h, max, backward));
         int i = 0, j = sectorCount - 1;
@@ -146,19 +146,37 @@ AutomaticSectorBuilder<Problem, Scalar>::operator()(const Problem *problem, cons
     Scalar mid = 0.4956864123 * max + 0.5043135877 * min;
     Scalar forwardH = .33 * (max - min);
     Scalar backwardH = forwardH;
-    forward.emplace_back(automaticNextSector(problem, forwardH, min, mid, tolerance, Direction::forward));
-    backward.emplace_back(automaticNextSector(problem, backwardH, mid, max, tolerance, Direction::backward));
+    auto forwardJumpPosition = jumps.begin();
+    auto backwardJumpPosition = jumps.rbegin();
+    auto nextForwardJump = [&]() {
+        return forwardJumpPosition == jumps.end() ? max : *forwardJumpPosition;
+    };
+    auto nextBackwardJump = [&]() {
+        return backwardJumpPosition == jumps.rend() ? min : *backwardJumpPosition;
+    };
+    forward.emplace_back(
+            automaticNextSector(problem, forwardH, min, std::min(mid, nextForwardJump()), tolerance,
+                                Direction::forward));
+    backward.emplace_back(
+            automaticNextSector(problem, backwardH, std::max(mid, nextBackwardJump()), max, tolerance,
+                                Direction::backward));
 
 
     while (forward.back()->max != backward.back()->min) {
         if (Sector::compare(*backward.back(), *forward.back())) {
+            if (forward.back()->max == nextForwardJump())
+                ++forwardJumpPosition;
             forward.emplace_back(automaticNextSector(
-                    problem, forwardH, forward.back()->max,
-                    backward.back()->min, tolerance, Direction::forward));
+                    problem, forwardH,
+                    forward.back()->max, std::min(backward.back()->min, nextForwardJump()),
+                    tolerance, Direction::forward));
         } else {
+            if (backward.back()->min == nextBackwardJump())
+                ++backwardJumpPosition;
             backward.emplace_back(automaticNextSector(
-                    problem, backwardH, forward.back()->max,
-                    backward.back()->min, tolerance, Direction::backward));
+                    problem, backwardH,
+                    std::max(forward.back()->max, nextBackwardJump()), backward.back()->min,
+                    tolerance, Direction::backward));
         }
     }
 
@@ -168,8 +186,10 @@ AutomaticSectorBuilder<Problem, Scalar>::operator()(const Problem *problem, cons
 };
 
 #define INSTANTIATE_SECTOR_BUILDER(Problem) \
-template class AutomaticSectorBuilder<Problem>; \
-template class UniformSectorBuilder<Problem>;
+namespace matslise::sector_builder {                  \
+    template class AutomaticSectorBuilder<Problem>; \
+    template class UniformSectorBuilder<Problem>; \
+}
 
 #define INSTANTIATE_MATSLISE(Scalar) \
 INSTANTIATE_SECTOR_BUILDER(Matslise<Scalar>)
