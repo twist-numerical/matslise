@@ -78,7 +78,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
 
 :returns: a list of tuples. Each tuples contains the index and the eigenvalue with that index.
 )"""",
-                 py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("rieigenfunctionght") = optional<Vector2d>())
+                 py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("right") = optional<Vector2d>())
             .def("eigenvalueError",
                  [](AbstractMatslise<double> &m, double E, const Vector2d &left, const optional<Vector2d> &_right,
                     int index)
@@ -140,7 +140,7 @@ True
                      return new Matslise<>(V, Rectangle<double, 1>{xmin, xmax}, tolerance, sb);
                  }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
-                 
+
 :param (float)->float V: the potential.
 :param float min, max: the ends of the domain.
 :param float tolerance: ensure the given accuracy.
