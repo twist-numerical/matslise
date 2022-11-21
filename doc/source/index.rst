@@ -2,12 +2,7 @@
 Welcome to the documentation of Pyslise
 #######################################
 
-Pyslise is a Python package (written in C++) to solve
-Schrödinger equations. In general the time-independent
-Schrödinger equation is given by:
-
-.. math::
-  -\nabla^2 \varphi({\bf x}) + V({\bf x}) \varphi({\bf x}) = E \varphi({\bf x})
+Pyslise is a Python package (written in C++) to solve one-dimensional time-independent Schrödinger equations and Sturm-Liouville equations.
 
 This package implements a constant perturbation (CP) method to
 efficiently solve the one-dimensional Schrödinger equation:
@@ -16,16 +11,33 @@ efficiently solve the one-dimensional Schrödinger equation:
   -\frac{d^2}{dx^2}\varphi(x) + V(x) \varphi(x) = E \varphi(x)
 
 
-And also the two-dimensional Schrödinger equation (experimental):
+
+Sturm-Liouville equations
 
 .. math::
-  -\frac{\partial^2}{\partial x^2}\varphi(x, y) -\frac{\partial^2}{\partial y^2}\varphi(x, y) + V(x, y) \varphi(x, y) = E \varphi(x, y)
+  \frac{d}{dx}\left[p(x)\frac{dy}{dx}\right] + q(x) y  = -\lambda w(x) y
+
+are solved by applying a Liouville transformation and then solving the Schrödinger equation.
 
 Besides a python package there is also an interactive web based GUI (compiled with WebAssembly):
 
 - `GUI for the one-dimensional problem <./ti1d>`_
 
 (Tested in a recent version of Firefox and Chrome)
+
+
+Documentation
+-------------
+
+This documentation consists of two main sections: a collection of examples and a reference manual.
+
+.. toctree::
+   :maxdepth: 2
+
+   examples/index
+   api/index
+
+* :ref:`genindex`
 
 
 Installation
@@ -40,16 +52,6 @@ Installing PySlise is as easy as:
 Make sure you are using a recent 64 bit version of python on a
 Linux, Windows or macOS (10.15).
 
-Documentation
--------------
-
-.. toctree::
-   :maxdepth: 2
-
-   examples/index
-   api/index
-
-* :ref:`genindex`
 
 Contact
 -------

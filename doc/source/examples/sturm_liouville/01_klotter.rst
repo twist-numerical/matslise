@@ -9,6 +9,7 @@ Here we will be solving the Sturm-Liouville equation
 
 .. math::
   \frac{d}{dx}\left[p(x)\frac{dy}{dx}\right] + q(x) y  = -\lambda w(x) y
+  
 with
 
 .. math::

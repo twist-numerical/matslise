@@ -140,9 +140,7 @@ True
                      return new Matslise<>(V, Rectangle<double, 1>{xmin, xmax}, tolerance, sb);
                  }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
-
-Note: only one of steps and tolerance have to be set.
-
+                 
 :param (float)->float V: the potential.
 :param float min, max: the ends of the domain.
 :param float tolerance: ensure the given accuracy.
