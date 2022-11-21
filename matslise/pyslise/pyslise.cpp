@@ -78,7 +78,7 @@ Calculate all eigenvalues with index between Imin and Imax. The first eigenvalue
 
 :returns: a list of tuples. Each tuples contains the index and the eigenvalue with that index.
 )"""",
-                 py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("right") = optional<Vector2d>())
+                 py::arg("Imin"), py::arg("Imax"), py::arg("left"), py::arg("rieigenfunctionght") = optional<Vector2d>())
             .def("eigenvalueError",
                  [](AbstractMatslise<double> &m, double E, const Vector2d &left, const optional<Vector2d> &_right,
                     int index)
@@ -95,41 +95,6 @@ Calculate the error for a given eigenvalue. It will use a less accurate method t
 )"""",
                  py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
             .def("eigenfunction",
-                 [](AbstractMatslise<double> &m, double E, const ArrayXd &xs, const Vector2d &left,
-                    const optional<Vector2d> &_right, int index)
-                         -> Array<double, 2, Dynamic> {
-                     const Vector2d &right = _right ? *_right : left;
-                     Array<double, Dynamic, 2> ys = (*m.eigenfunction(E, make_y(left), make_y(right), index))(xs);
-                     return ys.transpose();
-                 }, R""""(\
-Calculate the eigenfunction corresponding to the eigenvalue E in the points xs.
-
-:param float E: the eigenvalue.
-:param (float,float) left, right: the boundary conditions.
-:param xs: the points to calculate the eigenfunction for.
-
-:returns: a pair of lists which each a length of len(xs). The first list contains the values of the eigenfunction in the points xs. The second contains the derivative of the eigenfunction in those points.
-)"""",
-                 py::arg("E"), py::arg("xs"), py::arg("left"), py::arg("right") = optional<Vector2d>(),
-                 py::arg("index") = -1)
-            .def("eigenfunction",
-                 [](std::shared_ptr<AbstractMatslise<double>> m, double E, const Vector2d &left,
-                    const optional<Vector2d> &_right, int index)
-                         -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
-                     const Vector2d &right = _right ? *_right : left;
-                     return std::make_unique<EigenfunctionWrapper<double, AbstractMatslise<double>>>(
-                             m, m->eigenfunction(E, make_y(left), make_y(right), index));
-                 }, R""""(\
-Returns the eigenfunction corresponding to the eigenvalue E as a python function. The returned function can be evaluated in all the points in the domain.
-
-:param float E: the eigenvalue.
-:param (float,float) left, [right]: the boundary conditions.
-:param int [index]: the index of the eigenvalue
-
-:returns: a function that takes a value and returns a tuple with the eigenfunction and derivative in that value.
-)"""",
-                 py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
-            .def("eigenfunctionCalculator",
                  [](std::shared_ptr<AbstractMatslise<double>> m, double E, const Vector2d &left,
                     const optional<Vector2d> &_right, int index)
                          -> std::unique_ptr<AbstractMatslise<double>::Eigenfunction> {
@@ -159,7 +124,9 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
 >>> abs(E - -0.1102488054219) < 1e-6
 True
 >>> f = p.eigenfunction(E, left=(0,1), index=i)
->>> all(abs(f(x)[0] - p.eigenfunction(E, [x], left=(0,1), index=i)[0][0]) < 1e-6 for x in np.linspace(0, pi, 100))
+>>> exact = [0.45289019, 1., 1.35030787, 1.14115901, 0.60227556, 0.11984322]
+>>> computed = f([0.5, 1, 1.5, 2, 2.5, 3])[0,:]/f(1)[0]
+>>> np.allclose(computed, exact, 1e-6)
 True
 )"""")
             .def(py::init([](const function<double(double)> &V, double xmin, double xmax, double tolerance,
@@ -245,6 +212,20 @@ Note: only one of steps and tolerance have to be set.
 )"""", py::arg("V"), py::arg("xmax"), py::arg("tolerance") = 1e-8);
 
     py::class_<PeriodicMatslise<>, shared_ptr<PeriodicMatslise<>>>(m, "PyslisePeriodic", R""""(\
+>>> import numpy as np
+>>> from math import pi
+>>> exact = [2.02942, 6.50049, 7.01506, 18.58477, 18.66548, 38.58162, 38.62154, 66.58204, 66.60537, 102.58252]
+>>> andrews = PyslisePeriodic(lambda x: x*x*(pi-x), 0, pi)
+>>> computed = andrews.eigenvaluesByIndex(0, 10)
+>>> len(computed)
+10
+>>> index, value, multiplicty = zip(*computed)
+>>> index
+(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+>>> np.allclose(value, exact, 1e-4)
+True
+>>> set(multiplicty)
+{1}
 )"""")
             .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
                 return std::make_shared<PeriodicMatslise<>>(V, min, max, tolerance);

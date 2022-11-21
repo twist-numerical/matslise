@@ -1,5 +1,5 @@
 set(CMAKE_CXX_STANDARD 17)
-set(PYSLISE_VERSION "3.2.0")
+set(MATSLISE_VERSION "3.2.0")
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 
 cmake_policy(SET CMP0077 NEW)
@@ -42,6 +42,8 @@ if (MATSLISE_MATSCS)
     set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyscs.cpp)
     add_compile_definitions(WITH_MATSCS)
 endif ()
+
+add_compile_definitions(MATSLISE_VERSION="${MATSLISE_VERSION}")
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/module.cpp js/matslise.cpp js/sturm_liouville.cpp ${MATSLISE_FULL_SRC})

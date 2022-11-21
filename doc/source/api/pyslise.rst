@@ -1,5 +1,8 @@
-Pyslise
+Schrödinger equations
 =======
+
+General Schrödinger equations
+---------------------
 
 These two classes are able to solve the one dimensional time
 independent Schrödinger equation. The first one (Pyslise)
@@ -14,6 +17,9 @@ problem is symmetric.
    
    .. automethod:: __init__
 
+Symmetric Schrödinger equations
+---------------------
+
 Half range reduction can be applied when the problem is
 symmetric. This symmetry has following requirements:
 
@@ -23,6 +29,17 @@ symmetric. This symmetry has following requirements:
 - The boundary conditions are symmetric left and right.
 
 .. autoclass:: pyslise.PysliseHalf
+  :members:
+  :inherited-members:
+  :undoc-members:
+
+   .. automethod:: __init__
+
+
+Periodic Schrödinger equations
+---------------------
+
+.. autoclass:: pyslise.PyslisePeriodic
   :members:
   :inherited-members:
   :undoc-members:

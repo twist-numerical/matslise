@@ -31,7 +31,7 @@ class CMakeBuild(build_ext):
 
 setup(
     name="pyslise",
-    version="${PYSLISE_VERSION}",
+    version="${MATSLISE_VERSION}",
     author="Toon Baeyens",
     author_email="toon.baeyens@ugent.be",
     description="Python bindings for the C++ version of Matslise",
