@@ -96,7 +96,7 @@ namespace matslise {
     };
 }
 
-#define MATSLISE_SCOPED_TIMER(name) ScopedTimer __st(name)
+#define MATSLISE_SCOPED_TIMER(name) matslise::ScopedTimer __st(name)
 #else
 #define MATSLISE_SCOPED_TIMER(name)
 #endif //MATSLISE_PROFILING
