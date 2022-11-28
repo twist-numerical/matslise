@@ -2,6 +2,7 @@
 #define SCHRODINGER_CALCULATE_ETA_H
 
 #include "eigen.h"
+#include <math.h>
 
 template<typename Scalar>
 struct CalculateEtaData {

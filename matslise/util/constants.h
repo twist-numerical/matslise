@@ -1,6 +1,8 @@
 #ifndef MATSLISE_CONSTANTS_H
 #define MATSLISE_CONSTANTS_H
 
+#include <math.h>
+
 template<typename Scalar>
 class constants {
 public:

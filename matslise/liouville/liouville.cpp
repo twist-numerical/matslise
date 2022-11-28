@@ -1,3 +1,4 @@
+#include <math.h>
 #include <vector>
 #include "../liouville.h"
 #include "../util/legendre.h"
