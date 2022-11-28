@@ -37,28 +37,6 @@ if (DEFINED EMSCRIPTEN)
 else ()
     set(libraries matslise Eigen3::Eigen)
 
-    OPTION(MATSLISE_LONG_DOUBLE "Compile also for the 'long double' type." OFF)
-    IF (MATSLISE_LONG_DOUBLE)
-        ADD_DEFINITIONS(-DMATSLISE_LONG_DOUBLE)
-    ENDIF (MATSLISE_LONG_DOUBLE)
-
-    OPTION(MATSLISE_QUADMATH "Compile also for quadruple precision (_float128). Boost and a supporting compiler are required." OFF)
-    IF (MATSLISE_QUADMATH)
-        find_package(Boost REQUIRED)
-        if (Boost_FOUND)
-            add_definitions(-DBOOST)
-            include_directories(${Boost_INCLUDE_DIRS})
-
-            find_package(Quadmath REQUIRED)
-            if (Quadmath_FOUND)
-                add_definitions(-DMATSLISE_QUADMATH)
-                list(APPEND libraries Quadmath::quadmath)
-            endif ()
-        endif ()
-    ENDIF (MATSLISE_QUADMATH)
-
-    option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
-
     set(MATSLISE_TEST_SRC
             util/legendre.cpp util/rectangle.cpp util/calculateEta.cpp util/polynomial.cpp
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
@@ -66,35 +44,8 @@ else ()
             matslise/sturm_liouville.cpp
             liouville/liouville.cpp liouville/klotter.cpp)
 
-    if (MATSLISE_MATSCS)
-        set(MATSLISE_TEST_SRC ${MATSLISE_TEST_SRC}
-                matscs/propagatePsi.cpp matscs/propagateTheta.cpp)
-    endif ()
-
     add_executable(matslise_test EXCLUDE_FROM_ALL ${MATSLISE_TEST_SRC} main.cpp)
 
-    OPTION(MATSLISE_USE_MKL "Use the Intel's MKL if available" OFF)
-    if (USE_MKL)
-        find_package(MKL)
-        if (MKL_FOUND)
-            set(BLA_INCLUDE_DIR "${MKL_INCLUDE_DIR}")
-            set(BLAS_LIBRARIES "${MKL_LIBRARIES}")
-            set(BLA_DEFINITIONS USE_MKL)
-            target_compile_definitions(matslise_test PUBLIC ${BLA_DEFINITIONS})
-            target_include_directories(matslise_test PUBLIC ${BLA_INCLUDE_DIR})
-
-            set(THREADS_PREFER_PTHREAD_FLAG ON)
-            find_package(Threads REQUIRED)
-            target_link_libraries(matslise_test PUBLIC
-                    m
-                    Threads::Threads
-                    ${CMAKE_DL_LIBS}
-                    ${BLAS_LIBRARIES})
-            add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
-        endif ()
-    endif ()
-
     target_link_libraries(matslise_test PRIVATE ${libraries})
-
     add_dependencies(matslise_test matslise)
 endif ()
