@@ -35,15 +35,17 @@ set(PYSLISE_SRC pyslise/module.cpp pyslise/pyslise.cpp pyslise/sturm_liouville.c
 
 set(MATSLISE_FULL_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
 
+set(defines "")
+
 option(MATSLISE_MATSCS "Build matscs for coupled systems" ON)
 
 if (MATSLISE_MATSCS)
     set(MATSLISE_SRC ${MATSLISE_SRC} ${MATSLISE_MATSCS_SRC})
     set(PYSLISE_SRC ${PYSLISE_SRC} pyslise/pyscs.cpp)
-    add_compile_definitions(WITH_MATSCS)
+    list(APPEND defines WITH_MATSCS)
 endif ()
 
-add_compile_definitions(MATSLISE_VERSION="${MATSLISE_VERSION}")
+list(APPEND defines MATSLISE_VERSION="${MATSLISE_VERSION}")
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/module.cpp js/matslise.cpp js/sturm_liouville.cpp ${MATSLISE_FULL_SRC})
@@ -74,24 +76,24 @@ else ()
 
     OPTION(PROFILE "Compile with profiling information." OFF)
     if (PROFILE)
-        ADD_DEFINITIONS(-DMATSLISE_PROFILING)
+        list(APPEND defines MATSLISE_PROFILING)
     ENDIF (PROFILE)
 
     OPTION(MATSLISE_LONG_DOUBLE "Option description" OFF)
     IF (MATSLISE_LONG_DOUBLE)
-        ADD_DEFINITIONS(-DMATSLISE_LONG_DOUBLE)
+        list(APPEND defines MATSLISE_LONG_DOUBLE)
     ENDIF (MATSLISE_LONG_DOUBLE)
 
     OPTION(MATSLISE_QUADMATH "Option description" OFF)
     IF (MATSLISE_QUADMATH)
         find_package(Boost REQUIRED)
         if (Boost_FOUND)
-            add_definitions(-DBOOST)
+            list(APPEND defines BOOST)
             include_directories(${Boost_INCLUDE_DIRS})
 
             find_package(Quadmath REQUIRED)
             if (Quadmath_FOUND)
-                add_definitions(-DMATSLISE_QUADMATH)
+                list(APPEND defines MATSLISE_QUADMATH)
                 list(APPEND libraries Quadmath::quadmath)
             endif ()
         endif ()
@@ -116,13 +118,14 @@ else ()
                         ${CMAKE_DL_LIBS}
                         ${BLAS_LIBRARIES})
             endforeach ()
-            add_definitions(-DEIGEN_USE_BLAS -DEIGEN_USE_MKL -DMKL_DIRECT_CALL)
+            list(APPEND defines EIGEN_USE_BLAS EIGEN_USE_MKL MKL_DIRECT_CALL)
         endif ()
     endif ()
 
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     message("-- Eigen3 version ${Eigen3_VERSION}")
     target_link_libraries(matslise PUBLIC ${libraries})
+    target_compile_definitions(matslise PUBLIC ${defines})
 
     OPTION(MATSLISE_PYTHON "Also build the python bindings" ON)
     if (MATSLISE_PYTHON)
@@ -131,6 +134,7 @@ else ()
             message("-- python: ${PYTHON_EXECUTABLE}")
             pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} ${PYSLISE_SRC})
             target_link_libraries(pyslise PRIVATE ${libraries})
+            target_compile_definitions(pyslise PUBLIC ${defines})
 
             configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
             configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)

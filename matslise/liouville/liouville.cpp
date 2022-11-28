@@ -34,7 +34,7 @@ LiouvilleTransformation<Scalar>::Piece::Piece(
     w = legendreW.asPolynomial();
 
     r2x = Legendre<Scalar, DEGREE>{
-            [&](Scalar rValue) { return sqrt(w(rValue) / p(rValue)); }, 0, 1
+            [&](Scalar rValue) { return std::sqrt(w(rValue) / p(rValue)); }, 0, 1
     }.asPolynomial().integral();
     r2x *= (r.max() - r.min());
     x.max() = r2x(1);
