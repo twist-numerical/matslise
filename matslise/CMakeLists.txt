@@ -74,10 +74,10 @@ else ()
     install(FILES util/y.h util/eigen.h util/sectorbuilder.h util/rectangle.h util/scoped_timer.h
             DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/matslise/util)
 
-    OPTION(PROFILE "Compile with profiling information." OFF)
-    if (PROFILE)
+    OPTION(MATSLISE_PROFILING "Compile with profiling information." OFF)
+    if (MATSLISE_PROFILING)
         list(APPEND defines MATSLISE_PROFILING)
-    ENDIF (PROFILE)
+    ENDIF (MATSLISE_PROFILING)
 
     OPTION(MATSLISE_LONG_DOUBLE "Option description" OFF)
     IF (MATSLISE_LONG_DOUBLE)
