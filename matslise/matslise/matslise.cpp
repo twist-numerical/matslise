@@ -17,6 +17,7 @@ template<int cols>
 pair<Y<Scalar, 1, cols>, typename conditional<cols == 1, Scalar, Eigen::Array<Scalar, cols, 1>>::type>
 Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar, 1, cols> &_y,
                             const Scalar &a, const Scalar &b, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("Matslise::propagate");
     if (!domain.contains(a) || !domain.contains(b))
         throw runtime_error("Matslise::propagate(): a and b should be in the interval");
     Y<Scalar, 1, cols> y = _y;
@@ -46,6 +47,7 @@ Matslise<Scalar>::propagate(const Scalar &E, const Y<Scalar, 1, cols> &_y,
 template<typename Scalar>
 tuple<Scalar, Scalar, Scalar>
 Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, bool use_h) const {
+    MATSLISE_SCOPED_TIMER("Matslise::matchingError");
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
     tie(l, thetaL) = propagate(E, left, domain.min(), sectors[matchIndex]->max, use_h);
@@ -142,6 +144,7 @@ computeEigenvaluesHelper(const Matslise<Scalar> *ms, Scalar Emin, Scalar Emax, i
 template<typename Scalar>
 vector<pair<int, Scalar>>
 Matslise<Scalar>::eigenvaluesByIndex(int Imin, int Imax, const Y<Scalar> &left, const Y<Scalar> &right) const {
+    MATSLISE_SCOPED_TIMER("Matslise::eigenvaluesByIndex");
     Scalar Emin = -1;
     Scalar Emax = 1;
     while (true) {
@@ -175,12 +178,14 @@ template<typename Scalar>
 vector<pair<int, Scalar>>
 Matslise<Scalar>::eigenvalues(const Scalar &Emin, const Scalar &Emax, const Y<Scalar> &left,
                               const Y<Scalar> &right) const {
+    MATSLISE_SCOPED_TIMER("Matslise::eigenvalues");
     return computeEigenvaluesHelper(this, Emin, Emax, 0, INT_MAX, left, right);
 }
 
 template<typename Scalar>
 Scalar
 Matslise<Scalar>::eigenvalueError(const Scalar &E, const Y<Scalar> &left, const Y<Scalar> &right, int) const {
+    MATSLISE_SCOPED_TIMER("Matslise::eigenvalueError");
     return abs(E - newtonIteration<Scalar>(this, E, left, right, false).second);
 }
 
@@ -245,6 +250,7 @@ public:
     }
 
     virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
+        MATSLISE_SCOPED_TIMER("Matslise::Eigenfunction::operator()(Scalar)");
         if (x < matslise->domain.template min<0>() || x > matslise->domain.template max<0>())
             return Eigen::Array<Scalar, 2, 1>::Zero();
         auto sector = findSector(x, matslise->sectors.begin(), matslise->sectors.end());
@@ -259,6 +265,7 @@ public:
 
     virtual Eigen::Array<Scalar, Eigen::Dynamic, 2>
     operator()(const Eigen::Array<Scalar, Eigen::Dynamic, 1> &x) const override {
+        MATSLISE_SCOPED_TIMER("Evaluate Matslise::Eigenfunction::operator()(Array)");
         Eigen::Index n = x.size();
 
         Array<Scalar, Dynamic, 2> ys(n, 2);

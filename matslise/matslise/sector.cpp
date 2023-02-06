@@ -48,6 +48,7 @@ void Matslise<Scalar>::Sector::setDirection(Direction newDirection) {
 
 template<typename Scalar>
 void Matslise<Scalar>::Sector::calculateTCoeffs() {
+    MATSLISE_SCOPED_TIMER("Matslise::Sector::calculateTCoeffs");
     calculate_tcoeff_matrix(h, vs, t_coeff, t_coeff_h);
 }
 
