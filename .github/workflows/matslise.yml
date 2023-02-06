@@ -211,11 +211,11 @@ jobs:
           git checkout 3.3
           cmake ..
       - name: Set up Node
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v3
         with:
-          node-version: 10
+          node-version: 18
       - name: Install emscripten
-        uses: mymindstorm/setup-emsdk@v7
+        uses: mymindstorm/setup-emsdk@v11
         with:
           version: 1.39.20
       - name: NPM install ava
