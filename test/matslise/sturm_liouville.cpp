@@ -64,7 +64,7 @@ TEST_CASE("Example 2: p=(1+x)², q=x²-2, w=exp(x)", "[matslise][sturm-liouville
 }
 
 TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liouville]") {
-    // The values in the article are not accurate. This true values are from Matslise 2.0.
+    // The values in the article are not accurate. These true values are from Matslise 2.0.
     // The stated boundary conditions are not the same as used in table 5
     // β_1 = 10, β_2 = 1
 
