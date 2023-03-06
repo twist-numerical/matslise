@@ -96,7 +96,7 @@ TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liou
             ++i;
         }
 
-        REQUIRE(i == exact.size());
+        REQUIRE(i == (int) exact.size());
     }
 
     ArrayXXd eigenfunctions(101, 3);

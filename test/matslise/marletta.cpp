@@ -13,7 +13,7 @@ using namespace Eigen;
 TEST_CASE("Marletta", "[matslise][marletta]") {
     Matslise<double> marletta([](double x) {
         return 3 * (x - 31) / (4 * (x + 1) * (x + 4) * (x + 4));
-    }, 0, 12, 1e-6);
+    }, 0, 12, 1e-9);
     Y<double> left({-8, 5}, {0, 0});
     Y<double> right({0, 1}, {0, 0});
 
@@ -30,7 +30,7 @@ TEST_CASE("Marletta mirrored", "[matslise][marletta]") {
     Matslise<double> marletta([](double x) {
         x = 12 - x;
         return 3 * (x - 31) / (4 * (x + 1) * (x + 4) * (x + 4));
-    }, 0, 12, 1e-6);
+    }, 0, 12, 1e-9);
     Y<double> left({0, 1}, {0, 0});
     Y<double> right({8, 5}, {0, 0});
 
@@ -46,7 +46,7 @@ TEST_CASE("Marletta mirrored", "[matslise][marletta]") {
 TEST_CASE("Marletta mirrored boundary", "[matslise][marletta]") {
     Matslise<double> marletta([](double x) {
         return 3 * (x - 31) / (4 * (x + 1) * (x + 4) * (x + 4));
-    }, 0, 12, 1e-6);
+    }, 0, 12, 1e-9);
     Y<double> left({0, 1}, {0, 0});
     Y<double> right({-8, 5}, {0, 0});
 

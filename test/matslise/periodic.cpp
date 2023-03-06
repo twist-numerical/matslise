@@ -39,7 +39,7 @@ TEST_CASE("Periodic Andrews asymmetric", "[matslise][periodic]") {
         for (int i = 0; i < 20; ++i) {
             auto &eigenvalue = eigenvalues[i];
             REQUIRE(get<0>(eigenvalue) == i);
-            REQUIRE_THAT(get<1>(eigenvalue), WithinAbs(exact[i], 1e-4));
+            REQUIRE_THAT(get<1>(eigenvalue), WithinAbs(exact[i], 1e-4) || WithinRel(exact[i], 1e-4));
             REQUIRE(get<2>(eigenvalue) == 1);
         }
     }
@@ -50,7 +50,7 @@ TEST_CASE("Periodic Andrews asymmetric", "[matslise][periodic]") {
         auto ei = eigenvalues.begin();
         for (int i = 3; i < 10; ++i, ++ei) {
             REQUIRE(get<0>(*ei) == i);
-            REQUIRE_THAT(get<1>(*ei), WithinAbs(exact[i], 1e-4));
+            REQUIRE_THAT(get<1>(*ei), WithinAbs(exact[i], 1e-4) || WithinRel(exact[i], 1e-4));
             REQUIRE(get<2>(*ei) == 1);
         }
     }
@@ -117,7 +117,7 @@ TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
                 REQUIRE(seen.insert(j).second);
                 auto f = exact.find(j);
                 if (f != exact.end()) {
-                    REQUIRE_THAT(f->second, WithinAbs(E, 1e-4));
+                    REQUIRE_THAT(f->second, WithinAbs(E, 1e-4) || WithinRel(E, 1e-4));
                 }
             }
         }

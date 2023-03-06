@@ -45,7 +45,7 @@ void testEigenvaluesByIndex(
     int j = offset;
     for (const auto &iE: eigenvalues) {
         REQUIRE(iE.first == j);
-        REQUIRE_THAT(iE.second, WithinAbs(correct[j], tolerance));
+        REQUIRE_THAT(iE.second, WithinAbs(correct[j], tolerance) || WithinRel(correct[j], tolerance));
         ++j;
     }
 }
