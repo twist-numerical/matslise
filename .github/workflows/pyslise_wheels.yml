@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2019, macos-10.15 ]
+        os: [ windows-2022, macos-12 ]
         python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
     steps:
       - name: Cache Eigen3
@@ -77,7 +77,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2019, macos-10.15 ]
+        os: [ windows-2022, macos-12 ]
         python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
     steps:
       - uses: actions/download-artifact@v2
@@ -103,7 +103,7 @@ jobs:
         run: |
           python test/pyslise/test_docs.py --verbose
   build_wheel_manylinux:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v2
         with:
@@ -118,7 +118,7 @@ jobs:
           path: ./wheelhouse/*.whl
   test_wheel_manylinux:
     if: always()
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     needs: build_wheel_manylinux
     strategy:
       fail-fast: false
@@ -144,7 +144,7 @@ jobs:
           python test/pyslise/test_docs.py --verbos
   upload_wheels:
     if: always()
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     needs: [ test_wheel, test_wheel_manylinux ]
     steps:
       - uses: actions/download-artifact@v2 # download all artifacts
