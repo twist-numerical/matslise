@@ -1,12 +1,8 @@
-//
-// Created by toon on 4/20/20.
-//
-
 #ifndef MATSLISE_TEST_PROBLEM_H
 #define MATSLISE_TEST_PROBLEM_H
 
 #include "../../matslise/matslise.h"
-#include "../catch.hpp"
+#include "../test.h"
 
 
 template<typename Scalar>
@@ -49,7 +45,7 @@ void testEigenvaluesByIndex(
     int j = offset;
     for (const auto &iE: eigenvalues) {
         REQUIRE(iE.first == j);
-        REQUIRE(Approx(iE.second).margin(tolerance) == correct[j]);
+        REQUIRE_THAT(iE.second, WithinAbs(correct[j], tolerance));
         ++j;
     }
 }
@@ -73,17 +69,17 @@ void testOrthogonality(
                 = problem.eigenfunction(iE.second, left, right, iE.first);
 
         for (int i = 0; i < xs.rows(); ++i) {
-            CHECK(Approx(f_xs(i, 0)).margin(tolerance) == (*f)(xs[i])(0));
+            CHECK_THAT(f_xs(i, 0), WithinAbs((*f)(xs[i])(0), tolerance));
         }
 
         evaluated.emplace_back(f_xs.col(0));
     }
 
     {
-        INFO("Checking orthonormality")
+        INFO("Checking orthonormality");
         for (const auto &f1: evaluated)
             for (const auto &f2: evaluated)
-                CHECK(Approx(lobatto_quadrature<Scalar>(xs, f1 * f2)).margin(tolerance) == (&f1 == &f2 ? 1 : 0));
+                CHECK_THAT(lobatto_quadrature<Scalar>(xs, f1 * f2), WithinAbs<Scalar>(&f1 == &f2 ? 1 : 0, tolerance));
     }
 }
 

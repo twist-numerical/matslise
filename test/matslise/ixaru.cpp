@@ -1,7 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matslise.h"
 #include "test_problem.h"
 

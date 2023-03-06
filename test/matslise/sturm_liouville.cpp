@@ -1,7 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matslise.h"
 #include "../../matslise/liouville.h"
 #include "../../matslise/util/constants.h"
@@ -28,7 +28,7 @@ TEST_CASE("Example 1: p=1, q=0, w=(1+x)^-2", "[matslise][sturm-liouville]") {
         REQUIRE(iE.first == i);
         double exact = 0.25 + f * (i + 1) * (i + 1);
 
-        REQUIRE(Approx(exact).epsilon(1e-6) == iE.second);
+        REQUIRE_THAT(iE.second, WithinAbs(exact, 1e-6));
 
         ++i;
     }
@@ -56,11 +56,11 @@ TEST_CASE("Example 2: p=(1+x)², q=x²-2, w=exp(x)", "[matslise][sturm-liouville
     for (auto &iE: sl.eigenvaluesByIndex(0, (int) exact.size(), dirichlet, neumann)) {
         REQUIRE(iE.first == i);
 
-        REQUIRE(Approx(exact[i]).epsilon(1e-6) == iE.second);
+        REQUIRE_THAT(iE.second, WithinAbs(exact[i], 1e-6));
 
         ++i;
     }
-    REQUIRE(i == exact.size());
+    REQUIRE(i == int(exact.size()));
 }
 
 TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liouville]") {
@@ -91,7 +91,7 @@ TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liou
         for (auto &iE: sl.eigenvaluesByIndex(0, (int) exact.size(), dirichlet, right)) {
             REQUIRE(iE.first == i);
 
-            REQUIRE(Approx(exact[i]).epsilon(1e-6) == iE.second);
+            REQUIRE_THAT(iE.second, WithinAbs(exact[i], 1e-6));
 
             ++i;
         }
@@ -116,7 +116,7 @@ TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liou
             INFO("Eigenfunction " << i);
             REQUIRE(get<0>(iEf) == i);
 
-            REQUIRE(Approx(exact[i]).epsilon(1e-6) == get<1>(iEf));
+            REQUIRE_THAT(get<1>(iEf), WithinAbs(exact[i], 1e-6));
 
             auto &f = *get<2>(iEf);
 
@@ -129,7 +129,3 @@ TEST_CASE("Example 3: p=2+sin(2πx), q=-10, w=1+sqrt(x)", "[matslise][sturm-liou
     }
 
 }
-
-
-
-

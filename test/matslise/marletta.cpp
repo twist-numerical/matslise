@@ -1,11 +1,10 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matslise.h"
 #include "../../matslise/util/constants.h"
 #include "test_problem.h"
-
 
 using namespace matslise;
 using namespace std;

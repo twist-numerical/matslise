@@ -1,5 +1,5 @@
 #include <cmath>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/liouville.h"
 #include "../../matslise/util/constants.h"
 
@@ -22,14 +22,14 @@ TEST_CASE("Symbolic test liouville transformation", "[liouville]") {
     };
 
     auto dom = transformation.xDomain();
-    REQUIRE(Approx(dom.min()) == 0);
-    REQUIRE(Approx(dom.max()) == 1.3136317360059335);
+    REQUIRE_THAT(dom.min(), WithinAbs(0.0, 1e-6));
+    REQUIRE_THAT(dom.max(), WithinAbs(1.3136317360059335, 1e-6));
 
     for (double r = rMin; r < rMax; r += 0.01) {
         double exact = log(1 + square(std::tan(r))) / 2 - 0.005008355623235258;
 
-        REQUIRE(Approx(exact).margin(1e-5) == transformation.r2x(r));
-        REQUIRE(Approx(r).margin(1e-5) == transformation.x2r(exact));
+        REQUIRE_THAT(transformation.r2x(r), WithinAbs(exact, 1e-5));
+        REQUIRE_THAT(transformation.x2r(exact), WithinAbs(r, 1e-5));
     }
 
     for (double x = 0.1; x < dom.max(); x += 0.01) {
@@ -37,6 +37,6 @@ TEST_CASE("Symbolic test liouville transformation", "[liouville]") {
         double e4x = e2x * e2x;
         double exactV = (-1.010067046422495 * e2x + 0.25) / (1.020235438268662 * e4x - 2.02013409284499 * e2x + 1);
 
-        REQUIRE(Approx(exactV).epsilon(1e-3).margin(1e-3) == transformation.V(x));
+        REQUIRE_THAT(transformation.V(x), WithinAbs(exactV, 1e-3));
     }
 }

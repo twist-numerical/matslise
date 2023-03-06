@@ -35,7 +35,15 @@ if (DEFINED EMSCRIPTEN)
             DEPENDS matslise_test_copy_files
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/test-js)
 else ()
-    set(libraries matslise Eigen3::Eigen)
+    Include(FetchContent)
+
+    FetchContent_Declare(
+            Catch2
+            GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+            GIT_TAG        v3.3.2 # or a later release
+    )
+
+    FetchContent_MakeAvailable(Catch2)
 
     set(MATSLISE_TEST_SRC
             util/legendre.cpp util/rectangle.cpp util/calculateEta.cpp util/polynomial.cpp
@@ -44,8 +52,8 @@ else ()
             matslise/sturm_liouville.cpp
             liouville/liouville.cpp liouville/klotter.cpp)
 
-    add_executable(matslise_test EXCLUDE_FROM_ALL ${MATSLISE_TEST_SRC} main.cpp)
+    add_executable(matslise_test EXCLUDE_FROM_ALL ${MATSLISE_TEST_SRC})
 
-    target_link_libraries(matslise_test PRIVATE ${libraries})
+    target_link_libraries(matslise_test PRIVATE matslise Eigen3::Eigen Catch2::Catch2WithMain)
     add_dependencies(matslise_test matslise)
 endif ()

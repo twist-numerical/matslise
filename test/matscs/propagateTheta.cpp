@@ -1,7 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matscs.h"
 
 
@@ -24,7 +24,6 @@ TEST_CASE("Test propagateTheta", "[matscs][propagateTheta]") {
     }, 4, 0.1, 1, AutomaticSectorBuilder<Matscs<>>(1e-5));
     double E = 14.94180054416473;
     double theta = 0;
-    REQUIRE(Approx(
-            scs.propagate(E, Y<double, Dynamic>::Dirichlet(4), 0.1, 1, theta).first
-                    .block().determinant()).margin(1e-3) == 0);
+    REQUIRE_THAT(scs.propagate(E, Y<double, Dynamic>::Dirichlet(4), 0.1, 1, theta).first
+                         .block().determinant(), WithinAbs<double>(0, 1e-3));
 }

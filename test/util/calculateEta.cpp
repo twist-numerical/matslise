@@ -1,7 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matslise.h"
 #include "../../matslise/util/calculateEta.h"
 
@@ -15,7 +15,7 @@ void testEta(const Scalar &Z, const std::array<Scalar, etaCount> &correct, const
     Array<Scalar, etaCount, 1> etas = calculateEta<Scalar, etaCount>(Z);
 
     for (int i = 0; i < etaCount; ++i)
-        REQUIRE(abs(etas[i] - correct[i]) <= tolerance);
+        REQUIRE_THAT(etas[i], WithinAbs(correct[i], tolerance));
 }
 
 TEST_CASE("calculate eta", "[util][eta]") {

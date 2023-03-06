@@ -1,5 +1,5 @@
-#include "../catch.hpp"
 #include "../../matslise/util/legendre.h"
+#include "../test.h"
 #include "fEquals.h"
 
 using namespace matslise::legendre;
@@ -12,7 +12,7 @@ TEST_CASE("As polynomial", "[util][legendre]") {
     auto poly = l.asPolynomial();
 
     for (double x = xmin; x < xmax; x += 0.01) {
-        REQUIRE(Approx(poly((x - xmin) / (xmax - xmin))).margin(1e-8) == std::sin(x));
+        REQUIRE_THAT(poly((x - xmin) / (xmax - xmin)), WithinAbs(std::sin(x), 1e-8));
     }
 }
 

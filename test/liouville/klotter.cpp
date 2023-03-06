@@ -1,6 +1,6 @@
 #include <cmath>
 #include <iostream>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/liouville.h"
 #include "../../matslise/matslise.h"
 #include "../../matslise/util/constants.h"
@@ -34,7 +34,7 @@ TEST_CASE("Klotter with liouville transformation", "[liouville]") {
     for (auto &iE: eigenvalues) {
         double exact = square(iE.first + 1);
         REQUIRE(i == iE.first);
-        REQUIRE(Approx(exact).epsilon(1e-6) == iE.second);
+        REQUIRE_THAT(iE.second, WithinRel(exact, 1e-6));
         ++i;
         // std::cout << "E" << iE.first << ": " << iE.second << ", error: " << (iE.second - exact) << std::endl;
     }
@@ -58,7 +58,7 @@ TEST_CASE("Klotter as Sturm-Liouville problem", "[liouville]") {
     for (auto &iE: eigenvalues) {
         double exact = square(iE.first + 1);
         REQUIRE(i == iE.first);
-        REQUIRE(Approx(exact).epsilon(1e-6) == iE.second);
+        REQUIRE_THAT(iE.second, WithinRel(exact, 1e-6));
         ++i;
         // std::cout << "E" << iE.first << ": " << iE.second << ", error: " << (iE.second - exact) << std::endl;
     }

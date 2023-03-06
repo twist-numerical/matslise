@@ -1,7 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matslise.h"
 #include "../../matslise/util/eigen.h"
 #include "../../matslise/util/constants.h"
@@ -25,7 +25,7 @@ TEST_CASE("HR: sanity checks eigenfunctions", "[halfrange][matslise][mathieu]") 
 
     Y<> y0 = Y<>::Dirichlet();
 
-    for (const ArrayXd &xs : vector<ArrayXd>{
+    for (const ArrayXd &xs: vector<ArrayXd>{
             ArrayXd(0),
             {(ArrayXd(3) << 0.5, 1, 1.5).finished()},
             {(ArrayXd(3) << -1.5, -1, -0.5).finished()},
@@ -34,7 +34,7 @@ TEST_CASE("HR: sanity checks eigenfunctions", "[halfrange][matslise][mathieu]") 
             {(ArrayXd(1) << -1).finished()},
             {(ArrayXd(3) << -1, 0, 1).finished()}
     }) {
-        for (const double E : eigenvalues) {
+        for (const double E: eigenvalues) {
             Array<double, Dynamic, 2> fs = (*ms.eigenfunction(E, y0))(xs);
 
             unique_ptr<Matslise<>::Eigenfunction> f = ms.eigenfunction(E, y0);
@@ -58,7 +58,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][m
         REQUIRE(i == eigenvalues[i].first);
         double E = eigenvalues[i].second;
         double error = ms.eigenvalueError(E, y0);
-        REQUIRE(Approx(correct[i]).margin(error) == E);
+        REQUIRE_THAT(E, WithinAbs(correct[i], error));
         REQUIRE(fabs(error) < 1e-6);
     }
 }
@@ -72,12 +72,12 @@ TEST_CASE("HR: Solving the mathieu problem (first 10) (auto)", "[halfrange][mats
 
     Y<double> y0({0, 1}, {0, 0});
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, (int) correct.size(), y0, y0);
-    for (unsigned int i = 0; i < correct.size(); ++i) {
+    for (int i = 0; i < int(correct.size()); ++i) {
         REQUIRE(i == eigenvalues[i].first);
         double E = eigenvalues[i].second;
         double error = ms.eigenvalueError(E, y0, y0);
         REQUIRE(fabs(error) < 1e-6);
-        REQUIRE(Approx(correct[i]).margin(error) == E);
+        REQUIRE_THAT(E, WithinAbs(correct[i], error));
     }
 }
 
@@ -95,7 +95,7 @@ TEST_CASE("HR: Solving the mathieu problem (skip 100)", "[halfrange][matslise][m
     REQUIRE(correct.size() == eigenvalues.size());
     for (unsigned int i = 0; i < correct.size(); ++i) {
         REQUIRE((signed int) (offset + i) == eigenvalues[i].first);
-        REQUIRE(Approx(correct[i]).margin(1e-12) == eigenvalues[i].second);
+        REQUIRE_THAT(eigenvalues[i].second, WithinAbs(correct[i], 1e-12));
     }
 }
 
@@ -104,7 +104,7 @@ TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctio
     Y<double> ystart({0, 1}, {0, 0});
 
     vector<pair<int, double>> eigenvalues = ms.eigenvaluesByIndex(0, 10, ystart);
-    for (pair<int, double> ie : eigenvalues) {
+    for (pair<int, double> ie: eigenvalues) {
         double e = ie.second;
         unique_ptr<Matslise<>::Eigenfunction> f = ms.eigenfunction(e, ystart);
 
@@ -115,6 +115,6 @@ TEST_CASE("HR: Mathieu normalized", "[halfrange][mathieu][matslise][eigenfunctio
             v += q * q;
         }
         v *= constants<double>::PI / n;
-        REQUIRE(Approx(v).margin(1e-7) == 1);
+        REQUIRE_THAT(v, WithinAbs(1.0, 1e-7));
     }
 }

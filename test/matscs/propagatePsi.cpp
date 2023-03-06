@@ -1,7 +1,7 @@
 #include <cmath>
 #include <vector>
 #include <tuple>
-#include "../catch.hpp"
+#include "../test.h"
 #include "../../matslise/matscs.h"
 
 
@@ -32,8 +32,7 @@ TEST_CASE("Test propagatePsi", "[matscs][propagatePsi]") {
     for (double E : Es) {
         MatrixXd left = scs.propagatePsi(E, MatrixXd::Zero(2, 2), 0, mid);
         MatrixXd right = scs.propagatePsi(E, MatrixXd::Zero(2, 2), 20, mid);
-        REQUIRE(Approx(0).margin(1e-3) == (left - right).determinant());
+        REQUIRE_THAT((left - right).determinant(), WithinAbs(0, 1e-3));
     }
 }
-
 */
