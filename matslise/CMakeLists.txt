@@ -12,9 +12,7 @@ if (MSVC)
             /wd4661 # no suitable definition provided for explicit template instantiation request
             /wd4820 #'bytes' bytes padding added after construct 'member_name'
             /wd4464  # relative include path contains '..'
-            /DNOMINMAX
-            /D_USE_MATH_DEFINES
-            /bigobj)
+    )
 else ()
     add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
 endif ()
@@ -62,11 +60,18 @@ else ()
         add_library(matslise ${MATSLISE_SRC})
     endif ()
 
+    set(MATSLISE_COMPILE_OPTIONS)
+
+    IF(MSVC)
+        set(MATSLISE_COMPILE_OPTIONS ${MATSLISE_COMPILE_OPTIONS} /DNOMINMAX /D_USE_MATH_DEFINES /bigobj)
+    endif ()
+
     OPTION(MATSLISE_OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
-    IF (MATSLISE_OPTIMIZE AND NOT MSVC)
+    if (MATSLISE_OPTIMIZE AND NOT MSVC)
         message("-- Using -O3 -march=native")
-        target_compile_options(matslise PUBLIC -O3 -march=native)
-    ENDIF ()
+        set(MATSLISE_COMPILE_OPTIONS ${MATSLISE_COMPILE_OPTIONS} -O3 -march=native)
+    endif ()
+    target_compile_options(matslise PUBLIC ${MATSLISE_COMPILE_OPTIONS})
 
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
@@ -137,6 +142,7 @@ else ()
             pybind11_add_module(pyslise MODULE ${MATSLISE_SRC} ${PYSLISE_SRC})
             target_link_libraries(pyslise PRIVATE ${libraries})
             target_compile_definitions(pyslise PUBLIC ${defines})
+            target_compile_options(pyslise PUBLIC ${MATSLISE_COMPILE_OPTIONS})
 
             configure_file(pyslise/setup.py setup.py NEWLINE_STYLE LF)
             configure_file(pyslise/description.md description.md NEWLINE_STYLE LF)
