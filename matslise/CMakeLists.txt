@@ -17,11 +17,6 @@ if (MSVC)
             /bigobj)
 else ()
     add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
-    OPTION(MATSLISE_OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
-    IF (MATSLISE_OPTIMIZE)
-        message("-- Using -O3 -march=native")
-        add_compile_options(-O3 -march=native)
-    ENDIF (MATSLISE_OPTIMIZE)
 endif ()
 
 set(MATSLISE_SRC
@@ -66,6 +61,13 @@ else ()
     else ()
         add_library(matslise ${MATSLISE_SRC})
     endif ()
+
+    OPTION(MATSLISE_OPTIMIZE "Enable extra optimization flags (-O3 -march=native)" OFF)
+    IF (MATSLISE_OPTIMIZE AND NOT MSVC)
+        message("-- Using -O3 -march=native")
+        target_compile_options(matslise PUBLIC -O3 -march=native)
+    ENDIF ()
+
     install(TARGETS matslise
             ARCHIVE DESTINATION lib
             LIBRARY DESTINATION lib)

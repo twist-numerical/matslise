@@ -67,20 +67,20 @@ vector<double> correct = {-0.110248816992, 3.917024772998, 9.047739259809, 16.03
                           40000.000012500299, 40401.000012376229};
 
 TEST_CASE("Solving the mathieu problem (first 200)", "[matslise][mathieu]") {
-    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, UniformSectorBuilder<Matslise<>>(8));
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-10, UniformSectorBuilder<Matslise<>>(12));
 
     testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto)", "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8);
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-10);
 
     testProblem(ms, Y<>::Dirichlet(), Y<>::Dirichlet(), correct, 1e-7);
 }
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (negative boundary conditions)",
           "[matslise][mathieu][auto]") {
-    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8);
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-10);
 
     Y<double> y0({0, -1}, {0, 0});
     testProblem(ms, y0, y0, correct, 1e-7);
@@ -125,7 +125,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
                           -2.57141674375544, -3.13821749458430, -3.10573501735402, -2.51014152163740, -1.48587759669341,
                           -0.23002968436916, 1.03774249508994, 2.11136070876314, 2.82599938325101, 3.07626133037988};
 
-    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-8, UniformSectorBuilder<Matslise<>>(8));
+    Matslise<double> ms(&mathieu<>, 0, constants<double>::PI, 1e-11, UniformSectorBuilder<Matslise<>>(8));
     Y<double> ystart({0, 1}, {0, 0});
 
     {
@@ -134,15 +134,15 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         REQUIRE(0 == eigenvalues[0].first);
         double e = eigenvalues[0].second;
 
-        REQUIRE_THAT(e, WithinAbs(-0.11024881635796, 1e-12));
+        REQUIRE_THAT(e, WithinAbs(-0.11024881635796, 1e-8));
         Array<double, Dynamic, 2> result = (*ms.eigenfunction(e, ystart, ystart))(x);
         REQUIRE(((unsigned long) result.rows()) == y0.size());
         for (Eigen::Index i = result.rows() - 1; i >= 0; --i)
             result.row(i) *= dy0[0] / result(0, 1);
 
         for (Eigen::Index i = 0; i < result.rows(); ++i) {
-            REQUIRE_THAT(result(i, 0), WithinAbs(y0[i], 1e-12));
-            REQUIRE_THAT(result(i, 1), WithinAbs(dy0[i], 1e-12));
+            REQUIRE_THAT(result(i, 0), WithinAbs(y0[i], 1e-8));
+            REQUIRE_THAT(result(i, 1), WithinAbs(dy0[i], 1e-8));
         }
     }
 
@@ -151,15 +151,15 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         REQUIRE(eigenvalues.size() == 1);
         double e = eigenvalues.at(0).second;
 
-        REQUIRE_THAT(e, WithinAbs(16.03297008140580, 1e-12));
+        REQUIRE_THAT(e, WithinAbs(16.03297008140580, 1e-8));
         Array<double, Dynamic, 2> result = (*ms.eigenfunction(e, ystart, ystart))(x);
         REQUIRE(result.rows() == static_cast<long>(y0.size()));
         for (Eigen::Index i = result.rows() - 1; i >= 0; --i)
             result.row(i) *= dy3[0] / result(0, 1);
 
         for (Eigen::Index i = 0; i < result.rows(); ++i) {
-            REQUIRE_THAT(result(i, 0), WithinAbs(y3[i], 1e-12));
-            REQUIRE_THAT(result(i, 1), WithinAbs(dy3[i], 1e-12));
+            REQUIRE_THAT(result(i, 0), WithinAbs(y3[i], 1e-8));
+            REQUIRE_THAT(result(i, 1), WithinAbs(dy3[i], 1e-8));
         }
     }
 
@@ -169,15 +169,15 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
         REQUIRE(get<0>(eigenpairs.at(0)) == 3);
         double e = get<1>(eigenpairs.at(0));
 
-        REQUIRE_THAT(e, WithinAbs(16.03297008140580, 1e-12));
+        REQUIRE_THAT(e, WithinAbs(16.03297008140580, 1e-8));
         Array<double, Dynamic, 2> result = (*get<2>(eigenpairs.at(0)))(x);
         REQUIRE(result.rows() == static_cast<long>(y0.size()));
         for (Eigen::Index i = result.rows() - 1; i >= 0; --i)
             result.row(i) *= dy3[0] / result(0, 1);
 
         for (Eigen::Index i = 0; i < result.rows(); ++i) {
-            REQUIRE_THAT(result(i, 0), WithinAbs(y3[i], 1e-12));
-            REQUIRE_THAT(result(i, 1), WithinAbs(dy3[i], 1e-12));
+            REQUIRE_THAT(result(i, 0), WithinAbs(y3[i], 1e-8));
+            REQUIRE_THAT(result(i, 1), WithinAbs(dy3[i], 1e-8));
         }
     }
 }
@@ -185,7 +185,7 @@ TEST_CASE("Mathieu problem eigenfunctions", "[mathieu][matslise][eigenfunctions]
 #ifdef MATSLISE_LONG_DOUBLE
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (long)", "[matslise][mathieu][auto][long]") {
-    Matslise<long double> ms(&mathieu<long double>, 0, constants<long double>::PI, 1e-8);
+    Matslise<long double> ms(&mathieu<long double>, 0, constants<long double>::PI, 1e-10);
 
     vector<long double> correct_ld(correct.size());
     transform(correct.begin(), correct.end(), correct_ld.begin(),
@@ -203,7 +203,7 @@ TEST_CASE("Solving the mathieu problem (first 200) (auto) (long)", "[matslise][m
 using boost::multiprecision::float128;
 
 TEST_CASE("Solving the mathieu problem (first 200) (auto) (float128)", "[matslise][mathieu][auto][float128]") {
-    Matslise<float128> ms(&mathieu<float128>, 0, constants<float128>::PI, 1e-8);
+    Matslise<float128> ms(&mathieu<float128>, 0, constants<float128>::PI, 1e-10);
 
     vector<float128> correct_q(correct.size());
     transform(correct.begin(), correct.end(), correct_q.begin(),

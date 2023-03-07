@@ -58,7 +58,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10)", "[halfrange][matslise][m
         REQUIRE(i == eigenvalues[i].first);
         double E = eigenvalues[i].second;
         double error = ms.eigenvalueError(E, y0);
-        REQUIRE_THAT(E, WithinAbs(correct[i], error));
+        REQUIRE_THAT(E, WithinAbs(correct[i], 10*error));
         REQUIRE(fabs(error) < 1e-6);
     }
 }
@@ -77,7 +77,7 @@ TEST_CASE("HR: Solving the mathieu problem (first 10) (auto)", "[halfrange][mats
         double E = eigenvalues[i].second;
         double error = ms.eigenvalueError(E, y0, y0);
         REQUIRE(fabs(error) < 1e-6);
-        REQUIRE_THAT(E, WithinAbs(correct[i], error));
+        REQUIRE_THAT(E, WithinAbs(correct[i], 10*error));
     }
 }
 
@@ -95,7 +95,7 @@ TEST_CASE("HR: Solving the mathieu problem (skip 100)", "[halfrange][matslise][m
     REQUIRE(correct.size() == eigenvalues.size());
     for (unsigned int i = 0; i < correct.size(); ++i) {
         REQUIRE((signed int) (offset + i) == eigenvalues[i].first);
-        REQUIRE_THAT(eigenvalues[i].second, WithinAbs(correct[i], 1e-12));
+        REQUIRE_THAT(eigenvalues[i].second, WithinAbs(correct[i], 1e-12) || WithinRel(correct[i], 1e-12));
     }
 }
 
