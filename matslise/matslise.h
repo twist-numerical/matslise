@@ -285,11 +285,14 @@ namespace matslise {
     class PeriodicMatslise {
     public:
         Matslise<Scalar> matslise;
+        Eigen::Matrix<Scalar, 2, 2> K;
 
         using Eigenfunction = typename AbstractMatslise<Scalar>::Eigenfunction;
 
         PeriodicMatslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
-                         const Scalar &tolerance = 1e-8) : matslise{V, xmin, xmax, tolerance} {}
+                         const Scalar &tolerance = 1e-8,
+                         const Eigen::Matrix<Scalar, 2, 2> &K = Eigen::Matrix<Scalar, 2, 2>::Identity())
+                : matslise{V, xmin, xmax, tolerance}, K(K) {}
 
 
         std::pair<matslise::Y<Scalar, 1, 2>, Eigen::Array<Scalar, 2, 1>>

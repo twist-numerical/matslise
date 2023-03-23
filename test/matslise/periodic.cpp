@@ -126,3 +126,32 @@ TEST_CASE("Periodic Andrews symmetric", "[matslise][periodic]") {
     for (auto &ie: exact)
         REQUIRE(seen.find(ie.first) != seen.end());
 }
+
+
+TEST_CASE("Antiperiodic Andrew ", "[matslise][periodic]") {
+    PeriodicMatslise<> matslise(
+            [](double x) { return x * x * (M_PI - x); }, 0, M_PI, 1e-6, -Eigen::Matrix2d::Identity());
+
+    std::vector<double> exact{
+            2.3342987, 4.5237403, 11.6024346, 11.7198869, 27.58200, 27.63739, 51.58178, 51.61179, 83.58230, 83.60092, 123.58271,
+            123.59534, 171.58299, 171.59210, 227.58318, 227.59006, 291.58332, 291.58870, 363.58342, 363.58773
+    };
+
+
+    // None should be double
+    auto eigenvalues = matslise.eigenvaluesByIndex(0, (int) exact.size());
+    REQUIRE(exact.size() == eigenvalues.size());
+    int i, m;
+    double E;
+    int exactIndex = 0;
+    for (const auto &iem: eigenvalues) {
+        std::tie(i, E, m) = iem;
+
+        REQUIRE(exactIndex == i);
+        REQUIRE(m == 1);
+        REQUIRE_THAT(E, WithinRel(exact[i], 1e-3));
+
+        ++exactIndex;
+    }
+    REQUIRE(exact.size() == exactIndex);
+}

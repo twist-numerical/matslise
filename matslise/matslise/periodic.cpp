@@ -7,6 +7,15 @@ using namespace Eigen;
 using namespace std;
 
 template<typename Scalar>
+inline Y<Scalar, 1, 2>
+periodicInitialValue(const Eigen::Matrix<Scalar, 2, 2> &K = Eigen::Matrix<Scalar, 2, 2>::Identity()) {
+    Y<Scalar, 1, 2> y;
+    y.y() << 1, 1, 1, -1;
+    y.y() = K * y.y();
+    return y;
+}
+
+template<typename Scalar>
 pair<Y<Scalar, 1, 2>, Array<Scalar, 2, 1>>
 PeriodicMatslise<Scalar>::propagate(
         const Scalar &E, const Y<Scalar, 1, 2> &y,
@@ -17,8 +26,8 @@ PeriodicMatslise<Scalar>::propagate(
 template<typename Scalar>
 pair<Y<Scalar, 1, 2>, Array<Scalar, 2, 1>>
 PeriodicMatslise<Scalar>::matchingError(const Scalar &E, bool use_h) const {
-    Y<Scalar, 1, 2> l = Y<Scalar, 1, 2>::Periodic();
-    Y<Scalar, 1, 2> r = Y<Scalar, 1, 2>::Periodic();
+    Y<Scalar, 1, 2> l = periodicInitialValue<Scalar>();
+    Y<Scalar, 1, 2> r = periodicInitialValue<Scalar>(K);
     Array<Scalar, 2, 1> thetaL, thetaR;
     tie(l, thetaL) = propagate(E, l, matslise.domain.min(), matslise.sectors[matslise.matchIndex]->max, use_h);
     tie(r, thetaR) = propagate(E, r, matslise.domain.max(), matslise.sectors[matslise.matchIndex]->max, use_h);
@@ -27,7 +36,7 @@ PeriodicMatslise<Scalar>::matchingError(const Scalar &E, bool use_h) const {
     error.data -= r.data;
     Array<Scalar, 2, 1> theta = thetaL - thetaR;
     theta /= constants<Scalar>::PI;
-    theta[1] += 1; // adjust for initial conditions
+    // theta[1] += 1; // adjust for Dirichlet initial conditions
     return {error, theta};
 }
 
@@ -96,7 +105,8 @@ struct EigenpairsReturn {
 template<typename Scalar, bool with_eigenfunctions>
 typename EigenpairsReturn<Scalar, with_eigenfunctions>::type
 eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, int iMin, int iMax, Scalar eps) {
-    const Y<Scalar, 1, 2> boundary = Y<Scalar, 1, 2>::Periodic();
+    Y<Scalar, 1, 2> l = periodicInitialValue<Scalar>();
+    Y<Scalar, 1, 2> r = periodicInitialValue<Scalar>(ms->K);
     typename EigenpairsReturn<Scalar, with_eigenfunctions>::type result;
     auto addToResult = [&](int i, Scalar E, bool isDouble) {
         if ((isDouble ? i + 1 < iMin : i < iMin) || i >= iMax || E < eMin || E >= eMax) return;
@@ -107,17 +117,17 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
             if (isDouble) {
                 // double eigenvalue
                 eigenfunctions.reserve(2);
-                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, boundary.col(0), boundary.col(0)));
-                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, boundary.col(1), boundary.col(1)));
+                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, l.col(0), r.col(0)));
+                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, l.col(1), r.col(1)));
             } else {
                 EigenSolver<Matrix<Scalar, 2, 2>> solver(ms->matchingError(E).first.y(), true);
                 Eigen::Index kernelIndex;
                 solver.eigenvalues().array().abs().minCoeff(&kernelIndex);
 
-                Y<Scalar> y = boundary * (Matrix<Scalar, 2, 1>) solver.eigenvectors().real().col(kernelIndex);
+                Matrix<Scalar, 2, 1> c = solver.eigenvectors().real().col(kernelIndex);
 
                 eigenfunctions.reserve(1);
-                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, y, y));
+                eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, l * c, r * c));
             }
         } else {
             result.emplace_back(i, E, isDouble ? 2 : 1);
@@ -140,6 +150,11 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
         highest += step;
 
     int i = iMin - (iMin % 2);
+    if (ms->K(0, 1) > 0 || (ms->K(0, 1) == 0 && ms->K(0, 0) < 0)) {
+        // Antiperiodic case
+        ++i;
+    }
+
     Scalar low = eMin;
     if (i == 0) {
         for (Scalar step = 1; findHigh(i)(low) > 0; step *= 2)
@@ -172,8 +187,8 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
 template<typename Scalar, bool with_eigenfunctions>
 typename EigenpairsReturn<Scalar, with_eigenfunctions>::type
 eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, const Scalar &eMin, const Scalar &eMax) {
-    int iMin = ms->matchingError(eMin).second.minCoeff() - 1;
-    int iMax = ms->matchingError(eMax).second.maxCoeff() + 1;
+    int iMin = (int) ms->matchingError(eMin).second.minCoeff() - 1;
+    int iMax = (int) ms->matchingError(eMax).second.maxCoeff() + 1;
 
     return eigenpairsHelper<Scalar, with_eigenfunctions>(ms, eMin, eMax, iMin, iMax, 1e-8);
 }
@@ -221,8 +236,8 @@ vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>
 PeriodicMatslise<Scalar>::eigenfunction(const Scalar &E) const {
     Array<Scalar, 2, 1> thetaL, thetaR;
     Scalar &match = matslise.sectors[matslise.matchIndex]->max;
-    Y<Scalar, 1, 2> l = propagate(E, Y<Scalar, 1, 2>::Periodic(), matslise.domain.min(), match).first;
-    Y<Scalar, 1, 2> r = propagate(E, Y<Scalar, 1, 2>::Periodic(), matslise.domain.max(), match).first;
+    Y<Scalar, 1, 2> l = propagate(E, periodicInitialValue<Scalar>(), matslise.domain.min(), match).first;
+    Y<Scalar, 1, 2> r = propagate(E, periodicInitialValue<Scalar>(K), matslise.domain.max(), match).first;
     Matrix<Scalar, 2, 2> err = (l.y() - r.y());
     cout << err << endl;
 

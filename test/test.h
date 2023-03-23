@@ -15,7 +15,8 @@ public:
     }
 
     bool match(const Scalar &arg) const override {
-        return abs(m_target - arg) <= m_margin;
+        Scalar error = arg - m_target;
+        return m_margin <= error && error <= m_margin;
     }
 
     std::string describe() const override {
@@ -35,9 +36,12 @@ public:
     }
 
     bool match(const Scalar &arg) const override {
-        if (m_target > m_epsilon || m_target < -m_epsilon)
-            return abs((arg - m_target) / m_target) <= m_epsilon;
-        return abs(arg) <= m_epsilon;
+        if (m_target > m_epsilon || m_target < -m_epsilon) {
+            Scalar rel_error = (arg - m_target) / m_target;
+            return m_epsilon <= rel_error && rel_error <= m_epsilon;
+        }
+        Scalar error = arg - m_target;
+        return m_epsilon <= error && error <= m_epsilon;
     }
 
     std::string describe() const override {
