@@ -225,13 +225,35 @@ True
 >>> set(multiplicty)
 {1}
 )"""")
-            .def(py::init([](const function<double(double)> &V, double min, double max, double tolerance) {
-                return std::make_shared<PeriodicMatslise<>>(V, min, max, tolerance);
-            }), R""""(\
+            .def(py::init([](const function<double(double)> &V, double xmin, double xmax, double tolerance,
+                             const Eigen::Matrix<double, 2, 2> &K, const std::vector<double> &jumps) {
+                    if(std::abs( 1 - K.determinant() ) > 1e-6)
+                        throw std::runtime_error("PyslisePeriodic: K should have determinant 1.");
+                     AutomaticSectorBuilder<Matslise<>> sb(tolerance);
+                     sb.jumps.reserve(jumps.size());
+                     for (double jump: jumps)
+                         if (xmin < jump && jump < xmax)
+                             sb.jumps.push_back(jump);
+                     std::sort(sb.jumps.begin(), sb.jumps.end());
+                     return std::make_shared<PeriodicMatslise<>>(V, xmin, xmax, tolerance, sb, K);
+                 }), R""""(\
 :param (float)->float V: the potential.
 :param float min, max: the ends of the domain.
 :param int tolerance: automatically choose steps with at least the given accuracy.
-)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8)
+
+>>> from math import pi
+>>> import numpy as np
+>>> p1 = PyslisePeriodic(lambda x: 0, 0, pi)
+>>> c1 = p1.eigenvalues(0, 20)
+>>> np.allclose(c1, [(0, 0, 1), (1, 4, 2), (3, 16, 2)], 1e-6)
+True
+>>> p2 = PyslisePeriodic(lambda x: 0, 0, pi, K=[[-1, 0], [0, -1]])
+>>> c2 = p2.eigenvalues(0, 10)
+>>> np.allclose(c2, [(0, 1, 2), (2, 9, 2)], 1e-6)
+True
+)"""", py::arg("V"), py::arg("min"), py::arg("max"), py::arg("tolerance") = 1e-8,
+                 py::arg("K") = (Eigen::Matrix<double, 2, 2>) Eigen::Matrix<double, 2, 2>::Identity(),
+                 py::arg("jumps") = std::vector<double>{})
             .def("propagate",
                  [](const std::shared_ptr<PeriodicMatslise<>> &m, double E, const Matrix2d &y, double a,
                     double b) -> Matrix2d {

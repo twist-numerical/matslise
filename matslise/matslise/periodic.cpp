@@ -105,8 +105,8 @@ struct EigenpairsReturn {
 template<typename Scalar, bool with_eigenfunctions>
 typename EigenpairsReturn<Scalar, with_eigenfunctions>::type
 eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, int iMin, int iMax, Scalar eps) {
-    Y<Scalar, 1, 2> l = periodicInitialValue<Scalar>();
-    Y<Scalar, 1, 2> r = periodicInitialValue<Scalar>(ms->K);
+    const Y<Scalar, 1, 2> l = periodicInitialValue<Scalar>();
+    const Y<Scalar, 1, 2> r = periodicInitialValue<Scalar>(ms->K);
     typename EigenpairsReturn<Scalar, with_eigenfunctions>::type result;
     auto addToResult = [&](int i, Scalar E, bool isDouble) {
         if ((isDouble ? i + 1 < iMin : i < iMin) || i >= iMax || E < eMin || E >= eMax) return;
@@ -125,7 +125,6 @@ eigenpairsHelper(const PeriodicMatslise<Scalar> *ms, Scalar eMin, Scalar eMax, i
                 solver.eigenvalues().array().abs().minCoeff(&kernelIndex);
 
                 Matrix<Scalar, 2, 1> c = solver.eigenvectors().real().col(kernelIndex);
-
                 eigenfunctions.reserve(1);
                 eigenfunctions.emplace_back(ms->matslise.eigenfunction(E, l * c, r * c));
             }

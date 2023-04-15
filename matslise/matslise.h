@@ -294,6 +294,11 @@ namespace matslise {
                          const Eigen::Matrix<Scalar, 2, 2> &K = Eigen::Matrix<Scalar, 2, 2>::Identity())
                 : matslise{V, xmin, xmax, tolerance}, K(K) {}
 
+        PeriodicMatslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
+                         const Scalar &tolerance, const sector_builder::SectorBuilder<Matslise<Scalar>> &sb,
+                         const Eigen::Matrix<Scalar, 2, 2> &K = Eigen::Matrix<Scalar, 2, 2>::Identity())
+                : matslise{V, xmin, xmax, tolerance, sb}, K(K) {}
+
 
         std::pair<matslise::Y<Scalar, 1, 2>, Eigen::Array<Scalar, 2, 1>>
         propagate(const Scalar &E, const matslise::Y<Scalar, 1, 2> &y0,
