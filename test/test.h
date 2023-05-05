@@ -16,7 +16,7 @@ public:
 
     bool match(const Scalar &arg) const override {
         Scalar error = arg - m_target;
-        return m_margin <= error && error <= m_margin;
+        return -m_margin <= error && error <= m_margin;
     }
 
     std::string describe() const override {
@@ -29,8 +29,8 @@ public:
 template<typename Scalar>
 class WithinRel : public Catch::Matchers::MatcherBase<Scalar> {
 private:
-    double m_target;
-    double m_epsilon;
+    Scalar m_target;
+    Scalar m_epsilon;
 public:
     WithinRel(Scalar target, Scalar epsilon) : m_target(target), m_epsilon(epsilon) {
     }
@@ -38,10 +38,10 @@ public:
     bool match(const Scalar &arg) const override {
         if (m_target > m_epsilon || m_target < -m_epsilon) {
             Scalar rel_error = (arg - m_target) / m_target;
-            return m_epsilon <= rel_error && rel_error <= m_epsilon;
+            return -m_epsilon <= rel_error && rel_error <= m_epsilon;
         }
         Scalar error = arg - m_target;
-        return m_epsilon <= error && error <= m_epsilon;
+        return -m_epsilon <= error && error <= m_epsilon;
     }
 
     std::string describe() const override {
