@@ -3,7 +3,6 @@
 
 #include <vector>
 #include "./util/eigen.h"
-#include "./util/rectangle.h"
 #include "./util/polynomial.h"
 #include "./matslise.h"
 
@@ -15,15 +14,15 @@ namespace matslise {
     private:
         static constexpr const int DEGREE = 8;
 
-        const Rectangle<Scalar, 1> m_rDomain;
+        const Domain<Scalar> m_rDomain;
         const Function m_p, m_q, m_w;
     public:
 
         struct Piece {
-            Rectangle<Scalar, 1> r;
-            Rectangle<Scalar, 1> x;
+            Domain<Scalar> r;
+            Domain<Scalar> x;
 
-            Piece(const LiouvilleTransformation<Scalar> &, const Rectangle<Scalar, 1> &);
+            Piece(const LiouvilleTransformation<Scalar> &, const Domain<Scalar> &);
 
             Polynomial<Scalar, DEGREE> r2x; // [0,1] -> [xmin, xmax]
             Polynomial<Scalar, DEGREE> p; // [0,1] -> p(r)
@@ -31,11 +30,11 @@ namespace matslise {
             Polynomial<Scalar, DEGREE + 2> pwx; // [0,1] -> p(x)*w(x)
 
             Scalar normalizeR(Scalar r_) const {
-                return (r_ - r.min()) / (r.max() - r.min());
+                return (r_ - r.min) / (r.max - r.min);
             };
 
             Scalar normalizeX(Scalar x_) const {
-                return (x_ - x.min()) / (x.max() - x.min());
+                return (x_ - x.min) / (x.max - x.min);
             };
 
             Scalar x2r(Scalar x_) const;
@@ -43,7 +42,7 @@ namespace matslise {
 
         std::vector<Piece> pieces;
 
-        LiouvilleTransformation(const Rectangle<Scalar, 1> &domain, const Function &p, const Function &q,
+        LiouvilleTransformation(const Domain<Scalar> &domain, const Function &p, const Function &q,
                                 const Function &w);
 
         Scalar r2x(Scalar r) const;
@@ -56,11 +55,11 @@ namespace matslise {
 
         Y<Scalar> y2z(const Scalar &x, const Y<Scalar> &y) const;
 
-        Rectangle<Scalar, 1> xDomain() const {
-            return {pieces.front().x.min(), pieces.back().x.max()};
+        Domain<Scalar> xDomain() const {
+            return {pieces.front().x.min, pieces.back().x.max};
         }
 
-        const Rectangle<Scalar, 1> &rDomain() const {
+        const Domain<Scalar> &rDomain() const {
             return m_rDomain;
         }
     };
@@ -75,7 +74,7 @@ namespace matslise {
         typedef typename AbstractMatslise<Scalar>::Eigenfunction Eigenfunction;
 
         SturmLiouville(const Function &p, const Function &q, const Function &w,
-                       const Rectangle<Scalar, 1> &domain, const Scalar &tolerance)
+                       const Domain<Scalar> &domain, const Scalar &tolerance)
                 : transformation(domain, p, q, w),
                   matslise(std::bind(&LiouvilleTransformation<Scalar>::V, transformation, std::placeholders::_1),
                            transformation.xDomain(), tolerance) {
@@ -86,8 +85,8 @@ namespace matslise {
                            const matslise::Y<Scalar> &right) const {
             return matslise.eigenvaluesByIndex(
                     Imin, Imax,
-                    transformation.z2y(transformation.rDomain().min(), left),
-                    transformation.z2y(transformation.rDomain().max(), right));
+                    transformation.z2y(transformation.rDomain().min, left),
+                    transformation.z2y(transformation.rDomain().max, right));
         }
 
         std::vector<std::tuple<int, Scalar, std::unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction>>>
@@ -98,8 +97,8 @@ namespace matslise {
                                const matslise::Y<Scalar> &right, int index = -1) const {
             return matslise.eigenvalueError(
                     E,
-                    transformation.z2y(transformation.rDomain().min(), left),
-                    transformation.z2y(transformation.rDomain().max(), right),
+                    transformation.z2y(transformation.rDomain().min, left),
+                    transformation.z2y(transformation.rDomain().max, right),
                     index);
         }
     };

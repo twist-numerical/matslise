@@ -50,8 +50,8 @@ Matslise<Scalar>::matchingError(const Scalar &E, const Y<Scalar> &left, const Y<
     MATSLISE_SCOPED_TIMER("Matslise::matchingError");
     Y<Scalar> l, r;
     Scalar thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, left, domain.min(), sectors[matchIndex]->max, use_h);
-    tie(r, thetaR) = propagate(E, right, domain.max(), sectors[matchIndex]->max, use_h);
+    tie(l, thetaL) = propagate(E, left, domain.min, sectors[matchIndex]->max, use_h);
+    tie(r, thetaR) = propagate(E, right, domain.max, sectors[matchIndex]->max, use_h);
     return make_tuple(l.data[1] * r.data[0] - r.data[1] * l.data[0],
                       l.data[3] * r.data[0] + l.data[1] * r.data[2] - (r.data[3] * l.data[0] + r.data[1] * l.data[2]),
                       thetaL - thetaR);
@@ -251,7 +251,7 @@ public:
 
     virtual Eigen::Array<Scalar, 2, 1> operator()(const Scalar &x) const override {
         MATSLISE_SCOPED_TIMER("Matslise::Eigenfunction::operator()(Scalar)");
-        if (x < matslise->domain.template min<0>() || x > matslise->domain.template max<0>())
+        if (x < matslise->domain.min || x > matslise->domain.max)
             return Eigen::Array<Scalar, 2, 1>::Zero();
         auto sector = findSector(x, matslise->sectors.begin(), matslise->sectors.end());
         int sectorIndex = sector - matslise->sectors.begin();
@@ -273,7 +273,7 @@ public:
         int sectorIndex = 0;
         auto sector = matslise->sectors.begin();
         for (Eigen::Index i = 0; i < n; ++i) {
-            if (x[i] < matslise->domain.template min<0>() || x[i] > matslise->domain.template max<0>()) {
+            if (x[i] < matslise->domain.min || x[i] > matslise->domain.max) {
                 ys.row(i).setZero();
                 continue;
             }

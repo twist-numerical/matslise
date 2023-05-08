@@ -23,13 +23,13 @@ Scalar x2r_impl(const decltype(LiouvilleTransformation<Scalar>::Piece::r2x) &r2x
 
 template<typename Scalar>
 LiouvilleTransformation<Scalar>::Piece::Piece(
-        const LiouvilleTransformation<Scalar> &lt, const Rectangle<Scalar, 1> &r_) :
+        const LiouvilleTransformation<Scalar> &lt, const Domain<Scalar> &r_) :
         r(r_),
         x({Scalar(0), Scalar(0)}) {
     static constexpr const int DEGREE = LiouvilleTransformation<Scalar>::DEGREE;
 
-    Legendre<Scalar, DEGREE + 1> legendreP{lt.m_p, r.min(), r.max()};
-    Legendre<Scalar, DEGREE + 1> legendreW{lt.m_w, r.min(), r.max()};
+    Legendre<Scalar, DEGREE + 1> legendreP{lt.m_p, r.min, r.max};
+    Legendre<Scalar, DEGREE + 1> legendreW{lt.m_w, r.min, r.max};
 
     p = legendreP.asPolynomial();
     w = legendreW.asPolynomial();
@@ -37,24 +37,24 @@ LiouvilleTransformation<Scalar>::Piece::Piece(
     r2x = Legendre<Scalar, DEGREE>{
             [&](Scalar rValue) { return sqrt(w(rValue) / p(rValue)); }, 0, 1
     }.asPolynomial().integral();
-    r2x *= (r.max() - r.min());
-    x.max() = r2x(1);
+    r2x *= (r.max - r.min);
+    x.max = r2x(1);
 
     pwx = Legendre<Scalar, DEGREE + 3>{
             [&](Scalar xValue) {
                 Scalar rValue = x2r_impl(r2x, xValue);
                 return p(rValue) * w(rValue);
-            }, x.min(), x.max()
+            }, x.min, x.max
     }.asPolynomial();
 }
 
 template<typename Scalar>
 void setXMin(typename LiouvilleTransformation<Scalar>::Piece &piece, Scalar xMin) {
-    if (xMin != piece.x.min()) {
-        Scalar dx = xMin - piece.x.min();
+    if (xMin != piece.x.min) {
+        Scalar dx = xMin - piece.x.min;
         piece.r2x += dx;
-        piece.x.max() += dx;
-        piece.x.min() = xMin;
+        piece.x.max += dx;
+        piece.x.min = xMin;
     }
 }
 
@@ -84,23 +84,24 @@ constructPiecewise(const LiouvilleTransformation<Scalar> &lt) {
         Piece &next = toDo.back();
         setXMin(next, xMin);
 
-        Scalar rMid = (next.r.min() + next.r.max()) / 2;
+        Scalar rMid = (next.r.min + next.r.max) / 2;
 
-        Piece left{lt, {next.r.min(), rMid}};
+        Piece left{lt, {next.r.min, rMid}};
         setXMin(left, xMin);
-        Piece right{lt, {rMid, next.r.max()}};
-        setXMin(right, left.x.max());
+        Piece right{lt, {rMid, next.r.max}};
+        setXMin(right, left.x.max);
 
-        if ((next.x.max() - next.x.min()) < 1e-8 || (
-                relError(right.x.max(), next.x.max()) < 1e-14
+        if ((next.x.max - next.x.min) < 1e-8 || (
+                relError(right.x.max, next.x.max) < 1e-14
                 && pieceError<Scalar>([](const Piece &p) {
-                    return p.r2x.integral(1) * p.r.diameter();
+                    return p.r2x.integral(1) * (p.r.max - p.r.min);
                 }, next, left, right) < 1e-14
                 && pieceError<Scalar>([](const Piece &p) {
-                    return Legendre<Scalar, 12>([&p](Scalar x) { return p.x2r(x); }, 0, 1).integrate() * p.x.diameter();
+                    return Legendre<Scalar, 12>([&p](Scalar x) { return p.x2r(x); }, 0, 1).integrate() *
+                           (p.x.max - p.x.min);
                 }, next, left, right) < 1e-14
                 && pieceError<Scalar>([](const Piece &p) {
-                    return p.pwx.integral(1) * p.x.diameter();
+                    return p.pwx.integral(1) * (p.x.max - p.x.min);
                 }, next, left, right) < 1e-14
                 && pieceError<Scalar>([](const Piece &p) {
                     return p.pwx(1) - p.pwx(0);
@@ -109,7 +110,7 @@ constructPiecewise(const LiouvilleTransformation<Scalar> &lt) {
             toDo.pop_back();
             pieces.push_back(left);
             pieces.push_back(right);
-            xMin = right.x.max();
+            xMin = right.x.max;
         } else {
             toDo.pop_back();
             toDo.push_back(right);
@@ -122,23 +123,23 @@ constructPiecewise(const LiouvilleTransformation<Scalar> &lt) {
 
 template<typename Scalar>
 Scalar LiouvilleTransformation<Scalar>::Piece::x2r(Scalar x_) const {
-    return r.min() + (r.max() - r.min()) * x2r_impl(r2x, x.min() + x_ * (x.max() - x.min()));
+    return r.min + (r.max - r.min) * x2r_impl(r2x, x.min + x_ * (x.max - x.min));
 }
 
 template<typename Scalar>
 LiouvilleTransformation<Scalar>::LiouvilleTransformation(
-        const Rectangle<Scalar, 1> &domain, const Function &p, const Function &q, const Function &w)
+        const Domain<Scalar> &domain, const Function &p, const Function &q, const Function &w)
         : m_rDomain(domain), m_p(p), m_q(q), m_w(w), pieces(constructPiecewise(*this)) {
 }
 
 template<typename Scalar>
 const typename LiouvilleTransformation<Scalar>::Piece &
 findPiece(const LiouvilleTransformation<Scalar> &lt, Scalar value,
-          Rectangle<Scalar, 1> (LiouvilleTransformation<Scalar>::Piece::*f)) {
+          Domain<Scalar> (LiouvilleTransformation<Scalar>::Piece::*f)) {
     auto piece = std::lower_bound(
             lt.pieces.begin(), lt.pieces.end(), value,
             [&f](const typename LiouvilleTransformation<Scalar>::Piece &piece, const Scalar &v) {
-                return (piece.*f).max() <= v;
+                return (piece.*f).max <= v;
             });
     if (piece == lt.pieces.end()) --piece;
 
@@ -172,7 +173,7 @@ Scalar LiouvilleTransformation<Scalar>::V(Scalar x) const {
     Scalar r = piece.x2r(nx);
     Scalar nr = piece.normalizeR(r);
 
-    Scalar h = piece.x.max() - piece.x.min();
+    Scalar h = piece.x.max - piece.x.min;
     Scalar pw = piece.pwx(nx);
     Scalar pw_dx = piece.pwx.derivative(nx) / h;
     Scalar pw_ddx = piece.pwx.template derivative<2>(nx) / (h * h);
@@ -188,7 +189,7 @@ Y<Scalar> LiouvilleTransformation<Scalar>::z2y(const Scalar &r, const Y<Scalar> 
     Scalar nr = piece.normalizeR(r);
     Scalar p = piece.p(nr);
     Scalar w = piece.w(nr);
-    Scalar h = piece.r.diameter();
+    Scalar h = piece.r.max - piece.r.min;
     Scalar dp = piece.p.derivative(nr) / h;
     Scalar dw = piece.w.derivative(nr) / h;
     Scalar xdr = sqrt(w / p);
@@ -214,7 +215,7 @@ Y<Scalar> LiouvilleTransformation<Scalar>::y2z(const Scalar &x, const Y<Scalar> 
     Scalar nr = piece.normalizeR(piece.x2r(piece.normalizeX(x)));
     Scalar p = piece.p(nr);
     Scalar w = piece.w(nr);
-    Scalar h = piece.r.diameter();
+    Scalar h = piece.r.max - piece.r.min;
     Scalar dp = piece.p.derivative(nr) / h;
     Scalar dw = piece.w.derivative(nr) / h;
     Scalar xdr = sqrt(w / p);

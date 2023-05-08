@@ -28,7 +28,7 @@ else ()
     FetchContent_MakeAvailable(Catch2)
 
     set(MATSLISE_TEST_SRC
-            util/legendre.cpp util/rectangle.cpp util/calculateEta.cpp util/polynomial.cpp
+            util/legendre.cpp util/calculateEta.cpp util/polynomial.cpp
             matslise/prufer.cpp matslise/mathieu.cpp matslise/simple.cpp matslise/coffey_evans.cpp
             matslise/hr_mathieu.cpp matslise/ixaru.cpp matslise/marletta.cpp matslise/periodic.cpp
             matslise/sturm_liouville.cpp matslise/harmonic.cpp

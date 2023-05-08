@@ -57,7 +57,7 @@ void testOrthogonality(
         const matslise::Y<Scalar> right,
         const std::vector<std::pair<int, Scalar>> &eigenvalues,
         const Scalar &tolerance) {
-    Eigen::Array<Scalar, Eigen::Dynamic, 1> xs = lobatto_grid(501, problem.domain.min(), problem.domain.max());
+    Eigen::Array<Scalar, Eigen::Dynamic, 1> xs = lobatto_grid(501, problem.domain.min, problem.domain.max);
 
     std::vector<Eigen::Array<Scalar, Eigen::Dynamic, 1>> evaluated;
     for (const auto &iE: eigenvalues) {

@@ -49,8 +49,8 @@ SturmLiouville<Scalar>::eigenpairsByIndex(
         int Imin, int Imax, const matslise::Y<Scalar> &left, const matslise::Y<Scalar> &right) const {
     auto schrodingerEigenpairs = matslise.eigenpairsByIndex(
             Imin, Imax,
-            transformation.z2y(transformation.rDomain().min(), left),
-            transformation.z2y(transformation.rDomain().max(), right));
+            transformation.z2y(transformation.rDomain().min, left),
+            transformation.z2y(transformation.rDomain().max, right));
 
 
     vector<tuple<int, Scalar, unique_ptr<typename AbstractMatslise<Scalar>::Eigenfunction>>>

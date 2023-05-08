@@ -14,17 +14,17 @@ void pyslise_sturm_liouville(py::module &m) {
             .def("r2x", &LiouvilleTransformation<double>::r2x, py::arg("r"))
             .def("x2r", &LiouvilleTransformation<double>::x2r, py::arg("x"))
             .def_property_readonly("rDomain", [](const LiouvilleTransformation<double> &lt) {
-                return std::pair{lt.rDomain().min(), lt.rDomain().max()};
+                return std::pair{lt.rDomain().min, lt.rDomain().max};
             })
             .def_property_readonly("xDomain", [](const LiouvilleTransformation<double> &lt) {
                 auto domain = lt.xDomain();
-                return std::pair{domain.min(), domain.max()};
+                return std::pair{domain.min, domain.max};
             })
             .def_property_readonly("pieces", [](const LiouvilleTransformation<double> &lt) {
                 std::vector<std::pair<double, double>> r;
                 r.reserve(lt.pieces.size());
                 std::transform(lt.pieces.begin(), lt.pieces.end(), std::back_inserter(r), [](auto p) {
-                    return std::pair{p.r.min(), p.r.max()};
+                    return std::pair{p.r.min, p.r.max};
                 });
                 return r;
             });
@@ -44,7 +44,7 @@ True
 )"""")
             .def(py::init([](const function<double(double)> &p, const function<double(double)> &q,
                              const function<double(double)> &w, double min, double max, double tolerance) {
-                     return std::make_shared<SturmLiouville<double>>(p, q, w, Rectangle<double, 1>{min, max}, tolerance);
+                     return std::make_shared<SturmLiouville<double>>(p, q, w, Domain<double>{min, max}, tolerance);
                  }), R""""()"""", py::arg("p"), py::arg("q"), py::arg("w"), py::arg("min"), py::arg("max"),
                  py::arg("tolerance") = 1e-8)
             .def("eigenvaluesByIndex",

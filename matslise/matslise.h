@@ -11,12 +11,21 @@
 #include "util/eigen.h"
 #include "util/y.h"
 #include "util/sectorbuilder.h"
-#include "util/rectangle.h"
 #include "./formula_constants.h"
 
 namespace matslise {
     enum Direction {
         none, forward, backward
+    };
+
+    template<typename Scalar>
+    struct Domain {
+        Scalar min;
+        Scalar max;
+
+        bool contains(const Scalar &x) const {
+            return min <= x && x <= max;
+        }
     };
 
     template<typename Scalar>
@@ -29,9 +38,9 @@ namespace matslise {
 
     public:
         const std::function<Scalar(Scalar)> potential;
-        const Rectangle<Scalar, 1> domain;
+        const Domain<Scalar> domain;
 
-        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Rectangle<Scalar, 1> &domain)
+        AbstractMatslise(const std::function<Scalar(Scalar)> &potential, const Domain<Scalar> &domain)
                 : potential(potential), domain(domain) {
         }
 
@@ -129,21 +138,21 @@ namespace matslise {
         Scalar tolerance;
     public:
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
-                 const Scalar &tolerance = 1e-8) : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance) {}
+                 const Scalar &tolerance = 1e-8) : Matslise(V, Domain<Scalar>{xmin, xmax}, tolerance) {}
 
-        Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
+        Matslise(std::function<Scalar(const Scalar &)> V, const Domain<Scalar> &domain,
                  const Scalar &tolerance = 1e-8)
                 : Matslise(V, domain, tolerance, sector_builder::AutomaticSectorBuilder<Matslise<Scalar>>(tolerance)) {}
 
         Matslise(std::function<Scalar(const Scalar &)> V, const Scalar &xmin, const Scalar &xmax,
                  const Scalar &tolerance, const sector_builder::SectorBuilder<Matslise<Scalar>> &sectorBuilder)
-                : Matslise(V, Rectangle<Scalar, 1>{xmin, xmax}, tolerance, sectorBuilder) {}
+                : Matslise(V, Domain<Scalar>{xmin, xmax}, tolerance, sectorBuilder) {}
 
-        Matslise(std::function<Scalar(const Scalar &)> V, const Rectangle<Scalar, 1> &domain,
+        Matslise(std::function<Scalar(const Scalar &)> V, const Domain<Scalar> &domain,
                  const Scalar &tolerance, const sector_builder::SectorBuilder<Matslise<Scalar>> &sectorBuilder)
                 : AbstractMatslise<Scalar>(V, domain),
                   sectorCount(0), matchIndex(0), sectors(), tolerance(tolerance) {
-            auto buildSectors = sectorBuilder(this, domain.min(), domain.max());
+            auto buildSectors = sectorBuilder(this, domain.min, domain.max);
             sectors = std::move(buildSectors.sectors);
             matchIndex = buildSectors.matchIndex;
             sectorCount = sectors.size();
