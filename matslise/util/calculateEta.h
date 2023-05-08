@@ -4,30 +4,6 @@
 #include "eigen.h"
 #include <math.h>
 
-template<typename Scalar>
-struct CalculateEtaData {
-    static const int taylor_degree;
-    static const Scalar taylor_eta8[];
-    static const Scalar taylor_eta9[];
-};
-
-template<>
-inline const int CalculateEtaData<double>::taylor_degree = 7;
-
-#ifdef MATSLISE_LONG_DOUBLE
-template<>
-inline const int CalculateEtaData<long double>::taylor_degree = 11;
-#endif
-
-
-#ifdef MATSLISE_QUADMATH
-
-#include <boost/multiprecision/float128.hpp>
-
-template<>
-inline const int CalculateEtaData<boost::multiprecision::float128>::taylor_degree = 15;
-#endif
-
 template<typename Scalar, int n>
 Eigen::Array<Scalar, n, 1> calculateEta(Scalar Z) {
     Eigen::Array<Scalar, n, 1> eta;

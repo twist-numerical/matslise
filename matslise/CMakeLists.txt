@@ -19,7 +19,7 @@ endif ()
 
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
-        matslise/matslise_formulas.cpp matslise/sector.cpp util/calculateEta.cpp liouville/liouville.cpp
+        matslise/matslise_formulas.cpp matslise/sector.cpp liouville/liouville.cpp
         liouville/sturm_liouville.cpp util/sectorbuilder.cpp)
 
 set(MATSLISE_MATSCS_SRC
