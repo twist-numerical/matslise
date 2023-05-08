@@ -21,6 +21,7 @@ inline const int CalculateEtaData<long double>::taylor_degree = 11;
 
 
 #ifdef MATSLISE_QUADMATH
+
 #include <boost/multiprecision/float128.hpp>
 
 template<>
@@ -30,29 +31,44 @@ inline const int CalculateEtaData<boost::multiprecision::float128>::taylor_degre
 template<typename Scalar, int n>
 Eigen::Array<Scalar, n, 1> calculateEta(Scalar Z) {
     Eigen::Array<Scalar, n, 1> eta;
-    if (abs(Z) < 0.5) {
-        Scalar e9 = 0, e8 = 0;
-        Scalar z = 1;
-        for (int i = 0; i <= CalculateEtaData<Scalar>::taylor_degree; ++i, z *= Z) {
-            e8 += z * CalculateEtaData<Scalar>::taylor_eta8[i];
-            e9 += z * CalculateEtaData<Scalar>::taylor_eta9[i];
+    if (abs(Z) < 100) {
+        int last_eta = (std::abs(int(Z)) + 9) / 4;
+        if (last_eta > 150) last_eta = 150;
+        if (last_eta < n + 2) last_eta = n + 2;
+
+        Scalar w0 = 1;
+        for (int j = 0; j < last_eta; ++j)
+            w0 *= 2 * j + 1;
+        w0 = 1 / w0;
+        // eta_current
+        Scalar eta_current = w0;
+        {
+            Scalar f = w0;
+            for (int q2 = 2; q2 < 60; q2 += 2) {
+                f *= Z / (q2 * (q2 + 2 * last_eta - 1));
+                eta_current += f;
+            }
         }
 
-        if constexpr(n > 10)
-            eta[10] = e9;
-        if constexpr(n > 9)
-            eta[9] = e8;
+        // eta_next
+        w0 /= (2 * last_eta + 1);
+        Scalar eta_next = w0;
+        {
+            Scalar f = w0;
+            for (int q2 = 2; q2 < 60; q2 += 2) {
+                f *= Z / (q2 * (q2 + 2 * last_eta + 1));
+                eta_next += f;
+            }
+        }
 
-        Scalar eta_prev = e9;
-        Scalar eta_curr = e8;
-        for (int i = 8; i >= 0; --i) {
-            Scalar tmp = eta_curr;
-            eta_curr = Z * eta_prev + (2 * i + 1) * eta_curr;
-            eta_prev = tmp;
+        // eta_(last_eta) and eta_(last_eta-1)
+        for (int i = last_eta - 1; i >= 0; --i) {
+            Scalar tmp = eta_current;
+            eta_current = (2 * i + 1) * eta_current + Z * eta_next;
+            eta_next = tmp;
             if (i < n)
-                eta[i] = eta_curr;
+                eta[i] = eta_current;
         }
-
     } else {
         if (Z > 0) {
             if (Z > 500) {
