@@ -38,8 +38,7 @@ jobs:
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
         run: |
-          cmake -G "MinGW Makefiles" `
-            -DCMAKE_BUILD_TYPE=Release `
+          cmake -DCMAKE_BUILD_TYPE=Release `
             -DEigen3_DIR="$(resolve-path ../../eigen/build)" ..
           cmake --build . --target matslise_test --config Release
         working-directory: ./build
