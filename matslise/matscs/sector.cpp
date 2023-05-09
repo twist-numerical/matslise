@@ -249,7 +249,7 @@ template<typename Scalar>
 Matrix<Scalar, Dynamic, Dynamic>
 propagatePsi_delta(const typename Matscs<Scalar>::Sector *sector, Scalar E, const Matrix<Scalar, Dynamic, Dynamic> &psi,
                    Scalar delta) {
-    if (sector->direction == backward)
+    if (sector->direction == Direction::backward)
         delta *= -1;
     bool forward = delta >= 0;
     if (!forward)
@@ -258,7 +258,7 @@ propagatePsi_delta(const typename Matscs<Scalar>::Sector *sector, Scalar E, cons
         delta = sector->h;
 
     // TODO: verify
-    Scalar extra = sector->direction == forward ? 1 : -1;
+    Scalar extra = sector->direction == Direction::forward ? 1 : -1;
     if (delta > 0) {
         T<Scalar, Dynamic> T = sector->calculateT(E, delta);
         return extra * (T.getT(1, 1) + extra * T.getT(1, 0) * psi).transpose()

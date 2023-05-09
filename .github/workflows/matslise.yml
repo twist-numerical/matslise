@@ -15,7 +15,7 @@ jobs:
       - run: mkdir build
       - name: CMake
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Release ..
+          cmake -DCMAKE_BUILD_TYPE=Release -DMATSLISE_MATSCS=${{ startsWith(matrix.os, 'windows') && 'OFF' || 'ON' }} ..
           cmake --build . --target matslise_test --config Release
         working-directory: ./build
       - name: Run tests
@@ -80,8 +80,8 @@ jobs:
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
         run: | # The runner has issues with lto: "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `"
-          cmake -G
-            -DCMAKE_BUILD_TYPE=Release `
+          cmake -DCMAKE_BUILD_TYPE=Release `
+            -DMATSLISE_MATSCS=OFF `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
           cmake --build . --target pyslise_install --config Release
