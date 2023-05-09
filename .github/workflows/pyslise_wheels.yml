@@ -27,7 +27,7 @@ jobs:
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
         run: |
-          cmake -G "MinGW Makefiles" `
+          cmake
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DPYBIND11_LTO_CXX_FLAGS="" ..

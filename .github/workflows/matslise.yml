@@ -13,17 +13,10 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - run: mkdir build
-      - if: ${{startsWith(matrix.os, 'windows')}}
-        name: CMake (Windows)
+      - name: CMake
         run: |
           cmake -DCMAKE_BUILD_TYPE=Release `
           cmake --build . --target matslise_test --config Release
-        working-directory: ./build
-      - if: ${{!startsWith(matrix.os, 'windows')}}
-        name: CMake (not Windows)
-        run: |
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-          cmake --build . --target matslise_test --config Release -- -j 3
         working-directory: ./build
       - name: Run tests
         run: |
@@ -88,7 +81,7 @@ jobs:
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
         run: | # The runner has issues with lto: "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `"
-          cmake -G "MinGW Makefiles" `
+          cmake -G
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
