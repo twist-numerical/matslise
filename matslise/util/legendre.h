@@ -58,7 +58,7 @@ namespace matslise::legendre {
 
         const std::array<D, n> &getCoefficients() const {
             if (coefficientsCache) return *coefficientsCache;
-            auto &coeffs = coefficientsCache.template emplace();
+            auto &coeffs = coefficientsCache.emplace();
             Scalar H(1);
             for (int i = 0; i < n; ++i) {
                 coeffs[i] = integrate<false>(i) / H;
@@ -70,7 +70,7 @@ namespace matslise::legendre {
         const Polynomial<D, n - 1> &asPolynomial() const {
             static_assert(n <= 16);
             if (polynomialCache) return *polynomialCache;
-            auto &polynomial = polynomialCache.template emplace();
+            auto &polynomial = polynomialCache.emplace();
 
             std::array<D, n> coeffs = getCoefficients();
             for (int i = 0; i < n; ++i) polynomial[i] = 0;

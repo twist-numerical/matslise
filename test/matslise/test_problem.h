@@ -93,7 +93,7 @@ void testProblem(
 
     int n = (int) correct.size();
 
-    for (int offset: (int[]) {0, n / 6, n / 3, n / 2, 2 * n / 3}) {
+    for (int offset: std::vector<int>{0, n / 6, n / 3, n / 2, 2 * n / 3}) {
         testEigenvaluesByIndex(problem, left, right, correct, tolerance, offset, n - offset);
     }
 

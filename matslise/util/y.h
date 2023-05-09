@@ -10,23 +10,23 @@ namespace matslise {
         None = 0, dX = 1, dE = 2, dXdE = 3
     };
 
-    template<typename Scalar=double, int _dimension = 1, int _cols = _dimension>
+    template<typename Scalar=double, int dimension_ = 1, int cols_ = dimension_>
     class Y {
     public:
         EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-        static constexpr int n4 = (_dimension == Eigen::Dynamic ? _dimension : 4 * _dimension);
-        static constexpr int n2 = (_dimension == Eigen::Dynamic ? _dimension : 2 * _dimension);
-        Eigen::Matrix<Scalar, n4, _cols> data;
+        static constexpr int n4 = (dimension_ == Eigen::Dynamic ? dimension_ : 4 * dimension_);
+        static constexpr int n2 = (dimension_ == Eigen::Dynamic ? dimension_ : 2 * dimension_);
+        Eigen::Matrix<Scalar, n4, cols_> data;
 
-        static Y<Scalar, _dimension, _dimension> Dirichlet(Eigen::Index N = _dimension) {
-            Y<Scalar, _dimension, _dimension> y(N);
-            y.block(dX) = Eigen::Matrix<Scalar, _dimension, _dimension>::Identity(N, N);
+        static Y<Scalar, dimension_, dimension_> Dirichlet(Eigen::Index N = dimension_) {
+            Y<Scalar, dimension_, dimension_> y(N);
+            y.block(dX) = Eigen::Matrix<Scalar, dimension_, dimension_>::Identity(N, N);
             return y;
         }
 
-        static Y<Scalar, _dimension, _dimension> Neumann(Eigen::Index N = _dimension) {
-            Y<Scalar, _dimension, _dimension> y(N);
-            y.block(None) = Eigen::Matrix<Scalar, _dimension, _cols>::Identity(N, N);
+        static Y<Scalar, dimension_, dimension_> Neumann(Eigen::Index N = dimension_) {
+            Y<Scalar, dimension_, dimension_> y(N);
+            y.block(None) = Eigen::Matrix<Scalar, dimension_, cols_>::Identity(N, N);
             return y;
         }
 
@@ -35,20 +35,20 @@ namespace matslise {
             block(dXdE) *= -1;
         }
 
-        explicit Y(Eigen::Index N = _dimension, Eigen::Index R = _cols) {
+        explicit Y(Eigen::Index N = dimension_, Eigen::Index R = cols_) {
             if (R == -1)
                 R = N;
             if (N != -1) {
-                data = Eigen::Matrix<Scalar, n4, _cols>::Zero(4 * N, R);
+                data = Eigen::Matrix<Scalar, n4, cols_>::Zero(4 * N, R);
             }
         }
 
-        explicit Y(const Eigen::Matrix<Scalar, n4, _cols> &data) : data(data) {}
+        explicit Y(const Eigen::Matrix<Scalar, n4, cols_> &data) : data(data) {}
 
-        explicit Y(const Eigen::Matrix<Scalar, n2, _cols> &_y, const Eigen::Matrix<Scalar, n2, _cols> &_ydE) {
+        explicit Y(const Eigen::Matrix<Scalar, n2, cols_> &_y, const Eigen::Matrix<Scalar, n2, cols_> &_ydE) {
             assert(_y.rows() == _ydE.rows() && _y.cols() == _ydE.cols());
             Eigen::Index N = _y.rows() / 2;
-            data = Eigen::Matrix<Scalar, n4, _cols>::Zero(4 * N, _y.cols());
+            data = Eigen::Matrix<Scalar, n4, cols_>::Zero(4 * N, _y.cols());
             y() = _y;
             ydE() = _ydE;
         }
@@ -61,49 +61,49 @@ namespace matslise {
             return data.cols();
         };
 
-        Y<Scalar, _dimension, _cols> operator-() const {
-            return Y<Scalar, _dimension, _cols>(-data);
+        Y<Scalar, dimension_, cols_> operator-() const {
+            return Y<Scalar, dimension_, cols_>(-data);
         }
 
-        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> block(YDiff d = None) {
-            return data.template block<_dimension, _cols>(((int) d) * dimension(), 0, dimension(), cols());
+        Eigen::Block<Eigen::Matrix<Scalar, n4, cols_>, dimension_, cols_> block(YDiff d = None) {
+            return data.template block<dimension_, cols_>(((int) d) * dimension(), 0, dimension(), cols());
         }
 
-        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, _dimension, _cols> block(YDiff d = None) const {
-            return data.template block<_dimension, _cols>(((int) d) * dimension(), 0, dimension(), cols());
+        Eigen::Block<const Eigen::Matrix<Scalar, n4, cols_>, dimension_, cols_> block(YDiff d = None) const {
+            return data.template block<dimension_, cols_>(((int) d) * dimension(), 0, dimension(), cols());
         }
 
-        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, n2, _cols> y() {
+        Eigen::Block<Eigen::Matrix<Scalar, n4, cols_>, n2, cols_> y() {
             return data.template topRows<n2>(2 * dimension());
         }
 
-        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, n2, _cols> y() const {
+        Eigen::Block<const Eigen::Matrix<Scalar, n4, cols_>, n2, cols_> y() const {
             return data.template topRows<n2>(2 * dimension());
         }
 
-        Eigen::Block<Eigen::Matrix<Scalar, n4, _cols>, n2, _cols> ydE() {
+        Eigen::Block<Eigen::Matrix<Scalar, n4, cols_>, n2, cols_> ydE() {
             return data.template bottomRows<n2>(2 * dimension());
         }
 
-        Eigen::Block<const Eigen::Matrix<Scalar, n4, _cols>, n2, _cols> ydE() const {
+        Eigen::Block<const Eigen::Matrix<Scalar, n4, cols_>, n2, cols_> ydE() const {
             return data.template bottomRows<n2>(2 * dimension());
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const Y<Scalar, _dimension, _cols> &m) {
+        friend std::ostream &operator<<(std::ostream &os, const Y<Scalar, dimension_, cols_> &m) {
             return os << "(" << m.block(None) << "," << m.block(dX) << ")" << "(" << m.block(dE) << "," << m.block(dXdE)
                       << ")";
         }
 
-        Y<Scalar, _dimension, _cols> operator*(const Scalar &f) const {
-            return Y<Scalar, _dimension, _cols>(data * f);
+        Y<Scalar, dimension_, cols_> operator*(const Scalar &f) const {
+            return Y<Scalar, dimension_, cols_>(data * f);
         }
 
-        Y<Scalar, _dimension, _cols> &operator*=(const Scalar &f) {
+        Y<Scalar, dimension_, cols_> &operator*=(const Scalar &f) {
             data *= f;
             return *this;
         }
 
-        Y<Scalar, _dimension, _cols> &operator*=(const Eigen::Matrix<Scalar, _cols, _cols> &M) {
+        Y<Scalar, dimension_, cols_> &operator*=(const Eigen::Matrix<Scalar, cols_, cols_> &M) {
             data *= M;
             return *this;
         }
@@ -116,13 +116,14 @@ namespace matslise {
             return !(rhs == *this);
         }
 
-        Y<Scalar, _dimension, 1> col(Eigen::Index j) const {
-            return Y<Scalar, _dimension, 1>(data.col(j));
+        Y<Scalar, dimension_, 1> col(Eigen::Index j) const {
+            return Y<Scalar, dimension_, 1>(data.col(j));
         }
     };
 
     template<typename Scalar, int n, int cols, int count>
-    Y<Scalar, n, count> operator*(const Y<Scalar, n, cols> &y, const Eigen::Matrix<Scalar, cols, count> &M) {
+    Y<Scalar, n, count>
+    operator*(const Y<Scalar, n, cols> &y, const Eigen::Matrix<Scalar, cols, count, 0, cols, count> &M) {
         Y<Scalar, n, count> result(y.dimension(), M.cols());
         result.data = y.data * M;
         return result;
