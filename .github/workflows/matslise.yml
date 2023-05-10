@@ -20,7 +20,7 @@ jobs:
         working-directory: ./build
       - name: Run tests
         run: |
-          ctest -V --config Release
+          ctest -V -C Release
         working-directory: ./build
 
   matslise_test_float128:
@@ -38,7 +38,7 @@ jobs:
         working-directory: ./build
       - name: Run tests
         run: |
-          ctest -V --config Release
+          ctest -V -C Release
         working-directory: ./build
 
   matslise_test_long:
@@ -54,7 +54,7 @@ jobs:
         working-directory: ./build
       - name: Run tests
         run: |
-          ctest -V --config Release
+          ctest -V -C Release
         working-directory: ./build
 
 
