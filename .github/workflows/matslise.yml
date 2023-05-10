@@ -20,8 +20,8 @@ jobs:
         working-directory: ./build
       - name: Run tests
         run: |
-          ./matslise_test
-        working-directory: ./build/test
+          ctest -V --config Release
+        working-directory: ./build
 
   matslise_test_float128:
     name: Test matslise (float128)
@@ -38,8 +38,8 @@ jobs:
         working-directory: ./build
       - name: Run tests
         run: |
-          ./matslise_test
-        working-directory: ./build/test
+          ctest -V --config Release
+        working-directory: ./build
 
   matslise_test_long:
     name: Test matslise (long double)
@@ -49,14 +49,13 @@ jobs:
       - run: mkdir build
       - name: CMake
         run: |
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DMATSLISE_LONG_DOUBLE=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DMATSLISE_LONG_DOUBLE=ON
           cmake --build . --target matslise_test --config Release -- -j 3
         working-directory: ./build
       - name: Run tests
         run: |
-          ./matslise_test
-        working-directory: ./build/test
+          ctest -V --config Release
+        working-directory: ./build
 
 
   pyslise_test:
