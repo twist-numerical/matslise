@@ -112,7 +112,7 @@ Returns the eigenfunction corresponding to the eigenvalue E as a python function
 )"""",
                  py::arg("E"), py::arg("left"), py::arg("right") = optional<Vector2d>(), py::arg("index") = -1)
             .def_property_readonly("domain", [](const AbstractMatslise<double> &matslise) {
-                return std::pair<double, double>(matslise.domain.min(), matslise.domain.max());
+                return std::pair<double, double>(matslise.domain.min, matslise.domain.max);
             });
 
 
@@ -137,7 +137,7 @@ True
                          if (xmin < jump && jump < xmax)
                              sb.jumps.push_back(jump);
                      std::sort(sb.jumps.begin(), sb.jumps.end());
-                     return new Matslise<>(V, Rectangle<double, 1>{xmin, xmax}, tolerance, sb);
+                     return new Matslise<>(V, Domain<double>{xmin, xmax}, tolerance, sb);
                  }), R""""(\
 In the __init__ function all needed data will be precomputed to effectively solve the Schrödinger equation with given potential on the interval [min; max]. Because of the precomputation the function V is only evaluated at the moment of initalisation. Calling other methods after the object is created never will evaluate V.
 

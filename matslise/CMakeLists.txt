@@ -11,15 +11,24 @@ if (MSVC)
             /wd4244 # possible loss of data size_t -> int
             /wd4661 # no suitable definition provided for explicit template instantiation request
             /wd4820 #'bytes' bytes padding added after construct 'member_name'
-            /wd4464  # relative include path contains '..'
+            /wd4464 # relative include path contains '..'
+            /EHsc
     )
 else ()
     add_compile_options(-Wall -Wextra -Wno-register -Wno-undefined-var-template)
 endif ()
 
+Include(FetchContent)
+FetchContent_Declare(
+        eigen
+        GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
+        GIT_TAG 3.4.0
+)
+FetchContent_MakeAvailable(eigen)
+
 set(MATSLISE_SRC
         matslise/matslise.cpp matslise/halfrange.cpp matslise/abstract_matslise.cpp matslise/periodic.cpp
-        matslise/matslise_formulas.cpp matslise/sector.cpp util/calculateEta.cpp liouville/liouville.cpp
+        matslise/matslise_formulas.cpp matslise/sector.cpp liouville/liouville.cpp
         liouville/sturm_liouville.cpp util/sectorbuilder.cpp)
 
 set(MATSLISE_MATSCS_SRC
@@ -42,7 +51,6 @@ list(APPEND defines MATSLISE_VERSION="${MATSLISE_VERSION}")
 
 if (DEFINED EMSCRIPTEN)
     add_executable(matslise js/module.cpp js/matslise.cpp js/sturm_liouville.cpp ${MATSLISE_FULL_SRC})
-    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     target_link_libraries(matslise Eigen3::Eigen)
 
     configure_file(js/matslise.d.ts matslise.d.ts COPYONLY)
@@ -129,7 +137,6 @@ else ()
         endif ()
     endif ()
 
-    find_package(Eigen3 3.3 REQUIRED NO_MODULE)
     message("-- Eigen3 version ${Eigen3_VERSION}")
     target_link_libraries(matslise PUBLIC ${libraries})
     target_compile_definitions(matslise PUBLIC ${defines})

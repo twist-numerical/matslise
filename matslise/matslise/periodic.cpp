@@ -29,8 +29,8 @@ PeriodicMatslise<Scalar>::matchingError(const Scalar &E, bool use_h) const {
     Y<Scalar, 1, 2> l = periodicInitialValue<Scalar>();
     Y<Scalar, 1, 2> r = periodicInitialValue<Scalar>(K);
     Array<Scalar, 2, 1> thetaL, thetaR;
-    tie(l, thetaL) = propagate(E, l, matslise.domain.min(), matslise.sectors[matslise.matchIndex]->max, use_h);
-    tie(r, thetaR) = propagate(E, r, matslise.domain.max(), matslise.sectors[matslise.matchIndex]->max, use_h);
+    tie(l, thetaL) = propagate(E, l, matslise.domain.min, matslise.sectors[matslise.matchIndex]->max, use_h);
+    tie(r, thetaR) = propagate(E, r, matslise.domain.max, matslise.sectors[matslise.matchIndex]->max, use_h);
 
     Y<Scalar, 1, 2> error = l;
     error.data -= r.data;
@@ -235,8 +235,8 @@ vector<unique_ptr<typename PeriodicMatslise<Scalar>::Eigenfunction>>
 PeriodicMatslise<Scalar>::eigenfunction(const Scalar &E) const {
     Array<Scalar, 2, 1> thetaL, thetaR;
     Scalar &match = matslise.sectors[matslise.matchIndex]->max;
-    Y<Scalar, 1, 2> l = propagate(E, periodicInitialValue<Scalar>(), matslise.domain.min(), match).first;
-    Y<Scalar, 1, 2> r = propagate(E, periodicInitialValue<Scalar>(K), matslise.domain.max(), match).first;
+    Y<Scalar, 1, 2> l = propagate(E, periodicInitialValue<Scalar>(), matslise.domain.min, match).first;
+    Y<Scalar, 1, 2> r = propagate(E, periodicInitialValue<Scalar>(K), matslise.domain.max, match).first;
     Matrix<Scalar, 2, 2> err = (l.y() - r.y());
     cout << err << endl;
 

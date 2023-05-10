@@ -26,8 +26,8 @@ TEST_CASE("Klotter with liouville transformation", "[liouville]") {
 
     // std::cout << "Pieces: " << transformation.pieces.size() << std::endl;
 
-    Matslise<double> m{[&](double x) { return transformation.V(x); }, transformation.xDomain().min(),
-                       transformation.xDomain().max()};
+    Matslise<double> m{[&](double x) { return transformation.V(x); }, transformation.xDomain().min,
+                       transformation.xDomain().max};
 
     auto eigenvalues = m.eigenvaluesByIndex(0, 20, Y<double>::Dirichlet());
     Eigen::Index i = 0;

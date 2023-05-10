@@ -19,7 +19,7 @@ using namespace matslise;
 using namespace sector_builder;
 
 template<int cols = 1>
-inline Y<double, 1, cols> make_y(const Matrix<double, 2, cols> &value) {
+inline Y<double, 1, cols> make_y(const Matrix<double, 2, cols, 0, 2, cols> &value) {
     return Y<double, 1, cols>(value, Matrix<double, 2, cols>::Zero());
 }
 

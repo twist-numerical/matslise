@@ -11,121 +11,51 @@ jobs:
       matrix:
         os: [ windows-2022, ubuntu-22.04, macos-12 ]
     steps:
-      - name: Cache Eigen3
-        id: cache-eigen3_3
-        uses: actions/cache@v1
-        with:
-          path: ../eigen
-          key: ${{ runner.os }}-eigen3_3
-      - name: Download Eigen3
-        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
-        run: |
-          git clone https://gitlab.com/libeigen/eigen.git ../eigen
-          cd ../eigen
-          git checkout 3.3
-          mkdir ../eigen/build
-      - if: ${{startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
-        name: Build Eigen3 (Windows)
-        run: cmake -G "MinGW Makefiles" ..
-        working-directory: ../eigen/build
-      - if: ${{!startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
-        name: Build Eigen3 (not Windows)
-        run: cmake ..
-        working-directory: ../eigen/build
-
       - uses: actions/checkout@v2
       - run: mkdir build
-      - if: ${{startsWith(matrix.os, 'windows')}}
-        name: CMake (Windows)
+      - name: CMake
         run: |
-          cmake -G "MinGW Makefiles" `
-            -DCMAKE_BUILD_TYPE=Release `
-            -DEigen3_DIR="$(resolve-path ../../eigen/build)" ..
+          cmake -DCMAKE_BUILD_TYPE=Release -DMATSLISE_MATSCS=${{ startsWith(matrix.os, 'windows') && 'OFF' || 'ON' }} ..
           cmake --build . --target matslise_test --config Release
-        working-directory: ./build
-      - if: ${{!startsWith(matrix.os, 'windows')}}
-        name: CMake (not Windows)
-        run: |
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DEigen3_DIR="$(pwd)/../../eigen/build"
-          cmake --build . --target matslise_test --config Release -- -j 3
         working-directory: ./build
       - name: Run tests
         run: |
-          ./matslise_test
-        working-directory: ./build/test
+          ctest -V -C Release
+        working-directory: ./build
 
   matslise_test_float128:
     name: Test matslise (float128)
     runs-on: ubuntu-22.04
     steps:
-      - name: Cache Eigen3
-        id: cache-eigen3_3
-        uses: actions/cache@v1
-        with:
-          path: ../eigen
-          key: ${{ runner.os }}-eigen3_3
-      - name: Download Eigen3
-        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
-        run: |
-          git clone https://gitlab.com/libeigen/eigen.git ../eigen
-          cd ../eigen
-          git checkout 3.3
-          mkdir ../eigen/build
-      - if: ${{steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
-        name: Build Eigen3
-        run: cmake ..
-        working-directory: ../eigen/build
       - name: Install boost
         run: sudo apt-get install libboost-all-dev
       - uses: actions/checkout@v2
       - run: mkdir build
       - name: CMake
         run: |
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DEigen3_DIR="$(pwd)/../../eigen/build" \
-            -DMATSLISE_LONG_DOUBLE=ON -DMATSLISE_QUADMATH=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DMATSLISE_LONG_DOUBLE=ON -DMATSLISE_QUADMATH=ON
           cmake --build . --target matslise_test --config Release -- -j 3
         working-directory: ./build
       - name: Run tests
         run: |
-          ./matslise_test
-        working-directory: ./build/test
+          ctest -V -C Release
+        working-directory: ./build
 
   matslise_test_long:
     name: Test matslise (long double)
     runs-on: ubuntu-22.04
     steps:
-      - name: Cache Eigen3
-        id: cache-eigen3_3
-        uses: actions/cache@v1
-        with:
-          path: ../eigen
-          key: ${{ runner.os }}-eigen3_3
-      - name: Download Eigen3
-        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
-        run: |
-          git clone https://gitlab.com/libeigen/eigen.git ../eigen
-          cd ../eigen
-          git checkout 3.3
-          mkdir ../eigen/build
-      - if: ${{steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
-        name: Build Eigen3
-        run: cmake ..
-        working-directory: ../eigen/build
       - uses: actions/checkout@v2
       - run: mkdir build
       - name: CMake
         run: |
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DEigen3_DIR="$(pwd)/../../eigen/build" \
-            -DMATSLISE_LONG_DOUBLE=ON
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DMATSLISE_LONG_DOUBLE=ON
           cmake --build . --target matslise_test --config Release -- -j 3
         working-directory: ./build
       - name: Run tests
         run: |
-          ./matslise_test
-        working-directory: ./build/test
+          ctest -V -C Release
+        working-directory: ./build
 
 
   pyslise_test:
@@ -137,27 +67,6 @@ jobs:
         os: [ windows-2022, ubuntu-22.04, macos-12 ]
         python-version: [ 3.7 ]
     steps:
-      - name: Cache Eigen3
-        id: cache-eigen3_3
-        uses: actions/cache@v1
-        with:
-          path: ../eigen
-          key: ${{ runner.os }}-eigen3_3
-      - name: Download Eigen3
-        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
-        run: |
-          git clone https://gitlab.com/libeigen/eigen.git ../eigen
-          cd ../eigen
-          git checkout 3.3
-          mkdir ../eigen/build
-      - if: ${{startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
-        name: Build Eigen3 (Windows)
-        run: cmake -G "MinGW Makefiles" ..
-        working-directory: ../eigen/build
-      - if: ${{!startsWith(matrix.os, 'windows') && steps.cache-eigen3_3.outputs.cache-hit != 'true'}}
-        name: Build Eigen3 (not Windows)
-        run: cmake ..
-        working-directory: ../eigen/build
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
@@ -170,10 +79,9 @@ jobs:
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
         run: | # The runner has issues with lto: "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `"
-          cmake -G "MinGW Makefiles" `
-            -DCMAKE_BUILD_TYPE=Release `
+          cmake -DCMAKE_BUILD_TYPE=Release `
+            -DMATSLISE_MATSCS=OFF `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
-            -DEigen3_DIR="$(resolve-path ../../eigen/build)" `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
           cmake --build . --target pyslise_install --config Release
         working-directory: ./build
@@ -184,7 +92,6 @@ jobs:
         name: CMake (not Windows)
         run: |
           cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DEigen3_DIR="$(pwd)/../../eigen/build" \
             -DPYTHON_EXECUTABLE=$(which python)
           cmake --build . --target pyslise_install --config Release -- -j 3
         working-directory: ./build
@@ -192,49 +99,34 @@ jobs:
         run: |
           python test/pyslise/test_docs.py
 
-  matslise_wasm_test:
-    name: Test matslise.wasm
-    runs-on: ubuntu-latest
-    steps:
-      - name: Cache Eigen3
-        id: cache-eigen3_3
-        uses: actions/cache@v1
-        with:
-          path: ../eigen
-          key: ${{ runner.os }}-eigen3_3
-      - name: Download Eigen3
-        if: steps.cache-eigen3_3.outputs.cache-hit != 'true'
-        run: |
-          git clone https://gitlab.com/libeigen/eigen.git ../eigen
-          mkdir ../eigen/build
-          cd ../eigen/build
-          git checkout 3.3
-          cmake ..
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install emscripten
-        uses: mymindstorm/setup-emsdk@v11
-        with:
-          version: 1.39.20
-      - name: NPM install ava
-        run: |
-          npm install -g ava
-      - uses: actions/checkout@v2
-      - run: mkdir build
-      - name: CMake
-        run: |
-          emcmake cmake ..  \
-            -DEigen3_DIR=$(pwd)/../../eigen/build \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DPYTHON_EXECUTABLE=$(which python)
-        working-directory: ./build
-      - name: Make matslise
-        run: |
-          emmake cmake --build . --target matslise_test --config Release -- -j 3
-        working-directory: ./build
-      - uses: actions/upload-artifact@v2-preview
-        with:
-          name: matslise_wasm
-          path: ./build/matslise/matslise.*
+#  matslise_wasm_test:
+#    name: Test matslise.wasm
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Set up Node
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 18
+#      - name: Install emscripten
+#        uses: mymindstorm/setup-emsdk@v11
+#        with:
+#          version: 1.39.20
+#      - name: NPM install ava
+#        run: |
+#          npm install -g ava
+#      - uses: actions/checkout@v2
+#      - run: mkdir build
+#      - name: CMake
+#        run: |
+#          emcmake cmake ..  \
+#            -DCMAKE_BUILD_TYPE=Release \
+#            -DPYTHON_EXECUTABLE=$(which python)
+#        working-directory: ./build
+#      - name: Make matslise
+#        run: |
+#          emmake cmake --build . --target matslise_test --config Release -- -j 3
+#        working-directory: ./build
+#      - uses: actions/upload-artifact@v2-preview
+#        with:
+#          name: matslise_wasm
+#          path: ./build/matslise/matslise.*
