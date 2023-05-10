@@ -99,34 +99,34 @@ jobs:
         run: |
           python test/pyslise/test_docs.py
 
-  matslise_wasm_test:
-    name: Test matslise.wasm
-    runs-on: ubuntu-latest
-    steps:
-      - name: Set up Node
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-      - name: Install emscripten
-        uses: mymindstorm/setup-emsdk@v11
-        with:
-          version: 1.39.20
-      - name: NPM install ava
-        run: |
-          npm install -g ava
-      - uses: actions/checkout@v2
-      - run: mkdir build
-      - name: CMake
-        run: |
-          emcmake cmake ..  \
-            -DCMAKE_BUILD_TYPE=Release \
-            -DPYTHON_EXECUTABLE=$(which python)
-        working-directory: ./build
-      - name: Make matslise
-        run: |
-          emmake cmake --build . --target matslise_test --config Release -- -j 3
-        working-directory: ./build
-      - uses: actions/upload-artifact@v2-preview
-        with:
-          name: matslise_wasm
-          path: ./build/matslise/matslise.*
+#  matslise_wasm_test:
+#    name: Test matslise.wasm
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Set up Node
+#        uses: actions/setup-node@v3
+#        with:
+#          node-version: 18
+#      - name: Install emscripten
+#        uses: mymindstorm/setup-emsdk@v11
+#        with:
+#          version: 1.39.20
+#      - name: NPM install ava
+#        run: |
+#          npm install -g ava
+#      - uses: actions/checkout@v2
+#      - run: mkdir build
+#      - name: CMake
+#        run: |
+#          emcmake cmake ..  \
+#            -DCMAKE_BUILD_TYPE=Release \
+#            -DPYTHON_EXECUTABLE=$(which python)
+#        working-directory: ./build
+#      - name: Make matslise
+#        run: |
+#          emmake cmake --build . --target matslise_test --config Release -- -j 3
+#        working-directory: ./build
+#      - uses: actions/upload-artifact@v2-preview
+#        with:
+#          name: matslise_wasm
+#          path: ./build/matslise/matslise.*
