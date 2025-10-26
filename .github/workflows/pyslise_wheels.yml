@@ -43,7 +43,7 @@ jobs:
             -DPYTHON_EXECUTABLE=$(which python)
           cmake --build . --target build_wheel --config Release -- -j 3
         working-directory: ./build
-      - uses: actions/upload-artifact@v2-preview
+      - uses: actions/upload-artifact@v5
         with:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
           path: ./build/matslise/dist/*.whl
@@ -57,7 +57,7 @@ jobs:
         os: [ windows-2022, macos-12 ]
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v5
         with:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
           path: ../pyslise_wheel
@@ -89,7 +89,7 @@ jobs:
       - name: run docker manylinux
         run: |
           docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux_2_28_x86_64 /opt/matslise/docker_build.sh
-      - uses: actions/upload-artifact@v2-preview
+      - uses: actions/upload-artifact@v5
         with:
           name: pyslise_manylinux2010
           path: ./wheelhouse/*.whl
@@ -102,7 +102,7 @@ jobs:
       matrix:
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v5
         with:
           name: pyslise_manylinux2010
           path: ../pyslise_wheel
@@ -124,7 +124,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [ test_wheel, test_wheel_manylinux ]
     steps:
-      - uses: actions/download-artifact@v4.1.7 # download all artifacts
+      - uses: actions/download-artifact@v5
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
