@@ -16,7 +16,7 @@ jobs:
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install setuptools wheel
@@ -62,7 +62,7 @@ jobs:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
           path: ../pyslise_wheel
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: |
@@ -107,14 +107,14 @@ jobs:
           name: pyslise_manylinux2010
           path: ../pyslise_wheel
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: |
           pip install wheel
       - name: install pyslise
         run: |
-          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*manylinux2010_x86_64.whl
+          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*.whl
       - uses: actions/checkout@v2
       - name: test pyslise
         run: |
@@ -126,7 +126,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v5
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: 3.11
       - name: "Install twine"
