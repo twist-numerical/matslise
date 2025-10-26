@@ -137,6 +137,6 @@ jobs:
       - name: "Check all wheels"
         run: |
           twine check **/*.whl
-      #- name: "Upload to pypi"
-      #    run: |
-      #    twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} **/*.whl
+      - name: "Upload to pypi"
+        run: |
+          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} **/*.whl

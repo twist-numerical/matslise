@@ -7,7 +7,7 @@ cmake_python=/opt/python/cp312-cp312
 ${cmake_python}/bin/pip install cmake
 
 # pyslise
-pythons=(cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313)
+pythons=(cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313 cp314-cp314)
 for py in ${pythons[@]}; do
     mkdir /opt/matslise-build-${py}
     cd /opt/matslise-build-${py}
