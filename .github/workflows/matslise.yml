@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022, ubuntu-22.04, macos-12 ]
+        os: [ windows-2022, ubuntu-22.04, macos-15 ]
     steps:
       - uses: actions/checkout@v2
       - run: mkdir build
@@ -64,11 +64,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022, ubuntu-22.04, macos-12 ]
-        python-version: [ 3.7 ]
+        os: [ windows-2022, ubuntu-22.04, macos-15 ]
+        python-version: [ 3.12 ]
     steps:
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install setuptools wheel

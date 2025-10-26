@@ -15,6 +15,7 @@ namespace matslise::sector_builder {
     template<typename Problem, typename Scalar=typename Problem::Scalar>
     class SectorBuilder {
     public:
+        virtual ~SectorBuilder() = default;
         virtual SectorBuilderReturn<Problem>
         operator()(const Problem *, const Scalar &min, const Scalar &max) const = 0;
     };

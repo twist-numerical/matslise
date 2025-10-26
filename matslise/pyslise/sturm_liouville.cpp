@@ -39,7 +39,7 @@ True
 >>> i, E, f = slp.eigenpairsByIndex(1, 2, (0, 1), (2, -10))[0]
 >>> abs(E - 24.0804524555819) < 1e-6
 True
->>> abs(f(0.27)[0] - 0.82637509455759) < 1e-6
+>>> bool(abs(f(0.27)[0] - 0.82637509455759) < 1e-6)
 True
 )"""")
             .def(py::init([](const function<double(double)> &p, const function<double(double)> &q,

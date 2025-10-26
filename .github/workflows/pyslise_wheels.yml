@@ -12,11 +12,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022, macos-12 ]
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
+        os: [ windows-2022, macos-15 ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: pip install setuptools wheel
@@ -26,9 +26,11 @@ jobs:
       - run: mkdir build
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
+        # matscs on windows is unbearably slow to build (>60m)
         run: |
-          cmake
+          cmake `
             -DCMAKE_BUILD_TYPE=Release `
+            -DMATSLISE_MATSCS=OFF `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
           cmake --build . --target build_wheel --config Release
@@ -43,7 +45,7 @@ jobs:
             -DPYTHON_EXECUTABLE=$(which python)
           cmake --build . --target build_wheel --config Release -- -j 3
         working-directory: ./build
-      - uses: actions/upload-artifact@v2-preview
+      - uses: actions/upload-artifact@v5
         with:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
           path: ./build/matslise/dist/*.whl
@@ -54,15 +56,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022, macos-12 ]
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
+        os: [ windows-2022, macos-15 ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v5
         with:
           name: pyslise_${{ matrix.os }}_${{ matrix.python-version }}
           path: ../pyslise_wheel
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: |
@@ -88,8 +90,8 @@ jobs:
       - run: mkdir build
       - name: run docker manylinux
         run: |
-          docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux2010_x86_64 /opt/matslise/docker_build.sh
-      - uses: actions/upload-artifact@v2-preview
+          docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux_2_28_x86_64 /opt/matslise/docker_build.sh
+      - uses: actions/upload-artifact@v5
         with:
           name: pyslise_manylinux2010
           path: ./wheelhouse/*.whl
@@ -100,21 +102,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v5
         with:
           name: pyslise_manylinux2010
           path: ../pyslise_wheel
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ matrix.python-version }}
       - run: |
           pip install wheel
       - name: install pyslise
         run: |
-          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*manylinux2010_x86_64.whl
+          pip install ../pyslise_wheel/pyslise-*-cp$(tr -d . <<< ${{ matrix.python-version }})-*.whl
       - uses: actions/checkout@v2
       - name: test pyslise
         run: |
@@ -124,11 +126,11 @@ jobs:
     runs-on: ubuntu-22.04
     needs: [ test_wheel, test_wheel_manylinux ]
     steps:
-      - uses: actions/download-artifact@v4.1.7 # download all artifacts
+      - uses: actions/download-artifact@v5
       - name: Set up Python
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: "Install twine"
         run: |
           pip install twine
