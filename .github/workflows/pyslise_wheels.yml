@@ -13,7 +13,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2022, macos-12 ]
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10', '3.11' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v1
@@ -55,7 +55,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ windows-2022, macos-12 ]
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - uses: actions/download-artifact@v4.1.7
         with:
@@ -88,7 +88,7 @@ jobs:
       - run: mkdir build
       - name: run docker manylinux
         run: |
-          docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux2010_x86_64 /opt/matslise/docker_build.sh
+          docker run -v $(pwd):/opt/matslise quay.io/pypa/manylinux_2_28_x86_64 /opt/matslise/docker_build.sh
       - uses: actions/upload-artifact@v2-preview
         with:
           name: pyslise_manylinux2010
@@ -100,7 +100,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ '3.6', '3.7', '3.8', '3.9', '3.10' ]
+        python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - uses: actions/download-artifact@v4.1.7
         with:
@@ -128,13 +128,13 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v1
         with:
-          python-version: 3.9
+          python-version: 3.11
       - name: "Install twine"
         run: |
           pip install twine
       - name: "Check all wheels"
         run: |
           twine check **/*.whl
-      - name: "Upload to pypi"
-        run: |
-          twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} **/*.whl
+      #- name: "Upload to pypi"
+      #    run: |
+      #    twine upload --skip-existing -u __token__ -p ${{ secrets.PYPI_TOKEN }} **/*.whl
