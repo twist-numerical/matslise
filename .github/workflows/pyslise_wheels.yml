@@ -26,9 +26,11 @@ jobs:
       - run: mkdir build
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
+        # matscs on windows is unbearably slow to build (>60m)
         run: |
           cmake `
             -DCMAKE_BUILD_TYPE=Release `
+            -DMATSLISE_MATSCS=OFF `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
           cmake --build . --target build_wheel --config Release
