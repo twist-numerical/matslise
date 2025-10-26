@@ -12,7 +12,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022, macos-12 ]
+        os: [ windows-2022, macos-15 ]
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - name: Set up Python ${{ matrix.python-version }}
@@ -27,7 +27,7 @@ jobs:
       - if: ${{startsWith(matrix.os, 'windows')}}
         name: CMake (Windows)
         run: |
-          cmake
+          cmake `
             -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=OFF `
             -DPYBIND11_LTO_CXX_FLAGS="" ..
@@ -54,7 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ windows-2022, macos-12 ]
+        os: [ windows-2022, macos-15 ]
         python-version: [ '3.9', '3.10', '3.11', '3.12', '3.13', '3.14' ]
     steps:
       - uses: actions/download-artifact@v5
